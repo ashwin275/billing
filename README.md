@@ -57,9 +57,11 @@ A modern, responsive React-based billing dashboard with comprehensive user and p
 
 Before running this project locally, ensure you have:
 
-- **Node.js** (version 18 or higher)
+- **Node.js** (version 20 or higher) - Required for `import.meta.dirname` support
 - **npm** or **yarn** package manager
 - **Git** for version control
+
+> **Important for Local Development:** This project uses modern Node.js features that require Node.js 20+. If you encounter path resolution errors, ensure you're using the correct Node.js version.
 
 ## Installation & Setup
 
@@ -239,8 +241,9 @@ The application is fully responsive across all devices:
 ### Common Issues
 
 1. **Development server won't start:**
-   - Check Node.js version (18+ required)
+   - **Node.js Version Error:** If you see `TypeError [ERR_INVALID_ARG_TYPE]: The "paths[0]" argument must be of type string. Received undefined`, upgrade to Node.js 20+
    - Clear node_modules and reinstall: `rm -rf node_modules && npm install`
+   - Verify you're using Node.js 20 or higher: `node --version`
 
 2. **API connection errors:**
    - Verify `.env` file has correct `VITE_API_BASE_URL`
@@ -253,6 +256,11 @@ The application is fully responsive across all devices:
 4. **Styling issues:**
    - Ensure Tailwind CSS is configured properly
    - Check for conflicting CSS classes
+
+5. **Local Development Setup Issues:**
+   - This project was initially built for Replit environment
+   - Some Replit-specific dependencies might cause warnings locally
+   - Focus on Node.js 20+ requirement for modern ES features
 
 ### Performance Optimization
 
