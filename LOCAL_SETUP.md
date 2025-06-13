@@ -68,12 +68,23 @@ VITE_API_BASE_URL=https://billing-backend.serins.in/api
 ```
 
 ### 4. Run Development Server
-```bash
-# Standard command (requires Node.js 20+)
-npm run dev
 
-# Alternative: Use local config if you encounter issues
-npm run dev:local
+**If you get "tsx: command not found" error, use these commands instead:**
+
+```bash
+# For macOS/Linux
+NODE_ENV=development npx tsx server/index.ts
+
+# For Windows
+set NODE_ENV=development && npx tsx server/index.ts
+
+# Or simply (will work on all systems)
+npx tsx server/index.ts
+```
+
+**Original npm script (if tsx is globally installed):**
+```bash
+npm run dev
 ```
 
 ### 5. Access the Application
@@ -101,30 +112,36 @@ BillingDashboard/
 
 ## Common Local Development Issues
 
-### 1. Port Already in Use
+### 1. "tsx: command not found" Error
+Use npx to run the locally installed tsx:
+```bash
+NODE_ENV=development npx tsx server/index.ts
+```
+
+### 2. Port Already in Use
 If port 5000 is occupied:
 ```bash
 # Kill process using port 5000
-npx kill-port 5000
+lsof -ti:5000 | xargs kill -9
 
 # Or run on different port
-PORT=3000 npm run dev
+PORT=3000 npx tsx server/index.ts
 ```
 
-### 2. Module Resolution Errors
+### 3. Module Resolution Errors
 Clear node_modules and reinstall:
 ```bash
 rm -rf node_modules package-lock.json
 npm install
 ```
 
-### 3. TypeScript Errors
+### 4. TypeScript Errors
 Run type checking:
 ```bash
-npm run check
+npx tsc --noEmit
 ```
 
-### 4. API Connection Issues
+### 5. API Connection Issues
 Ensure your `.env` file contains the correct API URL and you have internet connectivity.
 
 ## Features Available Locally
