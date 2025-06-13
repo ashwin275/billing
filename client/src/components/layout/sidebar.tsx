@@ -174,7 +174,7 @@ export default function Sidebar({ activeSection, onSectionChange }: SidebarProps
   };
 
   return (
-    <aside className="w-64 bg-white shadow-sm border-r border-slate-200 min-h-screen">
+    <aside className="w-full lg:w-64 bg-white shadow-sm border-r border-slate-200 lg:min-h-screen">
       <nav className="p-4 space-y-6">
         {Object.entries(groupedNavItems).map(([category, items]) =>
           renderCategory(category, items)

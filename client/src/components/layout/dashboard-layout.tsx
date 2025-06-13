@@ -8,13 +8,13 @@ interface DashboardLayoutProps {
 
 /**
  * DashboardLayout component provides the common layout structure for dashboard pages
- * Includes header and main content area
+ * Includes header and main content area with responsive design
  */
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="min-h-screen bg-slate-50">
       <Header />
-      <div className="flex">
+      <div className="flex flex-col lg:flex-row">
         {children}
       </div>
     </div>

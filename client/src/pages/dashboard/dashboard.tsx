@@ -20,6 +20,8 @@ import { Badge } from "@/components/ui/badge";
 
 import DashboardLayout from "@/components/layout/dashboard-layout";
 import Sidebar from "@/components/layout/sidebar";
+import UsersManagement from "@/components/dashboard/users-management";
+import ProductsManagement from "@/components/dashboard/products-management";
 
 // Mock data for dashboard stats - in real app this would come from API
 const dashboardStats = {
@@ -314,24 +316,10 @@ export default function Dashboard() {
         return <DashboardOverview />;
       
       case "products":
-        return (
-          <ContentPanel
-            title="Products Management"
-            description="Products management interface will be implemented here."
-            buttonText="Add Product"
-            buttonIcon={Plus}
-          />
-        );
+        return <ProductsManagement />;
       
       case "add-users":
-        return (
-          <ContentPanel
-            title="User Management"
-            description="User management interface will be implemented here."
-            buttonText="Add New User"
-            buttonIcon={UserPlus}
-          />
-        );
+        return <UsersManagement />;
       
       case "invoice":
         return (
@@ -384,7 +372,7 @@ export default function Dashboard() {
         activeSection={activeSection} 
         onSectionChange={setActiveSection} 
       />
-      <main className="flex-1 p-6">
+      <main className="flex-1 p-4 lg:p-6">
         {renderContent()}
       </main>
     </DashboardLayout>
