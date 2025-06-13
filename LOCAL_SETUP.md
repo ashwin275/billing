@@ -69,22 +69,29 @@ VITE_API_BASE_URL=https://billing-backend.serins.in/api
 
 ### 4. Run Development Server
 
-**If you get "tsx: command not found" error, use these commands instead:**
+You have three options for local development:
 
+#### Option 1: Frontend-Only Development (Recommended for Local)
+```bash
+# Run only the React frontend
+node dev-frontend-only.js
+```
+This opens the app at `http://localhost:5173` with hot reload.
+
+#### Option 2: Simple Local Server
+```bash
+# Run with simplified server setup
+node server-local.js
+```
+This runs the full app at `http://localhost:5000`.
+
+#### Option 3: Original Command (if Node.js 20+)
 ```bash
 # For macOS/Linux
 NODE_ENV=development npx tsx server/index.ts
 
 # For Windows
 set NODE_ENV=development && npx tsx server/index.ts
-
-# Or simply (will work on all systems)
-npx tsx server/index.ts
-```
-
-**Original npm script (if tsx is globally installed):**
-```bash
-npm run dev
 ```
 
 ### 5. Access the Application
