@@ -60,22 +60,6 @@
 }
 
 /* Custom styles for the billing dashboard */
-.dashboard-card {
-  @apply bg-white p-6 rounded-xl border border-slate-200 shadow-sm;
-}
-
-.nav-item {
-  @apply flex items-center space-x-3 text-slate-700 p-2 rounded-lg hover:bg-slate-50 transition-colors duration-200;
-}
-
-.nav-item.active {
-  @apply bg-primary-50 text-primary-700;
-}
-
-.stat-card {
-  @apply bg-white p-6 rounded-xl border border-slate-200 shadow-sm;
-}
-
-.stat-icon {
-  @apply h-12 w-12 rounded-lg flex items-center justify-center;
+.billing-gradient {
+  background: linear-gradient(135deg, hsl(217, 91%, 60%) 0%, hsl(217, 91%, 50%) 100%);
 }
