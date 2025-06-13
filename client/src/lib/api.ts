@@ -1,0 +1,115 @@
+// API service for backend communication with the billing system
+
+import { getAuthToken } from "./auth";
+import { SignUpData, SignInData, AuthResponse, Country, ApiError } from "@/types/auth";
+
+// Get base URL from environment variable with fallback
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://billing-backend.serins.in/api";
+
+/**
+ * Generic API request function with error handling
+ */
+async function apiRequest<T>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const url = `${API_BASE_URL}${endpoint}`;
+  
+  const config: RequestInit = {
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+    ...options,
+  };
+
+  // Add authentication token if available
+  const token = getAuthToken();
+  if (token) {
+    config.headers = {
+      ...config.headers,
+      Authorization: `Bearer ${token}`,
+    };
+  }
+
+  try {
+    const response = await fetch(url, config);
+    
+    if (!response.ok) {
+      const errorData: ApiError = await response.json();
+      throw new Error(errorData.title || errorData.detail || `HTTP ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error(`API Error for ${endpoint}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Authentication API endpoints
+ */
+export const authApi = {
+  /**
+   * Sign up a new user
+   */
+  async signUp(userData: Omit<SignUpData, 'roleId'>): Promise<void> {
+    // Add hardcoded roleId as specified in requirements
+    const signUpData: SignUpData = {
+      ...userData,
+      roleId: 4,
+    };
+
+    return apiRequest("/auth/signup", {
+      method: "POST",
+      body: JSON.stringify(signUpData),
+    });
+  },
+
+  /**
+   * Sign in existing user
+   */
+  async signIn(credentials: SignInData): Promise<AuthResponse> {
+    return apiRequest("/auth/signin", {
+      method: "POST",
+      body: JSON.stringify(credentials),
+    });
+  },
+
+  /**
+   * Get list of all countries for signup form
+   */
+  async getCountries(): Promise<Country[]> {
+    return apiRequest("/country/all");
+  },
+};
+
+/**
+ * Dashboard API endpoints (to be implemented as needed)
+ */
+export const dashboardApi = {
+  /**
+   * Get dashboard statistics
+   */
+  async getStats(): Promise<any> {
+    return apiRequest("/dashboard/stats");
+  },
+
+  /**
+   * Get recent invoices
+   */
+  async getRecentInvoices(): Promise<any[]> {
+    return apiRequest("/invoices/recent");
+  },
+};
+
+/**
+ * Generic API error handler
+ */
+export function handleApiError(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return "An unexpected error occurred";
+}
