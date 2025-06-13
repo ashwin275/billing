@@ -8,6 +8,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 // Page components
 import SignIn from "@/pages/auth/signin";
 import SignUp from "@/pages/auth/signup";
+import ForgotPassword from "@/pages/auth/forgot-password";
 import Dashboard from "@/pages/dashboard/dashboard";
 import ProtectedRoute from "@/components/auth/protected-route";
 import NotFound from "@/pages/not-found";
@@ -30,6 +31,7 @@ function Router() {
       {/* Public authentication routes */}
       <Route path="/signin" component={SignIn} />
       <Route path="/signup" component={SignUp} />
+      <Route path="/forgot-password" component={ForgotPassword} />
 
       {/* Protected dashboard routes */}
       <Route path="/dashboard">
