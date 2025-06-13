@@ -1,0 +1,76 @@
+[
+    {
+        "userId": 1,
+        "fullName": "Admin",
+        "place": "Punalur",
+        "countryId": null,
+        "country": null,
+        "phone": "8891440433",
+        "email": "admin@gmail.com",
+        "password": null,
+        "referredBy": null,
+        "referredUsers": null,
+        "shop": null,
+        "roles": [
+            {
+                "roleId": 4,
+                "roleName": "ROLE_ADMIN",
+                "description": "Administrator with full access",
+                "createdAt": "2025-06-05T07:46:34.745+00:00",
+                "updatedAt": "2025-06-05T07:46:34.745+00:00"
+            }
+        ],
+        "roleId": null,
+        "status": "ACTIVE",
+        "referredByUserId": null
+    },
+    {
+        "userId": 2,
+        "fullName": "Ashwin",
+        "place": "Kannur",
+        "countryId": null,
+        "country": null,
+        "phone": "9645640108",
+        "email": "ashwinraj275@gmail.com",
+        "password": null,
+        "referredBy": null,
+        "referredUsers": null,
+        "shop": null,
+        "roles": [
+            {
+                "roleId": 4,
+                "roleName": "ROLE_ADMIN",
+                "description": "Administrator with full access",
+                "createdAt": "2025-06-05T07:46:34.745+00:00",
+                "updatedAt": "2025-06-05T07:46:34.745+00:00"
+            }
+        ],
+        "roleId": null,
+        "status": "ACTIVE",
+        "referredByUserId": null
+    },
+    {
+        "userId": 7,
+        "fullName": "Ashwin raj ck",
+        "place": "kannur",
+        "countryId": null,
+        "country": null,
+        "phone": "9645640103",
+        "email": "ashwinraj275+1@gmail.com",
+        "password": null,
+        "referredBy": null,
+        "referredUsers": null,
+        "shop": null,
+        "roles": [
+            {
+                "roleId": 4,
+                "roleName": "ROLE_ADMIN",
+                "description": "Administrator with full access",
+                "createdAt": "2025-06-05T07:46:34.745+00:00",
+                "updatedAt": "2025-06-05T07:46:34.745+00:00"
+            }
+        ],
+        "roleId": null,
+        "status": "ACTIVE",
+        "referredByUserId": null
+    },

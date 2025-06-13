@@ -86,7 +86,69 @@ export const authApi = {
 };
 
 /**
- * Dashboard API endpoints (to be implemented as needed)
+ * Users management API endpoints
+ */
+export const usersApi = {
+  /**
+   * Get all users
+   */
+  async getAllUsers(): Promise<import("@/types/api").User[]> {
+    return apiRequest("/users/all");
+  },
+
+  /**
+   * Delete user by ID
+   */
+  async deleteUser(userId: number): Promise<void> {
+    return apiRequest(`/users/delete/${userId}`, {
+      method: "DELETE",
+    });
+  },
+};
+
+/**
+ * Products management API endpoints
+ */
+export const productsApi = {
+  /**
+   * Get all products
+   */
+  async getAllProducts(): Promise<import("@/types/api").Product[]> {
+    return apiRequest("/products/all");
+  },
+
+  /**
+   * Add multiple products
+   */
+  async addProducts(products: import("@/types/api").ProductInput[]): Promise<void> {
+    return apiRequest("/products/add", {
+      method: "POST",
+      body: JSON.stringify(products),
+    });
+  },
+
+  /**
+   * Update product by ID
+   */
+  async updateProduct(productId: number, product: Partial<import("@/types/api").Product>): Promise<void> {
+    return apiRequest(`/products/update/${productId}`, {
+      method: "PUT",
+      body: JSON.stringify(product),
+    });
+  },
+
+  /**
+   * Delete product by ID
+   */
+  async deleteProduct(productId: number): Promise<void> {
+    return apiRequest(`/products/delete/${productId}`, {
+      method: "DELETE",
+    });
+  },
+};
+
+/**
+ * Dashboard API endpoints
  */
 export const dashboardApi = {
   /**

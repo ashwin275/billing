@@ -16,17 +16,83 @@ export interface Invoice {
   date: string;
 }
 
-export interface Product {
-  id: string;
-  name: string;
-  price: number;
-  stock: number;
-  category: string;
+export interface Role {
+  roleId: number;
+  roleName: string;
+  description: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface User {
+  userId: number;
+  fullName: string;
+  place: string;
+  countryId: number | null;
+  country: string | null;
+  phone: string;
+  email: string;
+  password: string | null;
+  referredBy: string | null;
+  referredUsers: string | null;
+  shop: any | null;
+  roles: Role[];
+  roleId: number | null;
+  status: 'ACTIVE' | 'INACTIVE';
+  referredByUserId: number | null;
 }
 
 export interface Shop {
-  id: string;
+  shopId: number;
   name: string;
-  location: string;
-  status: 'active' | 'inactive';
+  place: string;
+  status: 'CREATED' | 'ACTIVE' | 'INACTIVE';
+  map: string;
+  ownerId: number | null;
+  subscriptionPlanId: number | null;
+  owner: User | null;
+  subscriptionPlan: any | null;
+  shopSubscription: any | null;
+}
+
+export interface Product {
+  productId: number;
+  productNumber: string;
+  hsn: number | string;
+  name: string;
+  description: string;
+  quantity: number;
+  ourPrice: number;
+  wholesaleRate: number;
+  retailRate: number;
+  taxRate: number;
+  category: string;
+  imageUrl: string;
+  expiry: string;
+  barcode: string;
+  shopId: number | null;
+  shop: Shop | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+  cgst: number;
+  sgst: number;
+}
+
+export interface ProductInput {
+  name: string;
+  productNumber: string;
+  hsn: string;
+  description: string;
+  quantity: number;
+  ourPrice: number;
+  wholesaleRate: number;
+  retailRate: number;
+  taxRate: number;
+  cgst: number;
+  sgst: number;
+  category: string;
+  imageUrl: string;
+  expiry: string;
+  barcode: string;
+  shopId: number;
 }

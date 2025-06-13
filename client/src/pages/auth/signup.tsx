@@ -25,6 +25,10 @@ const signUpSchema = z.object({
   age: z.number().min(18, "You must be at least 18 years old").max(120, "Age must be less than 120"),
   countryId: z.number().min(1, "Please select a country"),
   password: z.string().min(8, "Password must be at least 8 characters"),
+  confirmPassword: z.string().min(1, "Please confirm your password"),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
 });
 
 type SignUpFormData = z.infer<typeof signUpSchema>;
@@ -51,6 +55,7 @@ export default function SignUp() {
       age: 18,
       countryId: 0,
       password: "",
+      confirmPassword: "",
     },
   });
 
@@ -326,12 +331,44 @@ export default function SignUp() {
                     )}
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Password must be at least 8 characters long
-                </p>
                 {form.formState.errors.password && (
                   <p className="text-sm text-destructive">
                     {form.formState.errors.password.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Confirm Password Input */}
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Confirm your password"
+                    {...form.register("confirmPassword")}
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Password must be at least 8 characters long
+                </p>
+                {form.formState.errors.confirmPassword && (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.confirmPassword.message}
                   </p>
                 )}
               </div>

@@ -28,10 +28,16 @@ function Router() {
         {isAuthenticated() ? <Redirect to="/dashboard" /> : <Redirect to="/signin" />}
       </Route>
 
-      {/* Public authentication routes */}
-      <Route path="/signin" component={SignIn} />
-      <Route path="/signup" component={SignUp} />
-      <Route path="/forgot-password" component={ForgotPassword} />
+      {/* Public authentication routes - redirect to dashboard if already authenticated */}
+      <Route path="/signin">
+        {isAuthenticated() ? <Redirect to="/dashboard" /> : <SignIn />}
+      </Route>
+      <Route path="/signup">
+        {isAuthenticated() ? <Redirect to="/dashboard" /> : <SignUp />}
+      </Route>
+      <Route path="/forgot-password">
+        {isAuthenticated() ? <Redirect to="/dashboard" /> : <ForgotPassword />}
+      </Route>
 
       {/* Protected dashboard routes */}
       <Route path="/dashboard">
