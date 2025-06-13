@@ -6,8 +6,13 @@ import { dirname, resolve } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Start Vite dev server for the frontend
-const viteProcess = spawn('npx', ['vite', '--port', '5000', '--host', '0.0.0.0'], {
+// Start Vite dev server for the frontend with allowed hosts
+const viteProcess = spawn('npx', [
+  'vite', 
+  '--port', '5000', 
+  '--host', '0.0.0.0',
+  '--config', 'vite.config.frontend.ts'
+], {
   cwd: resolve(__dirname, '..'),
   stdio: 'inherit'
 });
