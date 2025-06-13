@@ -10,7 +10,8 @@ import {
   BarChart3,
   Box,
   UserPlus,
-  Save
+  Save,
+  Menu
 } from "lucide-react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -304,7 +305,7 @@ function ContentPanel({
 /**
  * Main Dashboard component with navigation and content switching
  */
-export default function Dashboard() {
+function Dashboard() {
   const [activeSection, setActiveSection] = useState("dashboard");
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
@@ -369,10 +370,25 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
+      {/* Mobile Menu Button - Always visible on mobile */}
+      <div className="lg:hidden bg-white border-b border-slate-200 p-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setIsMobileOpen(!isMobileOpen)}
+          className="w-full justify-start"
+        >
+          <Menu className="h-4 w-4 mr-2" />
+          Menu
+        </Button>
+      </div>
+
       <div className="flex w-full">
         <Sidebar 
           activeSection={activeSection} 
-          onSectionChange={setActiveSection} 
+          onSectionChange={setActiveSection}
+          isMobileOpen={isMobileOpen}
+          setIsMobileOpen={setIsMobileOpen}
         />
         <main className="flex-1 p-4 lg:p-6">
           {renderContent()}
@@ -381,3 +397,5 @@ export default function Dashboard() {
     </DashboardLayout>
   );
 }
+
+export default Dashboard;
