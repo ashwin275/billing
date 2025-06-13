@@ -18,6 +18,8 @@ import { Button } from "@/components/ui/button";
 interface SidebarProps {
   activeSection: string;
   onSectionChange: (section: string) => void;
+  isMobileOpen: boolean;
+  setIsMobileOpen: (open: boolean) => void;
 }
 
 interface NavItem {
@@ -91,10 +93,9 @@ const groupedNavItems = navigationItems.reduce((acc, item) => {
  * Sidebar component for dashboard navigation
  * Organizes navigation items by category and handles active state with collapsible functionality
  */
-export default function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
+export default function Sidebar({ activeSection, onSectionChange, isMobileOpen, setIsMobileOpen }: SidebarProps) {
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   /**
    * Toggle category collapse state
@@ -191,19 +192,6 @@ export default function Sidebar({ activeSection, onSectionChange }: SidebarProps
 
   return (
     <>
-      {/* Mobile Menu Button */}
-      <div className="lg:hidden bg-white border-b border-slate-200 p-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setIsMobileOpen(!isMobileOpen)}
-          className="w-full justify-start"
-        >
-          <Menu className="h-4 w-4 mr-2" />
-          Menu
-        </Button>
-      </div>
-
       {/* Mobile Overlay */}
       {isMobileOpen && (
         <div 
@@ -216,12 +204,12 @@ export default function Sidebar({ activeSection, onSectionChange }: SidebarProps
       <aside className={cn(
         "bg-white shadow-sm border-r border-slate-200 transition-all duration-300 flex-shrink-0",
         // Desktop behavior
-        "hidden lg:flex lg:flex-col",
+        "lg:flex lg:flex-col lg:min-h-screen",
         isCollapsed ? "lg:w-16" : "lg:w-64",
-        // Mobile behavior
-        "lg:min-h-screen",
-        // Mobile sliding sidebar
-        isMobileOpen && "fixed inset-y-0 left-0 z-50 w-64 lg:relative lg:inset-auto lg:z-auto"
+        // Mobile behavior - show when mobile menu is open, hide when closed
+        isMobileOpen 
+          ? "flex flex-col fixed inset-y-0 left-0 z-50 w-64" 
+          : "hidden lg:flex"
       )}>
         {/* Desktop Toggle Button */}
         <div className="hidden lg:flex justify-end p-2 border-b border-slate-100">

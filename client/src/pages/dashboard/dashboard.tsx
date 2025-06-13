@@ -306,6 +306,7 @@ function ContentPanel({
  */
 export default function Dashboard() {
   const [activeSection, setActiveSection] = useState("dashboard");
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   /**
    * Render content based on active section
@@ -368,13 +369,15 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
-      <Sidebar 
-        activeSection={activeSection} 
-        onSectionChange={setActiveSection} 
-      />
-      <main className="flex-1 p-4 lg:p-6">
-        {renderContent()}
-      </main>
+      <div className="flex w-full">
+        <Sidebar 
+          activeSection={activeSection} 
+          onSectionChange={setActiveSection} 
+        />
+        <main className="flex-1 p-4 lg:p-6">
+          {renderContent()}
+        </main>
+      </div>
     </DashboardLayout>
   );
 }
