@@ -11,7 +11,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 
 import { authApi, handleApiError } from "@/lib/api";
@@ -26,7 +25,6 @@ const signUpSchema = z.object({
   age: z.number().min(18, "You must be at least 18 years old").max(120, "Age must be less than 120"),
   countryId: z.number().min(1, "Please select a country"),
   password: z.string().min(8, "Password must be at least 8 characters"),
-  terms: z.boolean().refine(val => val === true, "You must agree to the terms and conditions"),
 });
 
 type SignUpFormData = z.infer<typeof signUpSchema>;
@@ -53,7 +51,6 @@ export default function SignUp() {
       age: 18,
       countryId: 0,
       password: "",
-      terms: false,
     },
   });
 
@@ -121,237 +118,256 @@ export default function SignUp() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          {/* Logo/Brand Section */}
-          <div className="mx-auto h-12 w-12 bg-primary rounded-xl flex items-center justify-center mb-4">
-            <Receipt className="h-6 w-6 text-primary-foreground" />
+    <div className="min-h-screen flex">
+      {/* Left side - Design/Branding */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary via-primary-600 to-primary-700 relative overflow-hidden">
+        <div className="absolute inset-0 bg-black/20"></div>
+        <div className="relative z-10 flex flex-col justify-center px-12 text-white">
+          <div className="mb-8">
+            <div className="h-16 w-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-6">
+              <Receipt className="h-8 w-8 text-white" />
+            </div>
+            <h1 className="text-4xl font-bold mb-4">Join Our Platform</h1>
+            <p className="text-xl text-white/90 leading-relaxed">
+              Create your account and start managing your billing operations efficiently with our powerful tools.
+            </p>
           </div>
           
-          <CardTitle className="text-2xl font-bold">Create your account</CardTitle>
-          <CardDescription>Start managing your billing today</CardDescription>
-        </CardHeader>
-
-        <CardContent>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* Full Name Input */}
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
-              <div className="relative">
-                <Input
-                  id="fullName"
-                  placeholder="Enter your full name"
-                  {...form.register("fullName")}
-                  className="pr-10"
-                />
-                <User className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              </div>
-              {form.formState.errors.fullName && (
-                <p className="text-sm text-destructive">
-                  {form.formState.errors.fullName.message}
-                </p>
-              )}
+          <div className="space-y-4">
+            <div className="flex items-center space-x-3">
+              <div className="h-2 w-2 bg-white rounded-full"></div>
+              <span className="text-white/90">Quick account setup</span>
             </div>
-
-            {/* Email Input */}
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
-              <div className="relative">
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Enter your email address"
-                  {...form.register("email")}
-                  className="pr-10"
-                />
-                <Mail className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              </div>
-              {form.formState.errors.email && (
-                <p className="text-sm text-destructive">
-                  {form.formState.errors.email.message}
-                </p>
-              )}
+            <div className="flex items-center space-x-3">
+              <div className="h-2 w-2 bg-white rounded-full"></div>
+              <span className="text-white/90">Secure data protection</span>
             </div>
+            <div className="flex items-center space-x-3">
+              <div className="h-2 w-2 bg-white rounded-full"></div>
+              <span className="text-white/90">24/7 customer support</span>
+            </div>
+          </div>
+        </div>
+        
+        {/* Decorative elements */}
+        <div className="absolute top-20 right-20 h-32 w-32 bg-white/10 rounded-full blur-xl"></div>
+        <div className="absolute bottom-20 left-20 h-24 w-24 bg-white/10 rounded-full blur-xl"></div>
+      </div>
 
-            {/* Phone and Country Row */}
-            <div className="grid grid-cols-2 gap-4">
-              {/* Country Dropdown */}
-              <div className="space-y-2">
-                <Label htmlFor="countryId">Country</Label>
-                <Select
-                  value={form.watch("countryId")?.toString() || ""}
-                  onValueChange={(value) => form.setValue("countryId", parseInt(value))}
-                  disabled={loadingCountries}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={loadingCountries ? "Loading..." : "Select Country"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {countries.map((country) => (
-                      <SelectItem key={country.countryId} value={country.countryId.toString()}>
-                        {country.country} ({country.countryCode})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {form.formState.errors.countryId && (
-                  <p className="text-sm text-destructive">
-                    {form.formState.errors.countryId.message}
-                  </p>
-                )}
-              </div>
+      {/* Right side - Sign up form */}
+      <div className="flex-1 flex items-center justify-center p-8 bg-slate-50">
+        <Card className="w-full max-w-md shadow-xl border-0">
+          <CardHeader className="text-center pb-8">
+            {/* Logo for mobile */}
+            <div className="lg:hidden mx-auto h-12 w-12 bg-primary rounded-xl flex items-center justify-center mb-4">
+              <Receipt className="h-6 w-6 text-primary-foreground" />
+            </div>
+            
+            <CardTitle className="text-2xl font-bold text-slate-900">Create your account</CardTitle>
+            <CardDescription className="text-slate-600">Start managing your billing today</CardDescription>
+          </CardHeader>
 
-              {/* Phone Input */}
+          <CardContent>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              {/* Full Name Input */}
               <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
+                <Label htmlFor="fullName">Full Name</Label>
                 <div className="relative">
                   <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="Phone number"
-                    {...form.register("phone")}
+                    id="fullName"
+                    placeholder="Enter your full name"
+                    {...form.register("fullName")}
                     className="pr-10"
                   />
-                  <Phone className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <User className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 </div>
-                {form.formState.errors.phone && (
+                {form.formState.errors.fullName && (
                   <p className="text-sm text-destructive">
-                    {form.formState.errors.phone.message}
+                    {form.formState.errors.fullName.message}
                   </p>
                 )}
               </div>
-            </div>
 
-            {/* Place and Age Row */}
-            <div className="grid grid-cols-2 gap-4">
-              {/* Place Input */}
+              {/* Email Input */}
               <div className="space-y-2">
-                <Label htmlFor="place">Place</Label>
+                <Label htmlFor="email">Email Address</Label>
                 <div className="relative">
                   <Input
-                    id="place"
-                    placeholder="Your place"
-                    {...form.register("place")}
+                    id="email"
+                    type="email"
+                    placeholder="Enter your email address"
+                    {...form.register("email")}
                     className="pr-10"
                   />
-                  <MapPin className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Mail className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 </div>
-                {form.formState.errors.place && (
+                {form.formState.errors.email && (
                   <p className="text-sm text-destructive">
-                    {form.formState.errors.place.message}
+                    {form.formState.errors.email.message}
                   </p>
                 )}
               </div>
 
-              {/* Age Input */}
-              <div className="space-y-2">
-                <Label htmlFor="age">Age</Label>
-                <div className="relative">
-                  <Input
-                    id="age"
-                    type="number"
-                    min="18"
-                    max="120"
-                    placeholder="Age"
-                    {...form.register("age", { valueAsNumber: true })}
-                    className="pr-10"
-                  />
-                  <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                </div>
-                {form.formState.errors.age && (
-                  <p className="text-sm text-destructive">
-                    {form.formState.errors.age.message}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Password Input */}
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Create a password"
-                  {...form.register("password")}
-                  className="pr-10"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-muted-foreground" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-muted-foreground" />
+              {/* Phone and Country Row */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* Country Dropdown */}
+                <div className="space-y-2">
+                  <Label htmlFor="countryId">Country</Label>
+                  <Select
+                    value={form.watch("countryId")?.toString() || ""}
+                    onValueChange={(value) => form.setValue("countryId", parseInt(value))}
+                    disabled={loadingCountries}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={loadingCountries ? "Loading..." : "Select Country"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {countries.map((country) => (
+                        <SelectItem key={country.countryId} value={country.countryId.toString()}>
+                          {country.country} ({country.countryCode})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {form.formState.errors.countryId && (
+                    <p className="text-sm text-destructive">
+                      {form.formState.errors.countryId.message}
+                    </p>
                   )}
-                </Button>
+                </div>
+
+                {/* Phone Input */}
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <div className="relative">
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="Phone number"
+                      {...form.register("phone")}
+                      className="pr-10"
+                    />
+                    <Phone className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  </div>
+                  {form.formState.errors.phone && (
+                    <p className="text-sm text-destructive">
+                      {form.formState.errors.phone.message}
+                    </p>
+                  )}
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Password must be at least 8 characters long
-              </p>
-              {form.formState.errors.password && (
-                <p className="text-sm text-destructive">
-                  {form.formState.errors.password.message}
+
+              {/* Place and Age Row */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* Place Input */}
+                <div className="space-y-2">
+                  <Label htmlFor="place">Place</Label>
+                  <div className="relative">
+                    <Input
+                      id="place"
+                      placeholder="Your place"
+                      {...form.register("place")}
+                      className="pr-10"
+                    />
+                    <MapPin className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  </div>
+                  {form.formState.errors.place && (
+                    <p className="text-sm text-destructive">
+                      {form.formState.errors.place.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Age Input */}
+                <div className="space-y-2">
+                  <Label htmlFor="age">Age</Label>
+                  <div className="relative">
+                    <Input
+                      id="age"
+                      type="number"
+                      min="18"
+                      max="120"
+                      placeholder="Age"
+                      {...form.register("age", { valueAsNumber: true })}
+                      className="pr-10"
+                    />
+                    <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  </div>
+                  {form.formState.errors.age && (
+                    <p className="text-sm text-destructive">
+                      {form.formState.errors.age.message}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Password Input */}
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Create a password"
+                    {...form.register("password")}
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Password must be at least 8 characters long
                 </p>
-              )}
-            </div>
+                {form.formState.errors.password && (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.password.message}
+                  </p>
+                )}
+              </div>
 
-            {/* Terms and Conditions */}
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="terms" 
-                {...form.register("terms")}
-              />
-              <Label htmlFor="terms" className="text-sm font-normal">
-                I agree to the{" "}
-                <Link href="#" className="text-primary hover:underline">
-                  Terms and Conditions
-                </Link>
-              </Label>
-            </div>
-            {form.formState.errors.terms && (
-              <p className="text-sm text-destructive">
-                {form.formState.errors.terms.message}
-              </p>
-            )}
+              {/* Submit Button */}
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={isLoading || loadingCountries}
+              >
+                {isLoading ? (
+                  <>
+                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
+                    Creating Account...
+                  </>
+                ) : (
+                  <>
+                    <User className="mr-2 h-4 w-4" />
+                    Create Account
+                  </>
+                )}
+              </Button>
 
-            {/* Submit Button */}
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={isLoading || loadingCountries}
-            >
-              {isLoading ? (
-                <>
-                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
-                  Creating Account...
-                </>
-              ) : (
-                <>
-                  <User className="mr-2 h-4 w-4" />
-                  Create Account
-                </>
-              )}
-            </Button>
-
-            {/* Sign In Link */}
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground">
-                Already have an account?{" "}
-                <Link href="/signin" className="font-medium text-primary hover:underline">
-                  Sign in here
-                </Link>
-              </p>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+              {/* Sign In Link */}
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">
+                  Already have an account?{" "}
+                  <Link href="/signin" className="font-medium text-primary hover:underline">
+                    Sign in here
+                  </Link>
+                </p>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
