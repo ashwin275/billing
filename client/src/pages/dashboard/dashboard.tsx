@@ -43,7 +43,7 @@ const recentInvoices = [
 /**
  * Dashboard overview component showing stats and recent activity
  */
-function DashboardOverview() {
+function DashboardOverview({ onNavigate }: { onNavigate: (section: string) => void }) {
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -229,7 +229,11 @@ function DashboardOverview() {
               </div>
             </Button>
 
-            <Button variant="outline" className="h-auto p-4 justify-start">
+            <Button 
+              variant="outline" 
+              className="h-auto p-4 justify-start"
+              onClick={() => onNavigate("products")}
+            >
               <div className="flex items-center space-x-3">
                 <div className="h-10 w-10 bg-emerald-100 rounded-lg flex items-center justify-center">
                   <Box className="h-5 w-5 text-emerald-600" />
@@ -241,7 +245,11 @@ function DashboardOverview() {
               </div>
             </Button>
 
-            <Button variant="outline" className="h-auto p-4 justify-start">
+            <Button 
+              variant="outline" 
+              className="h-auto p-4 justify-start"
+              onClick={() => onNavigate("add-users")}
+            >
               <div className="flex items-center space-x-3">
                 <div className="h-10 w-10 bg-violet-100 rounded-lg flex items-center justify-center">
                   <UserPlus className="h-5 w-5 text-violet-600" />
@@ -253,7 +261,27 @@ function DashboardOverview() {
               </div>
             </Button>
 
-            <Button variant="outline" className="h-auto p-4 justify-start">
+            <Button 
+              variant="outline" 
+              className="h-auto p-4 justify-start"
+              onClick={() => onNavigate("shops")}
+            >
+              <div className="flex items-center space-x-3">
+                <div className="h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <Store className="h-5 w-5 text-blue-600" />
+                </div>
+                <div className="text-left">
+                  <p className="font-medium text-slate-900">Manage Shops</p>
+                  <p className="text-sm text-slate-500">Shop operations</p>
+                </div>
+              </div>
+            </Button>
+
+            <Button 
+              variant="outline" 
+              className="h-auto p-4 justify-start"
+              onClick={() => onNavigate("report")}
+            >
               <div className="flex items-center space-x-3">
                 <div className="h-10 w-10 bg-orange-100 rounded-lg flex items-center justify-center">
                   <BarChart3 className="h-5 w-5 text-orange-600" />
@@ -335,14 +363,7 @@ function Dashboard() {
         );
       
       case "shops":
-        return (
-          <ContentPanel
-            title="Shop Management"
-            description="Shop management interface will be implemented here."
-            buttonText="Add Shop"
-            buttonIcon={Store}
-          />
-        );
+        return <ShopsManagement />;
       
       case "report":
         return (
@@ -365,7 +386,7 @@ function Dashboard() {
         );
       
       default:
-        return <DashboardOverview />;
+        return <DashboardOverview onNavigate={setActiveSection} />;
     }
   };
 
