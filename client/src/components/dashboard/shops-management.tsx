@@ -404,25 +404,16 @@ export default function ShopsManagement() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Shops Management</h1>
-          <p className="text-slate-600 mt-1">Manage shops and their information</p>
-        </div>
-        <div className="flex items-center space-x-3">
-          <Badge variant="outline" className="text-sm">
-            {totalShops} of {shops?.length || 0} Shops
-          </Badge>
-          <Badge variant="default" className="text-sm bg-green-600">
-            {shops?.filter(shop => shop.status === 'ACTIVE').length || 0} Active
-          </Badge>
-          <Badge variant="secondary" className="text-sm">
-            {shops?.filter(shop => shop.status === 'CREATED').length || 0} Created
-          </Badge>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 truncate">Shops Management</h1>
+            <p className="text-sm sm:text-base text-slate-600 mt-1">Manage shops and their information</p>
+          </div>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="flex items-center space-x-2">
-                <Plus className="h-4 w-4" />
+              <Button className="w-full sm:w-auto">
+                <Plus className="h-4 w-4 mr-2 flex-shrink-0" />
                 <span>Add Shop</span>
               </Button>
             </DialogTrigger>

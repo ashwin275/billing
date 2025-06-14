@@ -731,18 +731,25 @@ export default function ProductsManagement() {
             </DialogContent>
           </Dialog>
         </div>
+        
+        {/* Statistics Badge */}
+        <div className="flex flex-wrap gap-2 sm:gap-3">
+          <Badge variant="outline" className="text-xs sm:text-sm px-2 py-1">
+            {totalProducts} of {products?.length || 0} Total Products
+          </Badge>
+        </div>
       </div>
 
       {/* Products Table */}
       <Card>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <CardTitle className="flex items-center space-x-2">
-              <Package className="h-5 w-5" />
+        <CardHeader className="p-4 sm:p-6">
+          <div className="flex flex-col gap-4">
+            <CardTitle className="flex items-center space-x-2 text-base sm:text-lg">
+              <Package className="h-4 w-4 sm:h-5 sm:w-5" />
               <span>All Products</span>
             </CardTitle>
-            <div className="relative w-full sm:w-80">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search products..."
                 value={searchTerm}
@@ -750,12 +757,12 @@ export default function ProductsManagement() {
                   setSearchTerm(e.target.value);
                   setCurrentPage(1); // Reset to first page when searching
                 }}
-                className="pl-8"
+                className="pl-10 w-full"
               />
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
