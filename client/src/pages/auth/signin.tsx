@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
+
 import { useToast } from "@/hooks/use-toast";
 
 import { authApi, handleApiError } from "@/lib/api";
@@ -21,7 +21,6 @@ import { SignInData } from "@/types/auth";
 const signInSchema = z.object({
   identifier: z.string().email("Please enter a valid email address"),
   password: z.string().min(1, "Password is required"),
-  rememberMe: z.boolean().optional(),
 });
 
 type SignInFormData = z.infer<typeof signInSchema>;
@@ -41,7 +40,6 @@ export default function SignIn() {
     defaultValues: {
       identifier: "",
       password: "",
-      rememberMe: false,
     },
   });
 
@@ -86,8 +84,20 @@ export default function SignIn() {
       // Redirect to dashboard
       setLocation("/dashboard");
       
-    } catch (error) {
-      const errorMessage = handleApiError(error);
+    } catch (error: any) {
+      let errorMessage = "Sign in failed";
+      
+      if (error && typeof error === 'object') {
+        // Handle API error response
+        if (error.detail) {
+          errorMessage = error.detail;
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
       toast({
         title: "Sign in failed",
         description: errorMessage,
@@ -202,17 +212,8 @@ export default function SignIn() {
                 )}
               </div>
 
-              {/* Remember Me & Forgot Password */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="rememberMe" 
-                    {...form.register("rememberMe")}
-                  />
-                  <Label htmlFor="rememberMe" className="text-sm font-normal">
-                    Remember me
-                  </Label>
-                </div>
+              {/* Forgot Password */}
+              <div className="flex justify-end">
                 <Link href="/forgot-password" className="text-sm font-medium text-primary hover:underline">
                   Forgot your password?
                 </Link>

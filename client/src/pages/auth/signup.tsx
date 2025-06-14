@@ -110,8 +110,20 @@ export default function SignUp() {
       // Redirect to sign-in page
       setLocation("/signin");
       
-    } catch (error) {
-      const errorMessage = handleApiError(error);
+    } catch (error: any) {
+      let errorMessage = "Sign up failed";
+      
+      if (error && typeof error === 'object') {
+        // Handle API error response
+        if (error.detail) {
+          errorMessage = error.detail;
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
       toast({
         title: "Sign up failed",
         description: errorMessage,
