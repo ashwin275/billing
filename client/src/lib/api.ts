@@ -36,11 +36,23 @@ async function apiRequest<T>(
     const response = await fetch(url, config);
     
     if (!response.ok) {
-      const errorData: ApiError = await response.json();
-      throw new Error(errorData.title || errorData.detail || `HTTP ${response.status}`);
+      try {
+        const errorData: ApiError = await response.json();
+        throw new Error(errorData.title || errorData.detail || `HTTP ${response.status}`);
+      } catch {
+        throw new Error(`HTTP ${response.status}`);
+      }
     }
 
-    return await response.json();
+    // Handle different response types
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return await response.json();
+    } else {
+      // For text responses like "product deleted successfully"
+      const text = await response.text();
+      return text as unknown as T;
+    }
   } catch (error) {
     console.error(`API Error for ${endpoint}:`, error);
     throw error;
@@ -97,12 +109,34 @@ export const usersApi = {
   },
 
   /**
+   * Add new user
+   */
+  async addUser(userData: import("@/types/auth").SignUpData): Promise<void> {
+    return apiRequest("/users/add", {
+      method: "POST",
+      body: JSON.stringify(userData),
+    });
+  },
+
+  /**
    * Delete user by ID
    */
   async deleteUser(userId: number): Promise<void> {
     return apiRequest(`/users/delete/${userId}`, {
       method: "DELETE",
     });
+  },
+};
+
+/**
+ * Roles management API endpoints
+ */
+export const rolesApi = {
+  /**
+   * Get all roles
+   */
+  async getAllRoles(): Promise<import("@/types/api").Role[]> {
+    return apiRequest("/roles/all");
   },
 };
 

@@ -1,7 +1,13 @@
-// Users management component with delete functionality
+// Users management component with CRUD functionality and pagination
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Trash2, UserCheck, Mail, Phone, MapPin, Shield, AlertTriangle } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { 
+  Trash2, UserCheck, Mail, Phone, MapPin, Shield, AlertTriangle, 
+  Plus, Users, X 
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +20,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -23,20 +37,62 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { useToast } from "@/hooks/use-toast";
 
-import { usersApi, handleApiError } from "@/lib/api";
-import { User } from "@/types/api";
+import { usersApi, rolesApi, authApi, handleApiError } from "@/lib/api";
+import { User, Role } from "@/types/api";
+import { SignUpData } from "@/types/auth";
+
+// Form validation schema for users
+const userSchema = z.object({
+  fullName: z.string().min(2, "Full name must be at least 2 characters"),
+  place: z.string().min(2, "Place must be at least 2 characters"),
+  age: z.number().min(1, "Age must be at least 1").max(120, "Age cannot exceed 120"),
+  countryId: z.number().min(1, "Please select a country"),
+  phone: z.string().min(10, "Phone number must be at least 10 digits"),
+  email: z.string().email("Must be a valid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  roleId: z.number().min(1, "Please select a role"),
+});
+
+type UserFormData = z.infer<typeof userSchema>;
 
 /**
- * UsersManagement component displays all users and handles deletion
- * Fetches users from API and provides delete functionality with confirmation
+ * UsersManagement component displays all users with CRUD operations and pagination
+ * Includes add, delete functionality with forms and confirmation dialogs
  */
 export default function UsersManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   // Fetch all users
   const {
@@ -48,6 +104,55 @@ export default function UsersManagement() {
     queryFn: () => usersApi.getAllUsers(),
   });
 
+  // Fetch roles for dropdown
+  const { data: roles } = useQuery({
+    queryKey: ["/api/roles/all"],
+    queryFn: () => rolesApi.getAllRoles(),
+  });
+
+  // Fetch countries for dropdown
+  const { data: countries } = useQuery({
+    queryKey: ["/api/countries/all"],
+    queryFn: () => authApi.getCountries(),
+  });
+
+  // Form for adding users
+  const addForm = useForm<UserFormData>({
+    resolver: zodResolver(userSchema),
+    defaultValues: {
+      fullName: "",
+      place: "",
+      age: 25,
+      countryId: 0,
+      phone: "",
+      email: "",
+      password: "",
+      roleId: 0,
+    },
+  });
+
+  // Add user mutation
+  const addUserMutation = useMutation({
+    mutationFn: (userData: SignUpData) => usersApi.addUser(userData),
+    onSuccess: () => {
+      toast({
+        title: "User added",
+        description: "User has been successfully added.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/users/all"] });
+      setIsAddDialogOpen(false);
+      addForm.reset();
+    },
+    onError: (error) => {
+      const errorMessage = handleApiError(error);
+      toast({
+        title: "Failed to add user",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Delete user mutation
   const deleteUserMutation = useMutation({
     mutationFn: (userId: number) => usersApi.deleteUser(userId),
@@ -56,7 +161,6 @@ export default function UsersManagement() {
         title: "User deleted",
         description: "User has been successfully deleted.",
       });
-      // Invalidate and refetch users
       queryClient.invalidateQueries({ queryKey: ["/api/users/all"] });
       setUserToDelete(null);
     },
@@ -69,6 +173,23 @@ export default function UsersManagement() {
       });
     },
   });
+
+  /**
+   * Handle add user form submission
+   */
+  const onAddUser = (data: UserFormData) => {
+    const userData: SignUpData = {
+      fullName: data.fullName,
+      place: data.place,
+      age: data.age,
+      countryId: data.countryId,
+      phone: data.phone,
+      email: data.email,
+      password: data.password,
+      roleId: data.roleId,
+    };
+    addUserMutation.mutate(userData);
+  };
 
   /**
    * Handle delete user confirmation
@@ -95,6 +216,13 @@ export default function UsersManagement() {
   const getStatusVariant = (status: string) => {
     return status === "ACTIVE" ? "default" : "secondary";
   };
+
+  // Pagination calculations
+  const totalUsers = users?.length || 0;
+  const totalPages = Math.ceil(totalUsers / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentUsers = users?.slice(startIndex, endIndex) || [];
 
   if (isLoading) {
     return (
