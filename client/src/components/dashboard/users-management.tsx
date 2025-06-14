@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { 
   Trash2, UserCheck, Mail, Phone, MapPin, Shield, AlertTriangle, 
-  Plus, Users, X, Search, ArrowUpDown, ArrowUp, ArrowDown
+  Plus, Users, X, Search, ArrowUpDown, ArrowUp, ArrowDown, Eye, EyeOff
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -77,7 +77,11 @@ const userSchema = z.object({
   phone: z.string().min(10, "Phone number must be at least 10 digits"),
   email: z.string().email("Must be a valid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
+  confirmPassword: z.string().min(6, "Confirm password is required"),
   roleId: z.number().min(1, "Please select a role"),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
 });
 
 type UserFormData = z.infer<typeof userSchema>;
@@ -96,6 +100,8 @@ export default function UsersManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState<keyof User>("fullName");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Fetch all users
   const {
@@ -130,13 +136,29 @@ export default function UsersManagement() {
       phone: "",
       email: "",
       password: "",
+      confirmPassword: "",
       roleId: 0,
     },
   });
 
-  // Add user mutation
+  // Add user mutation using signup endpoint
   const addUserMutation = useMutation({
-    mutationFn: (userData: SignUpData) => usersApi.addUser(userData),
+    mutationFn: async (userData: SignUpData) => {
+      const response = await fetch('/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Failed to add user' }));
+        throw new Error(errorData.message || 'Failed to add user');
+      }
+
+      return response.text();
+    },
     onSuccess: () => {
       toast({
         title: "User added",
@@ -145,12 +167,13 @@ export default function UsersManagement() {
       queryClient.invalidateQueries({ queryKey: ["/api/users/all"] });
       setIsAddDialogOpen(false);
       addForm.reset();
+      setShowPassword(false);
+      setShowConfirmPassword(false);
     },
     onError: (error) => {
-      const errorMessage = handleApiError(error);
       toast({
         title: "Failed to add user",
-        description: errorMessage,
+        description: error instanceof Error ? error.message : "Failed to add user. Please try again.",
         variant: "destructive",
       });
     },
