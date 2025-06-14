@@ -68,14 +68,14 @@ function DashboardOverview({ onNavigate }: { onNavigate: (section: string) => vo
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Dashboard Overview</h1>
-          <p className="text-slate-600 mt-1">Welcome back! Here's what's happening with your billing.</p>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 truncate">Dashboard Overview</h1>
+          <p className="text-sm sm:text-base text-slate-600 mt-1">Welcome back! Here's what's happening with your billing.</p>
         </div>
-        <div className="flex items-center space-x-3">
+        <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2 xs:gap-3 w-full sm:w-auto">
           <Select defaultValue="30">
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-full xs:w-40">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -84,9 +84,9 @@ function DashboardOverview({ onNavigate }: { onNavigate: (section: string) => vo
               <SelectItem value="365">This year</SelectItem>
             </SelectContent>
           </Select>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            New Invoice
+          <Button className="w-full xs:w-auto">
+            <Plus className="mr-2 h-4 w-4 flex-shrink-0" />
+            <span className="truncate">New Invoice</span>
           </Button>
         </div>
       </div>
@@ -425,27 +425,29 @@ function Dashboard() {
   return (
     <DashboardLayout>
       {/* Mobile Menu Button - Always visible on mobile */}
-      <div className="lg:hidden bg-white border-b border-slate-200 p-4">
+      <div className="lg:hidden bg-white border-b border-slate-200 p-3 sm:p-4">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => setIsMobileOpen(!isMobileOpen)}
-          className="w-full justify-start"
+          className="w-full justify-start text-left"
         >
-          <Menu className="h-4 w-4 mr-2" />
-          Menu
+          <Menu className="h-4 w-4 mr-2 flex-shrink-0" />
+          <span className="truncate">Menu</span>
         </Button>
       </div>
 
-      <div className="flex w-full">
+      <div className="flex w-full min-h-0">
         <Sidebar 
           activeSection={activeSection} 
           onSectionChange={setActiveSection}
           isMobileOpen={isMobileOpen}
           setIsMobileOpen={setIsMobileOpen}
         />
-        <main className="flex-1 p-4 lg:p-6">
-          {renderContent()}
+        <main className="flex-1 p-3 sm:p-4 lg:p-6 overflow-x-hidden">
+          <div className="max-w-full">
+            {renderContent()}
+          </div>
         </main>
       </div>
     </DashboardLayout>
