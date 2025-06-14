@@ -6,7 +6,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { 
   Package, Plus, Edit2, Trash2, AlertTriangle, DollarSign, 
-  Calendar, Tag, BarChart3, ShoppingCart, X, Search, ArrowUpDown, ArrowUp, ArrowDown
+  Calendar, Tag, BarChart3, ShoppingCart, X, Search, ArrowUpDown, ArrowUp, ArrowDown,
+  Store, User, MapPin, Info
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -143,8 +149,21 @@ export default function ProductsManagement() {
       setIsAddDialogOpen(false);
       addForm.reset();
     },
-    onError: (error) => {
-      const errorMessage = handleApiError(error);
+    onError: (error: any) => {
+      let errorMessage = "Failed to add product. Please try again.";
+      
+      // Handle the specific error format from backend
+      if (error?.response?.data) {
+        const errorData = error.response.data;
+        errorMessage = errorData.detail || errorData.title || errorMessage;
+      } else if (error?.detail) {
+        errorMessage = error.detail;
+      } else if (error?.title) {
+        errorMessage = error.title;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Failed to add product",
         description: errorMessage,
@@ -166,8 +185,20 @@ export default function ProductsManagement() {
       setIsEditDialogOpen(false);
       setProductToEdit(null);
     },
-    onError: (error) => {
-      const errorMessage = handleApiError(error);
+    onError: (error: any) => {
+      let errorMessage = "Failed to update product. Please try again.";
+      
+      if (error?.response?.data) {
+        const errorData = error.response.data;
+        errorMessage = errorData.detail || errorData.title || errorMessage;
+      } else if (error?.detail) {
+        errorMessage = error.detail;
+      } else if (error?.title) {
+        errorMessage = error.title;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Failed to update product",
         description: errorMessage,
@@ -187,8 +218,20 @@ export default function ProductsManagement() {
       queryClient.invalidateQueries({ queryKey: ["/api/products/all"] });
       setProductToDelete(null);
     },
-    onError: (error) => {
-      const errorMessage = handleApiError(error);
+    onError: (error: any) => {
+      let errorMessage = "Failed to delete product. Please try again.";
+      
+      if (error?.response?.data) {
+        const errorData = error.response.data;
+        errorMessage = errorData.detail || errorData.title || errorMessage;
+      } else if (error?.detail) {
+        errorMessage = error.detail;
+      } else if (error?.title) {
+        errorMessage = error.title;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Failed to delete product",
         description: errorMessage,
@@ -764,7 +807,62 @@ export default function ProductsManagement() {
                     {/* Product Info */}
                     <TableCell>
                       <div className="flex flex-col">
-                        <span className="font-medium text-slate-900">{product.name}</span>
+                        <div className="flex items-center space-x-2">
+                          <span className="font-medium text-slate-900">{product.name}</span>
+                          {product.shop && (
+                            <HoverCard>
+                              <HoverCardTrigger asChild>
+                                <Button variant="ghost" size="sm" className="p-1 h-6 w-6">
+                                  <Store className="h-3 w-3 text-blue-600" />
+                                </Button>
+                              </HoverCardTrigger>
+                              <HoverCardContent className="w-80">
+                                <div className="space-y-3">
+                                  <div className="flex items-center space-x-2">
+                                    <Store className="h-4 w-4 text-blue-600" />
+                                    <h4 className="font-semibold text-slate-900">Shop Details</h4>
+                                  </div>
+                                  
+                                  <div className="space-y-2">
+                                    <div className="flex items-center space-x-2">
+                                      <Badge variant="outline" className="text-xs">
+                                        {product.shop.name}
+                                      </Badge>
+                                      <Badge variant={product.shop.status === 'ACTIVE' ? 'default' : 'secondary'} className="text-xs">
+                                        {product.shop.status}
+                                      </Badge>
+                                    </div>
+                                    
+                                    <div className="flex items-center space-x-2 text-sm text-slate-600">
+                                      <MapPin className="h-3 w-3" />
+                                      <span>{product.shop.place}</span>
+                                    </div>
+                                    
+                                    {product.shop.owner && (
+                                      <div className="flex items-center space-x-2 text-sm text-slate-600">
+                                        <User className="h-3 w-3" />
+                                        <span>{product.shop.owner.fullName}</span>
+                                        <span className="text-xs text-slate-400">({product.shop.owner.place})</span>
+                                      </div>
+                                    )}
+                                    
+                                    {product.shop.owner?.email && (
+                                      <div className="text-xs text-slate-500">
+                                        {product.shop.owner.email}
+                                      </div>
+                                    )}
+                                    
+                                    {product.shop.owner?.phone && (
+                                      <div className="text-xs text-slate-500">
+                                        {product.shop.owner.phone}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </HoverCardContent>
+                            </HoverCard>
+                          )}
+                        </div>
                         <span className="text-sm text-slate-500">{product.productNumber}</span>
                         <span className="text-xs text-slate-400">HSN: {product.hsn}</span>
                         <div className="md:hidden mt-2">
