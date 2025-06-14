@@ -542,8 +542,8 @@ export default function UsersManagement() {
           </div>
 
           {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between px-2 py-4">
+          {totalUsers > 0 && (
+            <div className="flex items-center justify-between px-2 py-4 border-t">
               <div className="text-sm text-slate-700">
                 Showing {startIndex + 1} to {Math.min(endIndex, totalUsers)} of {totalUsers} users
               </div>
