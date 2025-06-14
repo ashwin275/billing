@@ -88,7 +88,7 @@ export default function Header() {
               </DropdownMenuTrigger>
               
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={() => setLocation("/dashboard#profile")}>
+                <DropdownMenuItem onClick={() => window.location.href = "/dashboard#profile"}>
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Profile Settings</span>
                 </DropdownMenuItem>

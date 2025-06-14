@@ -1,5 +1,5 @@
 // Main dashboard page with overview, navigation, and content panels
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   TrendingUp, 
   FileText, 
@@ -344,6 +344,18 @@ function Dashboard() {
     return 'dashboard';
   });
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  // Listen for hash changes to update active section
+  useEffect(() => {
+    const handleHashChange = () => {
+      if (window.location.hash === '#profile') {
+        setActiveSection('profile');
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
 
   /**
    * Render content based on active section
