@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { 
   Package, Plus, Edit2, Trash2, AlertTriangle, DollarSign, 
-  Calendar, Tag, BarChart3, ShoppingCart, X 
+  Calendar, Tag, BarChart3, ShoppingCart, X, Search, Filter, ArrowUpDown, ArrowUp, ArrowDown
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -89,6 +89,10 @@ export default function ProductsManagement() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [sortField, setSortField] = useState<string>("");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   // Fetch all products
   const {
@@ -275,12 +279,63 @@ export default function ProductsManagement() {
     return new Date(dateString).toLocaleDateString('en-IN');
   };
 
-  // Pagination calculations
-  const totalProducts = products?.length || 0;
+  // Filter, sort and paginate products
+  const filteredProducts = products?.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.productNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.description.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesCategory = !categoryFilter || product.category.toLowerCase() === categoryFilter.toLowerCase();
+    
+    return matchesSearch && matchesCategory;
+  }) || [];
+
+  // Sort products
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    if (!sortField) return 0;
+    
+    let aValue: any = a[sortField as keyof Product];
+    let bValue: any = b[sortField as keyof Product];
+    
+    // Handle numeric fields
+    if (typeof aValue === 'number' && typeof bValue === 'number') {
+      return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+    }
+    
+    // Handle string fields
+    if (typeof aValue === 'string' && typeof bValue === 'string') {
+      return sortDirection === 'asc' 
+        ? aValue.localeCompare(bValue)
+        : bValue.localeCompare(aValue);
+    }
+    
+    return 0;
+  });
+
+  const totalProducts = sortedProducts.length;
   const totalPages = Math.ceil(totalProducts / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentProducts = products?.slice(startIndex, endIndex) || [];
+  const currentProducts = sortedProducts.slice(startIndex, endIndex);
+
+  // Get unique categories for filter dropdown
+  const categories = Array.from(new Set(products?.map(p => p.category) || []));
+
+  // Handle sorting
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const getSortIcon = (field: string) => {
+    if (sortField !== field) return <ArrowUpDown className="h-4 w-4" />;
+    return sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />;
+  };
 
   if (isLoading) {
     return (
@@ -326,7 +381,7 @@ export default function ProductsManagement() {
         </div>
         <div className="flex items-center space-x-3">
           <Badge variant="outline" className="text-sm">
-            {products?.length || 0} Products
+            {totalProducts} of {products?.length || 0} Products
           </Badge>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
@@ -623,17 +678,90 @@ export default function ProductsManagement() {
             <Package className="h-5 w-5" />
             <span>All Products</span>
           </CardTitle>
+          {/* Search and Filter Controls */}
+          <div className="flex flex-col sm:flex-row gap-4 mt-4">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
+              <Input
+                placeholder="Search products..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Filter className="h-4 w-4 text-slate-400" />
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All Categories</SelectItem>
+                  {categories.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Product Info</TableHead>
-                  <TableHead className="hidden md:table-cell">Pricing</TableHead>
-                  <TableHead className="hidden lg:table-cell">Stock</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead className="hidden xl:table-cell">Expiry</TableHead>
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('name')}
+                      className="flex items-center space-x-1 p-0 h-auto font-medium"
+                    >
+                      <span>Product Info</span>
+                      {getSortIcon('name')}
+                    </Button>
+                  </TableHead>
+                  <TableHead className="hidden md:table-cell">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('retailRate')}
+                      className="flex items-center space-x-1 p-0 h-auto font-medium"
+                    >
+                      <span>Pricing</span>
+                      {getSortIcon('retailRate')}
+                    </Button>
+                  </TableHead>
+                  <TableHead className="hidden lg:table-cell">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('quantity')}
+                      className="flex items-center space-x-1 p-0 h-auto font-medium"
+                    >
+                      <span>Stock</span>
+                      {getSortIcon('quantity')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('category')}
+                      className="flex items-center space-x-1 p-0 h-auto font-medium"
+                    >
+                      <span>Category</span>
+                      {getSortIcon('category')}
+                    </Button>
+                  </TableHead>
+                  <TableHead className="hidden xl:table-cell">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('expiry')}
+                      className="flex items-center space-x-1 p-0 h-auto font-medium"
+                    >
+                      <span>Expiry</span>
+                      {getSortIcon('expiry')}
+                    </Button>
+                  </TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
