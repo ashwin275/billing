@@ -4,9 +4,18 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { 
-  User, Edit2, Lock, Save, Eye, EyeOff, 
-  Mail, Phone, MapPin, UserCircle, Shield
+import {
+  User,
+  Edit2,
+  Lock,
+  Save,
+  Eye,
+  EyeOff,
+  Mail,
+  Phone,
+  MapPin,
+  UserCircle,
+  Shield,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -16,10 +25,16 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { getAuthToken, decodeToken } from "@/lib/auth";
-import { authApi } from "@/lib/api";
+import { authApi, profileApi } from "@/lib/api";
 
 // Validation schemas
 const profileSchema = z.object({
@@ -30,17 +45,22 @@ const profileSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
 });
 
-const passwordSchema = z.object({
-  currentPassword: z.string().min(1, "Current password is required"),
-  newPassword: z.string()
-    .min(8, "Password must be at least 8 characters")
-    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, 
-      "Password must contain uppercase, lowercase, number and special character"),
-  confirmPassword: z.string()
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
+const passwordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Current password is required"),
+    newPassword: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
+        "Password must contain uppercase, lowercase, number and special character",
+      ),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
 type PasswordFormData = z.infer<typeof passwordSchema>;
@@ -79,25 +99,14 @@ export default function ProfileManagement() {
 
   // Fetch user profile
   const { data: userProfile, isLoading: profileLoading } = useQuery({
-    queryKey: ['user-profile', userId],
-    queryFn: async (): Promise<UserProfile> => {
-      const response = await fetch(`/api/users/${userId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch user profile');
-      }
-      return response.json();
-    },
+    queryKey: ["user-profile", userId],
+    queryFn: () => profileApi.getUserProfile(userId!),
     enabled: !!userId,
   });
 
   // Fetch countries for dropdown
   const { data: countries = [] } = useQuery({
-    queryKey: ['countries'],
+    queryKey: ["countries"],
     queryFn: authApi.getCountries,
   });
 
@@ -125,33 +134,17 @@ export default function ProfileManagement() {
 
   // Update profile mutation
   const updateProfileMutation = useMutation({
-    mutationFn: async (profileData: ProfileFormData) => {
-      const response = await fetch(`/api/users/update/${userId}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: userId,
-          ...profileData,
-          roleId: userProfile?.roleId.toString(),
-        }),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to update profile');
-      }
-      
-      return response.json();
-    },
+    mutationFn: (profileData: ProfileFormData) => 
+      profileApi.updateProfile(userId!, {
+        ...profileData,
+        roleId: userProfile?.roleId.toString(),
+      }),
     onSuccess: () => {
       toast({
         title: "Profile Updated",
         description: "Your profile has been updated successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: ['user-profile'] });
+      queryClient.invalidateQueries({ queryKey: ["user-profile"] });
     },
     onError: (error: Error) => {
       toast({
@@ -164,21 +157,24 @@ export default function ProfileManagement() {
 
   // Change password mutation
   const changePasswordMutation = useMutation({
-    mutationFn: async (passwordData: { currentPassword: string; newPassword: string }) => {
-      const response = await fetch('/api/users/change-password', {
-        method: 'POST',
+    mutationFn: async (passwordData: {
+      currentPassword: string;
+      newPassword: string;
+    }) => {
+      const response = await fetch("/api/users/change-password", {
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(passwordData),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to change password');
+        throw new Error(errorData.detail || "Failed to change password");
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
@@ -251,8 +247,12 @@ export default function ProfileManagement() {
           <User className="h-5 w-5 text-blue-600" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Profile Settings</h1>
-          <p className="text-slate-600">Manage your account information and security settings</p>
+          <h1 className="text-2xl font-bold text-slate-900">
+            Profile Settings
+          </h1>
+          <p className="text-slate-600">
+            Manage your account information and security settings
+          </p>
         </div>
       </div>
 
@@ -278,7 +278,9 @@ export default function ProfileManagement() {
                   <User className="h-8 w-8 text-blue-600" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-slate-900">{userProfile.fullName}</h3>
+                  <h3 className="text-lg font-semibold text-slate-900">
+                    {userProfile.fullName}
+                  </h3>
                   <p className="text-slate-600">{userProfile.email}</p>
                   <Badge variant="secondary" className="mt-1">
                     <Shield className="h-3 w-3 mr-1" />
@@ -286,9 +288,9 @@ export default function ProfileManagement() {
                   </Badge>
                 </div>
               </div>
-              
+
               <Separator />
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex items-center space-x-3">
                   <Phone className="h-4 w-4 text-slate-500" />
@@ -315,7 +317,10 @@ export default function ProfileManagement() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={profileForm.handleSubmit(onUpdateProfile)} className="space-y-4">
+              <form
+                onSubmit={profileForm.handleSubmit(onUpdateProfile)}
+                className="space-y-4"
+              >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="fullName">Full Name</Label>
@@ -325,7 +330,9 @@ export default function ProfileManagement() {
                       placeholder="Enter full name"
                     />
                     {profileForm.formState.errors.fullName && (
-                      <p className="text-sm text-red-600">{profileForm.formState.errors.fullName.message}</p>
+                      <p className="text-sm text-red-600">
+                        {profileForm.formState.errors.fullName.message}
+                      </p>
                     )}
                   </div>
 
@@ -337,7 +344,9 @@ export default function ProfileManagement() {
                       placeholder="Enter place"
                     />
                     {profileForm.formState.errors.place && (
-                      <p className="text-sm text-red-600">{profileForm.formState.errors.place.message}</p>
+                      <p className="text-sm text-red-600">
+                        {profileForm.formState.errors.place.message}
+                      </p>
                     )}
                   </div>
 
@@ -349,7 +358,9 @@ export default function ProfileManagement() {
                       placeholder="Enter phone number"
                     />
                     {profileForm.formState.errors.phone && (
-                      <p className="text-sm text-red-600">{profileForm.formState.errors.phone.message}</p>
+                      <p className="text-sm text-red-600">
+                        {profileForm.formState.errors.phone.message}
+                      </p>
                     )}
                   </div>
 
@@ -362,7 +373,9 @@ export default function ProfileManagement() {
                       placeholder="Enter email address"
                     />
                     {profileForm.formState.errors.email && (
-                      <p className="text-sm text-red-600">{profileForm.formState.errors.email.message}</p>
+                      <p className="text-sm text-red-600">
+                        {profileForm.formState.errors.email.message}
+                      </p>
                     )}
                   </div>
 
@@ -370,33 +383,44 @@ export default function ProfileManagement() {
                     <Label htmlFor="country">Country</Label>
                     <Select
                       value={profileForm.watch("countryId")?.toString() || ""}
-                      onValueChange={(value) => profileForm.setValue("countryId", parseInt(value))}
+                      onValueChange={(value) =>
+                        profileForm.setValue("countryId", parseInt(value))
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select country" />
                       </SelectTrigger>
                       <SelectContent>
                         {countries.map((country: Country) => (
-                          <SelectItem key={country.countryId} value={country.countryId.toString()}>
+                          <SelectItem
+                            key={country.countryId}
+                            value={country.countryId.toString()}
+                          >
                             {country.country}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                     {profileForm.formState.errors.countryId && (
-                      <p className="text-sm text-red-600">{profileForm.formState.errors.countryId.message}</p>
+                      <p className="text-sm text-red-600">
+                        {profileForm.formState.errors.countryId.message}
+                      </p>
                     )}
                   </div>
                 </div>
 
                 <div className="flex justify-end">
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     disabled={updateProfileMutation.isPending}
                     className="flex items-center space-x-2"
                   >
                     <Save className="h-4 w-4" />
-                    <span>{updateProfileMutation.isPending ? "Updating..." : "Update Profile"}</span>
+                    <span>
+                      {updateProfileMutation.isPending
+                        ? "Updating..."
+                        : "Update Profile"}
+                    </span>
                   </Button>
                 </div>
               </form>
@@ -414,7 +438,10 @@ export default function ProfileManagement() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={passwordForm.handleSubmit(onChangePassword)} className="space-y-4">
+              <form
+                onSubmit={passwordForm.handleSubmit(onChangePassword)}
+                className="space-y-4"
+              >
                 <div className="space-y-2">
                   <Label htmlFor="currentPassword">Current Password</Label>
                   <div className="relative">
@@ -429,7 +456,9 @@ export default function ProfileManagement() {
                       variant="ghost"
                       size="sm"
                       className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                      onClick={() =>
+                        setShowCurrentPassword(!showCurrentPassword)
+                      }
                     >
                       {showCurrentPassword ? (
                         <EyeOff className="h-4 w-4 text-slate-500" />
@@ -439,7 +468,9 @@ export default function ProfileManagement() {
                     </Button>
                   </div>
                   {passwordForm.formState.errors.currentPassword && (
-                    <p className="text-sm text-red-600">{passwordForm.formState.errors.currentPassword.message}</p>
+                    <p className="text-sm text-red-600">
+                      {passwordForm.formState.errors.currentPassword.message}
+                    </p>
                   )}
                 </div>
 
@@ -467,7 +498,9 @@ export default function ProfileManagement() {
                     </Button>
                   </div>
                   {passwordForm.formState.errors.newPassword && (
-                    <p className="text-sm text-red-600">{passwordForm.formState.errors.newPassword.message}</p>
+                    <p className="text-sm text-red-600">
+                      {passwordForm.formState.errors.newPassword.message}
+                    </p>
                   )}
                 </div>
 
@@ -485,7 +518,9 @@ export default function ProfileManagement() {
                       variant="ghost"
                       size="sm"
                       className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
                     >
                       {showConfirmPassword ? (
                         <EyeOff className="h-4 w-4 text-slate-500" />
@@ -495,12 +530,16 @@ export default function ProfileManagement() {
                     </Button>
                   </div>
                   {passwordForm.formState.errors.confirmPassword && (
-                    <p className="text-sm text-red-600">{passwordForm.formState.errors.confirmPassword.message}</p>
+                    <p className="text-sm text-red-600">
+                      {passwordForm.formState.errors.confirmPassword.message}
+                    </p>
                   )}
                 </div>
 
                 <div className="bg-blue-50 p-4 rounded-lg">
-                  <h4 className="text-sm font-medium text-blue-900 mb-2">Password Requirements:</h4>
+                  <h4 className="text-sm font-medium text-blue-900 mb-2">
+                    Password Requirements:
+                  </h4>
                   <ul className="text-sm text-blue-800 space-y-1">
                     <li>• At least 8 characters long</li>
                     <li>• Contains uppercase and lowercase letters</li>
@@ -510,13 +549,17 @@ export default function ProfileManagement() {
                 </div>
 
                 <div className="flex justify-end">
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     disabled={changePasswordMutation.isPending}
                     className="flex items-center space-x-2"
                   >
                     <Lock className="h-4 w-4" />
-                    <span>{changePasswordMutation.isPending ? "Changing..." : "Change Password"}</span>
+                    <span>
+                      {changePasswordMutation.isPending
+                        ? "Changing..."
+                        : "Change Password"}
+                    </span>
                   </Button>
                 </div>
               </form>

@@ -223,6 +223,41 @@ export const shopsApi = {
 };
 
 /**
+ * Profile API endpoints
+ */
+export const profileApi = {
+  /**
+   * Get user profile by ID
+   */
+  async getUserProfile(userId: number): Promise<any> {
+    return apiRequest(`/users/${userId}`);
+  },
+
+  /**
+   * Update user profile
+   */
+  async updateProfile(userId: number, profileData: any): Promise<void> {
+    return apiRequest(`/users/update/${userId}`, {
+      method: 'POST',
+      body: JSON.stringify({
+        userId: userId,
+        ...profileData,
+      }),
+    });
+  },
+
+  /**
+   * Change user password
+   */
+  async changePassword(passwordData: { currentPassword: string; newPassword: string }): Promise<void> {
+    return apiRequest('/users/change-password', {
+      method: 'POST',
+      body: JSON.stringify(passwordData),
+    });
+  },
+};
+
+/**
  * Dashboard API endpoints
  */
 export const dashboardApi = {
