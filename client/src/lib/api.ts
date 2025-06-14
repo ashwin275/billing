@@ -36,13 +36,13 @@ async function apiRequest<T>(
     const response = await fetch(url, config);
     
     if (!response.ok) {
+      let errorData: ApiError;
       try {
-        const errorData: ApiError = await response.json();
+        errorData = await response.json();
         console.log(`API Error for ${endpoint}:`, errorData);
-        throw errorData;
       } catch (parseError) {
         console.log(`Failed to parse error response for ${endpoint}:`, parseError);
-        throw {
+        errorData = {
           detail: `HTTP ${response.status}`,
           title: `Request failed`,
           status: response.status,
@@ -50,6 +50,7 @@ async function apiRequest<T>(
           instance: endpoint
         };
       }
+      throw errorData;
     }
 
     // Handle different response types
