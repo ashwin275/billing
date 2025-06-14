@@ -109,6 +109,8 @@ export default function ProductsManagement() {
   } = useQuery({
     queryKey: ["/api/products/all"],
     queryFn: () => productsApi.getAllProducts(),
+    retry: 1,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Form for adding products
