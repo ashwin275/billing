@@ -1,7 +1,7 @@
 // Products management component with full CRUD functionality
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
+import { useForm, Controller, FieldPath, ControllerRenderProps } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { 
@@ -55,6 +55,13 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
 import { productsApi, shopsApi, handleApiError } from "@/lib/api";
@@ -1246,12 +1253,33 @@ export default function ProductsManagement() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="edit-shopId">Shop ID</Label>
-                <Input
-                  id="edit-shopId"
-                  type="number"
-                  {...editForm.register("shopId", { valueAsNumber: true })}
-                  placeholder="1"
+                <Label htmlFor="edit-shopId">Shop</Label>
+                <Controller
+                  control={editForm.control}
+                  name="shopId"
+                  render={({ field }: { field: ControllerRenderProps<ProductFormData, "shopId"> }) => (
+                    <Select
+                      onValueChange={(value: string) => field.onChange(parseInt(value))}
+                      value={field.value?.toString() || ""}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select shop" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {shops?.map((shop: any) => (
+                          <SelectItem key={shop.shopId} value={shop.shopId.toString()}>
+                            <div className="flex flex-col">
+                              <span>{shop.name}</span>
+                              <span className="text-xs text-slate-500">
+                                {shop.place} • {shop.status}
+                                {shop.owner && ` • Owner: ${shop.owner.fullName}`}
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 />
                 {editForm.formState.errors.shopId && (
                   <p className="text-sm text-destructive">
