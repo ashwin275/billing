@@ -1,6 +1,5 @@
 // Sidebar navigation component for the dashboard
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { 
   BarChart3, 
   Box, 
@@ -15,7 +14,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { productsApi } from "@/lib/api";
 
 interface SidebarProps {
   activeSection: string;
@@ -44,6 +42,7 @@ const navigationItems: NavItem[] = [
     id: "products",
     label: "Products",
     icon: Box,
+    badge: "24",
     category: "Products"
   },
   {
@@ -97,12 +96,6 @@ const groupedNavItems = navigationItems.reduce((acc, item) => {
 export default function Sidebar({ activeSection, onSectionChange, isMobileOpen, setIsMobileOpen }: SidebarProps) {
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
   const [isCollapsed, setIsCollapsed] = useState(false);
-  
-  // Fetch products to get actual count
-  const { data: products } = useQuery({
-    queryKey: ["/api/products/all"],
-    queryFn: () => productsApi.getAllProducts(),
-  });
 
   /**
    * Toggle category collapse state
@@ -123,12 +116,6 @@ export default function Sidebar({ activeSection, onSectionChange, isMobileOpen, 
   const renderNavItem = (item: NavItem) => {
     const Icon = item.icon;
     const isActive = activeSection === item.id;
-    
-    // Dynamic badge for products
-    let badge = item.badge;
-    if (item.id === "products" && products) {
-      badge = products.length.toString();
-    }
 
     return (
       <button
@@ -155,14 +142,14 @@ export default function Sidebar({ activeSection, onSectionChange, isMobileOpen, 
           {!isCollapsed && <span className="font-medium">{item.label}</span>}
         </div>
         
-        {badge && !isCollapsed && (
+        {item.badge && !isCollapsed && (
           <span className={cn(
             "text-xs px-2 py-1 rounded-full font-medium",
             isActive
               ? "bg-primary-100 text-primary-600"
               : "bg-slate-100 text-slate-600"
           )}>
-            {badge}
+            {item.badge}
           </span>
         )}
       </button>

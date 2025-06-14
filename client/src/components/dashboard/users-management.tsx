@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { 
   Trash2, UserCheck, Mail, Phone, MapPin, Shield, AlertTriangle, 
-  Plus, Users, X, Search, Filter, Eye, EyeOff
+  Plus, Users, X 
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -77,11 +77,7 @@ const userSchema = z.object({
   phone: z.string().min(10, "Phone number must be at least 10 digits"),
   email: z.string().email("Must be a valid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  confirmPassword: z.string(),
   roleId: z.number().min(1, "Please select a role"),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
 });
 
 type UserFormData = z.infer<typeof userSchema>;
@@ -97,9 +93,6 @@ export default function UsersManagement() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [confirmPassword, setConfirmPassword] = useState("");
 
   // Fetch all users
   const {
@@ -134,7 +127,6 @@ export default function UsersManagement() {
       phone: "",
       email: "",
       password: "",
-      confirmPassword: "",
       roleId: 0,
     },
   });
@@ -182,24 +174,9 @@ export default function UsersManagement() {
     },
   });
 
-  // Filter and paginate users
-  const filteredUsers = users?.filter(user =>
-    user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.place.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.phone.includes(searchTerm)
-  ) || [];
-
-  const totalUsers = filteredUsers.length;
-  const totalPages = Math.ceil(totalUsers / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentUsers = filteredUsers.slice(startIndex, endIndex);
-
   /**
    * Handle add user form submission
    */
-
   const onAddUser = (data: UserFormData) => {
     const userData: SignUpData = {
       fullName: data.fullName,
@@ -240,7 +217,12 @@ export default function UsersManagement() {
     return status === "ACTIVE" ? "default" : "secondary";
   };
 
-
+  // Pagination calculations
+  const totalUsers = users?.length || 0;
+  const totalPages = Math.ceil(totalUsers / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentUsers = users?.slice(startIndex, endIndex) || [];
 
   if (isLoading) {
     return (
@@ -286,7 +268,7 @@ export default function UsersManagement() {
         </div>
         <div className="flex items-center space-x-3">
           <Badge variant="outline" className="text-sm">
-            {totalUsers} of {users?.length || 0} Users
+            {users?.length || 0} Total Users
           </Badge>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
@@ -436,58 +418,7 @@ export default function UsersManagement() {
                         <FormItem>
                           <FormLabel>Password</FormLabel>
                           <FormControl>
-                            <div className="relative">
-                              <Input 
-                                type={showPassword ? "text" : "password"} 
-                                placeholder="Enter password" 
-                                {...field} 
-                              />
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                                onClick={() => setShowPassword(!showPassword)}
-                              >
-                                {showPassword ? (
-                                  <EyeOff className="h-4 w-4" />
-                                ) : (
-                                  <Eye className="h-4 w-4" />
-                                )}
-                              </Button>
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={addForm.control}
-                      name="confirmPassword"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Confirm Password</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <Input 
-                                type={showPassword ? "text" : "password"} 
-                                placeholder="Confirm password" 
-                                {...field} 
-                              />
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                                onClick={() => setShowPassword(!showPassword)}
-                              >
-                                {showPassword ? (
-                                  <EyeOff className="h-4 w-4" />
-                                ) : (
-                                  <Eye className="h-4 w-4" />
-                                )}
-                              </Button>
-                            </div>
+                            <Input type="password" placeholder="Enter password" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -521,17 +452,6 @@ export default function UsersManagement() {
             <UserCheck className="h-5 w-5" />
             <span>All Users</span>
           </CardTitle>
-          <div className="flex items-center space-x-2 mt-4">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
-              <Input
-                placeholder="Search users..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </div>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
