@@ -189,11 +189,11 @@ function DashboardOverview({ onNavigate }: { onNavigate: (section: string) => vo
               </div>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="h-64 bg-slate-50 rounded-lg flex items-center justify-center">
+          <CardContent className="p-4 sm:p-6">
+            <div className="h-48 sm:h-64 bg-slate-50 rounded-lg flex items-center justify-center">
               <div className="text-center">
-                <BarChart3 className="h-12 w-12 text-slate-300 mx-auto mb-2" />
-                <p className="text-slate-500">Chart component will be integrated here</p>
+                <BarChart3 className="h-8 w-8 sm:h-12 sm:w-12 text-slate-300 mx-auto mb-2" />
+                <p className="text-xs sm:text-sm text-slate-500">Chart component will be integrated here</p>
               </div>
             </div>
           </CardContent>
@@ -201,27 +201,27 @@ function DashboardOverview({ onNavigate }: { onNavigate: (section: string) => vo
 
         {/* Recent Invoices */}
         <Card>
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle>Recent Invoices</CardTitle>
-              <Button variant="ghost" size="sm">View all</Button>
+          <CardHeader className="p-4 sm:p-6">
+            <div className="flex flex-col xs:flex-row xs:justify-between xs:items-center gap-3">
+              <CardTitle className="text-base sm:text-lg">Recent Invoices</CardTitle>
+              <Button variant="ghost" size="sm" className="w-full xs:w-auto">View all</Button>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6">
             {recentInvoices.map((invoice) => (
-              <div key={invoice.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <div className="h-8 w-8 bg-primary-100 rounded-full flex items-center justify-center">
-                    <FileText className="h-4 w-4 text-primary-600" />
+              <div key={invoice.id} className="flex items-center justify-between p-2 sm:p-3 bg-slate-50 rounded-lg">
+                <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+                  <div className="h-6 w-6 sm:h-8 sm:w-8 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-primary-600" />
                   </div>
-                  <div>
-                    <p className="font-medium text-slate-900 text-sm">{invoice.number}</p>
-                    <p className="text-xs text-slate-500">{invoice.client}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-slate-900 text-xs sm:text-sm truncate">{invoice.number}</p>
+                    <p className="text-xs text-slate-500 truncate">{invoice.client}</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-medium text-slate-900 text-sm">{invoice.amount}</p>
-                  <Badge variant={invoice.status === "paid" ? "default" : "secondary"}>
+                <div className="text-right flex-shrink-0 ml-2">
+                  <p className="font-medium text-slate-900 text-xs sm:text-sm">{invoice.amount}</p>
+                  <Badge variant={invoice.status === "paid" ? "default" : "secondary"} className="text-xs">
                     {invoice.status}
                   </Badge>
                 </div>
@@ -233,19 +233,19 @@ function DashboardOverview({ onNavigate }: { onNavigate: (section: string) => vo
 
       {/* Quick Actions */}
       <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="text-base sm:text-lg">Quick Actions</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Button variant="outline" className="h-auto p-4 justify-start">
-              <div className="flex items-center space-x-3">
-                <div className="h-10 w-10 bg-primary-100 rounded-lg flex items-center justify-center">
-                  <Plus className="h-5 w-5 text-primary-600" />
+        <CardContent className="p-4 sm:p-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <Button variant="outline" className="h-auto p-3 sm:p-4 justify-start">
+              <div className="flex items-center space-x-2 sm:space-x-3 w-full">
+                <div className="h-8 w-8 sm:h-10 sm:w-10 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Plus className="h-4 w-4 sm:h-5 sm:w-5 text-primary-600" />
                 </div>
-                <div className="text-left">
-                  <p className="font-medium text-slate-900">Create Invoice</p>
-                  <p className="text-sm text-slate-500">Generate new invoice</p>
+                <div className="text-left min-w-0 flex-1">
+                  <p className="font-medium text-slate-900 text-sm sm:text-base truncate">Create Invoice</p>
+                  <p className="text-xs sm:text-sm text-slate-500 truncate">Generate new invoice</p>
                 </div>
               </div>
             </Button>

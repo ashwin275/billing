@@ -366,25 +366,16 @@ export default function UsersManagement() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Users Management</h1>
-          <p className="text-slate-600 mt-1">Manage users and their permissions</p>
-        </div>
-        <div className="flex items-center space-x-3">
-          <Badge variant="outline" className="text-sm">
-            {totalUsers} of {users?.length || 0} Users
-          </Badge>
-          <Badge variant="default" className="text-sm bg-green-600">
-            {users?.filter(user => user.status === 'ACTIVE').length || 0} Active
-          </Badge>
-          <Badge variant="secondary" className="text-sm">
-            {users?.filter(user => user.status === 'INACTIVE' || user.status === 'DEACTIVATED').length || 0} Inactive
-          </Badge>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 truncate">Users Management</h1>
+            <p className="text-sm sm:text-base text-slate-600 mt-1">Manage users and their permissions</p>
+          </div>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="flex items-center space-x-2">
-                <Plus className="h-4 w-4" />
+              <Button className="w-full sm:w-auto">
+                <Plus className="h-4 w-4 mr-2 flex-shrink-0" />
                 <span>Add User</span>
               </Button>
             </DialogTrigger>
