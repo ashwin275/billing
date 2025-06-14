@@ -38,9 +38,17 @@ async function apiRequest<T>(
     if (!response.ok) {
       try {
         const errorData: ApiError = await response.json();
-        throw new Error(errorData.title || errorData.detail || `HTTP ${response.status}`);
-      } catch {
-        throw new Error(`HTTP ${response.status}`);
+        console.log(`API Error for ${endpoint}:`, errorData);
+        throw errorData;
+      } catch (parseError) {
+        console.log(`Failed to parse error response for ${endpoint}:`, parseError);
+        throw {
+          detail: `HTTP ${response.status}`,
+          title: `Request failed`,
+          status: response.status,
+          type: "about:blank",
+          instance: endpoint
+        };
       }
     }
 
