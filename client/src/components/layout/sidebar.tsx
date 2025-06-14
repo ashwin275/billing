@@ -1,5 +1,6 @@
 // Sidebar navigation component for the dashboard
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { 
   BarChart3, 
   Box, 
@@ -13,6 +14,7 @@ import {
   X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { usersApi, productsApi } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 
 interface SidebarProps {
@@ -30,64 +32,7 @@ interface NavItem {
   category?: string;
 }
 
-// Navigation items configuration
-const navigationItems: NavItem[] = [
-  {
-    id: "dashboard",
-    label: "Dashboard",
-    icon: BarChart3,
-    category: "Overview"
-  },
-  {
-    id: "products",
-    label: "Products",
-    icon: Box,
-    badge: "24",
-    category: "Products"
-  },
-  {
-    id: "add-users",
-    label: "Add Users",
-    icon: UserPlus,
-    category: "User Management"
-  },
-  {
-    id: "invoice",
-    label: "Invoice",
-    icon: FileText,
-    badge: "12",
-    category: "Billing"
-  },
-  {
-    id: "shops",
-    label: "Shops",
-    icon: Store,
-    badge: "3",
-    category: "Billing"
-  },
-  {
-    id: "report",
-    label: "Reports",
-    icon: TrendingUp,
-    category: "Analytics"
-  },
-  {
-    id: "profile",
-    label: "Profile",
-    icon: UserCircle,
-    category: "Account"
-  }
-];
 
-// Group navigation items by category
-const groupedNavItems = navigationItems.reduce((acc, item) => {
-  const category = item.category || "Other";
-  if (!acc[category]) {
-    acc[category] = [];
-  }
-  acc[category].push(item);
-  return acc;
-}, {} as Record<string, NavItem[]>);
 
 /**
  * Sidebar component for dashboard navigation
@@ -96,6 +41,86 @@ const groupedNavItems = navigationItems.reduce((acc, item) => {
 export default function Sidebar({ activeSection, onSectionChange, isMobileOpen, setIsMobileOpen }: SidebarProps) {
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  // Fetch users count
+  const { data: users } = useQuery({
+    queryKey: ["/api/users/all"],
+    queryFn: () => usersApi.getAllUsers(),
+  });
+
+  // Fetch products count  
+  const { data: products } = useQuery({
+    queryKey: ["/api/products/all"],
+    queryFn: () => productsApi.getAllProducts(),
+  });
+
+  // Calculate real counts
+  const activeUsersCount = users?.filter(user => user.status === 'ACTIVE').length || 0;
+  const productsCount = products?.length || 0;
+
+  // Navigation items configuration with real data
+  const navigationItems: NavItem[] = [
+    {
+      id: "dashboard",
+      label: "Dashboard",
+      icon: BarChart3,
+      category: "Overview"
+    },
+    {
+      id: "users",
+      label: "Users",
+      icon: UserCircle,
+      badge: activeUsersCount > 0 ? activeUsersCount : undefined,
+      category: "User Management"
+    },
+    {
+      id: "products",
+      label: "Products",
+      icon: Box,
+      badge: productsCount > 0 ? productsCount : undefined,
+      category: "Products"
+    },
+    {
+      id: "add-users",
+      label: "Add Users",
+      icon: UserPlus,
+      category: "User Management"
+    },
+    {
+      id: "invoice",
+      label: "Invoice",
+      icon: FileText,
+      category: "Billing"
+    },
+    {
+      id: "shops",
+      label: "Shops",
+      icon: Store,
+      category: "Billing"
+    },
+    {
+      id: "report",
+      label: "Reports",
+      icon: TrendingUp,
+      category: "Analytics"
+    },
+    {
+      id: "profile",
+      label: "Profile",
+      icon: UserCircle,
+      category: "Account"
+    }
+  ];
+
+  // Group navigation items by category
+  const groupedNavItems = navigationItems.reduce((acc, item) => {
+    const category = item.category || "Other";
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(item);
+    return acc;
+  }, {} as Record<string, NavItem[]>);
 
   /**
    * Toggle category collapse state

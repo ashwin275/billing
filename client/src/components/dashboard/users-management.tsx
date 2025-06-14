@@ -352,6 +352,12 @@ export default function UsersManagement() {
           <Badge variant="outline" className="text-sm">
             {totalUsers} of {users?.length || 0} Users
           </Badge>
+          <Badge variant="default" className="text-sm bg-green-600">
+            {users?.filter(user => user.status === 'ACTIVE').length || 0} Active
+          </Badge>
+          <Badge variant="secondary" className="text-sm">
+            {users?.filter(user => user.status === 'INACTIVE').length || 0} Inactive
+          </Badge>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
               <Button className="flex items-center space-x-2">
