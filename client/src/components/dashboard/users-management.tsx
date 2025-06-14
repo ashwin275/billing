@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { 
   Trash2, UserCheck, Mail, Phone, MapPin, Shield, AlertTriangle, 
-  Plus, Users, X 
+  Plus, Users, X, Search, ArrowUpDown, ArrowUp, ArrowDown
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -93,6 +93,9 @@ export default function UsersManagement() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortField, setSortField] = useState<keyof User>("fullName");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   // Fetch all users
   const {
@@ -217,12 +220,65 @@ export default function UsersManagement() {
     return status === "ACTIVE" ? "default" : "secondary";
   };
 
+  /**
+   * Handle sorting
+   */
+  const handleSort = (field: keyof User) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+    setCurrentPage(1); // Reset to first page when sorting
+  };
+
+  /**
+   * Get sort icon for column headers
+   */
+  const getSortIcon = (field: keyof User) => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="h-4 w-4" />;
+    }
+    return sortDirection === "asc" ? 
+      <ArrowUp className="h-4 w-4" /> : 
+      <ArrowDown className="h-4 w-4" />;
+  };
+
+  // Filter and sort users
+  const filteredUsers = users?.filter(user => 
+    user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.phone.includes(searchTerm) ||
+    user.place.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    getRoleName(user).toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
+
+  const sortedUsers = filteredUsers.sort((a, b) => {
+    let aValue = a[sortField];
+    let bValue = b[sortField];
+
+    // Handle different data types
+    if (typeof aValue === 'string' && typeof bValue === 'string') {
+      aValue = aValue.toLowerCase();
+      bValue = bValue.toLowerCase();
+    }
+
+    if (aValue < bValue) {
+      return sortDirection === "asc" ? -1 : 1;
+    }
+    if (aValue > bValue) {
+      return sortDirection === "asc" ? 1 : -1;
+    }
+    return 0;
+  });
+
   // Pagination calculations
-  const totalUsers = users?.length || 0;
+  const totalUsers = sortedUsers.length;
   const totalPages = Math.ceil(totalUsers / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentUsers = users?.slice(startIndex, endIndex) || [];
+  const currentUsers = sortedUsers.slice(startIndex, endIndex);
 
   if (isLoading) {
     return (
@@ -268,7 +324,7 @@ export default function UsersManagement() {
         </div>
         <div className="flex items-center space-x-3">
           <Badge variant="outline" className="text-sm">
-            {users?.length || 0} Total Users
+            {totalUsers} of {users?.length || 0} Users
           </Badge>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
@@ -448,21 +504,80 @@ export default function UsersManagement() {
       {/* Users Table */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <UserCheck className="h-5 w-5" />
-            <span>All Users</span>
-          </CardTitle>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <CardTitle className="flex items-center space-x-2">
+              <UserCheck className="h-5 w-5" />
+              <span>All Users</span>
+            </CardTitle>
+            <div className="relative w-full sm:w-80">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search users..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1); // Reset to first page when searching
+                }}
+                className="pl-8"
+              />
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>User Info</TableHead>
-                  <TableHead className="hidden md:table-cell">Contact</TableHead>
-                  <TableHead className="hidden lg:table-cell">Location</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort("fullName")}
+                      className="h-auto p-0 font-semibold hover:bg-transparent"
+                    >
+                      User Info
+                      {getSortIcon("fullName")}
+                    </Button>
+                  </TableHead>
+                  <TableHead className="hidden md:table-cell">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort("email")}
+                      className="h-auto p-0 font-semibold hover:bg-transparent"
+                    >
+                      Contact
+                      {getSortIcon("email")}
+                    </Button>
+                  </TableHead>
+                  <TableHead className="hidden lg:table-cell">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort("place")}
+                      className="h-auto p-0 font-semibold hover:bg-transparent"
+                    >
+                      Location
+                      {getSortIcon("place")}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort("roleId")}
+                      className="h-auto p-0 font-semibold hover:bg-transparent"
+                    >
+                      Role
+                      {getSortIcon("roleId")}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort("status")}
+                      className="h-auto p-0 font-semibold hover:bg-transparent"
+                    >
+                      Status
+                      {getSortIcon("status")}
+                    </Button>
+                  </TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>

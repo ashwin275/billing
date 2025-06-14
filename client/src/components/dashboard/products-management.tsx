@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { 
   Package, Plus, Edit2, Trash2, AlertTriangle, DollarSign, 
-  Calendar, Tag, BarChart3, ShoppingCart, X 
+  Calendar, Tag, BarChart3, ShoppingCart, X, Search, ArrowUpDown, ArrowUp, ArrowDown
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -89,6 +89,9 @@ export default function ProductsManagement() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortField, setSortField] = useState<keyof Product>("name");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   // Fetch all products
   const {
@@ -275,12 +278,66 @@ export default function ProductsManagement() {
     return new Date(dateString).toLocaleDateString('en-IN');
   };
 
+  /**
+   * Handle sorting
+   */
+  const handleSort = (field: keyof Product) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+    setCurrentPage(1); // Reset to first page when sorting
+  };
+
+  /**
+   * Get sort icon for column headers
+   */
+  const getSortIcon = (field: keyof Product) => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="h-4 w-4" />;
+    }
+    return sortDirection === "asc" ? 
+      <ArrowUp className="h-4 w-4" /> : 
+      <ArrowDown className="h-4 w-4" />;
+  };
+
+  // Filter and sort products
+  const filteredProducts = products?.filter(product => 
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.productNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.hsn.toString().includes(searchTerm) ||
+    product.barcode.includes(searchTerm)
+  ) || [];
+
+  const sortedProducts = filteredProducts.sort((a, b) => {
+    let aValue = a[sortField];
+    let bValue = b[sortField];
+
+    // Handle different data types
+    if (typeof aValue === 'string' && typeof bValue === 'string') {
+      aValue = aValue.toLowerCase();
+      bValue = bValue.toLowerCase();
+    }
+
+    if (aValue < bValue) {
+      return sortDirection === "asc" ? -1 : 1;
+    }
+    if (aValue > bValue) {
+      return sortDirection === "asc" ? 1 : -1;
+    }
+    return 0;
+  });
+
   // Pagination calculations
-  const totalProducts = products?.length || 0;
+  const totalProducts = sortedProducts.length;
   const totalPages = Math.ceil(totalProducts / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentProducts = products?.slice(startIndex, endIndex) || [];
+  const currentProducts = sortedProducts.slice(startIndex, endIndex);
 
   if (isLoading) {
     return (
