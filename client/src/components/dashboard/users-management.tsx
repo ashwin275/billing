@@ -144,7 +144,7 @@ export default function UsersManagement() {
   // Add user mutation using signup endpoint
   const addUserMutation = useMutation({
     mutationFn: async (userData: SignUpData) => {
-      const response = await fetch('/auth/signup', {
+      const response = await fetch('https://billing-backend.serins.in/api/auth/signup', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -153,8 +153,11 @@ export default function UsersManagement() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Failed to add user' }));
-        throw new Error(errorData.message || 'Failed to add user');
+        const errorData = await response.json().catch(() => ({ 
+          title: 'Failed to add user',
+          detail: 'An error occurred while adding the user'
+        }));
+        throw new Error(errorData.detail || errorData.title || 'Failed to add user');
       }
 
       return response.text();
