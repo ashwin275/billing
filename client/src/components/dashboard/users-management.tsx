@@ -157,7 +157,7 @@ export default function UsersManagement() {
           title: 'Failed to add user',
           detail: 'An error occurred while adding the user'
         }));
-        throw new Error(errorData.detail || errorData.title || 'Failed to add user');
+        throw errorData;
       }
 
       return response.text();
@@ -173,10 +173,22 @@ export default function UsersManagement() {
       setShowPassword(false);
       setShowConfirmPassword(false);
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      let errorMessage = "Failed to add user. Please try again.";
+      
+      if (error && typeof error === 'object') {
+        if (error.detail) {
+          errorMessage = error.detail;
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
       toast({
         title: "Failed to add user",
-        description: error instanceof Error ? error.message : "Failed to add user. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -193,8 +205,19 @@ export default function UsersManagement() {
       queryClient.invalidateQueries({ queryKey: ["/api/users/all"] });
       setUserToDelete(null);
     },
-    onError: (error) => {
-      const errorMessage = handleApiError(error);
+    onError: (error: any) => {
+      let errorMessage = "Failed to delete user. Please try again.";
+      
+      if (error && typeof error === 'object') {
+        if (error.detail) {
+          errorMessage = error.detail;
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
       toast({
         title: "Failed to delete user",
         description: errorMessage,
