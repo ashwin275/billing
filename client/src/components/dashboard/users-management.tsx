@@ -65,6 +65,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 
 import { usersApi, rolesApi, authApi, handleApiError } from "@/lib/api";
+import { cn } from "@/lib/utils";
 import { User, Role } from "@/types/api";
 import { SignUpData } from "@/types/auth";
 
