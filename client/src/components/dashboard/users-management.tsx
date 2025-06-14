@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { 
   Trash2, UserCheck, Mail, Phone, MapPin, Shield, AlertTriangle, 
-  Plus, Users, X 
+  Plus, Users, X, Search, Filter, Eye, EyeOff
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -77,7 +77,11 @@ const userSchema = z.object({
   phone: z.string().min(10, "Phone number must be at least 10 digits"),
   email: z.string().email("Must be a valid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
+  confirmPassword: z.string(),
   roleId: z.number().min(1, "Please select a role"),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
 });
 
 type UserFormData = z.infer<typeof userSchema>;
@@ -93,6 +97,9 @@ export default function UsersManagement() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   // Fetch all users
   const {
