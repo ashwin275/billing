@@ -314,8 +314,13 @@ export default function ProductsManagement() {
   ) || [];
 
   const sortedProducts = filteredProducts.sort((a, b) => {
-    let aValue = a[sortField];
-    let bValue = b[sortField];
+    let aValue: any = a[sortField];
+    let bValue: any = b[sortField];
+
+    // Handle null/undefined values
+    if (aValue == null && bValue == null) return 0;
+    if (aValue == null) return sortDirection === "asc" ? 1 : -1;
+    if (bValue == null) return sortDirection === "asc" ? -1 : 1;
 
     // Handle different data types
     if (typeof aValue === 'string' && typeof bValue === 'string') {
@@ -383,7 +388,7 @@ export default function ProductsManagement() {
         </div>
         <div className="flex items-center space-x-3">
           <Badge variant="outline" className="text-sm">
-            {products?.length || 0} Products
+            {totalProducts} of {products?.length || 0} Products
           </Badge>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
@@ -676,21 +681,80 @@ export default function ProductsManagement() {
       {/* Products Table */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Package className="h-5 w-5" />
-            <span>All Products</span>
-          </CardTitle>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <CardTitle className="flex items-center space-x-2">
+              <Package className="h-5 w-5" />
+              <span>All Products</span>
+            </CardTitle>
+            <div className="relative w-full sm:w-80">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search products..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1); // Reset to first page when searching
+                }}
+                className="pl-8"
+              />
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Product Info</TableHead>
-                  <TableHead className="hidden md:table-cell">Pricing</TableHead>
-                  <TableHead className="hidden lg:table-cell">Stock</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead className="hidden xl:table-cell">Expiry</TableHead>
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort("name")}
+                      className="h-auto p-0 font-semibold hover:bg-transparent"
+                    >
+                      Product Info
+                      {getSortIcon("name")}
+                    </Button>
+                  </TableHead>
+                  <TableHead className="hidden md:table-cell">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort("retailRate")}
+                      className="h-auto p-0 font-semibold hover:bg-transparent"
+                    >
+                      Pricing
+                      {getSortIcon("retailRate")}
+                    </Button>
+                  </TableHead>
+                  <TableHead className="hidden lg:table-cell">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort("quantity")}
+                      className="h-auto p-0 font-semibold hover:bg-transparent"
+                    >
+                      Stock
+                      {getSortIcon("quantity")}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort("category")}
+                      className="h-auto p-0 font-semibold hover:bg-transparent"
+                    >
+                      Category
+                      {getSortIcon("category")}
+                    </Button>
+                  </TableHead>
+                  <TableHead className="hidden xl:table-cell">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort("expiry")}
+                      className="h-auto p-0 font-semibold hover:bg-transparent"
+                    >
+                      Expiry
+                      {getSortIcon("expiry")}
+                    </Button>
+                  </TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
