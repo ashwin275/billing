@@ -344,7 +344,7 @@ function Dashboard() {
   const renderContent = () => {
     switch (activeSection) {
       case "dashboard":
-        return <DashboardOverview />;
+        return <DashboardOverview onNavigate={setActiveSection} />;
       
       case "products":
         return <ProductsManagement />;
