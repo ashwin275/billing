@@ -1268,13 +1268,7 @@ export default function ProductsManagement() {
                       <SelectContent>
                         {shops?.map((shop: any) => (
                           <SelectItem key={shop.shopId} value={shop.shopId.toString()}>
-                            <div className="flex flex-col">
-                              <span>{shop.name}</span>
-                              <span className="text-xs text-slate-500">
-                                {shop.place} • {shop.status}
-                                {shop.owner && ` • Owner: ${shop.owner.fullName}`}
-                              </span>
-                            </div>
+                            {shop.name}
                           </SelectItem>
                         ))}
                       </SelectContent>

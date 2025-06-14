@@ -66,13 +66,7 @@ export default function Sidebar({ activeSection, onSectionChange, isMobileOpen, 
       icon: BarChart3,
       category: "Overview"
     },
-    {
-      id: "users",
-      label: "Users",
-      icon: UserCircle,
-      badge: activeUsersCount > 0 ? activeUsersCount : undefined,
-      category: "User Management"
-    },
+
     {
       id: "products",
       label: "Products",

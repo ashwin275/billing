@@ -23,6 +23,7 @@ import DashboardLayout from "@/components/layout/dashboard-layout";
 import Sidebar from "@/components/layout/sidebar";
 import UsersManagement from "@/components/dashboard/users-management";
 import ProductsManagement from "@/components/dashboard/products-management";
+import ShopsManagement from "@/components/dashboard/shops-management";
 
 // Mock data for dashboard stats - in real app this would come from API
 const dashboardStats = {

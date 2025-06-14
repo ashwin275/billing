@@ -166,7 +166,7 @@ export const productsApi = {
    */
   async updateProduct(productId: number, product: Partial<import("@/types/api").Product>): Promise<void> {
     return apiRequest(`/products/update/${productId}`, {
-      method: "PUT",
+      method: "POST",
       body: JSON.stringify(product),
     });
   },
@@ -190,6 +190,35 @@ export const shopsApi = {
    */
   async getAllShops(): Promise<any[]> {
     return apiRequest("/shop/all");
+  },
+
+  /**
+   * Add new shop
+   */
+  async addShop(shopData: any): Promise<void> {
+    return apiRequest("/shop/add", {
+      method: "POST",
+      body: JSON.stringify(shopData),
+    });
+  },
+
+  /**
+   * Update shop by ID
+   */
+  async updateShop(shopId: number, shopData: any): Promise<void> {
+    return apiRequest(`/shop/update/${shopId}`, {
+      method: "POST",
+      body: JSON.stringify(shopData),
+    });
+  },
+
+  /**
+   * Delete shop by ID
+   */
+  async deleteShop(shopId: number): Promise<void> {
+    return apiRequest(`/shop/delete/${shopId}`, {
+      method: "DELETE",
+    });
   },
 };
 
