@@ -157,26 +157,8 @@ export default function ProfileManagement() {
 
   // Change password mutation
   const changePasswordMutation = useMutation({
-    mutationFn: async (passwordData: {
-      currentPassword: string;
-      newPassword: string;
-    }) => {
-      const response = await fetch("/api/users/change-password", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(passwordData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || "Failed to change password");
-      }
-
-      return response.json();
-    },
+    mutationFn: (passwordData: { currentPassword: string; newPassword: string }) => 
+      profileApi.changePassword(passwordData),
     onSuccess: () => {
       toast({
         title: "Password Changed",
