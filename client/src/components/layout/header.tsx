@@ -68,20 +68,6 @@ export default function Header() {
 
           {/* User Menu Section */}
           <div className="flex items-center space-x-4">
-            {/* Notifications */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="relative p-2 text-slate-400 hover:text-slate-600"
-            >
-              <Bell className="h-5 w-5" />
-              {notificationCount > 0 && (
-                <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                  {notificationCount}
-                </span>
-              )}
-            </Button>
-
             {/* User Profile Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -102,14 +88,9 @@ export default function Header() {
               </DropdownMenuTrigger>
               
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem>
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Profile Settings</span>
-                </DropdownMenuItem>
-                
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLocation("/dashboard#profile")}>
                   <Settings className="mr-2 h-4 w-4" />
-                  <span>Account Settings</span>
+                  <span>Profile Settings</span>
                 </DropdownMenuItem>
                 
                 <DropdownMenuSeparator />

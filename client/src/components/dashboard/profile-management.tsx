@@ -137,7 +137,7 @@ export default function ProfileManagement() {
     mutationFn: (profileData: ProfileFormData) => 
       profileApi.updateProfile(userId!, {
         ...profileData,
-        roleId: userProfile?.roleId.toString(),
+        roleId: userProfile?.roleId?.toString() || "3",
       }),
     onSuccess: () => {
       toast({

@@ -241,6 +241,7 @@ export const profileApi = {
       method: 'POST',
       body: JSON.stringify({
         userId: userId,
+        password: "", // Add empty password field as required by API
         ...profileData,
       }),
     });

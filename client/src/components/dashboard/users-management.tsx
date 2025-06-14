@@ -356,7 +356,7 @@ export default function UsersManagement() {
             {users?.filter(user => user.status === 'ACTIVE').length || 0} Active
           </Badge>
           <Badge variant="secondary" className="text-sm">
-            {users?.filter(user => user.status === 'INACTIVE').length || 0} Inactive
+            {users?.filter(user => user.status === 'INACTIVE' || user.status === 'DEACTIVATED').length || 0} Inactive
           </Badge>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>

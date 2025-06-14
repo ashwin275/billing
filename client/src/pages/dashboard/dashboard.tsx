@@ -336,7 +336,13 @@ function ContentPanel({
  * Main Dashboard component with navigation and content switching
  */
 function Dashboard() {
-  const [activeSection, setActiveSection] = useState("dashboard");
+  const [activeSection, setActiveSection] = useState(() => {
+    // Check if profile section is requested via hash
+    if (window.location.hash === '#profile') {
+      return 'profile';
+    }
+    return 'dashboard';
+  });
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   /**
