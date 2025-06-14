@@ -57,7 +57,7 @@ import {
 } from "@/components/ui/pagination";
 import { useToast } from "@/hooks/use-toast";
 
-import { productsApi, handleApiError } from "@/lib/api";
+import { productsApi, shopsApi, handleApiError } from "@/lib/api";
 import { Product, ProductInput } from "@/types/api";
 
 // Form validation schema for products
@@ -107,6 +107,14 @@ export default function ProductsManagement() {
   } = useQuery({
     queryKey: ["/api/products/all"],
     queryFn: () => productsApi.getAllProducts(),
+  });
+
+  // Fetch all shops for dropdown
+  const {
+    data: shops,
+  } = useQuery({
+    queryKey: ["/shop/all"],
+    queryFn: () => shopsApi.getAllShops(),
   });
 
   // Form for adding products
@@ -299,7 +307,7 @@ export default function ProductsManagement() {
       imageUrl: product.imageUrl,
       expiry: product.expiry.split('T')[0], // Convert to date format
       barcode: product.barcode,
-      shopId: product.shopId || 1,
+      shopId: product.shopId || (shops?.[0]?.shopId || 1),
     });
     setIsEditDialogOpen(true);
   };

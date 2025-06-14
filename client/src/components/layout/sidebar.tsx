@@ -267,7 +267,7 @@ export default function Sidebar({ activeSection, onSectionChange, isMobileOpen, 
           isCollapsed && "px-2"
         )}>
           {Object.entries(groupedNavItems).map(([category, items]) =>
-            renderCategory(category, items)
+            renderCategory(category, items as NavItem[])
           )}
         </nav>
 

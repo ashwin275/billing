@@ -182,6 +182,18 @@ export const productsApi = {
 };
 
 /**
+ * Shops management API endpoints
+ */
+export const shopsApi = {
+  /**
+   * Get all shops
+   */
+  async getAllShops(): Promise<any[]> {
+    return apiRequest("/shop/all");
+  },
+};
+
+/**
  * Dashboard API endpoints
  */
 export const dashboardApi = {
