@@ -609,18 +609,31 @@ export default function UsersManagement() {
             </DialogContent>
           </Dialog>
         </div>
+        
+        {/* Statistics Badges */}
+        <div className="flex flex-wrap gap-2 sm:gap-3">
+          <Badge variant="outline" className="text-xs sm:text-sm px-2 py-1">
+            {totalUsers} of {users?.length || 0} Total
+          </Badge>
+          <Badge variant="default" className="text-xs sm:text-sm px-2 py-1 bg-green-600">
+            {users?.filter(user => user.status === 'ACTIVE').length || 0} Active
+          </Badge>
+          <Badge variant="secondary" className="text-xs sm:text-sm px-2 py-1">
+            {users?.filter(user => user.status === 'INACTIVE' || user.status === 'DEACTIVATED').length || 0} Inactive
+          </Badge>
+        </div>
       </div>
 
       {/* Users Table */}
       <Card>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <CardTitle className="flex items-center space-x-2">
-              <UserCheck className="h-5 w-5" />
+        <CardHeader className="p-4 sm:p-6">
+          <div className="flex flex-col gap-4">
+            <CardTitle className="flex items-center space-x-2 text-base sm:text-lg">
+              <UserCheck className="h-4 w-4 sm:h-5 sm:w-5" />
               <span>All Users</span>
             </CardTitle>
-            <div className="relative w-full sm:w-80">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search users..."
                 value={searchTerm}
@@ -628,12 +641,12 @@ export default function UsersManagement() {
                   setSearchTerm(e.target.value);
                   setCurrentPage(1); // Reset to first page when searching
                 }}
-                className="pl-8"
+                className="pl-10 w-full"
               />
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -768,33 +781,42 @@ export default function UsersManagement() {
 
           {/* Pagination */}
           {totalUsers > 0 && (
-            <div className="flex items-center justify-between px-2 py-4 border-t">
-              <div className="text-sm text-slate-700">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 px-4 py-4 border-t">
+              <div className="text-xs sm:text-sm text-slate-700 text-center sm:text-left">
                 Showing {startIndex + 1} to {Math.min(endIndex, totalUsers)} of {totalUsers} users
               </div>
               <Pagination>
-                <PaginationContent>
+                <PaginationContent className="flex-wrap justify-center">
                   <PaginationItem>
                     <PaginationPrevious 
                       onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                      className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      className={cn(
+                        currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer",
+                        "text-xs sm:text-sm"
+                      )}
                     />
                   </PaginationItem>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                    <PaginationItem key={page}>
-                      <PaginationLink
-                        onClick={() => setCurrentPage(page)}
-                        isActive={currentPage === page}
-                        className="cursor-pointer"
-                      >
-                        {page}
-                      </PaginationLink>
-                    </PaginationItem>
-                  ))}
+                  {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                    const page = i + Math.max(1, currentPage - 2);
+                    return page <= totalPages ? (
+                      <PaginationItem key={page}>
+                        <PaginationLink
+                          onClick={() => setCurrentPage(page)}
+                          isActive={currentPage === page}
+                          className="cursor-pointer text-xs sm:text-sm min-w-8 h-8"
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ) : null;
+                  })}
                   <PaginationItem>
                     <PaginationNext 
                       onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      className={cn(
+                        currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer",
+                        "text-xs sm:text-sm"
+                      )}
                     />
                   </PaginationItem>
                 </PaginationContent>
