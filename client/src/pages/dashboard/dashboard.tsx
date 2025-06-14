@@ -42,7 +42,7 @@ const recentInvoices = [
 /**
  * Dashboard overview component showing stats and recent activity
  */
-function DashboardOverview() {
+function DashboardOverview({ onSectionChange }: { onSectionChange: (section: string) => void }) {
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -216,7 +216,11 @@ function DashboardOverview() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Button variant="outline" className="h-auto p-4 justify-start">
+            <Button 
+              variant="outline" 
+              className="h-auto p-4 justify-start"
+              onClick={() => onSectionChange("invoices")}
+            >
               <div className="flex items-center space-x-3">
                 <div className="h-10 w-10 bg-primary-100 rounded-lg flex items-center justify-center">
                   <Plus className="h-5 w-5 text-primary-600" />
@@ -228,7 +232,11 @@ function DashboardOverview() {
               </div>
             </Button>
 
-            <Button variant="outline" className="h-auto p-4 justify-start">
+            <Button 
+              variant="outline" 
+              className="h-auto p-4 justify-start"
+              onClick={() => onSectionChange("products")}
+            >
               <div className="flex items-center space-x-3">
                 <div className="h-10 w-10 bg-emerald-100 rounded-lg flex items-center justify-center">
                   <Box className="h-5 w-5 text-emerald-600" />
@@ -240,7 +248,11 @@ function DashboardOverview() {
               </div>
             </Button>
 
-            <Button variant="outline" className="h-auto p-4 justify-start">
+            <Button 
+              variant="outline" 
+              className="h-auto p-4 justify-start"
+              onClick={() => onSectionChange("add-users")}
+            >
               <div className="flex items-center space-x-3">
                 <div className="h-10 w-10 bg-violet-100 rounded-lg flex items-center justify-center">
                   <UserPlus className="h-5 w-5 text-violet-600" />
@@ -252,7 +264,11 @@ function DashboardOverview() {
               </div>
             </Button>
 
-            <Button variant="outline" className="h-auto p-4 justify-start">
+            <Button 
+              variant="outline" 
+              className="h-auto p-4 justify-start"
+              onClick={() => onSectionChange("report")}
+            >
               <div className="flex items-center space-x-3">
                 <div className="h-10 w-10 bg-orange-100 rounded-lg flex items-center justify-center">
                   <BarChart3 className="h-5 w-5 text-orange-600" />
@@ -315,7 +331,7 @@ function Dashboard() {
   const renderContent = () => {
     switch (activeSection) {
       case "dashboard":
-        return <DashboardOverview />;
+        return <DashboardOverview onSectionChange={setActiveSection} />;
       
       case "products":
         return <ProductsManagement />;
@@ -364,7 +380,7 @@ function Dashboard() {
         );
       
       default:
-        return <DashboardOverview />;
+        return <DashboardOverview onSectionChange={setActiveSection} />;
     }
   };
 
