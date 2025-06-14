@@ -41,6 +41,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { useToast } from "@/hooks/use-toast";
 
 import { productsApi, handleApiError } from "@/lib/api";
@@ -144,7 +152,7 @@ export default function ProductsManagement() {
 
   // Update product mutation
   const updateProductMutation = useMutation({
-    mutationFn: ({ productId, product }: { productId: number; product: Partial<Product> }) =>
+    mutationFn: ({ productId, product }: { productId: number; product: Product }) =>
       productsApi.updateProduct(productId, product),
     onSuccess: () => {
       toast({
@@ -266,6 +274,13 @@ export default function ProductsManagement() {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-IN');
   };
+
+  // Pagination calculations
+  const totalProducts = products?.length || 0;
+  const totalPages = Math.ceil(totalProducts / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentProducts = products?.slice(startIndex, endIndex) || [];
 
   if (isLoading) {
     return (
@@ -623,7 +638,7 @@ export default function ProductsManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {products?.map((product) => (
+                {currentProducts.map((product) => (
                   <TableRow key={product.productId}>
                     {/* Product Info */}
                     <TableCell>
@@ -713,6 +728,42 @@ export default function ProductsManagement() {
             </Table>
           </div>
 
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-2 py-4">
+              <div className="text-sm text-slate-700">
+                Showing {startIndex + 1} to {Math.min(endIndex, totalProducts)} of {totalProducts} products
+              </div>
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                      className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        onClick={() => setCurrentPage(page)}
+                        isActive={currentPage === page}
+                        className="cursor-pointer"
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+                  <PaginationItem>
+                    <PaginationNext 
+                      onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
+
           {products && products.length === 0 && (
             <div className="text-center py-8">
               <Package className="h-12 w-12 text-slate-300 mx-auto mb-4" />
@@ -733,7 +784,6 @@ export default function ProductsManagement() {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={editForm.handleSubmit(onEditProduct)} className="space-y-4">
-            {/* Same form fields as add form but with edit prefix */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-name">Product Name</Label>
@@ -763,8 +813,226 @@ export default function ProductsManagement() {
                 )}
               </div>
             </div>
-            
-            {/* Continue with similar pattern for all fields... */}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-hsn">HSN Code</Label>
+                <Input
+                  id="edit-hsn"
+                  {...editForm.register("hsn")}
+                  placeholder="1234"
+                />
+                {editForm.formState.errors.hsn && (
+                  <p className="text-sm text-destructive">
+                    {editForm.formState.errors.hsn.message}
+                  </p>
+                )}
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-category">Category</Label>
+                <Input
+                  id="edit-category"
+                  {...editForm.register("category")}
+                  placeholder="Electronics"
+                />
+                {editForm.formState.errors.category && (
+                  <p className="text-sm text-destructive">
+                    {editForm.formState.errors.category.message}
+                  </p>
+                )}
+              </div>
+            </div>
+                
+            <div className="space-y-2">
+              <Label htmlFor="edit-description">Description</Label>
+              <Textarea
+                id="edit-description"
+                {...editForm.register("description")}
+                placeholder="Product description"
+              />
+              {editForm.formState.errors.description && (
+                <p className="text-sm text-destructive">
+                  {editForm.formState.errors.description.message}
+                </p>
+              )}
+            </div>
+                
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-quantity">Quantity</Label>
+                <Input
+                  id="edit-quantity"
+                  type="number"
+                  {...editForm.register("quantity", { valueAsNumber: true })}
+                  placeholder="50"
+                />
+                {editForm.formState.errors.quantity && (
+                  <p className="text-sm text-destructive">
+                    {editForm.formState.errors.quantity.message}
+                  </p>
+                )}
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-ourPrice">Our Price</Label>
+                <Input
+                  id="edit-ourPrice"
+                  type="number"
+                  step="0.01"
+                  {...editForm.register("ourPrice", { valueAsNumber: true })}
+                  placeholder="80.00"
+                />
+                {editForm.formState.errors.ourPrice && (
+                  <p className="text-sm text-destructive">
+                    {editForm.formState.errors.ourPrice.message}
+                  </p>
+                )}
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-wholesaleRate">Wholesale Rate</Label>
+                <Input
+                  id="edit-wholesaleRate"
+                  type="number"
+                  step="0.01"
+                  {...editForm.register("wholesaleRate", { valueAsNumber: true })}
+                  placeholder="90.00"
+                />
+                {editForm.formState.errors.wholesaleRate && (
+                  <p className="text-sm text-destructive">
+                    {editForm.formState.errors.wholesaleRate.message}
+                  </p>
+                )}
+              </div>
+            </div>
+                
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-retailRate">Retail Rate</Label>
+                <Input
+                  id="edit-retailRate"
+                  type="number"
+                  step="0.01"
+                  {...editForm.register("retailRate", { valueAsNumber: true })}
+                  placeholder="120.00"
+                />
+                {editForm.formState.errors.retailRate && (
+                  <p className="text-sm text-destructive">
+                    {editForm.formState.errors.retailRate.message}
+                  </p>
+                )}
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-taxRate">Tax Rate (%)</Label>
+                <Input
+                  id="edit-taxRate"
+                  type="number"
+                  step="0.01"
+                  {...editForm.register("taxRate", { valueAsNumber: true })}
+                  placeholder="18.0"
+                />
+                {editForm.formState.errors.taxRate && (
+                  <p className="text-sm text-destructive">
+                    {editForm.formState.errors.taxRate.message}
+                  </p>
+                )}
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-cgst">CGST (%)</Label>
+                <Input
+                  id="edit-cgst"
+                  type="number"
+                  step="0.01"
+                  {...editForm.register("cgst", { valueAsNumber: true })}
+                  placeholder="9.0"
+                />
+                {editForm.formState.errors.cgst && (
+                  <p className="text-sm text-destructive">
+                    {editForm.formState.errors.cgst.message}
+                  </p>
+                )}
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-sgst">SGST (%)</Label>
+                <Input
+                  id="edit-sgst"
+                  type="number"
+                  step="0.01"
+                  {...editForm.register("sgst", { valueAsNumber: true })}
+                  placeholder="9.0"
+                />
+                {editForm.formState.errors.sgst && (
+                  <p className="text-sm text-destructive">
+                    {editForm.formState.errors.sgst.message}
+                  </p>
+                )}
+              </div>
+            </div>
+                
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-imageUrl">Image URL</Label>
+                <Input
+                  id="edit-imageUrl"
+                  {...editForm.register("imageUrl")}
+                  placeholder="https://example.com/product-image.jpg"
+                />
+                {editForm.formState.errors.imageUrl && (
+                  <p className="text-sm text-destructive">
+                    {editForm.formState.errors.imageUrl.message}
+                  </p>
+                )}
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-expiry">Expiry Date</Label>
+                <Input
+                  id="edit-expiry"
+                  type="date"
+                  {...editForm.register("expiry")}
+                />
+                {editForm.formState.errors.expiry && (
+                  <p className="text-sm text-destructive">
+                    {editForm.formState.errors.expiry.message}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-barcode">Barcode</Label>
+                <Input
+                  id="edit-barcode"
+                  {...editForm.register("barcode")}
+                  placeholder="8901234567890"
+                />
+                {editForm.formState.errors.barcode && (
+                  <p className="text-sm text-destructive">
+                    {editForm.formState.errors.barcode.message}
+                  </p>
+                )}
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-shopId">Shop ID</Label>
+                <Input
+                  id="edit-shopId"
+                  type="number"
+                  {...editForm.register("shopId", { valueAsNumber: true })}
+                  placeholder="1"
+                />
+                {editForm.formState.errors.shopId && (
+                  <p className="text-sm text-destructive">
+                    {editForm.formState.errors.shopId.message}
+                  </p>
+                )}
+              </div>
+            </div>
             <div className="flex justify-end space-x-2 pt-4">
               <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
                 Cancel
