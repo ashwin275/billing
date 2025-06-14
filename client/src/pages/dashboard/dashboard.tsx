@@ -24,6 +24,7 @@ import Sidebar from "@/components/layout/sidebar";
 import UsersManagement from "@/components/dashboard/users-management";
 import ProductsManagement from "@/components/dashboard/products-management";
 import ShopsManagement from "@/components/dashboard/shops-management";
+import ProfileManagement from "@/components/dashboard/profile-management";
 
 // Mock data for dashboard stats - in real app this would come from API
 const dashboardStats = {
@@ -376,14 +377,7 @@ function Dashboard() {
         );
       
       case "profile":
-        return (
-          <ContentPanel
-            title="Profile Settings"
-            description="Profile settings interface will be implemented here."
-            buttonText="Save Changes"
-            buttonIcon={Save}
-          />
-        );
+        return <ProfileManagement />;
       
       default:
         return <DashboardOverview onNavigate={setActiveSection} />;
