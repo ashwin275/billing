@@ -38,7 +38,7 @@ export interface User {
   shop: any | null;
   roles: Role[];
   roleId: number | null;
-  status: 'ACTIVE' | 'INACTIVE';
+  status: 'ACTIVE' | 'INACTIVE' | 'DEACTIVATED';
   referredByUserId: number | null;
 }
 
