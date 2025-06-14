@@ -1,5 +1,6 @@
 // Main dashboard page with overview, navigation, and content panels
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { 
   TrendingUp, 
   FileText, 
@@ -25,6 +26,7 @@ import UsersManagement from "@/components/dashboard/users-management";
 import ProductsManagement from "@/components/dashboard/products-management";
 import ShopsManagement from "@/components/dashboard/shops-management";
 import ProfileManagement from "@/components/dashboard/profile-management";
+import { shopsApi, usersApi } from "@/lib/api";
 
 // Mock data for dashboard stats - in real app this would come from API
 const dashboardStats = {
@@ -45,6 +47,24 @@ const recentInvoices = [
  * Dashboard overview component showing stats and recent activity
  */
 function DashboardOverview({ onNavigate }: { onNavigate: (section: string) => void }) {
+  // Fetch shops data for statistics
+  const { data: shops = [] } = useQuery({
+    queryKey: ["/api/shop/all"],
+    queryFn: () => shopsApi.getAllShops(),
+  });
+
+  // Fetch users data for statistics
+  const { data: users = [] } = useQuery({
+    queryKey: ["/api/users/all"],
+    queryFn: () => usersApi.getAllUsers(),
+  });
+
+  // Calculate dynamic stats
+  const activeShops = shops.filter(shop => shop.status === 'ACTIVE').length;
+  const totalShops = shops.length;
+  const activeUsers = users.filter(user => user.status === 'ACTIVE').length;
+  const totalUsers = users.length;
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -117,10 +137,10 @@ function DashboardOverview({ onNavigate }: { onNavigate: (section: string) => vo
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-600">Active Shops</p>
-                <p className="text-2xl font-bold text-slate-900 mt-1">{dashboardStats.activeShops}</p>
+                <p className="text-2xl font-bold text-slate-900 mt-1">{activeShops}</p>
                 <p className="text-sm text-violet-600 mt-1">
                   <TrendingUp className="inline h-3 w-3 mr-1" />
-                  +2 new this month
+                  {totalShops > 0 ? `${totalShops} total shops` : 'No shops yet'}
                 </p>
               </div>
               <div className="h-12 w-12 bg-violet-100 rounded-lg flex items-center justify-center">

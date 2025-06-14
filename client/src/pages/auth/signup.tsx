@@ -373,6 +373,16 @@ export default function SignUp() {
                 )}
               </div>
 
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h4 className="text-sm font-medium text-blue-900 mb-2">Password Requirements:</h4>
+                <ul className="text-sm text-blue-800 space-y-1">
+                  <li>• At least 8 characters long</li>
+                  <li>• Contains uppercase and lowercase letters</li>
+                  <li>• Contains at least one number</li>
+                  <li>• Contains at least one special character (@$!%*?&)</li>
+                </ul>
+              </div>
+
               {/* Submit Button */}
               <Button 
                 type="submit" 
