@@ -92,21 +92,21 @@ function DashboardOverview({ onNavigate }: { onNavigate: (section: string) => vo
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {/* Total Revenue Card */}
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-600">Total Revenue</p>
-                <p className="text-2xl font-bold text-slate-900 mt-1">{dashboardStats.totalRevenue}</p>
-                <p className="text-sm text-emerald-600 mt-1">
-                  <TrendingUp className="inline h-3 w-3 mr-1" />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-slate-600 truncate">Total Revenue</p>
+                <p className="text-lg sm:text-2xl font-bold text-slate-900 mt-1 truncate">{dashboardStats.totalRevenue}</p>
+                <p className="text-xs sm:text-sm text-emerald-600 mt-1 truncate">
+                  <TrendingUp className="inline h-3 w-3 mr-1 flex-shrink-0" />
                   +12.5% from last month
                 </p>
               </div>
-              <div className="h-12 w-12 bg-emerald-100 rounded-lg flex items-center justify-center">
-                <span className="text-emerald-600 text-lg font-bold">₹</span>
+              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
+                <span className="text-emerald-600 text-base sm:text-lg font-bold">₹</span>
               </div>
             </div>
           </CardContent>
@@ -114,18 +114,18 @@ function DashboardOverview({ onNavigate }: { onNavigate: (section: string) => vo
 
         {/* Total Invoices Card */}
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-600">Total Invoices</p>
-                <p className="text-2xl font-bold text-slate-900 mt-1">{dashboardStats.totalInvoices}</p>
-                <p className="text-sm text-blue-600 mt-1">
-                  <TrendingUp className="inline h-3 w-3 mr-1" />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-slate-600 truncate">Total Invoices</p>
+                <p className="text-lg sm:text-2xl font-bold text-slate-900 mt-1">{dashboardStats.totalInvoices}</p>
+                <p className="text-xs sm:text-sm text-blue-600 mt-1 truncate">
+                  <TrendingUp className="inline h-3 w-3 mr-1 flex-shrink-0" />
                   +8.2% from last month
                 </p>
               </div>
-              <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <FileText className="h-6 w-6 text-blue-600" />
+              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
+                <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
               </div>
             </div>
           </CardContent>
@@ -133,18 +133,18 @@ function DashboardOverview({ onNavigate }: { onNavigate: (section: string) => vo
 
         {/* Active Shops Card */}
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-600">Active Shops</p>
-                <p className="text-2xl font-bold text-slate-900 mt-1">{activeShops}</p>
-                <p className="text-sm text-violet-600 mt-1">
-                  <TrendingUp className="inline h-3 w-3 mr-1" />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-slate-600 truncate">Active Shops</p>
+                <p className="text-lg sm:text-2xl font-bold text-slate-900 mt-1">{activeShops}</p>
+                <p className="text-xs sm:text-sm text-violet-600 mt-1 truncate">
+                  <TrendingUp className="inline h-3 w-3 mr-1 flex-shrink-0" />
                   {totalShops > 0 ? `${totalShops} total shops` : 'No shops yet'}
                 </p>
               </div>
-              <div className="h-12 w-12 bg-violet-100 rounded-lg flex items-center justify-center">
-                <Store className="h-6 w-6 text-violet-600" />
+              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-violet-100 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
+                <Store className="h-5 w-5 sm:h-6 sm:w-6 text-violet-600" />
               </div>
             </div>
           </CardContent>
@@ -152,18 +152,18 @@ function DashboardOverview({ onNavigate }: { onNavigate: (section: string) => vo
 
         {/* Pending Payments Card */}
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-600">Pending Payments</p>
-                <p className="text-2xl font-bold text-slate-900 mt-1">{dashboardStats.pendingPayments}</p>
-                <p className="text-sm text-orange-600 mt-1">
-                  <Clock className="inline h-3 w-3 mr-1" />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-slate-600 truncate">Pending Payments</p>
+                <p className="text-lg sm:text-2xl font-bold text-slate-900 mt-1 truncate">{dashboardStats.pendingPayments}</p>
+                <p className="text-xs sm:text-sm text-orange-600 mt-1 truncate">
+                  <Clock className="inline h-3 w-3 mr-1 flex-shrink-0" />
                   5 invoices overdue
                 </p>
               </div>
-              <div className="h-12 w-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                <Clock className="h-6 w-6 text-orange-600" />
+              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
+                <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-orange-600" />
               </div>
             </div>
           </CardContent>
@@ -171,20 +171,20 @@ function DashboardOverview({ onNavigate }: { onNavigate: (section: string) => vo
       </div>
 
       {/* Charts and Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Revenue Chart Placeholder */}
         <Card className="lg:col-span-2">
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle>Revenue Overview</CardTitle>
-              <div className="flex items-center space-x-4 text-sm">
-                <div className="flex items-center space-x-1">
-                  <div className="w-3 h-3 bg-primary rounded-full"></div>
-                  <span className="text-slate-600">Revenue</span>
+          <CardHeader className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+              <CardTitle className="text-base sm:text-lg">Revenue Overview</CardTitle>
+              <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm">
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 sm:w-3 sm:h-3 bg-primary rounded-full flex-shrink-0"></div>
+                  <span className="text-slate-600 truncate">Revenue</span>
                 </div>
-                <div className="flex items-center space-x-1">
-                  <div className="w-3 h-3 bg-slate-300 rounded-full"></div>
-                  <span className="text-slate-600">Target</span>
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 sm:w-3 sm:h-3 bg-slate-300 rounded-full flex-shrink-0"></div>
+                  <span className="text-slate-600 truncate">Target</span>
                 </div>
               </div>
             </div>
