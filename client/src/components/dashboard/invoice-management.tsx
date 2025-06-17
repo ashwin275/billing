@@ -396,13 +396,13 @@ export default function InvoiceManagement() {
 
   // Filter and sort invoices
   const filteredInvoices = invoices?.filter(invoice =>
-    invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    invoice.invoiceNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     invoice.customer?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     invoice.shop?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    invoice.transactionId.toLowerCase().includes(searchTerm.toLowerCase())
+    invoice.transactionId?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
-  const sortedInvoices = filteredInvoices.sort((a, b) => {
+  const sortedInvoices = [...filteredInvoices].sort((a, b) => {
     let aValue = a[sortField];
     let bValue = b[sortField];
 
@@ -441,6 +441,7 @@ export default function InvoiceManagement() {
           <CardContent className="p-6">
             <div className="flex items-center justify-center h-32">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <span className="ml-2">Loading invoices...</span>
             </div>
           </CardContent>
         </Card>
@@ -456,8 +457,9 @@ export default function InvoiceManagement() {
         </div>
         <Card>
           <CardContent className="p-6">
-            <div className="text-center text-destructive">
-              <p>Failed to load invoices. Please try again.</p>
+            <div className="text-center">
+              <p className="text-destructive mb-4">Failed to load invoices. Please try again.</p>
+              <Button onClick={() => window.location.reload()}>Refresh Page</Button>
             </div>
           </CardContent>
         </Card>
@@ -890,30 +892,41 @@ export default function InvoiceManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {currentInvoices.map((invoice) => (
+                {currentInvoices.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8">
+                      <div className="flex flex-col items-center space-y-2">
+                        <FileText className="h-8 w-8 text-muted-foreground" />
+                        <p className="text-muted-foreground">No invoices found</p>
+                        <p className="text-sm text-muted-foreground">Create your first invoice to get started</p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  currentInvoices.map((invoice) => (
                   <TableRow key={invoice.invoiceId}>
                     <TableCell>
                       <div className="space-y-1">
-                        <div className="font-medium">{invoice.invoiceNumber}</div>
-                        <div className="text-sm text-slate-600">{invoice.transactionId}</div>
+                        <div className="font-medium">{invoice.invoiceNumber || 'N/A'}</div>
+                        <div className="text-sm text-slate-600">{invoice.transactionId || 'N/A'}</div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1">
-                        <div className="font-medium">{invoice.customer?.name}</div>
-                        <div className="text-sm text-slate-600">{invoice.customer?.place}</div>
+                        <div className="font-medium">{invoice.customer?.name || 'Unknown Customer'}</div>
+                        <div className="text-sm text-slate-600">{invoice.customer?.place || 'Unknown Location'}</div>
                       </div>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
                       <div className="space-y-1">
-                        <div className="font-medium">{invoice.shop?.name}</div>
-                        <div className="text-sm text-slate-600">{invoice.shop?.place}</div>
+                        <div className="font-medium">{invoice.shop?.name || 'Unknown Shop'}</div>
+                        <div className="text-sm text-slate-600">{invoice.shop?.place || 'Unknown Location'}</div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1">
                         <div className="font-medium">₹{invoice.totalAmount?.toFixed(2) || '0.00'}</div>
-                        <div className="text-sm text-slate-600">{invoice.paymentMode}</div>
+                        <div className="text-sm text-slate-600">{invoice.paymentMode || 'N/A'}</div>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -939,7 +952,8 @@ export default function InvoiceManagement() {
                       </div>
                     </TableCell>
                   </TableRow>
-                ))}
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
