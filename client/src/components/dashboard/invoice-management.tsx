@@ -715,7 +715,14 @@ export default function InvoiceManagement() {
                                   type="number"
                                   min="1"
                                   {...field}
-                                  onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    if (value === '') {
+                                      field.onChange('');
+                                    } else {
+                                      field.onChange(parseInt(value) || 1);
+                                    }
+                                  }}
                                 />
                               </FormControl>
                               <FormMessage />
@@ -735,7 +742,14 @@ export default function InvoiceManagement() {
                                   min="0"
                                   step="0.01"
                                   {...field}
-                                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    if (value === '') {
+                                      field.onChange('');
+                                    } else {
+                                      field.onChange(parseFloat(value) || 0);
+                                    }
+                                  }}
                                 />
                               </FormControl>
                               <FormMessage />
@@ -823,7 +837,14 @@ export default function InvoiceManagement() {
                               step="0.01"
                               placeholder="0.00"
                               {...field}
-                              onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                if (value === '') {
+                                  field.onChange('');
+                                } else {
+                                  field.onChange(parseFloat(value) || 0);
+                                }
+                              }}
                             />
                           </FormControl>
                           <FormMessage />
@@ -844,7 +865,14 @@ export default function InvoiceManagement() {
                               step="0.01"
                               placeholder="0.00"
                               {...field}
-                              onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                if (value === '') {
+                                  field.onChange('');
+                                } else {
+                                  field.onChange(parseFloat(value) || 0);
+                                }
+                              }}
                             />
                           </FormControl>
                           <FormMessage />
@@ -1141,7 +1169,105 @@ export default function InvoiceManagement() {
                 <Button variant="outline" onClick={() => setIsPreviewDialogOpen(false)}>
                   Close
                 </Button>
-                <Button onClick={handleDownloadPDF}>
+                <Button onClick={(e) => {
+                  e.preventDefault();
+                  // Generate PDF from preview data
+                  const printWindow = window.open('', '_blank');
+                  if (!printWindow) return;
+
+                  const previewHTML = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                      <title>Invoice Preview - ${invoicePreview.shop.name}</title>
+                      <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.4; }
+                        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
+                        .company { font-size: 28px; font-weight: bold; color: #333; }
+                        .company-details { font-size: 14px; color: #666; margin-top: 10px; }
+                        .billing-section { display: flex; justify-content: space-between; margin-bottom: 30px; }
+                        .billing-box { width: 45%; border: 1px solid #ddd; padding: 15px; border-radius: 5px; }
+                        .table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                        .table th, .table td { padding: 12px 8px; border: 1px solid #ddd; text-align: left; }
+                        .table th { background-color: #f8f9fa; font-weight: bold; }
+                        .totals { margin-top: 20px; text-align: right; width: 300px; margin-left: auto; }
+                        .total-row { display: flex; justify-content: space-between; margin: 8px 0; padding: 5px 0; }
+                        .grand-total { font-weight: bold; font-size: 18px; border-top: 2px solid #333; padding-top: 8px; }
+                      </style>
+                    </head>
+                    <body>
+                      <div class="header">
+                        <div class="company">${invoicePreview.shop.name}</div>
+                        <div class="company-details">${invoicePreview.shop.place}</div>
+                      </div>
+                      
+                      <div class="billing-section">
+                        <div class="billing-box">
+                          <strong>Bill To:</strong><br>
+                          ${invoicePreview.customer.name}<br>
+                          ${invoicePreview.customer.place}<br>
+                          Phone: ${invoicePreview.customer.phone}
+                        </div>
+                        <div class="billing-box">
+                          <strong>Invoice Details:</strong><br>
+                          Date: ${new Date().toLocaleDateString()}<br>
+                          Type: Preview
+                        </div>
+                      </div>
+
+                      <table class="table">
+                        <thead>
+                          <tr>
+                            <th>Product</th>
+                            <th>HSN</th>
+                            <th>Qty</th>
+                            <th>Rate</th>
+                            <th>CGST</th>
+                            <th>SGST</th>
+                            <th>Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          ${invoicePreview.items.map(item => `
+                            <tr>
+                              <td>${item.product.name}</td>
+                              <td>${item.product.hsn}</td>
+                              <td>${item.quantity}</td>
+                              <td>₹${item.unitPrice.toFixed(2)}</td>
+                              <td>₹${item.cgst.toFixed(2)}</td>
+                              <td>₹${item.sgst.toFixed(2)}</td>
+                              <td>₹${item.totalPrice.toFixed(2)}</td>
+                            </tr>
+                          `).join('')}
+                        </tbody>
+                      </table>
+
+                      <div class="totals">
+                        <div class="total-row">
+                          <span>Subtotal:</span>
+                          <span>₹${invoicePreview.subtotal.toFixed(2)}</span>
+                        </div>
+                        <div class="total-row">
+                          <span>Tax:</span>
+                          <span>₹${invoicePreview.totalTax.toFixed(2)}</span>
+                        </div>
+                        <div class="total-row">
+                          <span>Discount:</span>
+                          <span>₹${invoicePreview.totalDiscount.toFixed(2)}</span>
+                        </div>
+                        <div class="total-row grand-total">
+                          <span>Grand Total:</span>
+                          <span>₹${invoicePreview.grandTotal.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </body>
+                    </html>
+                  `;
+
+                  printWindow.document.write(previewHTML);
+                  printWindow.document.close();
+                  printWindow.print();
+                }}>
                   <Download className="h-4 w-4 mr-2" />
                   Download PDF
                 </Button>
