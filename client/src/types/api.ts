@@ -121,3 +121,58 @@ export interface CustomerUpdate {
   place: string;
   phone: number;
 }
+
+export interface Invoice {
+  invoiceId: number;
+  invoiceNumber: string;
+  customer: Customer;
+  shop: Shop;
+  discount: number;
+  amountPaid: number;
+  paymentMode: 'CASH' | 'CARD' | 'UPI' | 'CHEQUE' | 'BANK_TRANSFER';
+  paymentStatus: 'PAID' | 'PENDING' | 'OVERDUE';
+  remark: string;
+  dueDate: string | null;
+  billType: 'GST' | 'NON_GST';
+  saleType: 'RETAIL' | 'WHOLESALE';
+  transactionId: string;
+  saleItems: SaleItem[];
+  subtotal: number;
+  totalTax: number;
+  totalAmount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SaleItem {
+  saleItemId: number;
+  product: Product;
+  quantity: number;
+  discount: number;
+  unitPrice: number;
+  totalPrice: number;
+  cgst: number;
+  sgst: number;
+  taxAmount: number;
+}
+
+export interface InvoiceInput {
+  customerId: number;
+  shopId: number;
+  discount: number;
+  amountPaid: number;
+  paymentMode: 'CASH' | 'CARD' | 'UPI' | 'CHEQUE' | 'BANK_TRANSFER';
+  paymentStatus: 'PAID' | 'PENDING' | 'OVERDUE';
+  remark: string;
+  dueDate: string | null;
+  billType: 'GST' | 'NON_GST';
+  saleType: 'RETAIL' | 'WHOLESALE';
+  transactionId: string;
+  saleItems: SaleItemInput[];
+}
+
+export interface SaleItemInput {
+  productId: number;
+  quantity: number;
+  discount: number;
+}

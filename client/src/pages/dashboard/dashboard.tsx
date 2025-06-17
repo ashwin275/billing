@@ -26,6 +26,7 @@ import UsersManagement from "@/components/dashboard/users-management";
 import ProductsManagement from "@/components/dashboard/products-management";
 import ShopsManagement from "@/components/dashboard/shops-management";
 import CustomersManagement from "@/components/dashboard/customers-management";
+import InvoiceManagement from "@/components/dashboard/invoice-management";
 import ProfileManagement from "@/components/dashboard/profile-management";
 import { shopsApi, usersApi } from "@/lib/api";
 
@@ -393,14 +394,7 @@ function Dashboard() {
         return <UsersManagement />;
       
       case "invoice":
-        return (
-          <ContentPanel
-            title="Invoice Management"
-            description="Invoice management interface will be implemented here."
-            buttonText="Create Invoice"
-            buttonIcon={FileText}
-          />
-        );
+        return <InvoiceManagement />;
       
       case "shops":
         return <ShopsManagement />;

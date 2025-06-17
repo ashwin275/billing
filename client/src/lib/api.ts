@@ -273,6 +273,47 @@ export const customersApi = {
 };
 
 /**
+ * Invoice management API endpoints
+ */
+export const invoicesApi = {
+  /**
+   * Get all invoices
+   */
+  async getAllInvoices(): Promise<import("@/types/api").Invoice[]> {
+    return apiRequest('/invoice/all');
+  },
+
+  /**
+   * Add new invoice
+   */
+  async addInvoice(invoiceData: import("@/types/api").InvoiceInput): Promise<void> {
+    return apiRequest('/invoice/add', {
+      method: 'POST',
+      body: JSON.stringify(invoiceData),
+    });
+  },
+
+  /**
+   * Update invoice by ID
+   */
+  async updateInvoice(invoiceId: number, invoiceData: import("@/types/api").InvoiceInput): Promise<void> {
+    return apiRequest(`/invoice/update/${invoiceId}`, {
+      method: 'POST',
+      body: JSON.stringify(invoiceData),
+    });
+  },
+
+  /**
+   * Delete invoice by ID
+   */
+  async deleteInvoice(invoiceId: number): Promise<void> {
+    return apiRequest(`/invoice/delete/${invoiceId}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
+/**
  * Profile API endpoints
  */
 export const profileApi = {
