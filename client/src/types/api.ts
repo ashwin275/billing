@@ -96,3 +96,28 @@ export interface ProductInput {
   barcode: string;
   shopId: number;
 }
+
+export interface Customer {
+  customerId: number;
+  name: string;
+  place: string;
+  phone: string | number;
+  shop: Shop;
+  shopId: number;
+  totalSpend: number | null;
+  referredby: string | null;
+}
+
+export interface CustomerInput {
+  name: string;
+  place: string;
+  phone: string;
+  shopId: number;
+}
+
+export interface CustomerUpdate {
+  customerId: number;
+  name: string;
+  place: string;
+  phone: number;
+}

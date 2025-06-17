@@ -93,6 +93,12 @@ export default function Sidebar({ activeSection, onSectionChange, isMobileOpen, 
       category: "Billing"
     },
     {
+      id: "customers",
+      label: "Customers",
+      icon: UserCircle,
+      category: "Billing"
+    },
+    {
       id: "report",
       label: "Reports",
       icon: TrendingUp,

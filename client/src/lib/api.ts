@@ -232,6 +232,47 @@ export const shopsApi = {
 };
 
 /**
+ * Customers management API endpoints
+ */
+export const customersApi = {
+  /**
+   * Get all customers
+   */
+  async getAllCustomers(): Promise<import("@/types/api").Customer[]> {
+    return apiRequest('/customer/all');
+  },
+
+  /**
+   * Add new customer
+   */
+  async addCustomer(customerData: import("@/types/api").CustomerInput): Promise<void> {
+    return apiRequest('/customer/add', {
+      method: 'POST',
+      body: JSON.stringify(customerData),
+    });
+  },
+
+  /**
+   * Update customer by ID
+   */
+  async updateCustomer(customerId: number, customerData: import("@/types/api").CustomerUpdate): Promise<void> {
+    return apiRequest(`/customer/update/${customerId}`, {
+      method: 'POST',
+      body: JSON.stringify(customerData),
+    });
+  },
+
+  /**
+   * Delete customer by ID
+   */
+  async deleteCustomer(customerId: number): Promise<void> {
+    return apiRequest(`/customer/delete/${customerId}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
+/**
  * Profile API endpoints
  */
 export const profileApi = {

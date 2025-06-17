@@ -25,6 +25,7 @@ import Sidebar from "@/components/layout/sidebar";
 import UsersManagement from "@/components/dashboard/users-management";
 import ProductsManagement from "@/components/dashboard/products-management";
 import ShopsManagement from "@/components/dashboard/shops-management";
+import CustomersManagement from "@/components/dashboard/customers-management";
 import ProfileManagement from "@/components/dashboard/profile-management";
 import { shopsApi, usersApi } from "@/lib/api";
 
@@ -403,6 +404,9 @@ function Dashboard() {
       
       case "shops":
         return <ShopsManagement />;
+      
+      case "customers":
+        return <CustomersManagement />;
       
       case "report":
         return (
