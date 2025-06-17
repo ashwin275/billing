@@ -112,7 +112,7 @@ export default function InvoiceManagement() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
   const [invoicePreview, setInvoicePreview] = useState<InvoicePreview | null>(null);
-  const [sortField, setSortField] = useState<keyof Invoice>("createdAt");
+  const [sortField, setSortField] = useState<keyof Invoice>("invoiceDate");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
   const { toast } = useToast();
@@ -177,8 +177,7 @@ export default function InvoiceManagement() {
       queryClient.invalidateQueries({ queryKey: ["/api/invoice/all"] });
       setIsCreateDialogOpen(false);
       form.reset();
-      // Generate PDF after successful creation
-      handleDownloadPDF();
+      // PDF will be generated on demand from the table
     },
     onError: (error: any) => {
       let errorMessage = "Failed to create invoice. Please try again.";
@@ -294,12 +293,13 @@ export default function InvoiceManagement() {
   };
 
   /**
-   * Generate PDF download
+   * Generate PDF download for invoice
    */
-  const handleDownloadPDF = () => {
-    if (!invoicePreview) return;
-
-    // Create a simple HTML invoice for printing
+  const handleDownloadPDF = async (invoice: Invoice) => {
+    // Get customer data first
+    const customer = customers?.find(c => c.customerId === invoice.customerId);
+    
+    // Create a detailed HTML invoice for printing
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
@@ -307,67 +307,122 @@ export default function InvoiceManagement() {
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Invoice - ${invoicePreview.shop.name}</title>
+        <title>Invoice - ${invoice.invoiceNo}</title>
         <style>
-          body { font-family: Arial, sans-serif; margin: 20px; }
-          .header { text-align: center; margin-bottom: 30px; }
-          .company { font-size: 24px; font-weight: bold; }
-          .details { display: flex; justify-content: space-between; margin-bottom: 30px; }
-          .table { width: 100%; border-collapse: collapse; }
-          .table th, .table td { padding: 8px; border: 1px solid #ddd; text-align: left; }
-          .table th { background-color: #f5f5f5; }
-          .totals { margin-top: 20px; text-align: right; }
-          .total-row { margin: 5px 0; }
-          .grand-total { font-weight: bold; font-size: 18px; }
+          body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.4; }
+          .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
+          .company { font-size: 28px; font-weight: bold; color: #333; }
+          .company-details { font-size: 14px; color: #666; margin-top: 10px; }
+          .invoice-info { display: flex; justify-content: space-between; margin-bottom: 30px; }
+          .billing-section { display: flex; justify-content: space-between; margin-bottom: 30px; }
+          .billing-box { width: 45%; border: 1px solid #ddd; padding: 15px; border-radius: 5px; }
+          .table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+          .table th, .table td { padding: 12px 8px; border: 1px solid #ddd; text-align: left; }
+          .table th { background-color: #f8f9fa; font-weight: bold; }
+          .table td { vertical-align: top; }
+          .totals { margin-top: 20px; text-align: right; width: 300px; margin-left: auto; }
+          .total-row { display: flex; justify-content: space-between; margin: 8px 0; padding: 5px 0; }
+          .subtotal { border-top: 1px solid #ddd; padding-top: 8px; }
+          .grand-total { font-weight: bold; font-size: 18px; border-top: 2px solid #333; padding-top: 8px; }
+          .tax-breakdown { font-size: 14px; color: #666; }
+          .footer { margin-top: 40px; text-align: center; font-size: 12px; color: #666; }
+          .payment-info { margin-top: 20px; }
         </style>
       </head>
       <body>
         <div class="header">
-          <div class="company">${invoicePreview.shop.name}</div>
-          <div>${invoicePreview.shop.place}</div>
+          <div class="company">${invoice.shop?.name || 'Shop Name'}</div>
+          <div class="company-details">
+            ${invoice.shop?.place || 'Location'}<br>
+            ${invoice.shop?.owner?.phone || 'Phone'} | ${invoice.shop?.owner?.email || 'Email'}
+          </div>
         </div>
         
-        <div class="details">
+        <div class="invoice-info">
           <div>
-            <strong>Bill To:</strong><br>
-            ${invoicePreview.customer.name}<br>
-            ${invoicePreview.customer.place}<br>
-            ${invoicePreview.customer.phone}
+            <strong>Invoice #:</strong> ${invoice.invoiceNo}<br>
+            <strong>Date:</strong> ${invoice.invoiceDate}<br>
+            <strong>Sales ID:</strong> ${invoice.salesId}
           </div>
           <div>
-            <strong>Invoice #:</strong> INV-${Date.now()}<br>
-            <strong>Date:</strong> ${new Date().toLocaleDateString()}<br>
+            <strong>Payment Mode:</strong> ${invoice.paymentMode}<br>
+            <strong>Status:</strong> ${invoice.paymentStatus}<br>
+            ${invoice.dueDate ? `<strong>Due Date:</strong> ${invoice.dueDate}<br>` : ''}
+          </div>
+        </div>
+
+        <div class="billing-section">
+          <div class="billing-box">
+            <strong>Bill To:</strong><br>
+            ${customer ? `
+              ${customer.name}<br>
+              ${customer.place}<br>
+              Phone: ${customer.phone}
+            ` : `
+              Customer ID: ${invoice.customerId}<br>
+              Address: Not Available
+            `}
+          </div>
+          <div class="billing-box">
+            <strong>Bill From:</strong><br>
+            ${invoice.shop?.name || 'Shop Name'}<br>
+            ${invoice.shop?.place || 'Location'}<br>
+            ${invoice.shop?.owner?.phone || 'Phone'}
           </div>
         </div>
 
         <table class="table">
           <thead>
             <tr>
-              <th>Product</th>
+              <th>Item</th>
+              <th>HSN</th>
               <th>Qty</th>
-              <th>Unit Price</th>
-              <th>Discount</th>
-              <th>Total</th>
+              <th>Rate</th>
+              <th>CGST</th>
+              <th>SGST</th>
+              <th>Tax</th>
+              <th>Amount</th>
             </tr>
           </thead>
           <tbody>
-            ${invoicePreview.items.map(item => `
-              <tr>
-                <td>${item.product.name}</td>
-                <td>${item.quantity}</td>
-                <td>₹${item.unitPrice.toFixed(2)}</td>
-                <td>₹${item.discount.toFixed(2)}</td>
-                <td>₹${item.totalPrice.toFixed(2)}</td>
-              </tr>
-            `).join('')}
+            <tr>
+              <td colspan="8" style="text-align: center; padding: 20px; color: #666;">
+                Product details not available in current invoice data
+              </td>
+            </tr>
           </tbody>
         </table>
 
+        <div class="payment-info">
+          <strong>Remarks:</strong> ${invoice.remark || 'No remarks'}
+        </div>
+
         <div class="totals">
-          <div class="total-row">Subtotal: ₹${invoicePreview.subtotal.toFixed(2)}</div>
-          <div class="total-row">Tax: ₹${invoicePreview.totalTax.toFixed(2)}</div>
-          <div class="total-row">Discount: ₹${invoicePreview.totalDiscount.toFixed(2)}</div>
-          <div class="total-row grand-total">Total: ₹${invoicePreview.grandTotal.toFixed(2)}</div>
+          <div class="total-row subtotal">
+            <span>Subtotal:</span>
+            <span>₹${(invoice.totalAmount - invoice.tax).toFixed(2)}</span>
+          </div>
+          <div class="total-row tax-breakdown">
+            <span>Tax:</span>
+            <span>₹${invoice.tax.toFixed(2)}</span>
+          </div>
+          <div class="total-row">
+            <span>Discount:</span>
+            <span>₹${invoice.discount.toFixed(2)}</span>
+          </div>
+          <div class="total-row grand-total">
+            <span>Grand Total:</span>
+            <span>₹${invoice.totalAmount.toFixed(2)}</span>
+          </div>
+          <div class="total-row">
+            <span>Amount Paid:</span>
+            <span>₹${invoice.amountPaid?.toFixed(2) || '0.00'}</span>
+          </div>
+        </div>
+
+        <div class="footer">
+          <p>Thank you for your business!</p>
+          <p>Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</p>
         </div>
       </body>
       </html>
@@ -396,10 +451,10 @@ export default function InvoiceManagement() {
 
   // Filter and sort invoices
   const filteredInvoices = invoices?.filter(invoice =>
-    invoice.invoiceNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    invoice.customer?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    invoice.invoiceNo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     invoice.shop?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    invoice.transactionId?.toLowerCase().includes(searchTerm.toLowerCase())
+    invoice.remark?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    invoice.paymentMode?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
   const sortedInvoices = [...filteredInvoices].sort((a, b) => {
@@ -907,14 +962,14 @@ export default function InvoiceManagement() {
                     <TableRow key={invoice.invoiceId}>
                     <TableCell>
                       <div className="space-y-1">
-                        <div className="font-medium">{invoice.invoiceNumber || 'N/A'}</div>
-                        <div className="text-sm text-slate-600">{invoice.transactionId || 'N/A'}</div>
+                        <div className="font-medium">{invoice.invoiceNo || 'N/A'}</div>
+                        <div className="text-sm text-slate-600">{invoice.invoiceDate || 'N/A'}</div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1">
-                        <div className="font-medium">{invoice.customer?.name || 'Unknown Customer'}</div>
-                        <div className="text-sm text-slate-600">{invoice.customer?.place || 'Unknown Location'}</div>
+                        <div className="font-medium">Customer ID: {invoice.customerId}</div>
+                        <div className="text-sm text-slate-600">{invoice.remark || 'No remarks'}</div>
                       </div>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
@@ -945,7 +1000,10 @@ export default function InvoiceManagement() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={handleDownloadPDF}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleDownloadPDF(invoice);
+                          }}
                         >
                           <Download className="h-4 w-4" />
                         </Button>

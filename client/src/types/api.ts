@@ -124,24 +124,42 @@ export interface CustomerUpdate {
 
 export interface Invoice {
   invoiceId: number;
-  invoiceNumber: string;
-  customer: Customer;
-  shop: Shop;
+  invoiceNo: string;
+  invoiceDate: string;
+  customerId: number;
+  shopId: number;
+  salesId: number;
   discount: number;
-  amountPaid: number;
-  paymentMode: 'CASH' | 'CARD' | 'UPI' | 'CHEQUE' | 'BANK_TRANSFER';
-  paymentStatus: 'PAID' | 'PENDING' | 'OVERDUE';
-  remark: string;
-  dueDate: string | null;
-  billType: 'GST' | 'NON_GST';
-  saleType: 'RETAIL' | 'WHOLESALE';
-  transactionId: string;
-  saleItems: SaleItem[];
-  subtotal: number;
-  totalTax: number;
+  staffId: number;
   totalAmount: number;
-  createdAt: string;
-  updatedAt: string;
+  amountPaid: number | null;
+  tax: number;
+  dueDate: string | null;
+  paymentStatus: 'PAID' | 'PENDING' | 'OVERDUE';
+  paymentMode: 'CASH' | 'CARD' | 'UPI' | 'CHEQUE' | 'BANK_TRANSFER';
+  remark: string;
+  shop: Shop;
+  sales: {
+    saleId: number | null;
+    staffId: number | null;
+    customerId: number | null;
+    shopId: number | null;
+    totalAmount: number | null;
+    taxRate: number | null;
+    discountId: number | null;
+    discountAmount: number | null;
+    finalAmount: number | null;
+    paymentMode: string | null;
+    paymentStatus: string | null;
+    saleType: 'RETAIL' | 'WHOLESALE';
+    billType: 'GST' | 'NON_GST';
+    transactionId: string | null;
+    saleDate: string | null;
+  };
+  billType: 'GST' | 'NON_GST' | null;
+  saleType: 'RETAIL' | 'WHOLESALE' | null;
+  transactionId: string | null;
+  saleItems: SaleItem[] | null;
 }
 
 export interface SaleItem {
