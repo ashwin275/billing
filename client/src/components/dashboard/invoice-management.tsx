@@ -1517,6 +1517,7 @@ export default function InvoiceManagement() {
                             <th>HSN</th>
                             <th>Qty</th>
                             <th>Rate</th>
+                            <th>Discount</th>
                             <th>CGST</th>
                             <th>SGST</th>
                             <th>Total</th>
@@ -1525,13 +1526,28 @@ export default function InvoiceManagement() {
                         <tbody>
                           ${invoicePreview.items.map(item => `
                             <tr>
-                              <td>${item.product.name}</td>
+                              <td>
+                                <div style="font-weight: bold;">${item.product.name}</div>
+                                <div style="font-size: 12px; color: #666;">${item.product.description || ''}</div>
+                              </td>
                               <td>${item.product.hsn}</td>
                               <td>${item.quantity}</td>
                               <td>₹${item.unitPrice.toFixed(2)}</td>
-                              <td>₹${item.cgst.toFixed(2)}</td>
-                              <td>₹${item.sgst.toFixed(2)}</td>
-                              <td>₹${item.totalPrice.toFixed(2)}</td>
+                              <td>
+                                <div>₹${item.discountAmount.toFixed(2)}</div>
+                                <div style="font-size: 10px; color: #666;">
+                                  ${item.discountType === 'PERCENTAGE' ? `${item.discount}%` : 'Amount'}
+                                </div>
+                              </td>
+                              <td>
+                                <div>₹${item.cgstAmount.toFixed(2)}</div>
+                                <div style="font-size: 10px; color: #666;">${item.cgst}%</div>
+                              </td>
+                              <td>
+                                <div>₹${item.sgstAmount.toFixed(2)}</div>
+                                <div style="font-size: 10px; color: #666;">${item.sgst}%</div>
+                              </td>
+                              <td style="font-weight: bold;">₹${item.totalPrice.toFixed(2)}</td>
                             </tr>
                           `).join('')}
                         </tbody>
@@ -1543,18 +1559,57 @@ export default function InvoiceManagement() {
                           <span>₹${invoicePreview.subtotal.toFixed(2)}</span>
                         </div>
                         <div class="total-row">
-                          <span>Tax:</span>
+                          <span>Total CGST:</span>
+                          <span>₹${invoicePreview.items.reduce((sum, item) => sum + item.cgstAmount, 0).toFixed(2)}</span>
+                        </div>
+                        <div class="total-row">
+                          <span>Total SGST:</span>
+                          <span>₹${invoicePreview.items.reduce((sum, item) => sum + item.sgstAmount, 0).toFixed(2)}</span>
+                        </div>
+                        <div class="total-row">
+                          <span>Total Tax:</span>
                           <span>₹${invoicePreview.totalTax.toFixed(2)}</span>
                         </div>
                         <div class="total-row">
-                          <span>Discount:</span>
+                          <span>Overall Discount:</span>
                           <span>₹${invoicePreview.totalDiscount.toFixed(2)}</span>
                         </div>
                         <div class="total-row grand-total">
                           <span>Grand Total:</span>
                           <span>₹${invoicePreview.grandTotal.toFixed(2)}</span>
                         </div>
+                        ${invoicePreview.dueDate ? `
+                          <div class="total-row" style="font-size: 14px; color: #666;">
+                            <span>Due Date:</span>
+                            <span>${invoicePreview.dueDate}</span>
+                          </div>
+                        ` : ''}
                       </div>
+
+                      ${invoicePreview.termsAndConditions ? `
+                        <div style="margin-top: 30px;">
+                          <h4 style="font-weight: bold; margin-bottom: 10px;">Terms and Conditions:</h4>
+                          <p style="font-size: 12px; color: #666; white-space: pre-wrap; line-height: 1.4;">
+                            ${invoicePreview.termsAndConditions}
+                          </p>
+                        </div>
+                      ` : ''}
+
+                      ${invoicePreview.signatureType && invoicePreview.signatureType !== 'NONE' ? `
+                        <div style="margin-top: 40px; text-align: right;">
+                          <div style="display: inline-block;">
+                            <div style="font-size: 12px; color: #666; margin-bottom: 10px;">Authorized Signature:</div>
+                            ${invoicePreview.signatureType === 'IMAGE' && invoicePreview.signatureData ? `
+                              <img src="${invoicePreview.signatureData}" alt="Signature" style="max-height: 60px; border-bottom: 1px solid #ccc;" />
+                            ` : ''}
+                            ${invoicePreview.signatureType === 'DIGITAL' && invoicePreview.signatureData ? `
+                              <div style="border-bottom: 1px solid #ccc; padding-bottom: 5px; min-width: 200px; text-align: center; font-family: cursive;">
+                                ${invoicePreview.signatureData}
+                              </div>
+                            ` : ''}
+                          </div>
+                        </div>
+                      ` : ''}
                     </body>
                     </html>
                   `;
