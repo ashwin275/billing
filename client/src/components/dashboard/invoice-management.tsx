@@ -904,7 +904,7 @@ export default function InvoiceManagement() {
                   </TableRow>
                 ) : (
                   currentInvoices.map((invoice) => (
-                  <TableRow key={invoice.invoiceId}>
+                    <TableRow key={invoice.invoiceId}>
                     <TableCell>
                       <div className="space-y-1">
                         <div className="font-medium">{invoice.invoiceNumber || 'N/A'}</div>
@@ -951,7 +951,7 @@ export default function InvoiceManagement() {
                         </Button>
                       </div>
                     </TableCell>
-                  </TableRow>
+                    </TableRow>
                   ))
                 )}
               </TableBody>
