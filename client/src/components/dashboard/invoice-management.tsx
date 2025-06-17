@@ -66,6 +66,7 @@ const invoiceSchema = z.object({
   customerId: z.number().min(1, "Please select a customer"),
   shopId: z.number().min(1, "Please select a shop"),
   discount: z.number().min(0, "Discount cannot be negative"),
+  discountType: z.enum(['PERCENTAGE', 'AMOUNT']),
   amountPaid: z.number().min(0, "Amount paid cannot be negative"),
   paymentMode: z.enum(['CASH', 'CARD', 'UPI', 'CHEQUE', 'BANK_TRANSFER']),
   paymentStatus: z.enum(['PAID', 'PENDING', 'OVERDUE']),
@@ -74,10 +75,14 @@ const invoiceSchema = z.object({
   billType: z.enum(['GST', 'NON_GST']),
   saleType: z.enum(['RETAIL', 'WHOLESALE']),
   transactionId: z.string().min(1, "Transaction ID is required"),
+  termsAndConditions: z.string().optional(),
+  signatureType: z.enum(['NONE', 'IMAGE', 'DIGITAL']).optional(),
+  signatureData: z.string().optional(),
   saleItems: z.array(z.object({
     productId: z.number().min(1, "Please select a product"),
     quantity: z.number().min(1, "Quantity must be at least 1"),
     discount: z.number().min(0, "Discount cannot be negative"),
+    discountType: z.enum(['PERCENTAGE', 'AMOUNT']),
   })).min(1, "At least one product is required"),
 });
 
@@ -90,16 +95,25 @@ interface InvoicePreview {
     product: Product;
     quantity: number;
     discount: number;
+    discountType: 'PERCENTAGE' | 'AMOUNT';
+    discountAmount: number;
     unitPrice: number;
-    totalPrice: number;
+    lineTotal: number;
     cgst: number;
     sgst: number;
+    cgstAmount: number;
+    sgstAmount: number;
     taxAmount: number;
+    totalPrice: number;
   }>;
   subtotal: number;
   totalDiscount: number;
   totalTax: number;
   grandTotal: number;
+  dueDate?: string | null;
+  termsAndConditions?: string;
+  signatureType?: 'NONE' | 'IMAGE' | 'DIGITAL';
+  signatureData?: string;
 }
 
 /**
@@ -125,6 +139,7 @@ export default function InvoiceManagement() {
       customerId: 0,
       shopId: 0,
       discount: 0,
+      discountType: 'AMOUNT',
       amountPaid: 0,
       paymentMode: 'CASH',
       paymentStatus: 'PAID',
@@ -133,7 +148,10 @@ export default function InvoiceManagement() {
       billType: 'GST',
       saleType: 'RETAIL',
       transactionId: '',
-      saleItems: [{ productId: 0, quantity: 1, discount: 0 }],
+      termsAndConditions: '',
+      signatureType: 'NONE',
+      signatureData: '',
+      saleItems: [{ productId: 0, quantity: 1, discount: 0, discountType: 'AMOUNT' }],
     },
   });
 
@@ -202,7 +220,7 @@ export default function InvoiceManagement() {
   });
 
   /**
-   * Calculate invoice totals
+   * Calculate invoice totals with detailed product-wise breakdown
    */
   const calculateInvoiceTotals = (formData: InvoiceFormData) => {
     if (!customers || !shops || !products) return null;
@@ -217,28 +235,55 @@ export default function InvoiceManagement() {
       if (!product) return null;
 
       const unitPrice = formData.saleType === 'RETAIL' ? product.retailRate : product.wholesaleRate;
-      const discountedPrice = unitPrice - item.discount;
-      const totalPrice = discountedPrice * item.quantity;
       
-      const cgst = formData.billType === 'GST' ? (totalPrice * product.cgst) / 100 : 0;
-      const sgst = formData.billType === 'GST' ? (totalPrice * product.sgst) / 100 : 0;
-      const taxAmount = cgst + sgst;
+      // Calculate discount amount based on type
+      let discountAmount = 0;
+      if (item.discountType === 'PERCENTAGE') {
+        discountAmount = (unitPrice * item.discount) / 100;
+      } else {
+        discountAmount = item.discount;
+      }
+      
+      const discountedPrice = unitPrice - discountAmount;
+      const lineTotal = discountedPrice * item.quantity;
+      
+      // Calculate CGST and SGST from product data
+      const cgstRate = formData.billType === 'GST' ? product.cgst : 0;
+      const sgstRate = formData.billType === 'GST' ? product.sgst : 0;
+      
+      const cgstAmount = (lineTotal * cgstRate) / 100;
+      const sgstAmount = (lineTotal * sgstRate) / 100;
+      const taxAmount = cgstAmount + sgstAmount;
+      const totalPrice = lineTotal + taxAmount;
 
       return {
         product,
         quantity: item.quantity,
         discount: item.discount,
+        discountType: item.discountType,
+        discountAmount,
         unitPrice,
-        totalPrice,
-        cgst,
-        sgst,
+        lineTotal,
+        cgst: cgstRate,
+        sgst: sgstRate,
+        cgstAmount,
+        sgstAmount,
         taxAmount,
+        totalPrice,
       };
     }).filter(Boolean);
 
-    const subtotal = items.reduce((sum, item) => sum + item!.totalPrice, 0);
-    const totalDiscount = formData.discount;
+    const subtotal = items.reduce((sum, item) => sum + item!.lineTotal, 0);
     const totalTax = items.reduce((sum, item) => sum + item!.taxAmount, 0);
+    
+    // Calculate overall discount
+    let totalDiscount = 0;
+    if (formData.discountType === 'PERCENTAGE') {
+      totalDiscount = (subtotal * formData.discount) / 100;
+    } else {
+      totalDiscount = formData.discount;
+    }
+    
     const grandTotal = subtotal + totalTax - totalDiscount;
 
     return {
@@ -249,6 +294,10 @@ export default function InvoiceManagement() {
       totalDiscount,
       totalTax,
       grandTotal,
+      dueDate: formData.dueDate,
+      termsAndConditions: formData.termsAndConditions,
+      signatureType: formData.signatureType,
+      signatureData: formData.signatureData,
     };
   };
 
@@ -670,7 +719,7 @@ export default function InvoiceManagement() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => append({ productId: 0, quantity: 1, discount: 0 })}
+                        onClick={() => append({ productId: 0, quantity: 1, discount: 0, discountType: 'AMOUNT' })}
                       >
                         <Plus className="h-4 w-4 mr-2" />
                         Add Product
@@ -678,7 +727,7 @@ export default function InvoiceManagement() {
                     </div>
 
                     {fields.map((field, index) => (
-                      <div key={field.id} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border rounded-lg">
+                      <div key={field.id} className="grid grid-cols-1 md:grid-cols-6 gap-4 p-4 border rounded-lg">
                         <FormField
                           control={form.control}
                           name={`saleItems.${index}.productId`}
@@ -694,7 +743,7 @@ export default function InvoiceManagement() {
                                 <SelectContent>
                                   {products?.map((product) => (
                                     <SelectItem key={product.productId} value={product.productId.toString()}>
-                                      {product.name} - ₹{product.retailRate}
+                                      {product.name} - ₹{product.retailRate} (CGST: {product.cgst}%, SGST: {product.sgst}%)
                                     </SelectItem>
                                   ))}
                                 </SelectContent>
@@ -732,10 +781,34 @@ export default function InvoiceManagement() {
 
                         <FormField
                           control={form.control}
+                          name={`saleItems.${index}.discountType`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Discount Type</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="AMOUNT">Amount (₹)</SelectItem>
+                                  <SelectItem value="PERCENTAGE">Percentage (%)</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
                           name={`saleItems.${index}.discount`}
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Discount (₹)</FormLabel>
+                              <FormLabel>
+                                Discount {form.watch(`saleItems.${index}.discountType`) === 'PERCENTAGE' ? '(%)' : '(₹)'}
+                              </FormLabel>
                               <FormControl>
                                 <Input
                                   type="number"
@@ -756,6 +829,17 @@ export default function InvoiceManagement() {
                             </FormItem>
                           )}
                         />
+
+                        <div className="flex flex-col justify-end space-y-2">
+                          {products && form.watch(`saleItems.${index}.productId`) && (
+                            <div className="text-xs text-muted-foreground">
+                              {(() => {
+                                const product = products.find(p => p.productId === form.watch(`saleItems.${index}.productId`));
+                                return product ? `CGST: ${product.cgst}% | SGST: ${product.sgst}%` : '';
+                              })()}
+                            </div>
+                          )}
+                        </div>
 
                         <div className="flex items-end">
                           <Button
@@ -823,13 +907,37 @@ export default function InvoiceManagement() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="discountType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Overall Discount Type</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="AMOUNT">Amount (₹)</SelectItem>
+                              <SelectItem value="PERCENTAGE">Percentage (%)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
                     <FormField
                       control={form.control}
                       name="discount"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Additional Discount (₹)</FormLabel>
+                          <FormLabel>
+                            Overall Discount {form.watch('discountType') === 'PERCENTAGE' ? '(%)' : '(₹)'}
+                          </FormLabel>
                           <FormControl>
                             <Input
                               type="number"
@@ -879,6 +987,118 @@ export default function InvoiceManagement() {
                         </FormItem>
                       )}
                     />
+                  </div>
+
+                  {/* Due Date */}
+                  <FormField
+                    control={form.control}
+                    name="dueDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Due Date (Optional)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="date"
+                            {...field}
+                            value={field.value || ''}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Terms and Conditions */}
+                  <FormField
+                    control={form.control}
+                    name="termsAndConditions"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Terms and Conditions</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Enter terms and conditions for this invoice..."
+                            className="min-h-[100px]"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Signature Options */}
+                  <div className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="signatureType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Signature</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="NONE">No Signature</SelectItem>
+                              <SelectItem value="IMAGE">Upload Image</SelectItem>
+                              <SelectItem value="DIGITAL">Digital Signature</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {form.watch('signatureType') === 'IMAGE' && (
+                      <FormField
+                        control={form.control}
+                        name="signatureData"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Upload Signature Image</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    const reader = new FileReader();
+                                    reader.onload = (e) => {
+                                      field.onChange(e.target?.result as string);
+                                    };
+                                    reader.readAsDataURL(file);
+                                  }
+                                }}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+
+                    {form.watch('signatureType') === 'DIGITAL' && (
+                      <FormField
+                        control={form.control}
+                        name="signatureData"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Digital Signature Text</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Enter your name or signature text"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
                   </div>
 
                   <FormField
@@ -1126,18 +1346,48 @@ export default function InvoiceManagement() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Product</TableHead>
+                      <TableHead>HSN</TableHead>
                       <TableHead>Qty</TableHead>
-                      <TableHead>Price</TableHead>
+                      <TableHead>Rate</TableHead>
+                      <TableHead>Discount</TableHead>
+                      <TableHead>CGST</TableHead>
+                      <TableHead>SGST</TableHead>
                       <TableHead>Total</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {invoicePreview.items.map((item, index) => (
                       <TableRow key={index}>
-                        <TableCell>{item.product.name}</TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{item.product.name}</div>
+                            <div className="text-xs text-muted-foreground">{item.product.description}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>{item.product.hsn}</TableCell>
                         <TableCell>{item.quantity}</TableCell>
                         <TableCell>₹{item.unitPrice.toFixed(2)}</TableCell>
-                        <TableCell>₹{item.totalPrice.toFixed(2)}</TableCell>
+                        <TableCell>
+                          <div>
+                            <div>₹{item.discountAmount.toFixed(2)}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {item.discountType === 'PERCENTAGE' ? `${item.discount}%` : 'Amount'}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <div>₹{item.cgstAmount.toFixed(2)}</div>
+                            <div className="text-xs text-muted-foreground">{item.cgst}%</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <div>₹{item.sgstAmount.toFixed(2)}</div>
+                            <div className="text-xs text-muted-foreground">{item.sgst}%</div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-medium">₹{item.totalPrice.toFixed(2)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -1151,19 +1401,64 @@ export default function InvoiceManagement() {
                   <span>₹{invoicePreview.subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Tax:</span>
+                  <span>Total CGST:</span>
+                  <span>₹{invoicePreview.items.reduce((sum, item) => sum + item.cgstAmount, 0).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Total SGST:</span>
+                  <span>₹{invoicePreview.items.reduce((sum, item) => sum + item.sgstAmount, 0).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Total Tax:</span>
                   <span>₹{invoicePreview.totalTax.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Discount:</span>
+                  <span>Overall Discount:</span>
                   <span>₹{invoicePreview.totalDiscount.toFixed(2)}</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between text-lg font-bold">
-                  <span>Total:</span>
+                  <span>Grand Total:</span>
                   <span>₹{invoicePreview.grandTotal.toFixed(2)}</span>
                 </div>
+                {invoicePreview.dueDate && (
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Due Date:</span>
+                    <span>{invoicePreview.dueDate}</span>
+                  </div>
+                )}
               </div>
+
+              {/* Terms and Conditions */}
+              {invoicePreview.termsAndConditions && (
+                <div className="mt-6">
+                  <h4 className="font-semibold mb-2">Terms and Conditions:</h4>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                    {invoicePreview.termsAndConditions}
+                  </p>
+                </div>
+              )}
+
+              {/* Signature */}
+              {invoicePreview.signatureType && invoicePreview.signatureType !== 'NONE' && (
+                <div className="mt-6 text-right">
+                  <div className="inline-block">
+                    <div className="text-sm text-muted-foreground mb-2">Authorized Signature:</div>
+                    {invoicePreview.signatureType === 'IMAGE' && invoicePreview.signatureData && (
+                      <img 
+                        src={invoicePreview.signatureData} 
+                        alt="Signature" 
+                        className="max-h-16 border-b border-gray-300"
+                      />
+                    )}
+                    {invoicePreview.signatureType === 'DIGITAL' && (
+                      <div className="border-b border-gray-300 pb-1 min-w-[200px] text-center font-signature">
+                        {invoicePreview.signatureData}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div className="flex justify-end space-x-2">
                 <Button variant="outline" onClick={() => setIsPreviewDialogOpen(false)}>
