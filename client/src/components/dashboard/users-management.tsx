@@ -309,13 +309,13 @@ export default function UsersManagement() {
   };
 
   // Filter and sort users
-  const filteredUsers = users?.filter(user => 
+  const filteredUsers = Array.isArray(users) ? users.filter(user => 
     user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.phone.includes(searchTerm) ||
     user.place.toLowerCase().includes(searchTerm.toLowerCase()) ||
     getRoleName(user).toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  ) : [];
 
   const sortedUsers = filteredUsers.sort((a, b) => {
     let aValue = a[sortField];

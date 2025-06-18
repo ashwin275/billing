@@ -584,12 +584,12 @@ export default function InvoiceManagement() {
   }, [isCreateDialogOpen, form]);
 
   // Filter and sort invoices
-  const filteredInvoices = invoices?.filter(invoice =>
+  const filteredInvoices = Array.isArray(invoices) ? invoices.filter(invoice =>
     invoice.invoiceNo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     invoice.shop?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     invoice.remark?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     invoice.paymentMode?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  ) : [];
 
   const sortedInvoices = [...filteredInvoices].sort((a, b) => {
     let aValue = a[sortField];

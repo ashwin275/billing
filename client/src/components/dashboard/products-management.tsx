@@ -362,14 +362,14 @@ export default function ProductsManagement() {
   };
 
   // Filter and sort products
-  const filteredProducts = products?.filter(product => 
+  const filteredProducts = Array.isArray(products) ? products.filter(product => 
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.productNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.hsn.toString().includes(searchTerm) ||
     product.barcode.includes(searchTerm)
-  ) || [];
+  ) : [];
 
   const sortedProducts = filteredProducts.sort((a, b) => {
     let aValue: any = a[sortField];

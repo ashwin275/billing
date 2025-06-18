@@ -323,13 +323,13 @@ export default function CustomersManagement() {
   };
 
   // Filter customers based on search term
-  const filteredCustomers = customers?.filter(customer =>
+  const filteredCustomers = Array.isArray(customers) ? customers.filter(customer =>
     customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.place.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.phone.toString().includes(searchTerm) ||
     customer.shop?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.shop?.place?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  ) : [];
 
   const sortedCustomers = filteredCustomers.sort((a, b) => {
     let aValue = a[sortField];
