@@ -60,7 +60,17 @@ import { useToast } from "@/hooks/use-toast";
 
 import { invoicesApi, customersApi, shopsApi, productsApi, handleApiError } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import { Invoice, Customer, Shop, Product, InvoiceInput, SaleItemInput } from "@/types/api";
+import { Invoice, Customer, Shop, Product, InvoiceInput, SaleItemInput, CustomerInput } from "@/types/api";
+
+// Customer form validation schema
+const customerSchema = z.object({
+  name: z.string().min(1, "Customer name is required"),
+  place: z.string().min(1, "Place is required"),
+  phone: z.string().min(10, "Phone number must be at least 10 digits"),
+  shopId: z.number().min(1, "Please select a shop"),
+});
+
+type CustomerFormData = z.infer<typeof customerSchema>;
 
 // Form validation schema for invoices
 const invoiceSchema = z.object({
@@ -133,9 +143,21 @@ export default function InvoiceManagement() {
   const [invoicePreview, setInvoicePreview] = useState<InvoicePreview | null>(null);
   const [sortField, setSortField] = useState<keyof Invoice>("invoiceDate");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [isAddCustomerDialogOpen, setIsAddCustomerDialogOpen] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Form for adding customers
+  const customerForm = useForm<CustomerFormData>({
+    resolver: zodResolver(customerSchema),
+    defaultValues: {
+      name: "",
+      place: "",
+      phone: "",
+      shopId: 0,
+    },
+  });
 
   // Form for creating invoices
   const form = useForm<InvoiceFormData>({
@@ -186,6 +208,43 @@ export default function InvoiceManagement() {
   const { data: products } = useQuery({
     queryKey: ["/api/products/all"],
     queryFn: () => productsApi.getAllProducts(),
+  });
+
+  // Add customer mutation
+  const addCustomerMutation = useMutation({
+    mutationFn: async (customerData: CustomerInput) => {
+      const response = await customersApi.addCustomer(customerData);
+      return response;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Customer added",
+        description: "Customer has been successfully added.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/customer/all"] });
+      setIsAddCustomerDialogOpen(false);
+      customerForm.reset();
+    },
+    onError: (error: any) => {
+      let errorMessage = "Failed to add customer. Please try again.";
+      
+      if (error?.response?.data) {
+        const errorData = error.response.data;
+        errorMessage = errorData.detail || errorData.title || errorMessage;
+      } else if (error?.detail) {
+        errorMessage = error.detail;
+      } else if (error?.title) {
+        errorMessage = error.title;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
+      toast({
+        title: "Failed to add customer",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    },
   });
 
   // Add invoice mutation
@@ -308,6 +367,20 @@ export default function InvoiceManagement() {
       useCustomBillingAddress: formData.useCustomBillingAddress,
       customBillingAddress: formData.customBillingAddress,
     };
+  };
+
+  /**
+   * Handle customer form submission
+   */
+  const onAddCustomer = (data: CustomerFormData) => {
+    const customerInput: CustomerInput = {
+      name: data.name,
+      place: data.place,
+      phone: data.phone,
+      shopId: data.shopId,
+    };
+
+    addCustomerMutation.mutate(customerInput);
   };
 
   /**
