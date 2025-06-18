@@ -707,11 +707,11 @@ export default function InvoiceManagement() {
                               <SelectItem value="add_new" className="text-blue-600 font-medium">
                                 + Add New Customer
                               </SelectItem>
-                              {customers?.map((customer) => (
+                              {Array.isArray(customers) ? customers.map((customer) => (
                                 <SelectItem key={customer.customerId} value={customer.customerId.toString()}>
                                   {customer.name} - {customer.place}
                                 </SelectItem>
-                              ))}
+                              )) : null}
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -732,11 +732,11 @@ export default function InvoiceManagement() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {shops?.map((shop) => (
+                              {Array.isArray(shops) ? shops.map((shop) => (
                                 <SelectItem key={shop.shopId} value={shop.shopId.toString()}>
                                   {shop.name} - {shop.place}
                                 </SelectItem>
-                              ))}
+                              )) : null}
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -836,11 +836,11 @@ export default function InvoiceManagement() {
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  {products?.map((product) => (
+                                  {Array.isArray(products) ? products.map((product) => (
                                     <SelectItem key={product.productId} value={product.productId.toString()}>
                                       {product.name} - ₹{product.retailRate} (CGST: {product.cgst}%, SGST: {product.sgst}%)
                                     </SelectItem>
-                                  ))}
+                                  )) : null}
                                 </SelectContent>
                               </Select>
                               <FormMessage />
@@ -1837,11 +1837,11 @@ export default function InvoiceManagement() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {shops?.map((shop) => (
+                        {Array.isArray(shops) ? shops.map((shop) => (
                           <SelectItem key={shop.shopId} value={shop.shopId.toString()}>
                             {shop.name} - {shop.place}
                           </SelectItem>
-                        ))}
+                        )) : null}
                       </SelectContent>
                     </Select>
                     <FormMessage />

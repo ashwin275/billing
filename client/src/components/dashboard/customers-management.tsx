@@ -473,11 +473,11 @@ export default function CustomersManagement() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {shops?.map((shop) => (
+                            {Array.isArray(shops) ? shops.map((shop) => (
                               <SelectItem key={shop.shopId} value={shop.shopId.toString()}>
                                 {shop.name} - {shop.place}
                               </SelectItem>
-                            ))}
+                            )) : null}
                           </SelectContent>
                         </Select>
                         <FormMessage />
