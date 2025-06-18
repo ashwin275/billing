@@ -918,9 +918,16 @@ export default function ProductsManagement() {
                     {/* Stock - Hidden on tablet and mobile */}
                     <TableCell className="hidden lg:table-cell">
                       <div className="flex items-center space-x-2">
-                        <BarChart3 className="h-4 w-4 text-slate-400" />
-                        <span className="font-medium">{product.quantity}</span>
+                        <BarChart3 className={`h-4 w-4 ${product.quantity <= 5 ? 'text-red-500' : 'text-slate-400'}`} />
+                        <span className={`font-medium ${product.quantity <= 5 ? 'text-red-600' : ''}`}>
+                          {product.quantity}
+                        </span>
                         <span className="text-sm text-slate-500">units</span>
+                        {product.quantity <= 5 && (
+                          <Badge variant="destructive" className="text-xs ml-2">
+                            Low Stock
+                          </Badge>
+                        )}
                       </div>
                     </TableCell>
 

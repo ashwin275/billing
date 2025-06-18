@@ -86,7 +86,7 @@ function DashboardOverview({ onNavigate }: { onNavigate: (section: string) => vo
               <SelectItem value="365">This year</SelectItem>
             </SelectContent>
           </Select>
-          <Button className="w-full xs:w-auto">
+          <Button className="w-full xs:w-auto" onClick={() => onNavigate('invoices')}>
             <Plus className="mr-2 h-4 w-4 flex-shrink-0" />
             <span className="truncate">New Invoice</span>
           </Button>

@@ -614,13 +614,23 @@ export default function InvoiceManagement() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Customer</FormLabel>
-                          <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                          <Select onValueChange={(value) => {
+                            if (value === "add_new") {
+                              // Open add customer dialog
+                              window.open('/customers', '_blank');
+                            } else {
+                              field.onChange(parseInt(value));
+                            }
+                          }} value={field.value?.toString()}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select customer" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
+                              <SelectItem value="add_new" className="text-blue-600 font-medium">
+                                + Add New Customer
+                              </SelectItem>
                               {customers?.map((customer) => (
                                 <SelectItem key={customer.customerId} value={customer.customerId.toString()}>
                                   {customer.name} - {customer.place}
@@ -1559,16 +1569,15 @@ export default function InvoiceManagement() {
                       </style>
                     </head>
                     <body>
-                      <div class="invoice-container">
-                        <div class="header">
-                          <div class="company">${invoicePreview.shop.name}</div>
-                          <div class="company-details">
-                            ${invoicePreview.useCustomBillingAddress && invoicePreview.customBillingAddress ? 
-                              invoicePreview.customBillingAddress.replace(/\n/g, '<br>') : 
-                              invoicePreview.shop.place
-                            }
-                          </div>
+                      <div class="header">
+                        <div class="company">${invoicePreview.shop.name}</div>
+                        <div class="company-details">
+                          ${invoicePreview.useCustomBillingAddress && invoicePreview.customBillingAddress ? 
+                            invoicePreview.customBillingAddress.replace(/\n/g, '<br>') : 
+                            invoicePreview.shop.place
+                          }
                         </div>
+                      </div>
                       
                       <div class="billing-section">
                         <div class="billing-box">
@@ -1661,9 +1670,9 @@ export default function InvoiceManagement() {
 
                       ${invoicePreview.signatureType && invoicePreview.signatureType !== 'NONE' ? `
                         <div class="signature-section">
-                          <div style="font-size: 16px; color: #333; margin-bottom: 20px; font-weight: bold;">Authorized Signature:</div>
+                          <div style="font-size: 14px; color: #333; margin-bottom: 15px; font-weight: bold;">Authorized Signature:</div>
                           ${invoicePreview.signatureType === 'IMAGE' && invoicePreview.signatureData ? `
-                            <img src="${invoicePreview.signatureData}" alt="Signature" style="max-height: 80px; border-bottom: 3px solid #667eea; padding: 10px;" />
+                            <img src="${invoicePreview.signatureData}" alt="Signature" style="max-height: 60px; border-bottom: 2px solid #333;" />
                           ` : ''}
                           ${invoicePreview.signatureType === 'DIGITAL' && invoicePreview.signatureData ? `
                             <div class="signature-box">
@@ -1672,7 +1681,6 @@ export default function InvoiceManagement() {
                           ` : ''}
                         </div>
                       ` : ''}
-                      </div>
                     </body>
                     </html>
                   `;
