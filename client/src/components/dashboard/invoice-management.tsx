@@ -159,6 +159,13 @@ export default function InvoiceManagement() {
     },
   });
 
+  // Set default shop when shops load
+  useEffect(() => {
+    if (shops && shops.length > 0 && customerForm.getValues('shopId') === 0) {
+      customerForm.setValue('shopId', shops[0].shopId);
+    }
+  }, [shops]);
+
   // Form for creating invoices
   const form = useForm<InvoiceFormData>({
     resolver: zodResolver(invoiceSchema),
