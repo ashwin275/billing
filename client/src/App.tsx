@@ -21,40 +21,35 @@ import { isAuthenticated } from "@/lib/auth";
  * Includes public auth routes and protected dashboard routes
  */
 function Router() {
-  try {
-    return (
-      <Switch>
-        {/* Redirect root to appropriate page based on auth status */}
-        <Route path="/">
-          {isAuthenticated() ? <Redirect to="/dashboard" /> : <Redirect to="/signin" />}
-        </Route>
+  return (
+    <Switch>
+      {/* Redirect root to appropriate page based on auth status */}
+      <Route path="/">
+        {isAuthenticated() ? <Redirect to="/dashboard" /> : <Redirect to="/signin" />}
+      </Route>
 
-        {/* Public authentication routes - redirect to dashboard if already authenticated */}
-        <Route path="/signin">
-          {isAuthenticated() ? <Redirect to="/dashboard" /> : <SignIn />}
-        </Route>
-        <Route path="/signup">
-          {isAuthenticated() ? <Redirect to="/dashboard" /> : <SignUp />}
-        </Route>
-        <Route path="/forgot-password">
-          {isAuthenticated() ? <Redirect to="/dashboard" /> : <ForgotPassword />}
-        </Route>
+      {/* Public authentication routes - redirect to dashboard if already authenticated */}
+      <Route path="/signin">
+        {isAuthenticated() ? <Redirect to="/dashboard" /> : <SignIn />}
+      </Route>
+      <Route path="/signup">
+        {isAuthenticated() ? <Redirect to="/dashboard" /> : <SignUp />}
+      </Route>
+      <Route path="/forgot-password">
+        {isAuthenticated() ? <Redirect to="/dashboard" /> : <ForgotPassword />}
+      </Route>
 
-        {/* Protected dashboard routes */}
-        <Route path="/dashboard">
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        </Route>
+      {/* Protected dashboard routes */}
+      <Route path="/dashboard">
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      </Route>
 
-        {/* Fallback to 404 */}
-        <Route component={NotFound} />
-      </Switch>
-    );
-  } catch (error) {
-    console.error('Router error:', error);
-    return <SignIn />;
-  }
+      {/* Fallback to 404 */}
+      <Route component={NotFound} />
+    </Switch>
+  );
 }
 
 /**
