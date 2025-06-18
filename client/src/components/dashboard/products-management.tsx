@@ -1282,11 +1282,11 @@ export default function ProductsManagement() {
                         <SelectValue placeholder="Select shop" />
                       </SelectTrigger>
                       <SelectContent>
-                        {shops?.map((shop: any) => (
+                        {Array.isArray(shops) ? shops.map((shop: any) => (
                           <SelectItem key={shop.shopId} value={shop.shopId.toString()}>
                             {shop.name}
                           </SelectItem>
-                        ))}
+                        )) : null}
                       </SelectContent>
                     </Select>
                   )}

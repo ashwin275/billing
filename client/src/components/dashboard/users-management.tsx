@@ -489,11 +489,11 @@ export default function UsersManagement() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {countries?.map((country) => (
+                              {Array.isArray(countries) ? countries.map((country) => (
                                 <SelectItem key={country.countryId} value={country.countryId.toString()}>
                                   {country.country}
                                 </SelectItem>
-                              ))}
+                              )) : null}
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -516,11 +516,11 @@ export default function UsersManagement() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {roles?.map((role) => (
+                              {Array.isArray(roles) ? roles.map((role) => (
                                 <SelectItem key={role.roleId} value={role.roleId.toString()}>
                                   {role.roleName.replace("ROLE_", "")} - {role.description}
                                 </SelectItem>
-                              ))}
+                              )) : null}
                             </SelectContent>
                           </Select>
                           <FormMessage />

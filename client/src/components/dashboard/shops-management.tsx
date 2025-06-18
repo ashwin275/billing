@@ -570,7 +570,7 @@ export default function ShopsManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {currentShops.map((shop) => (
+                {Array.isArray(currentShops) ? currentShops.map((shop) => (
                   <TableRow key={shop.shopId}>
                     {/* Shop Info */}
                     <TableCell>
@@ -646,7 +646,7 @@ export default function ShopsManagement() {
                       </div>
                     </TableCell>
                   </TableRow>
-                ))}
+                )) : null}
               </TableBody>
             </Table>
           </div>
