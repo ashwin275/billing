@@ -1296,7 +1296,7 @@ export default function InvoiceManagement() {
             {totalInvoices} of {invoices?.length || 0} Total
           </Badge>
           <Badge variant="default" className="text-xs sm:text-sm px-2 py-1 bg-green-600">
-            {invoices?.filter(invoice => invoice.paymentStatus === 'PAID').length || 0} Paid
+            {Array.isArray(invoices) ? invoices.filter(invoice => invoice.paymentStatus === 'PAID').length : 0} Paid
           </Badge>
           <Badge variant="secondary" className="text-xs sm:text-sm px-2 py-1">
             {Array.isArray(invoices) ? invoices.filter(invoice => invoice.paymentStatus === 'PENDING').length : 0} Pending
