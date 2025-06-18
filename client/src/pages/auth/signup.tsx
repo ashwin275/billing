@@ -67,6 +67,15 @@ export default function SignUp() {
       try {
         const countriesData = await authApi.getCountries();
         setCountries(countriesData);
+        
+        // Set India as default if available
+        const india = countriesData.find(country => 
+          country.country.toLowerCase().includes('india') || 
+          country.countryCode.toLowerCase() === 'in'
+        );
+        if (india) {
+          form.setValue('countryId', india.countryId);
+        }
       } catch (error) {
         toast({
           title: "Error loading countries",
@@ -79,7 +88,7 @@ export default function SignUp() {
     };
 
     loadCountries();
-  }, [toast]);
+  }, [toast, form]);
 
   /**
    * Handle form submission and API call

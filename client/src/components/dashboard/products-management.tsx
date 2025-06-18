@@ -891,8 +891,13 @@ export default function ProductsManagement() {
                               <span>{formatCurrency(product.retailRate)}</span>
                             </span>
                             <span className="flex items-center space-x-1">
-                              <BarChart3 className="h-3 w-3" />
-                              <span>{product.quantity}</span>
+                              <BarChart3 className={`h-3 w-3 ${product.quantity <= 5 ? 'text-red-500' : ''}`} />
+                              <span className={product.quantity <= 5 ? 'text-red-600' : ''}>{product.quantity}</span>
+                              {product.quantity <= 5 && (
+                                <Badge variant="destructive" className="text-xs ml-1">
+                                  Low
+                                </Badge>
+                              )}
                             </span>
                           </div>
                         </div>
