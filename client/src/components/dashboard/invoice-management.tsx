@@ -689,8 +689,7 @@ export default function InvoiceManagement() {
                           <FormLabel>Customer</FormLabel>
                           <Select onValueChange={(value) => {
                             if (value === "add_new") {
-                              // Open add customer dialog
-                              window.open('/customers', '_blank');
+                              setIsAddCustomerDialogOpen(true);
                             } else {
                               field.onChange(parseInt(value));
                             }
@@ -1768,6 +1767,97 @@ export default function InvoiceManagement() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Customer Dialog */}
+      <Dialog open={isAddCustomerDialogOpen} onOpenChange={setIsAddCustomerDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Add New Customer</DialogTitle>
+            <DialogDescription>
+              Enter customer details to add them to your customer list.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...customerForm}>
+            <form onSubmit={customerForm.handleSubmit(onAddCustomer)} className="space-y-4">
+              <FormField
+                control={customerForm.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Customer Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter customer name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={customerForm.control}
+                name="place"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Place</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter place" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={customerForm.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone Number</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter phone number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={customerForm.control}
+                name="shopId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Shop</FormLabel>
+                    <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select shop" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {shops?.map((shop) => (
+                          <SelectItem key={shop.shopId} value={shop.shopId.toString()}>
+                            {shop.name} - {shop.place}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="flex justify-end space-x-2">
+                <Button type="button" variant="outline" onClick={() => setIsAddCustomerDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={addCustomerMutation.isPending}>
+                  {addCustomerMutation.isPending ? "Adding..." : "Add Customer"}
+                </Button>
+              </div>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
     </div>
