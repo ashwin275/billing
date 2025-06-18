@@ -1773,6 +1773,93 @@ export default function InvoiceManagement() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Customer Creation Dialog */}
+      <Dialog open={isCustomerDialogOpen} onOpenChange={setIsCustomerDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add New Customer</DialogTitle>
+            <DialogDescription>
+              Create a new customer to add to your invoice.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...customerForm}>
+            <form onSubmit={customerForm.handleSubmit(onAddCustomer)} className="space-y-4">
+              <FormField
+                control={customerForm.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Customer Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter customer name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={customerForm.control}
+                name="place"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Place</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter place" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={customerForm.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter phone number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={customerForm.control}
+                name="shopId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Shop</FormLabel>
+                    <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select shop" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {shops?.map((shop) => (
+                          <SelectItem key={shop.shopId} value={shop.shopId.toString()}>
+                            {shop.name} - {shop.place}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="flex justify-end space-x-2">
+                <Button type="button" variant="outline" onClick={() => setIsCustomerDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={addCustomerMutation.isPending}>
+                  {addCustomerMutation.isPending ? "Adding..." : "Add Customer"}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
