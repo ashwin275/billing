@@ -1559,15 +1559,16 @@ export default function InvoiceManagement() {
                       </style>
                     </head>
                     <body>
-                      <div class="header">
-                        <div class="company">${invoicePreview.shop.name}</div>
-                        <div class="company-details">
-                          ${invoicePreview.useCustomBillingAddress && invoicePreview.customBillingAddress ? 
-                            invoicePreview.customBillingAddress.replace(/\n/g, '<br>') : 
-                            invoicePreview.shop.place
-                          }
+                      <div class="invoice-container">
+                        <div class="header">
+                          <div class="company">${invoicePreview.shop.name}</div>
+                          <div class="company-details">
+                            ${invoicePreview.useCustomBillingAddress && invoicePreview.customBillingAddress ? 
+                              invoicePreview.customBillingAddress.replace(/\n/g, '<br>') : 
+                              invoicePreview.shop.place
+                            }
+                          </div>
                         </div>
-                      </div>
                       
                       <div class="billing-section">
                         <div class="billing-box">
@@ -1580,7 +1581,7 @@ export default function InvoiceManagement() {
                           <strong>Invoice Details:</strong><br>
                           Invoice #: INV-${Date.now().toString().slice(-6)}<br>
                           Date: ${new Date().toLocaleDateString()}<br>
-                          Status: ${invoice.paymentStatus}
+                          Status: Preview
                         </div>
                       </div>
 
@@ -1659,20 +1660,19 @@ export default function InvoiceManagement() {
                       ` : ''}
 
                       ${invoicePreview.signatureType && invoicePreview.signatureType !== 'NONE' ? `
-                        <div style="margin-top: 40px; text-align: right;">
-                          <div style="display: inline-block;">
-                            <div style="font-size: 12px; color: #666; margin-bottom: 10px;">Authorized Signature:</div>
-                            ${invoicePreview.signatureType === 'IMAGE' && invoicePreview.signatureData ? `
-                              <img src="${invoicePreview.signatureData}" alt="Signature" style="max-height: 60px; border-bottom: 1px solid #ccc;" />
-                            ` : ''}
-                            ${invoicePreview.signatureType === 'DIGITAL' && invoicePreview.signatureData ? `
-                              <div style="border-bottom: 1px solid #ccc; padding-bottom: 5px; min-width: 200px; text-align: center; font-family: cursive;">
-                                ${invoicePreview.signatureData}
-                              </div>
-                            ` : ''}
-                          </div>
+                        <div class="signature-section">
+                          <div style="font-size: 16px; color: #333; margin-bottom: 20px; font-weight: bold;">Authorized Signature:</div>
+                          ${invoicePreview.signatureType === 'IMAGE' && invoicePreview.signatureData ? `
+                            <img src="${invoicePreview.signatureData}" alt="Signature" style="max-height: 80px; border-bottom: 3px solid #667eea; padding: 10px;" />
+                          ` : ''}
+                          ${invoicePreview.signatureType === 'DIGITAL' && invoicePreview.signatureData ? `
+                            <div class="signature-box">
+                              ${invoicePreview.signatureData}
+                            </div>
+                          ` : ''}
                         </div>
                       ` : ''}
+                      </div>
                     </body>
                     </html>
                   `;
