@@ -38,6 +38,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -78,6 +79,8 @@ const invoiceSchema = z.object({
   termsAndConditions: z.string().optional(),
   signatureType: z.enum(['NONE', 'IMAGE', 'DIGITAL']).optional(),
   signatureData: z.string().optional(),
+  useCustomBillingAddress: z.boolean().optional(),
+  customBillingAddress: z.string().optional(),
   saleItems: z.array(z.object({
     productId: z.number().min(1, "Please select a product"),
     quantity: z.number().min(1, "Quantity must be at least 1"),
@@ -151,6 +154,8 @@ export default function InvoiceManagement() {
       termsAndConditions: '',
       signatureType: 'NONE',
       signatureData: '',
+      useCustomBillingAddress: false,
+      customBillingAddress: '',
       saleItems: [{ productId: 0, quantity: 1, discount: 0, discountType: 'AMOUNT' }],
     },
   });
@@ -298,6 +303,8 @@ export default function InvoiceManagement() {
       termsAndConditions: formData.termsAndConditions,
       signatureType: formData.signatureType,
       signatureData: formData.signatureData,
+      useCustomBillingAddress: formData.useCustomBillingAddress,
+      customBillingAddress: formData.customBillingAddress,
     };
   };
 
@@ -1008,6 +1015,52 @@ export default function InvoiceManagement() {
                     )}
                   />
 
+                  {/* Billing Address Options */}
+                  <div className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="useCustomBillingAddress"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <input
+                              type="checkbox"
+                              checked={field.value}
+                              onChange={field.onChange}
+                              className="rounded border border-input"
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>Use Custom Billing Address</FormLabel>
+                            <FormDescription>
+                              Check this to use a different billing address instead of the shop address
+                            </FormDescription>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    {form.watch('useCustomBillingAddress') && (
+                      <FormField
+                        control={form.control}
+                        name="customBillingAddress"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Custom Billing Address</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                placeholder="Enter the billing address for this invoice..."
+                                className="min-h-[100px]"
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                  </div>
+
                   {/* Terms and Conditions */}
                   <FormField
                     control={form.control}
@@ -1087,13 +1140,17 @@ export default function InvoiceManagement() {
                         name="signatureData"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Digital Signature Text</FormLabel>
+                            <FormLabel>Digital Signature</FormLabel>
                             <FormControl>
-                              <Input
-                                placeholder="Enter your name or signature text"
-                                {...field}
+                              <Textarea 
+                                placeholder="Enter your signature text or draw your signature using text characters..."
+                                className="min-h-[120px] font-mono text-lg"
+                                {...field} 
                               />
                             </FormControl>
+                            <FormDescription>
+                              You can type your name, create ASCII art signature, or use special characters for your digital signature
+                            </FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
