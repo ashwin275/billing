@@ -62,10 +62,10 @@ function DashboardOverview({ onNavigate }: { onNavigate: (section: string) => vo
   });
 
   // Calculate dynamic stats
-  const activeShops = shops.filter(shop => shop.status === 'ACTIVE').length;
-  const totalShops = shops.length;
-  const activeUsers = users.filter(user => user.status === 'ACTIVE').length;
-  const totalUsers = users.length;
+  const activeShops = Array.isArray(shops) ? shops.filter(shop => shop.status === 'ACTIVE').length : 0;
+  const totalShops = Array.isArray(shops) ? shops.length : 0;
+  const activeUsers = Array.isArray(users) ? users.filter(user => user.status === 'ACTIVE').length : 0;
+  const totalUsers = Array.isArray(users) ? users.length : 0;
 
   return (
     <div className="space-y-6">

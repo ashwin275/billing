@@ -1,0 +1,32 @@
+dashboard.tsx:67 Uncaught TypeError: users.filter is not a function
+    at DashboardOverview (dashboard.tsx:67:29)
+DashboardOverview	@	dashboard.tsx:67
+
+dashboard.tsx:67 Uncaught TypeError: users.filter is not a function
+    at DashboardOverview (dashboard.tsx:67:29)
+DashboardOverview	@	dashboard.tsx:67
+chunk-WERSD76P.js?v=60f3450b:14032 The above error occurred in the <DashboardOverview> component:
+
+    at DashboardOverview (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.dev/src/pages/dashboard/dashboard.tsx:56:30)
+    at div
+    at main
+    at div
+    at div
+    at div
+    at DashboardLayout (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.dev/src/components/layout/dashboard-layout.tsx:18:43)
+    at Dashboard (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.dev/src/pages/dashboard/dashboard.tsx:845:45)
+    at ProtectedRoute (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.dev/src/components/auth/protected-route.tsx:19:42)
+    at Route (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.…/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=60f3450b:323:16)
+    at Switch (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.…/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=60f3450b:379:17)
+    at Router
+    at Provider (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.…unner/workspace/node_modules/.vite/deps/chunk-JCDXHMNF.js?v=60f3450b:38:15)
+    at TooltipProvider (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.…rkspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=60f3450b:61:5)
+    at QueryClientProvider (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.…rkspace/node_modules/.vite/deps/@tanstack_react-query.js?v=60f3450b:2805:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+chunk-WERSD76P.js?v=60f3450b:9129 Uncaught TypeError: users.filter is not a function
+    at DashboardOverview (dashboard.tsx:67:29)
+﻿
+
