@@ -144,7 +144,7 @@ export default function UsersManagement() {
 
   // Set India as default country when countries load
   useEffect(() => {
-    if (countries && countries.length > 0 && addForm.watch('countryId') === 0) {
+    if (countries && countries.length > 0 && addForm.getValues('countryId') === 0) {
       const india = countries.find(country => 
         country.country.toLowerCase().includes('india') || 
         country.countryCode.toLowerCase() === 'in'
@@ -153,7 +153,7 @@ export default function UsersManagement() {
         addForm.setValue('countryId', india.countryId);
       }
     }
-  }, [countries, addForm]);
+  }, [countries]);
 
   // Add user mutation using signup endpoint
   const addUserMutation = useMutation({
