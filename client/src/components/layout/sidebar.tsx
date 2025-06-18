@@ -55,8 +55,8 @@ export default function Sidebar({ activeSection, onSectionChange, isMobileOpen, 
   });
 
   // Calculate real counts
-  const activeUsersCount = users?.filter(user => user.status === 'ACTIVE').length || 0;
-  const productsCount = products?.length || 0;
+  const activeUsersCount = Array.isArray(users) ? users.filter(user => user.status === 'ACTIVE').length : 0;
+  const productsCount = Array.isArray(products) ? products.length : 0;
 
   // Navigation items configuration with real data
   const navigationItems: NavItem[] = [
