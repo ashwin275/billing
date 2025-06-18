@@ -821,7 +821,7 @@ export default function ProductsManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {currentProducts.map((product) => (
+                {Array.isArray(currentProducts) ? currentProducts.map((product) => (
                   <TableRow key={product.productId}>
                     {/* Product Info */}
                     <TableCell>
@@ -973,7 +973,7 @@ export default function ProductsManagement() {
                       </div>
                     </TableCell>
                   </TableRow>
-                ))}
+                )) : null}
               </TableBody>
             </Table>
           </div>

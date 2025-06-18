@@ -568,7 +568,7 @@ export default function CustomersManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {currentCustomers.map((customer) => (
+                {Array.isArray(currentCustomers) ? currentCustomers.map((customer) => (
                   <TableRow key={customer.customerId}>
                     {/* Customer Info */}
                     <TableCell>
@@ -634,7 +634,7 @@ export default function CustomersManagement() {
                       </div>
                     </TableCell>
                   </TableRow>
-                ))}
+                )) : null}
               </TableBody>
             </Table>
           </div>
