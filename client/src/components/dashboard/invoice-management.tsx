@@ -91,6 +91,16 @@ const invoiceSchema = z.object({
 
 type InvoiceFormData = z.infer<typeof invoiceSchema>;
 
+// Customer creation schema
+const customerSchema = z.object({
+  name: z.string().min(1, "Customer name is required"),
+  place: z.string().min(1, "Place is required"),
+  phone: z.string().min(10, "Phone number must be at least 10 digits"),
+  shopId: z.number().min(1, "Shop is required"),
+});
+
+type CustomerFormData = z.infer<typeof customerSchema>;
+
 interface InvoicePreview {
   customer: Customer;
   shop: Shop;
@@ -130,6 +140,7 @@ export default function InvoiceManagement() {
   const [itemsPerPage] = useState(10);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
+  const [isCustomerDialogOpen, setIsCustomerDialogOpen] = useState(false);
   const [invoicePreview, setInvoicePreview] = useState<InvoicePreview | null>(null);
   const [sortField, setSortField] = useState<keyof Invoice>("invoiceDate");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
@@ -165,6 +176,17 @@ export default function InvoiceManagement() {
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "saleItems",
+  });
+
+  // Customer creation form
+  const customerForm = useForm<CustomerFormData>({
+    resolver: zodResolver(customerSchema),
+    defaultValues: {
+      name: "",
+      place: "",
+      phone: "",
+      shopId: 0,
+    },
   });
 
   // Fetch data
@@ -220,6 +242,46 @@ export default function InvoiceManagement() {
       
       toast({
         title: "Failed to create invoice",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Add customer mutation
+  const addCustomerMutation = useMutation({
+    mutationFn: async (customerData: any) => {
+      const response = await customersApi.addCustomer(customerData);
+      return response;
+    },
+    onSuccess: (data, variables) => {
+      toast({
+        title: "Customer added",
+        description: "Customer has been successfully added.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/customer/all"] });
+      setIsCustomerDialogOpen(false);
+      customerForm.reset();
+      
+      // Auto-select the newly created customer in the invoice form
+      // Since we don't get the ID back, we'll refresh and let user select manually
+    },
+    onError: (error: any) => {
+      let errorMessage = "Failed to add customer. Please try again.";
+      
+      if (error?.response?.data) {
+        const errorData = error.response.data;
+        errorMessage = errorData.detail || errorData.title || errorMessage;
+      } else if (error?.detail) {
+        errorMessage = error.detail;
+      } else if (error?.title) {
+        errorMessage = error.title;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
+      toast({
+        title: "Failed to add customer",
         description: errorMessage,
         variant: "destructive",
       });
@@ -330,6 +392,20 @@ export default function InvoiceManagement() {
     };
 
     addInvoiceMutation.mutate(invoiceInput);
+  };
+
+  /**
+   * Handle customer creation form submission
+   */
+  const onAddCustomer = (data: CustomerFormData) => {
+    const customerInput = {
+      name: data.name,
+      place: data.place,
+      phone: data.phone,
+      shopId: data.shopId,
+    };
+
+    addCustomerMutation.mutate(customerInput);
   };
 
   /**
@@ -617,7 +693,7 @@ export default function InvoiceManagement() {
                           <Select onValueChange={(value) => {
                             if (value === "add_new") {
                               // Open add customer dialog
-                              window.open('/customers', '_blank');
+                              setIsCustomerDialogOpen(true);
                             } else {
                               field.onChange(parseInt(value));
                             }
