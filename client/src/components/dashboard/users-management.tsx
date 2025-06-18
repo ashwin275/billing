@@ -144,12 +144,12 @@ export default function UsersManagement() {
 
   // Set India as default country when countries load
   useEffect(() => {
-    if (countries && countries.length > 0) {
+    if (countries && countries.length > 0 && addForm.getValues('countryId') === 0) {
       const india = countries.find(country => 
         country.country.toLowerCase().includes('india') || 
         country.countryCode.toLowerCase() === 'in'
       );
-      if (india && addForm.getValues('countryId') === 0) {
+      if (india) {
         addForm.setValue('countryId', india.countryId);
       }
     }
