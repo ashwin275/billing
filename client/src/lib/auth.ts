@@ -28,13 +28,22 @@ export function getAuthToken(): string | null {
  * Check if user is authenticated and token is not expired
  */
 export function isAuthenticated(): boolean {
-  const token = getAuthToken();
-  if (!token) return false;
+  try {
+    const token = getAuthToken();
+    if (!token) return false;
 
-  const expiry = localStorage.getItem(TOKEN_EXPIRY_KEY);
-  if (!expiry) return false;
+    const expiry = localStorage.getItem(TOKEN_EXPIRY_KEY);
+    if (!expiry) return false;
 
-  return Date.now() < parseInt(expiry);
+    const isValid = Date.now() < parseInt(expiry);
+    if (!isValid) {
+      clearAuthData();
+    }
+    return isValid;
+  } catch (error) {
+    clearAuthData();
+    return false;
+  }
 }
 
 /**
