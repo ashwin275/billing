@@ -117,6 +117,8 @@ interface InvoicePreview {
   termsAndConditions?: string;
   signatureType?: 'NONE' | 'IMAGE' | 'DIGITAL';
   signatureData?: string;
+  useCustomBillingAddress?: boolean;
+  customBillingAddress?: string;
 }
 
 /**
@@ -1370,81 +1372,90 @@ export default function InvoiceManagement() {
 
       {/* Invoice Preview Dialog */}
       <Dialog open={isPreviewDialogOpen} onOpenChange={setIsPreviewDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Invoice Preview</DialogTitle>
+            <DialogTitle className="text-2xl font-bold text-blue-600">Invoice Preview</DialogTitle>
           </DialogHeader>
           
           {invoicePreview && (
-            <div className="space-y-6">
+            <div className="space-y-6 bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-lg">
               {/* Header */}
-              <div className="text-center">
-                <h2 className="text-2xl font-bold">{invoicePreview.shop.name}</h2>
-                <p className="text-slate-600">{invoicePreview.shop.place}</p>
+              <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500">
+                <div className="text-center">
+                  <h2 className="text-3xl font-bold text-gray-800">{invoicePreview.shop.name}</h2>
+                  <div className="mt-2 text-gray-600">
+                    {invoicePreview.useCustomBillingAddress && invoicePreview.customBillingAddress ? (
+                      <div className="whitespace-pre-wrap">{invoicePreview.customBillingAddress}</div>
+                    ) : (
+                      <p>{invoicePreview.shop.place}</p>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* Customer Details */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h3 className="font-semibold mb-2">Bill To:</h3>
-                  <p>{invoicePreview.customer.name}</p>
-                  <p>{invoicePreview.customer.place}</p>
-                  <p>{invoicePreview.customer.phone}</p>
+              <div className="grid grid-cols-2 gap-6">
+                <div className="bg-green-50 p-4 rounded-lg border-l-4 border-green-400">
+                  <h3 className="font-semibold mb-2 text-green-800">Bill To:</h3>
+                  <p className="text-green-700 font-medium">{invoicePreview.customer.name}</p>
+                  <p className="text-green-600">{invoicePreview.customer.place}</p>
+                  <p className="text-green-600">{invoicePreview.customer.phone}</p>
                 </div>
-                <div className="text-right">
-                  <p><strong>Invoice #:</strong> INV-{Date.now()}</p>
+                <div className="bg-blue-600 text-white p-4 rounded-lg text-right">
+                  <p className="text-xl font-bold mb-2">INVOICE</p>
+                  <p><strong>Invoice #:</strong> INV-{Date.now().toString().slice(-6)}</p>
                   <p><strong>Date:</strong> {new Date().toLocaleDateString()}</p>
                 </div>
               </div>
 
               {/* Items Table */}
-              <div className="border rounded-lg overflow-hidden">
+              <div className="bg-white rounded-lg overflow-hidden shadow-sm">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Product</TableHead>
-                      <TableHead>HSN</TableHead>
-                      <TableHead>Qty</TableHead>
-                      <TableHead>Rate</TableHead>
-                      <TableHead>Discount</TableHead>
-                      <TableHead>CGST</TableHead>
-                      <TableHead>SGST</TableHead>
-                      <TableHead>Total</TableHead>
+                    <TableRow className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
+                      <TableHead className="text-white font-semibold">Product</TableHead>
+                      <TableHead className="text-white font-semibold">HSN</TableHead>
+                      <TableHead className="text-white font-semibold">Qty</TableHead>
+                      <TableHead className="text-white font-semibold">Rate</TableHead>
+                      <TableHead className="text-white font-semibold">Discount</TableHead>
+                      <TableHead className="text-white font-semibold">CGST</TableHead>
+                      <TableHead className="text-white font-semibold">SGST</TableHead>
+                      <TableHead className="text-white font-semibold">Total</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {invoicePreview.items.map((item, index) => (
-                      <TableRow key={index}>
+                      <TableRow key={index} className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}>
                         <TableCell>
                           <div>
-                            <div className="font-medium">{item.product.name}</div>
-                            <div className="text-xs text-muted-foreground">{item.product.description}</div>
+                            <div className="font-medium text-gray-800">{item.product.name}</div>
+                            <div className="text-xs text-gray-500">{item.product.description}</div>
                           </div>
                         </TableCell>
-                        <TableCell>{item.product.hsn}</TableCell>
-                        <TableCell>{item.quantity}</TableCell>
-                        <TableCell>₹{item.unitPrice.toFixed(2)}</TableCell>
+                        <TableCell className="text-blue-600 font-medium">{item.product.hsn}</TableCell>
+                        <TableCell className="text-center font-medium">{item.quantity}</TableCell>
+                        <TableCell className="text-green-600 font-medium">₹{item.unitPrice.toFixed(2)}</TableCell>
                         <TableCell>
                           <div>
-                            <div>₹{item.discountAmount.toFixed(2)}</div>
-                            <div className="text-xs text-muted-foreground">
+                            <div className="text-orange-600 font-medium">₹{item.discountAmount.toFixed(2)}</div>
+                            <div className="text-xs text-gray-500">
                               {item.discountType === 'PERCENTAGE' ? `${item.discount}%` : 'Amount'}
                             </div>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div>
-                            <div>₹{item.cgstAmount.toFixed(2)}</div>
-                            <div className="text-xs text-muted-foreground">{item.cgst}%</div>
+                            <div className="text-purple-600 font-medium">₹{item.cgstAmount.toFixed(2)}</div>
+                            <div className="text-xs text-gray-500">{item.cgst}%</div>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div>
-                            <div>₹{item.sgstAmount.toFixed(2)}</div>
-                            <div className="text-xs text-muted-foreground">{item.sgst}%</div>
+                            <div className="text-pink-600 font-medium">₹{item.sgstAmount.toFixed(2)}</div>
+                            <div className="text-xs text-gray-500">{item.sgst}%</div>
                           </div>
                         </TableCell>
-                        <TableCell className="font-medium">₹{item.totalPrice.toFixed(2)}</TableCell>
+                        <TableCell className="font-bold text-lg text-blue-800">₹{item.totalPrice.toFixed(2)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -1452,45 +1463,45 @@ export default function InvoiceManagement() {
               </div>
 
               {/* Totals */}
-              <div className="space-y-2 text-right">
-                <div className="flex justify-between">
-                  <span>Subtotal:</span>
-                  <span>₹{invoicePreview.subtotal.toFixed(2)}</span>
+              <div className="bg-white p-6 rounded-lg shadow-sm space-y-3">
+                <div className="flex justify-between text-gray-700">
+                  <span className="font-medium">Subtotal:</span>
+                  <span className="text-green-600 font-semibold">₹{invoicePreview.subtotal.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>Total CGST:</span>
-                  <span>₹{invoicePreview.items.reduce((sum, item) => sum + item.cgstAmount, 0).toFixed(2)}</span>
+                <div className="flex justify-between text-gray-700">
+                  <span className="font-medium">Total CGST:</span>
+                  <span className="text-purple-600 font-semibold">₹{invoicePreview.items.reduce((sum, item) => sum + item.cgstAmount, 0).toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>Total SGST:</span>
-                  <span>₹{invoicePreview.items.reduce((sum, item) => sum + item.sgstAmount, 0).toFixed(2)}</span>
+                <div className="flex justify-between text-gray-700">
+                  <span className="font-medium">Total SGST:</span>
+                  <span className="text-pink-600 font-semibold">₹{invoicePreview.items.reduce((sum, item) => sum + item.sgstAmount, 0).toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>Total Tax:</span>
-                  <span>₹{invoicePreview.totalTax.toFixed(2)}</span>
+                <div className="flex justify-between text-gray-700">
+                  <span className="font-medium">Total Tax:</span>
+                  <span className="text-indigo-600 font-semibold">₹{invoicePreview.totalTax.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>Overall Discount:</span>
-                  <span>₹{invoicePreview.totalDiscount.toFixed(2)}</span>
+                <div className="flex justify-between text-gray-700">
+                  <span className="font-medium">Overall Discount:</span>
+                  <span className="text-orange-600 font-semibold">₹{invoicePreview.totalDiscount.toFixed(2)}</span>
                 </div>
-                <Separator />
-                <div className="flex justify-between text-lg font-bold">
+                <Separator className="bg-gradient-to-r from-blue-400 to-purple-400 h-1" />
+                <div className="flex justify-between text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 text-white p-3 rounded">
                   <span>Grand Total:</span>
                   <span>₹{invoicePreview.grandTotal.toFixed(2)}</span>
                 </div>
                 {invoicePreview.dueDate && (
-                  <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>Due Date:</span>
-                    <span>{invoicePreview.dueDate}</span>
+                  <div className="flex justify-between text-sm bg-yellow-50 p-2 rounded border-l-4 border-yellow-400">
+                    <span className="font-medium text-yellow-800">Due Date:</span>
+                    <span className="text-yellow-700">{invoicePreview.dueDate}</span>
                   </div>
                 )}
               </div>
 
               {/* Terms and Conditions */}
               {invoicePreview.termsAndConditions && (
-                <div className="mt-6">
-                  <h4 className="font-semibold mb-2">Terms and Conditions:</h4>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                <div className="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-400">
+                  <h4 className="font-semibold mb-2 text-yellow-800">Terms and Conditions:</h4>
+                  <p className="text-sm text-yellow-700 whitespace-pre-wrap">
                     {invoicePreview.termsAndConditions}
                   </p>
                 </div>
@@ -1498,18 +1509,18 @@ export default function InvoiceManagement() {
 
               {/* Signature */}
               {invoicePreview.signatureType && invoicePreview.signatureType !== 'NONE' && (
-                <div className="mt-6 text-right">
+                <div className="bg-gray-50 p-6 rounded-lg text-right">
                   <div className="inline-block">
-                    <div className="text-sm text-muted-foreground mb-2">Authorized Signature:</div>
+                    <div className="text-sm text-gray-600 mb-4 font-medium">Authorized Signature:</div>
                     {invoicePreview.signatureType === 'IMAGE' && invoicePreview.signatureData && (
                       <img 
                         src={invoicePreview.signatureData} 
                         alt="Signature" 
-                        className="max-h-16 border-b border-gray-300"
+                        className="max-h-20 border-b-2 border-gray-400"
                       />
                     )}
                     {invoicePreview.signatureType === 'DIGITAL' && (
-                      <div className="border-b border-gray-300 pb-1 min-w-[200px] text-center font-signature">
+                      <div className="border-b-2 border-gray-400 pb-2 min-w-[300px] min-h-[80px] text-center font-mono text-lg whitespace-pre-wrap">
                         {invoicePreview.signatureData}
                       </div>
                     )}
@@ -1550,7 +1561,12 @@ export default function InvoiceManagement() {
                     <body>
                       <div class="header">
                         <div class="company">${invoicePreview.shop.name}</div>
-                        <div class="company-details">${invoicePreview.shop.place}</div>
+                        <div class="company-details">
+                          ${invoicePreview.useCustomBillingAddress && invoicePreview.customBillingAddress ? 
+                            invoicePreview.customBillingAddress.replace(/\n/g, '<br>') : 
+                            invoicePreview.shop.place
+                          }
+                        </div>
                       </div>
                       
                       <div class="billing-section">
@@ -1562,8 +1578,9 @@ export default function InvoiceManagement() {
                         </div>
                         <div class="billing-box">
                           <strong>Invoice Details:</strong><br>
+                          Invoice #: INV-${Date.now().toString().slice(-6)}<br>
                           Date: ${new Date().toLocaleDateString()}<br>
-                          Type: Preview
+                          Status: ${invoice.paymentStatus}
                         </div>
                       </div>
 
@@ -1590,20 +1607,9 @@ export default function InvoiceManagement() {
                               <td>${item.product.hsn}</td>
                               <td>${item.quantity}</td>
                               <td>₹${item.unitPrice.toFixed(2)}</td>
-                              <td>
-                                <div>₹${item.discountAmount.toFixed(2)}</div>
-                                <div style="font-size: 10px; color: #666;">
-                                  ${item.discountType === 'PERCENTAGE' ? `${item.discount}%` : 'Amount'}
-                                </div>
-                              </td>
-                              <td>
-                                <div>₹${item.cgstAmount.toFixed(2)}</div>
-                                <div style="font-size: 10px; color: #666;">${item.cgst}%</div>
-                              </td>
-                              <td>
-                                <div>₹${item.sgstAmount.toFixed(2)}</div>
-                                <div style="font-size: 10px; color: #666;">${item.sgst}%</div>
-                              </td>
+                              <td>₹${item.discountAmount.toFixed(2)}</td>
+                              <td>₹${item.cgstAmount.toFixed(2)}</td>
+                              <td>₹${item.sgstAmount.toFixed(2)}</td>
                               <td style="font-weight: bold;">₹${item.totalPrice.toFixed(2)}</td>
                             </tr>
                           `).join('')}
