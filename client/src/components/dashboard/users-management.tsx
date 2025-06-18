@@ -630,10 +630,10 @@ export default function UsersManagement() {
             {totalUsers} of {users?.length || 0} Total
           </Badge>
           <Badge variant="default" className="text-xs sm:text-sm px-2 py-1 bg-green-600">
-            {users?.filter(user => user.status === 'ACTIVE').length || 0} Active
+            {Array.isArray(users) ? users.filter(user => user.status === 'ACTIVE').length : 0} Active
           </Badge>
           <Badge variant="secondary" className="text-xs sm:text-sm px-2 py-1">
-            {users?.filter(user => user.status === 'INACTIVE' || user.status === 'DEACTIVATED').length || 0} Inactive
+            {Array.isArray(users) ? users.filter(user => user.status === 'INACTIVE' || user.status === 'DEACTIVATED').length : 0} Inactive
           </Badge>
         </div>
       </div>

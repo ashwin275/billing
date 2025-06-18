@@ -299,13 +299,13 @@ export default function ShopsManagement() {
   };
 
   // Filter and sort shops
-  const filteredShops = shops?.filter(shop => 
+  const filteredShops = Array.isArray(shops) ? shops.filter(shop => 
     shop.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     shop.place.toLowerCase().includes(searchTerm.toLowerCase()) ||
     shop.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
     shop.owner?.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     shop.subscriptionPlan?.planName.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  ) : [];
 
   const sortedShops = filteredShops.sort((a, b) => {
     let aValue: any = a[sortField];

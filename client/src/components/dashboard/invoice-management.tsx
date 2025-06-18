@@ -1299,7 +1299,7 @@ export default function InvoiceManagement() {
             {invoices?.filter(invoice => invoice.paymentStatus === 'PAID').length || 0} Paid
           </Badge>
           <Badge variant="secondary" className="text-xs sm:text-sm px-2 py-1">
-            {invoices?.filter(invoice => invoice.paymentStatus === 'PENDING').length || 0} Pending
+            {Array.isArray(invoices) ? invoices.filter(invoice => invoice.paymentStatus === 'PENDING').length : 0} Pending
           </Badge>
         </div>
       </div>

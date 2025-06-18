@@ -510,7 +510,7 @@ export default function CustomersManagement() {
             {totalCustomers} of {customers?.length || 0} Total
           </Badge>
           <Badge variant="default" className="text-xs sm:text-sm px-2 py-1 bg-blue-600">
-            {customers?.filter(customer => customer.shop?.status === 'ACTIVE').length || 0} Active Shop Customers
+            {Array.isArray(customers) ? customers.filter(customer => customer.shop?.status === 'ACTIVE').length : 0} Active Shop Customers
           </Badge>
         </div>
       </div>
