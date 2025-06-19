@@ -1351,7 +1351,7 @@ export default function InvoiceManagement() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  currentInvoices.map((invoice) => (
+                  Array.isArray(currentInvoices) && currentInvoices.length > 0 ? currentInvoices.map((invoice) => (
                     <TableRow key={invoice.invoiceId}>
                     <TableCell>
                       <div className="space-y-1">
@@ -1403,7 +1403,19 @@ export default function InvoiceManagement() {
                       </div>
                     </TableCell>
                     </TableRow>
-                  ))
+                  )) : (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-12">
+                        <div className="flex flex-col items-center space-y-3 text-slate-500">
+                          <FileText className="h-12 w-12" />
+                          <div className="space-y-1">
+                            <h3 className="font-medium">No invoices found</h3>
+                            <p className="text-sm">Create your first invoice to get started</p>
+                          </div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
                 )}
               </TableBody>
             </Table>

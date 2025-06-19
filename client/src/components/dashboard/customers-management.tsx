@@ -568,7 +568,7 @@ export default function CustomersManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {Array.isArray(currentCustomers) ? currentCustomers.map((customer) => (
+                {Array.isArray(currentCustomers) && currentCustomers.length > 0 ? currentCustomers.map((customer) => (
                   <TableRow key={customer.customerId}>
                     {/* Customer Info */}
                     <TableCell>
@@ -634,7 +634,23 @@ export default function CustomersManagement() {
                       </div>
                     </TableCell>
                   </TableRow>
-                )) : null}
+                )) : (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-12">
+                      <div className="flex flex-col items-center space-y-3 text-slate-500">
+                        <Users className="h-12 w-12" />
+                        <div className="space-y-1">
+                          <h3 className="font-medium">No customers found</h3>
+                          <p className="text-sm">Add your first customer to get started</p>
+                        </div>
+                        <Button onClick={() => setIsAddDialogOpen(true)} size="sm">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Customer
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>

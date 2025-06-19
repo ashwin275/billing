@@ -570,7 +570,7 @@ export default function ShopsManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {Array.isArray(currentShops) ? currentShops.map((shop) => (
+                {Array.isArray(currentShops) && currentShops.length > 0 ? currentShops.map((shop) => (
                   <TableRow key={shop.shopId}>
                     {/* Shop Info */}
                     <TableCell>
@@ -646,7 +646,23 @@ export default function ShopsManagement() {
                       </div>
                     </TableCell>
                   </TableRow>
-                )) : null}
+                )) : (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-12">
+                      <div className="flex flex-col items-center space-y-3 text-slate-500">
+                        <Store className="h-12 w-12" />
+                        <div className="space-y-1">
+                          <h3 className="font-medium">No shops found</h3>
+                          <p className="text-sm">Add your first shop to get started</p>
+                        </div>
+                        <Button onClick={() => setIsAddDialogOpen(true)} size="sm">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Shop
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>

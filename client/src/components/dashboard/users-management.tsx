@@ -719,7 +719,7 @@ export default function UsersManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {currentUsers.map((user) => (
+                {Array.isArray(currentUsers) && currentUsers.length > 0 ? currentUsers.map((user) => (
                   <TableRow key={user.userId}>
                     {/* User Info */}
                     <TableCell>
@@ -788,7 +788,23 @@ export default function UsersManagement() {
                       </Button>
                     </TableCell>
                   </TableRow>
-                ))}
+                )) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-12">
+                      <div className="flex flex-col items-center space-y-3 text-slate-500">
+                        <Users className="h-12 w-12" />
+                        <div className="space-y-1">
+                          <h3 className="font-medium">No users found</h3>
+                          <p className="text-sm">Add your first user to get started</p>
+                        </div>
+                        <Button onClick={() => setIsAddDialogOpen(true)} size="sm">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add User
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>
