@@ -36,6 +36,12 @@ async function apiRequest<T>(
     const response = await fetch(url, config);
     
     if (!response.ok) {
+      // Handle 404 as empty data for GET requests
+      if (response.status === 404 && (!options.method || options.method === 'GET')) {
+        console.log(`API returned 404 for ${endpoint}, treating as empty data`);
+        return [] as unknown as T;
+      }
+      
       let errorData: ApiError;
       try {
         errorData = await response.json();

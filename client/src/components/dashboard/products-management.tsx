@@ -821,7 +821,7 @@ export default function ProductsManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {Array.isArray(currentProducts) ? currentProducts.map((product) => (
+                {Array.isArray(currentProducts) && currentProducts.length > 0 ? currentProducts.map((product) => (
                   <TableRow key={product.productId}>
                     {/* Product Info */}
                     <TableCell>
@@ -973,7 +973,23 @@ export default function ProductsManagement() {
                       </div>
                     </TableCell>
                   </TableRow>
-                )) : null}
+                )) : (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-12">
+                      <div className="flex flex-col items-center space-y-3 text-slate-500">
+                        <Package className="h-12 w-12" />
+                        <div className="space-y-1">
+                          <h3 className="font-medium">No products found</h3>
+                          <p className="text-sm">Add your first product to get started</p>
+                        </div>
+                        <Button onClick={() => setIsAddDialogOpen(true)} size="sm">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Product
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>
