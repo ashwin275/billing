@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
 import { useToast } from "@/hooks/use-toast";
+import { SignatureInput } from "@/components/ui/signature-input";
 import { productsApi, customersApi, shopsApi, invoicesApi } from "@/lib/api";
 import { Product, Customer, Shop, InvoiceInput } from "@/types/api";
 
@@ -43,9 +44,9 @@ const invoiceSchema = z.object({
   billType: z.enum(["GST", "NON_GST"]).default("GST"),
   saleType: z.enum(["RETAIL", "WHOLESALE"]).default("RETAIL"),
   transactionId: z.string().min(1, "Transaction ID is required"),
+  signature: z.string().optional(),
   saleItems: z.array(saleItemSchema).min(1, "At least one item is required"),
   termsAndConditions: z.string().optional(),
-  signature: z.string().optional(),
   useCustomBillingAddress: z.boolean().default(false),
   customBillingAddress: z.string().optional(),
 });
