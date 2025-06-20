@@ -175,169 +175,458 @@ export default function InvoiceManagement() {
 
   // Handle download
   const handleDownload = (invoice: Invoice) => {
+    const invoiceData = {
+      invoiceNo: invoice.invoiceNo,
+      invoiceDate: invoice.invoiceDate,
+      shop: {
+        name: invoice.shop?.name || "Shop Name",
+        place: invoice.shop?.place || "Shop Address",
+        tagline: "Quality Products & Services"
+      },
+      customer: {
+        name: "Customer Name", // We don't have customer data in invoice object
+        place: "Customer Address",
+        phone: "Customer Phone"
+      },
+      paymentDetails: {
+        paymentStatus: invoice.paymentStatus,
+        paymentMode: invoice.paymentMode,
+        billType: invoice.billType || "GST",
+        saleType: invoice.saleType || "RETAIL"
+      },
+      items: invoice.saleItems || [],
+      totalAmount: invoice.totalAmount || 0,
+      tax: invoice.tax || 0,
+      discount: invoice.discount || 0,
+      amountPaid: invoice.amountPaid || 0,
+      remark: invoice.remark
+    };
+
+    // Create a new window for PDF generation
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Invoice ${invoiceData.invoiceNo}</title>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+            
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            
+            body { 
+              font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              min-height: 100vh;
+              padding: 40px 20px;
+            }
+            
+            .invoice-container {
+              max-width: 800px;
+              margin: 0 auto;
+              background: white;
+              border-radius: 20px;
+              overflow: hidden;
+              box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+              position: relative;
+            }
+            
+            .header-wave {
+              background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+              height: 200px;
+              position: relative;
+              overflow: hidden;
+            }
+            
+            .header-wave::after {
+              content: '';
+              position: absolute;
+              bottom: -50px;
+              left: 0;
+              width: 100%;
+              height: 100px;
+              background: white;
+              border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+            }
+            
+            .header-content {
+              position: relative;
+              z-index: 2;
+              color: white;
+              padding: 40px 50px;
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
+            }
+            
+            .logo-section {
+              display: flex;
+              align-items: center;
+              gap: 15px;
+            }
+            
+            .logo-placeholder {
+              width: 60px;
+              height: 60px;
+              background: rgba(255,255,255,0.2);
+              border-radius: 12px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 24px;
+              font-weight: bold;
+              border: 2px solid rgba(255,255,255,0.3);
+            }
+            
+            .company-info h1 {
+              font-size: 32px;
+              font-weight: 700;
+              margin-bottom: 5px;
+              text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            }
+            
+            .company-tagline {
+              font-size: 14px;
+              opacity: 0.9;
+              font-weight: 300;
+            }
+            
+            .invoice-title {
+              text-align: right;
+            }
+            
+            .invoice-title h2 {
+              font-size: 48px;
+              font-weight: 300;
+              letter-spacing: 3px;
+              margin-bottom: 10px;
+              text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            }
+            
+            .invoice-meta {
+              font-size: 14px;
+              opacity: 0.9;
+            }
+            
+            .content-section {
+              padding: 60px 50px 50px;
+            }
+            
+            .bill-to-section {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 60px;
+              margin-bottom: 50px;
+            }
+            
+            .info-block h3 {
+              color: #2d3748;
+              font-size: 16px;
+              font-weight: 600;
+              margin-bottom: 15px;
+              padding-bottom: 8px;
+              border-bottom: 2px solid #e2e8f0;
+            }
+            
+            .info-block p {
+              color: #4a5568;
+              line-height: 1.6;
+              margin-bottom: 5px;
+            }
+            
+            .customer-name {
+              font-weight: 600;
+              color: #2d3748;
+              font-size: 18px;
+            }
+            
+            .items-table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 40px;
+              border-radius: 12px;
+              overflow: hidden;
+              box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            }
+            
+            .items-table thead tr {
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+            }
+            
+            .items-table th {
+              padding: 20px 15px;
+              font-weight: 600;
+              font-size: 14px;
+              letter-spacing: 0.5px;
+            }
+            
+            .items-table td {
+              padding: 18px 15px;
+              border-bottom: 1px solid #e2e8f0;
+              color: #4a5568;
+            }
+            
+            .items-table tbody tr:hover {
+              background-color: #f7fafc;
+            }
+            
+            .items-table tbody tr:last-child td {
+              border-bottom: none;
+            }
+            
+            .text-right { text-align: right; }
+            .text-center { text-align: center; }
+            .text-left { text-align: left; }
+            
+            .totals-section {
+              display: flex;
+              justify-content: flex-end;
+              margin-bottom: 50px;
+            }
+            
+            .totals-box {
+              background: #f7fafc;
+              padding: 30px;
+              border-radius: 12px;
+              min-width: 350px;
+            }
+            
+            .total-line {
+              display: flex;
+              justify-content: space-between;
+              padding: 8px 0;
+              color: #4a5568;
+            }
+            
+            .grand-total {
+              border-top: 2px solid #e2e8f0;
+              margin-top: 15px;
+              padding-top: 15px;
+              font-size: 20px;
+              font-weight: 700;
+              color: #2d3748;
+            }
+            
+            .balance {
+              font-weight: 600;
+              font-size: 18px;
+            }
+            
+            .balance.positive { color: #e53e3e; }
+            .balance.negative { color: #38a169; }
+            
+            .bottom-section {
+              display: grid;
+              grid-template-columns: 2fr 1fr;
+              gap: 40px;
+              margin-top: 40px;
+            }
+            
+            .terms-section {
+              background: #f7fafc;
+              padding: 25px;
+              border-radius: 12px;
+            }
+            
+            .terms-section h3 {
+              color: #2d3748;
+              font-size: 16px;
+              font-weight: 600;
+              margin-bottom: 15px;
+            }
+            
+            .terms-section p {
+              color: #4a5568;
+              font-size: 13px;
+              line-height: 1.6;
+              margin-bottom: 8px;
+            }
+            
+            .signature-section {
+              text-align: center;
+              padding: 25px;
+            }
+            
+            .signature-line {
+              border-top: 2px solid #2d3748;
+              width: 150px;
+              margin: 40px auto 10px;
+            }
+            
+            .signature-text {
+              color: #4a5568;
+              font-size: 14px;
+              font-weight: 500;
+            }
+            
+            .footer-wave {
+              background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+              height: 80px;
+              position: relative;
+              margin-top: 40px;
+            }
+            
+            .footer-wave::before {
+              content: '';
+              position: absolute;
+              top: -40px;
+              left: 0;
+              width: 100%;
+              height: 80px;
+              background: white;
+              border-radius: 0 0 50% 50% / 0 0 100% 100%;
+            }
+            
+            @media print {
+              body { 
+                background: white;
+                padding: 0;
+              }
+              .invoice-container {
+                box-shadow: none;
+                border-radius: 0;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="invoice-container">
+            <!-- Header Wave Section -->
+            <div class="header-wave">
+              <div class="header-content">
+                <div class="logo-section">
+                  <div class="logo-placeholder">
+                    ${invoiceData.shop.name.charAt(0)}
+                  </div>
+                  <div class="company-info">
+                    <h1>${invoiceData.shop.name}</h1>
+                    <div class="company-tagline">${invoiceData.shop.tagline}</div>
+                  </div>
+                </div>
+                <div class="invoice-title">
+                  <h2>INVOICE</h2>
+                  <div class="invoice-meta">
+                    <div><strong>Invoice #:</strong> ${invoiceData.invoiceNo}</div>
+                    <div><strong>Date:</strong> ${new Date(invoiceData.invoiceDate).toLocaleDateString()}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Content Section -->
+            <div class="content-section">
+              <!-- Bill To Section -->
+              <div class="bill-to-section">
+                <div class="info-block">
+                  <h3>Invoice To:</h3>
+                  <p class="customer-name">${invoiceData.customer.name}</p>
+                  <p>📍 ${invoiceData.customer.place}</p>
+                  <p>📞 ${invoiceData.customer.phone}</p>
+                </div>
+                <div class="info-block">
+                  <h3>Payment Info:</h3>
+                  <p><strong>Status:</strong> ${invoiceData.paymentDetails.paymentStatus}</p>
+                  <p><strong>Mode:</strong> ${invoiceData.paymentDetails.paymentMode}</p>
+                  <p><strong>Type:</strong> ${invoiceData.paymentDetails.billType} ${invoiceData.paymentDetails.saleType}</p>
+                </div>
+              </div>
+
+              <!-- Items Table -->
+              <table class="items-table">
+                <thead>
+                  <tr>
+                    <th class="text-left">Item Description</th>
+                    <th class="text-center">Qty.</th>
+                    <th class="text-right">Price</th>
+                    <th class="text-right">Discount</th>
+                    <th class="text-right">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${invoiceData.items.map(item => `
+                    <tr>
+                      <td class="text-left">
+                        <div style="font-weight: 600; color: #2d3748;">${item.product?.name || 'Product'}</div>
+                      </td>
+                      <td class="text-center">${item.quantity.toString().padStart(2, '0')}</td>
+                      <td class="text-right">₹${(item.unitPrice || 0).toFixed(2)}</td>
+                      <td class="text-right">₹${(item.discount || 0).toFixed(2)}</td>
+                      <td class="text-right" style="font-weight: 600; color: #2d3748;">₹${(item.totalPrice || 0).toFixed(2)}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+
+              <!-- Totals Section -->
+              <div class="totals-section">
+                <div class="totals-box">
+                  <div class="total-line">
+                    <span>Sub Total:</span>
+                    <span>₹${invoiceData.totalAmount.toFixed(2)}</span>
+                  </div>
+                  <div class="total-line">
+                    <span>Discount:</span>
+                    <span>- ₹${invoiceData.discount.toFixed(2)}</span>
+                  </div>
+                  <div class="total-line">
+                    <span>Tax - GST:</span>
+                    <span>₹${invoiceData.tax.toFixed(2)}</span>
+                  </div>
+                  <div class="total-line grand-total">
+                    <span>Total:</span>
+                    <span>₹${invoiceData.totalAmount.toFixed(2)}</span>
+                  </div>
+                  <div class="total-line">
+                    <span>Amount Paid:</span>
+                    <span>₹${invoiceData.amountPaid.toFixed(2)}</span>
+                  </div>
+                  <div class="total-line balance ${(invoiceData.totalAmount - invoiceData.amountPaid) > 0 ? 'positive' : 'negative'}">
+                    <span>Balance:</span>
+                    <span>₹${(invoiceData.totalAmount - invoiceData.amountPaid).toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Bottom Section -->
+              <div class="bottom-section">
+                <div class="terms-section">
+                  <h3>Terms & Conditions</h3>
+                  <p>1. Payment is due within 30 days of invoice date.</p>
+                  <p>2. Late payments may incur additional charges.</p>
+                  <p>3. Goods once sold cannot be returned without prior approval.</p>
+                  <p>4. Any disputes must be resolved within 7 days of delivery.</p>
+                  ${invoiceData.remark ? `
+                    <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
+                      <strong>Remarks:</strong><br>
+                      ${invoiceData.remark}
+                    </div>
+                  ` : ''}
+                </div>
+                <div class="signature-section">
+                  <div class="signature-line"></div>
+                  <div class="signature-text">${invoiceData.shop.name}<br>Signature</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer Wave -->
+            <div class="footer-wave"></div>
+          </div>
+          
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(function() { window.close(); }, 1000);
+            }
+          </script>
+        </body>
+      </html>
+    `);
     
-    const doc = new jsPDF();
-    
-    // Header with better formatting
-    doc.setFontSize(24);
-    doc.setFont("helvetica", "bold");
-    doc.text(invoice.shop?.name || "Shop Name", 20, 25);
-    
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text(invoice.shop?.place || "Shop Address", 20, 35);
-    
-    // Invoice title and details - right aligned
-    doc.setFontSize(28);
-    doc.setFont("helvetica", "bold");
-    doc.text("INVOICE", 210 - doc.getTextWidth("INVOICE"), 25);
-    
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    const invoiceText = `Invoice #: ${invoice.invoiceNo}`;
-    doc.text(invoiceText, 210 - doc.getTextWidth(invoiceText), 35);
-    const dateText = `Date: ${new Date(invoice.invoiceDate).toLocaleDateString()}`;
-    doc.text(dateText, 210 - doc.getTextWidth(dateText), 42);
-    
-    // Horizontal line
-    doc.setLineWidth(0.5);
-    doc.line(20, 50, 190, 50);
-    
-    // Bill To and Payment Details sections
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text("Bill To:", 20, 65);
-    doc.text("Payment Details:", 120, 65);
-    
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text("Customer Name", 20, 75);
-    doc.text("Customer Address", 20, 82);
-    doc.text("Customer Phone", 20, 89);
-    
-    doc.text(`Status: ${invoice.paymentStatus}`, 120, 75);
-    doc.text(`Mode: ${invoice.paymentMode}`, 120, 82);
-    doc.text(`Type: ${invoice.billType} ${invoice.saleType}`, 120, 89);
-    
-    // Items table with proper formatting
-    let yPos = 110;
-    
-    // Table header with background
-    doc.setFillColor(240, 240, 240);
-    doc.rect(20, yPos - 5, 170, 12, 'F');
-    
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-    doc.text("Product", 25, yPos);
-    doc.text("Qty", 100, yPos);
-    doc.text("Rate", 120, yPos);
-    doc.text("Discount", 145, yPos);
-    doc.text("Total", 170, yPos);
-    
-    // Table border
-    doc.setLineWidth(0.3);
-    doc.rect(20, yPos - 5, 170, 12);
-    
-    yPos += 15;
-    doc.setFont("helvetica", "normal");
-    
-    // Items with proper alignment
-    if (invoice.saleItems) {
-      invoice.saleItems.forEach((item, index) => {
-        if (index % 2 === 0) {
-          doc.setFillColor(250, 250, 250);
-          doc.rect(20, yPos - 5, 170, 10, 'F');
-        }
-        
-        doc.text(item.product?.name || "Product", 25, yPos);
-        doc.text(item.quantity.toString(), 105, yPos);
-        doc.text(`₹${item.unitPrice?.toFixed(2)}`, 125, yPos);
-        doc.text(`₹${item.discount?.toFixed(2)}`, 150, yPos);
-        const totalText = `₹${item.totalPrice?.toFixed(2)}`;
-        doc.text(totalText, 190 - doc.getTextWidth(totalText), yPos);
-        
-        doc.rect(20, yPos - 5, 170, 10);
-        yPos += 10;
-      });
-    }
-    
-    // Totals section with proper alignment
-    yPos += 10;
-    doc.setLineWidth(0.5);
-    doc.line(120, yPos, 190, yPos);
-    yPos += 10;
-    
-    const totalsData = [
-      { label: "Total Amount:", value: `₹${invoice.totalAmount?.toFixed(2)}` },
-      { label: "Tax:", value: `₹${invoice.tax?.toFixed(2)}` },
-      { label: "Discount:", value: `-₹${invoice.discount?.toFixed(2)}` }
-    ];
-    
-    totalsData.forEach(item => {
-      doc.setFont("helvetica", "normal");
-      doc.text(item.label, 125, yPos);
-      doc.text(item.value, 190 - doc.getTextWidth(item.value), yPos);
-      yPos += 7;
-    });
-    
-    // Grand total with emphasis
-    doc.setLineWidth(0.8);
-    doc.line(120, yPos, 190, yPos);
-    yPos += 10;
-    
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text("Grand Total:", 125, yPos);
-    const grandTotalText = `₹${invoice.totalAmount?.toFixed(2)}`;
-    doc.text(grandTotalText, 190 - doc.getTextWidth(grandTotalText), yPos);
-    
-    yPos += 10;
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text("Amount Paid:", 125, yPos);
-    const amountPaidText = `₹${(invoice.amountPaid || 0).toFixed(2)}`;
-    doc.text(amountPaidText, 190 - doc.getTextWidth(amountPaidText), yPos);
-    
-    yPos += 7;
-    doc.setFont("helvetica", "bold");
-    doc.text("Balance:", 125, yPos);
-    const balanceText = `₹${((invoice.totalAmount || 0) - (invoice.amountPaid || 0)).toFixed(2)}`;
-    doc.text(balanceText, 190 - doc.getTextWidth(balanceText), yPos);
-    
-    // Terms and Conditions with better formatting
-    yPos += 25;
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
-    doc.text("Terms and Conditions:", 20, yPos);
-    
-    yPos += 8;
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-    const terms = [
-      "1. Payment is due within 30 days of invoice date.",
-      "2. Late payments may incur additional charges.",
-      "3. Goods once sold cannot be returned without prior approval.",
-      "4. Any disputes must be resolved within 7 days of delivery."
-    ];
-    
-    terms.forEach(term => {
-      doc.text(term, 20, yPos);
-      yPos += 6;
-    });
-    
-    // Remarks if present
-    if (invoice.remark) {
-      yPos += 10;
-      doc.setFontSize(11);
-      doc.setFont("helvetica", "bold");
-      doc.text("Remarks:", 20, yPos);
-      yPos += 8;
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "normal");
-      doc.text(invoice.remark, 20, yPos);
-    }
-    
-    doc.save(`invoice-${invoice.invoiceNo}.pdf`);
+    printWindow.document.close();
   };
 
   // Get status badge variant
