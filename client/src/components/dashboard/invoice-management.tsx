@@ -9,6 +9,7 @@ import {
   Calculator, Receipt, Users, Store, ArrowUpDown, ArrowUp, ArrowDown,
   Calendar, CreditCard, DollarSign, Package, X
 } from "lucide-react";
+import { Link } from "wouter";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -665,24 +666,12 @@ export default function InvoiceManagement() {
             <h1 className="text-xl sm:text-2xl font-bold text-slate-900 truncate">Invoice Management</h1>
             <p className="text-sm sm:text-base text-slate-600 mt-1">Create and manage invoices for your business</p>
           </div>
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="w-full sm:w-auto">
-                <Plus className="h-4 w-4 mr-2 flex-shrink-0" />
-                <span>Create Invoice</span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Create New Invoice</DialogTitle>
-                <DialogDescription>
-                  Create a professional invoice with automatic calculations and tax handling.
-                </DialogDescription>
-              </DialogHeader>
-              
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  {/* Customer and Shop Selection */}
+          <Link href="/create-invoice">
+            <Button className="w-full sm:w-auto">
+              <Plus className="h-4 w-4 mr-2 flex-shrink-0" />
+              <span>Create Invoice</span>
+            </Button>
+          </Link>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
