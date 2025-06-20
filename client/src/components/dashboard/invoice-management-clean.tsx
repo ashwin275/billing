@@ -12,6 +12,7 @@ import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { invoicesApi } from "@/lib/api";
 import { Invoice } from "@/types/api";
+import InvoiceTemplate from "@/components/invoice/InvoiceTemplate";
 
 export default function InvoiceManagementClean() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -94,7 +95,7 @@ export default function InvoiceManagementClean() {
     setIsPreviewDialogOpen(true);
   };
 
-  // Generate PDF
+  // Generate PDF using the new template system
   const handleDownloadPDF = (invoiceData: Invoice) => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
@@ -113,37 +114,45 @@ export default function InvoiceManagementClean() {
               box-sizing: border-box;
             }
             
+            @page {
+              margin: 0;
+              size: A4 portrait;
+            }
+            
             body {
               font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-              min-height: 100vh;
-              padding: 40px 20px;
+              background: white;
+              color: #000;
+              line-height: 1.6;
+              margin: 0;
+              padding: 0;
             }
             
-            .invoice-container {
-              max-width: 800px;
+            .invoice-template {
+              width: 210mm;
+              min-height: 297mm;
               margin: 0 auto;
               background: white;
-              border-radius: 20px;
-              overflow: hidden;
-              box-shadow: 0 25px 50px rgba(0,0,0,0.15);
-              position: relative;
+              display: flex;
+              flex-direction: column;
             }
             
-            .header-wave {
+            .invoice-header {
               background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-              height: 200px;
+              color: white;
+              padding: 30px;
               position: relative;
               overflow: hidden;
+              flex-shrink: 0;
             }
             
-            .header-wave::after {
+            .invoice-header::after {
               content: '';
               position: absolute;
-              bottom: -50px;
+              bottom: -20px;
               left: 0;
               width: 100%;
-              height: 100px;
+              height: 40px;
               background: white;
               border-radius: 50% 50% 0 0 / 100% 100% 0 0;
             }
@@ -151,90 +160,109 @@ export default function InvoiceManagementClean() {
             .header-content {
               position: relative;
               z-index: 2;
-              color: white;
-              padding: 40px 50px;
               display: flex;
               justify-content: space-between;
               align-items: flex-start;
             }
             
-            .logo-section {
+            .company-info {
               display: flex;
               align-items: center;
               gap: 15px;
             }
             
-            .logo-placeholder {
-              width: 60px;
-              height: 60px;
-              background: rgba(255,255,255,0.2);
-              border-radius: 12px;
+            .company-logo {
+              width: 50px;
+              height: 50px;
+              background: rgba(255, 255, 255, 0.2);
+              border-radius: 8px;
               display: flex;
               align-items: center;
               justify-content: center;
-              font-size: 24px;
+              font-size: 20px;
               font-weight: bold;
-              border: 2px solid rgba(255,255,255,0.3);
+              border: 2px solid rgba(255, 255, 255, 0.3);
             }
             
-            .company-info h1 {
-              font-size: 32px;
+            .company-details h1 {
+              font-size: 24px;
               font-weight: 700;
-              margin-bottom: 5px;
-              text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+              margin: 0 0 5px 0;
+              text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             }
             
             .company-tagline {
-              font-size: 14px;
+              font-size: 12px;
               opacity: 0.9;
-              font-weight: 300;
+              margin: 0;
             }
             
             .invoice-meta {
               text-align: right;
+            }
+            
+            .invoice-meta h2 {
+              font-size: 28px;
+              font-weight: 300;
+              letter-spacing: 2px;
+              margin: 0 0 8px 0;
+              text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            }
+            
+            .invoice-number {
               font-size: 14px;
+              font-weight: 600;
+              margin: 3px 0;
+            }
+            
+            .invoice-date {
+              font-size: 12px;
               opacity: 0.9;
+              margin: 3px 0;
             }
             
-            .content-section {
-              padding: 60px 50px 50px;
+            .invoice-body {
+              padding: 30px;
+              flex: 1;
+              display: flex;
+              flex-direction: column;
             }
             
-            .bill-to-section {
+            .billing-section {
               display: grid;
               grid-template-columns: 1fr 1fr;
-              gap: 60px;
-              margin-bottom: 50px;
+              gap: 30px;
+              margin-bottom: 25px;
             }
             
-            .info-block h3 {
+            .billing-block h3 {
               color: #2d3748;
-              font-size: 16px;
+              font-size: 14px;
               font-weight: 600;
-              margin-bottom: 15px;
-              padding-bottom: 8px;
+              margin: 0 0 10px 0;
+              padding-bottom: 5px;
               border-bottom: 2px solid #e2e8f0;
             }
             
-            .info-block p {
+            .billing-block p {
               color: #4a5568;
-              line-height: 1.6;
-              margin-bottom: 5px;
+              margin: 3px 0;
+              font-size: 12px;
             }
             
             .customer-name {
               font-weight: 600;
-              font-size: 18px;
+              font-size: 14px;
               color: #2d3748;
             }
             
             .items-table {
               width: 100%;
               border-collapse: collapse;
-              margin-bottom: 40px;
-              border-radius: 12px;
+              margin-bottom: 20px;
+              border-radius: 6px;
               overflow: hidden;
-              box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             }
             
             .items-table thead {
@@ -244,21 +272,25 @@ export default function InvoiceManagementClean() {
             .items-table th {
               color: white;
               font-weight: 600;
-              padding: 20px 15px;
+              padding: 10px 8px;
               text-align: left;
-              font-size: 14px;
-              letter-spacing: 0.5px;
+              font-size: 11px;
+              letter-spacing: 0.3px;
+            }
+            
+            .items-table th.text-right {
+              text-align: right;
             }
             
             .items-table td {
-              padding: 18px 15px;
+              padding: 8px;
               border-bottom: 1px solid #e2e8f0;
               color: #4a5568;
-              font-size: 14px;
+              font-size: 11px;
             }
             
-            .items-table tbody tr:hover {
-              background-color: #f7fafc;
+            .items-table td.text-right {
+              text-align: right;
             }
             
             .items-table tbody tr:last-child td {
@@ -268,156 +300,185 @@ export default function InvoiceManagementClean() {
             .product-name {
               font-weight: 600;
               color: #2d3748;
-              margin-bottom: 4px;
-            }
-            
-            .text-right {
-              text-align: right;
             }
             
             .totals-section {
               display: flex;
               justify-content: flex-end;
-              margin-bottom: 40px;
+              margin-bottom: 25px;
             }
             
             .totals-table {
-              min-width: 300px;
+              min-width: 250px;
             }
             
-            .total-line {
+            .total-row {
               display: flex;
               justify-content: space-between;
-              padding: 8px 0;
+              padding: 5px 0;
               color: #4a5568;
+              font-size: 12px;
             }
             
-            .grand-total {
+            .total-row.grand-total {
               border-top: 2px solid #e2e8f0;
-              margin-top: 15px;
-              padding-top: 15px;
-              font-size: 20px;
+              margin-top: 8px;
+              padding-top: 10px;
+              font-size: 16px;
               font-weight: 700;
               color: #2d3748;
             }
             
-            .balance {
+            .total-row.balance {
               font-weight: 600;
-              font-size: 18px;
+              font-size: 14px;
             }
             
-            .balance.positive { color: #e53e3e; }
-            .balance.negative { color: #38a169; }
+            .balance.positive {
+              color: #e53e3e;
+            }
+            
+            .balance.negative {
+              color: #38a169;
+            }
             
             .bottom-section {
               display: grid;
               grid-template-columns: 2fr 1fr;
-              gap: 40px;
-              margin-top: 40px;
+              gap: 25px;
+              margin-top: auto;
+              margin-bottom: 20px;
             }
             
             .terms-section {
               background: #f7fafc;
-              padding: 25px;
-              border-radius: 12px;
+              padding: 15px;
+              border-radius: 6px;
             }
             
             .terms-section h3 {
               color: #2d3748;
-              font-size: 16px;
+              font-size: 14px;
               font-weight: 600;
-              margin-bottom: 15px;
+              margin: 0 0 10px 0;
             }
             
             .terms-section p {
               color: #4a5568;
-              font-size: 13px;
-              line-height: 1.6;
-              margin-bottom: 8px;
+              font-size: 11px;
+              margin: 5px 0;
+              line-height: 1.4;
+            }
+            
+            .remarks-section {
+              margin-top: 15px;
+              padding-top: 10px;
+              border-top: 1px solid #e2e8f0;
+            }
+            
+            .remarks-section strong {
+              color: #2d3748;
             }
             
             .signature-section {
               text-align: center;
-              padding: 25px;
+              padding: 15px;
+            }
+            
+            .signature-image {
+              max-width: 120px;
+              max-height: 50px;
+              margin: 0 auto 8px;
+              display: block;
             }
             
             .signature-line {
               border-top: 2px solid #2d3748;
-              width: 150px;
-              margin: 40px auto 10px;
+              width: 100px;
+              margin: 20px auto 8px;
             }
             
             .signature-text {
               color: #4a5568;
-              font-size: 14px;
+              font-size: 11px;
               font-weight: 500;
+              line-height: 1.3;
             }
             
-            .footer-wave {
+            .invoice-footer {
               background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-              height: 60px;
+              height: 30px;
               position: relative;
-              margin-top: 30px;
+              margin-top: auto;
+              flex-shrink: 0;
             }
             
-            .footer-wave::before {
+            .invoice-footer::before {
               content: '';
               position: absolute;
-              top: -30px;
+              top: -15px;
               left: 0;
               width: 100%;
-              height: 60px;
+              height: 30px;
               background: white;
               border-radius: 0 0 50% 50% / 0 0 100% 100%;
             }
             
             @media print {
-              body { 
-                background: white;
-                padding: 0;
-              }
-              .invoice-container {
-                box-shadow: none;
-                border-radius: 0;
+              body {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
               }
             }
           </style>
         </head>
         <body>
-          <div class="invoice-container">
-            <!-- Header Wave Section -->
-            <div class="header-wave">
+          <div class="invoice-template">
+            <!-- Header -->
+            <div class="invoice-header">
               <div class="header-content">
-                <div class="logo-section">
-                  <div class="logo-placeholder">${invoiceData.shop.name.charAt(0)}</div>
-                  <div class="company-info">
-                    <h1>${invoiceData.shop.name}</h1>
-                    <div class="company-tagline">Quality Products & Services</div>
+                <div class="company-info">
+                  <div class="company-logo">
+                    ${invoiceData.shop?.name?.charAt(0) || 'S'}
+                  </div>
+                  <div class="company-details">
+                    <h1>${invoiceData.shop?.name || 'Shop Name'}</h1>
+                    <p class="company-tagline">Quality Products & Services</p>
                   </div>
                 </div>
                 <div class="invoice-meta">
-                  <div style="font-size: 14px; margin-bottom: 8px;">#${invoiceData.invoiceNo}</div>
-                  <div style="font-size: 12px;">${new Date(invoiceData.invoiceDate).toLocaleDateString()}</div>
+                  <h2>INVOICE</h2>
+                  <div class="invoice-number">#${invoiceData.invoiceNo}</div>
+                  <div class="invoice-date">
+                    ${new Date(invoiceData.invoiceDate).toLocaleDateString('en-IN', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </div>
                 </div>
               </div>
             </div>
 
-            <!-- Content Section -->
-            <div class="content-section">
-              <!-- Bill To Section -->
-              <div class="bill-to-section">
-                <div class="info-block">
+            <!-- Body -->
+            <div class="invoice-body">
+              <!-- Billing Information -->
+              <div class="billing-section">
+                <div class="billing-block">
                   <h3>Bill To</h3>
-                  <div class="customer-name">${invoiceData.sales?.customerId ? 'Customer' : 'Walk-in Customer'}</div>
+                  <div class="customer-name">
+                    ${invoiceData.sales?.customerId ? 'Customer Name' : 'Walk-in Customer'}
+                  </div>
                   <p>Phone: ${invoiceData.sales?.customerId || 'N/A'}</p>
-                  <p>Location: ${invoiceData.shop.place}</p>
+                  <p>Location: ${invoiceData.shop?.place || 'Shop Location'}</p>
                 </div>
-                <div class="info-block">
+                <div class="billing-block">
                   <h3>Payment Details</h3>
                   <p><strong>Status:</strong> ${invoiceData.paymentStatus}</p>
                   <p><strong>Mode:</strong> ${invoiceData.paymentMode}</p>
                   <p><strong>Type:</strong> ${invoiceData.billType} ${invoiceData.saleType}</p>
-                  ${invoiceData.dueDate ? `<p><strong>Due Date:</strong> ${new Date(invoiceData.dueDate).toLocaleDateString()}</p>` : ''}
+                  ${invoiceData.dueDate ? `<p><strong>Due Date:</strong> ${new Date(invoiceData.dueDate).toLocaleDateString('en-IN')}</p>` : ''}
+                  ${invoiceData.transactionId ? `<p><strong>Transaction ID:</strong> ${invoiceData.transactionId}</p>` : ''}
                 </div>
               </div>
 
@@ -436,49 +497,52 @@ export default function InvoiceManagementClean() {
                   </tr>
                 </thead>
                 <tbody>
-                  ${invoiceData.saleItems?.map(item => `
-                    <tr>
-                      <td>
-                        <div class="product-name">${item.product?.name || 'Product'}</div>
-                      </td>
-                      <td>${item.product?.hsn || 'N/A'}</td>
-                      <td class="text-right">${item.quantity}</td>
-                      <td class="text-right">₹${item.unitPrice?.toFixed(2) || '0.00'}</td>
-                      <td class="text-right">₹${item.discount?.toFixed(2) || '0.00'}</td>
-                      <td class="text-right">₹${item.cgst?.toFixed(2) || '0.00'}</td>
-                      <td class="text-right">₹${item.sgst?.toFixed(2) || '0.00'}</td>
-                      <td class="text-right">₹${item.totalPrice?.toFixed(2) || '0.00'}</td>
-                    </tr>
-                  `).join('') || '<tr><td colspan="8" style="text-align: center; padding: 40px;">No items found</td></tr>'}
+                  ${invoiceData.saleItems && invoiceData.saleItems.length > 0 ? (
+                    invoiceData.saleItems.map(item => `
+                      <tr>
+                        <td>
+                          <div class="product-name">${item.product?.name || 'Product'}</div>
+                          ${item.product?.description ? `<div style="font-size: 10px; color: #718096;">${item.product.description}</div>` : ''}
+                        </td>
+                        <td>${item.product?.hsn || 'N/A'}</td>
+                        <td class="text-right">${item.quantity}</td>
+                        <td class="text-right">₹${item.unitPrice?.toFixed(2) || '0.00'}</td>
+                        <td class="text-right">₹${item.discount?.toFixed(2) || '0.00'}</td>
+                        <td class="text-right">₹${item.cgst?.toFixed(2) || '0.00'}</td>
+                        <td class="text-right">₹${item.sgst?.toFixed(2) || '0.00'}</td>
+                        <td class="text-right">₹${item.totalPrice?.toFixed(2) || '0.00'}</td>
+                      </tr>
+                    `).join('')
+                  ) : '<tr><td colspan="8" style="text-align: center; padding: 20px; color: #9ca3af;">No items found</td></tr>'}
                 </tbody>
               </table>
 
-              <!-- Totals Section -->
+              <!-- Totals -->
               <div class="totals-section">
                 <div class="totals-table">
-                  <div class="total-line">
+                  <div class="total-row">
                     <span>Subtotal:</span>
-                    <span>₹${invoiceData.totalAmount ? (invoiceData.totalAmount - invoiceData.tax).toFixed(2) : '0.00'}</span>
+                    <span>₹${((invoiceData.totalAmount || 0) - (invoiceData.tax || 0)).toFixed(2)}</span>
                   </div>
-                  <div class="total-line">
+                  <div class="total-row">
                     <span>Tax:</span>
-                    <span>₹${invoiceData.tax?.toFixed(2) || '0.00'}</span>
+                    <span>₹${(invoiceData.tax || 0).toFixed(2)}</span>
                   </div>
-                  <div class="total-line">
+                  <div class="total-row">
                     <span>Discount:</span>
-                    <span>₹${invoiceData.discount?.toFixed(2) || '0.00'}</span>
+                    <span>₹${(invoiceData.discount || 0).toFixed(2)}</span>
                   </div>
-                  <div class="total-line grand-total">
+                  <div class="total-row grand-total">
                     <span>Total Amount:</span>
-                    <span>₹${invoiceData.totalAmount?.toFixed(2) || '0.00'}</span>
+                    <span>₹${(invoiceData.totalAmount || 0).toFixed(2)}</span>
                   </div>
-                  <div class="total-line">
+                  <div class="total-row">
                     <span>Amount Paid:</span>
-                    <span>₹${invoiceData.amountPaid?.toFixed(2) || '0.00'}</span>
+                    <span>₹${(invoiceData.amountPaid || 0).toFixed(2)}</span>
                   </div>
-                  <div class="total-line balance ${(invoiceData.totalAmount - invoiceData.amountPaid) > 0 ? 'positive' : 'negative'}">
+                  <div class="total-row balance ${((invoiceData.totalAmount || 0) - (invoiceData.amountPaid || 0)) > 0 ? 'positive' : 'negative'}">
                     <span>Balance:</span>
-                    <span>₹${(invoiceData.totalAmount - invoiceData.amountPaid).toFixed(2)}</span>
+                    <span>₹${((invoiceData.totalAmount || 0) - (invoiceData.amountPaid || 0)).toFixed(2)}</span>
                   </div>
                 </div>
               </div>
@@ -491,25 +555,35 @@ export default function InvoiceManagementClean() {
                   <p>2. Late payments may incur additional charges.</p>
                   <p>3. Goods once sold cannot be returned without prior approval.</p>
                   <p>4. Any disputes must be resolved within 7 days of delivery.</p>
+                  
                   ${invoiceData.remark ? `
-                    <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
-                      <strong>Remarks:</strong><br>
+                    <div class="remarks-section">
+                      <strong>Remarks:</strong><br />
                       ${invoiceData.remark}
                     </div>
                   ` : ''}
                 </div>
+                
                 <div class="signature-section">
-                  ${invoiceData.signature ? 
-                    `<img src="${invoiceData.signature}" alt="Signature" style="max-width: 150px; max-height: 60px; margin: 0 auto 10px;">` : 
-                    '<div class="signature-line"></div>'
-                  }
-                  <div class="signature-text">${invoiceData.shop.name}<br>Signature</div>
+                  ${invoiceData.signature ? `
+                    <img 
+                      src="${invoiceData.signature}" 
+                      alt="Signature" 
+                      class="signature-image"
+                    />
+                  ` : `
+                    <div class="signature-line"></div>
+                  `}
+                  <div class="signature-text">
+                    ${invoiceData.shop?.name || 'Shop Name'}<br />
+                    Signature
+                  </div>
                 </div>
               </div>
             </div>
 
-            <!-- Footer Wave -->
-            <div class="footer-wave"></div>
+            <!-- Footer -->
+            <div class="invoice-footer"></div>
           </div>
           
           <script>
@@ -728,96 +802,7 @@ export default function InvoiceManagementClean() {
           </DialogHeader>
           
           {selectedInvoice && (
-            <div className="space-y-6 p-6 bg-white text-black border rounded-lg">
-              {/* Invoice Header */}
-              <div className="flex justify-between items-start border-b pb-6">
-                <div>
-                  <h2 className="text-2xl font-bold text-black">{selectedInvoice.shop?.name}</h2>
-                  <p className="text-gray-600">{selectedInvoice.shop?.place}</p>
-                </div>
-                <div className="text-right">
-                  <h3 className="text-xl font-bold text-black">INVOICE</h3>
-                  <p className="text-gray-600">#{selectedInvoice.invoiceNo}</p>
-                  <p className="text-gray-600">{new Date(selectedInvoice.invoiceDate).toLocaleDateString()}</p>
-                </div>
-              </div>
-
-              {/* Invoice Details */}
-              <div className="grid grid-cols-2 gap-8">
-                <div>
-                  <h4 className="font-semibold text-black mb-2">Payment Details:</h4>
-                  <p className="text-gray-600">Status: {selectedInvoice.paymentStatus}</p>
-                  <p className="text-gray-600">Mode: {selectedInvoice.paymentMode}</p>
-                  <p className="text-gray-600">Type: {selectedInvoice.billType} {selectedInvoice.saleType}</p>
-                </div>
-              </div>
-
-              {/* Items */}
-              <div>
-                <h4 className="font-semibold text-black mb-4">Items:</h4>
-                <div className="border border-black rounded">
-                  <table className="w-full">
-                    <thead className="bg-gray-100">
-                      <tr>
-                        <th className="border-b border-black p-2 text-left text-black">Product</th>
-                        <th className="border-b border-black p-2 text-right text-black">Qty</th>
-                        <th className="border-b border-black p-2 text-right text-black">Rate</th>
-                        <th className="border-b border-black p-2 text-right text-black">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {selectedInvoice.saleItems?.map((item, index) => (
-                        <tr key={index}>
-                          <td className="border-b border-black p-2 text-black">{item.product?.name || 'Product'}</td>
-                          <td className="border-b border-black p-2 text-right text-black">{item.quantity}</td>
-                          <td className="border-b border-black p-2 text-right text-black">₹{item.unitPrice?.toFixed(2) || '0.00'}</td>
-                          <td className="border-b border-black p-2 text-right text-black">₹{item.totalPrice?.toFixed(2) || '0.00'}</td>
-                        </tr>
-                      )) || (
-                        <tr>
-                          <td colSpan={4} className="text-center p-4 text-gray-500">No items found</td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* Totals */}
-              <div className="flex justify-end">
-                <div className="w-80 space-y-2">
-                  <div className="flex justify-between text-black">
-                    <span>Total Amount:</span>
-                    <span>₹{selectedInvoice.totalAmount?.toFixed(2) || '0.00'}</span>
-                  </div>
-                  <div className="flex justify-between text-black">
-                    <span>Amount Paid:</span>
-                    <span>₹{selectedInvoice.amountPaid?.toFixed(2) || '0.00'}</span>
-                  </div>
-                  <div className="flex justify-between font-semibold text-black border-t pt-2">
-                    <span>Balance:</span>
-                    <span>₹{((selectedInvoice.totalAmount || 0) - (selectedInvoice.amountPaid || 0)).toFixed(2)}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Footer with signature */}
-              <div className="mt-8 pt-6 border-t">
-                <div className="flex justify-end">
-                  <div className="text-center">
-                    {selectedInvoice.signature && (
-                      <img 
-                        src={selectedInvoice.signature} 
-                        alt="Signature" 
-                        className="max-w-[150px] max-h-[60px] mx-auto mb-2"
-                      />
-                    )}
-                    <div className="border-t-2 border-black w-32 mx-auto mb-2"></div>
-                    <p className="text-sm text-gray-600">{selectedInvoice.shop?.name}<br />Signature</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <InvoiceTemplate invoice={selectedInvoice} isPreview={true} />
           )}
         </DialogContent>
       </Dialog>
