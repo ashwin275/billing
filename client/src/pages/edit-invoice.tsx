@@ -1,20 +1,19 @@
-// Invoice creation page with direct editing layout
+// Edit invoice page with pre-filled invoice data
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowLeft, Plus, Trash2, Save, Eye, FileText, User, Building2, Calendar, CreditCard, Percent, Hash, Phone, MapPin } from "lucide-react";
-import { Link, useLocation } from "wouter";
+import { ArrowLeft, Plus, Trash2, Save, User, MapPin, Phone } from "lucide-react";
+import { Link, useLocation, useRoute } from "wouter";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
@@ -44,11 +43,6 @@ const invoiceSchema = z.object({
   saleType: z.enum(["RETAIL", "WHOLESALE"]).default("RETAIL"),
   transactionId: z.string().min(1, "Transaction ID is required"),
   saleItems: z.array(saleItemSchema).min(1, "At least one item is required"),
-  termsAndConditions: z.string().optional(),
-  signatureType: z.enum(["NONE", "IMAGE", "DIGITAL"]).default("NONE"),
-  signatureData: z.string().optional(),
-  useCustomBillingAddress: z.boolean().default(false),
-  customBillingAddress: z.string().optional(),
 });
 
 type InvoiceFormData = z.infer<typeof invoiceSchema>;
@@ -62,17 +56,26 @@ const customerSchema = z.object({
 
 type CustomerFormData = z.infer<typeof customerSchema>;
 
-export default function CreateInvoice() {
+export default function EditInvoice() {
+  const [match, params] = useRoute("/edit-invoice/:id");
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
   const [isAddCustomerDialogOpen, setIsAddCustomerDialogOpen] = useState(false);
-  const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [selectedShop, setSelectedShop] = useState<Shop | null>(null);
 
-  // Fetch data
+  const invoiceId = params?.id ? parseInt(params.id) : null;
+
+  // Fetch invoice data
+  const { data: invoice, isLoading: isLoadingInvoice } = useQuery({
+    queryKey: ["/api/invoices", invoiceId],
+    queryFn: () => invoicesApi.getInvoiceById(invoiceId!),
+    enabled: !!invoiceId,
+  });
+
+  // Fetch other data
   const { data: products = [] } = useQuery({
     queryKey: ["/api/products/all"],
     queryFn: () => productsApi.getAllProducts(),
@@ -105,11 +108,6 @@ export default function CreateInvoice() {
       saleType: "RETAIL",
       transactionId: `TXN${Date.now()}`,
       saleItems: [{ productId: 0, quantity: 1, discount: 0, discountType: "PERCENTAGE" }],
-      termsAndConditions: "",
-      signatureType: "NONE",
-      signatureData: "",
-      useCustomBillingAddress: false,
-      customBillingAddress: "",
     },
   });
 
@@ -129,23 +127,23 @@ export default function CreateInvoice() {
     },
   });
 
-  // Create invoice mutation
-  const createInvoiceMutation = useMutation({
+  // Update invoice mutation
+  const updateInvoiceMutation = useMutation({
     mutationFn: async (invoiceData: InvoiceInput) => {
-      await invoicesApi.addInvoice(invoiceData);
+      await invoicesApi.updateInvoice(invoiceId!, invoiceData);
     },
     onSuccess: () => {
       toast({
-        title: "Invoice created successfully",
-        description: "The invoice has been saved and can be viewed in the invoice list.",
+        title: "Invoice updated successfully",
+        description: "The invoice has been updated and saved.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/invoices/all"] });
-      // Stay on the current page instead of redirecting
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices", invoiceId] });
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to create invoice",
-        description: error?.detail || error?.message || "An error occurred while creating the invoice.",
+        title: "Failed to update invoice",
+        description: error?.detail || error?.message || "An error occurred while updating the invoice.",
         variant: "destructive",
       });
     },
@@ -173,6 +171,34 @@ export default function CreateInvoice() {
       });
     },
   });
+
+  // Populate form with invoice data
+  useEffect(() => {
+    if (invoice) {
+      form.reset({
+        customerId: invoice.customerId,
+        shopId: invoice.shopId,
+        discount: invoice.discount || 0,
+        discountType: "PERCENTAGE", // Default as this isn't in the invoice data
+        amountPaid: invoice.amountPaid || 0,
+        paymentMode: invoice.paymentMode,
+        paymentStatus: invoice.paymentStatus,
+        remark: invoice.remark || "",
+        dueDate: invoice.dueDate ? invoice.dueDate.split('T')[0] : null,
+        billType: invoice.billType || "GST",
+        saleType: invoice.saleType || "RETAIL",
+        transactionId: invoice.transactionId || `TXN${Date.now()}`,
+        saleItems: invoice.saleItems && invoice.saleItems.length > 0 
+          ? invoice.saleItems.map(item => ({
+              productId: item.product?.productId || 0,
+              quantity: item.quantity,
+              discount: item.discount,
+              discountType: "PERCENTAGE" as const,
+            }))
+          : [{ productId: 0, quantity: 1, discount: 0, discountType: "PERCENTAGE" as const }],
+      });
+    }
+  }, [invoice, form]);
 
   // Calculate totals
   const calculateTotals = () => {
@@ -259,7 +285,7 @@ export default function CreateInvoice() {
       })),
     };
 
-    createInvoiceMutation.mutate(invoiceInput);
+    updateInvoiceMutation.mutate(invoiceInput);
   };
 
   // Handle add customer
@@ -287,6 +313,43 @@ export default function CreateInvoice() {
     setSelectedShop(shop || null);
   }, [form.watch("shopId"), shops]);
 
+  if (!match) {
+    return <div>Invoice not found</div>;
+  }
+
+  if (isLoadingInvoice) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="max-w-5xl mx-auto">
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <span className="ml-2">Loading invoice...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!invoice) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="max-w-5xl mx-auto">
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <h3 className="text-lg font-semibold mb-2">Invoice not found</h3>
+              <p className="text-muted-foreground text-center mb-4">
+                The invoice you're looking for doesn't exist or has been deleted.
+              </p>
+              <Link href="/dashboard">
+                <Button variant="outline">Back to Dashboard</Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-5xl mx-auto">
@@ -299,30 +362,22 @@ export default function CreateInvoice() {
                 Back to Dashboard
               </Button>
             </Link>
-            <h1 className="text-2xl font-bold text-gray-900">Create Invoice</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Edit Invoice #{invoice.invoiceNo}</h1>
           </div>
           <div className="flex items-center space-x-2">
             <Button 
-              variant="outline"
-              onClick={() => setIsPreviewDialogOpen(true)}
-              disabled={!selectedCustomer || !selectedShop}
-            >
-              <Eye className="h-4 w-4 mr-2" />
-              Preview
-            </Button>
-            <Button 
               onClick={() => form.handleSubmit(onSubmit)()}
-              disabled={createInvoiceMutation.isPending}
+              disabled={updateInvoiceMutation.isPending}
             >
               <Save className="h-4 w-4 mr-2" />
-              {createInvoiceMutation.isPending ? "Creating..." : "Create Invoice"}
+              {updateInvoiceMutation.isPending ? "Updating..." : "Update Invoice"}
             </Button>
           </div>
         </div>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Invoice Layout */}
+            {/* Invoice Layout - Same as create page but with pre-filled data */}
             <Card className="bg-white">
               <CardContent className="p-8">
                 {/* Header Section */}
@@ -355,38 +410,7 @@ export default function CreateInvoice() {
                         )}
                       />
                       {selectedShop && (
-                        <div className="mt-2">
-                          <FormField
-                            control={form.control}
-                            name="useCustomBillingAddress"
-                            render={({ field }) => (
-                              <div className="flex items-center space-x-2">
-                                <input
-                                  type="checkbox"
-                                  checked={field.value}
-                                  onChange={field.onChange}
-                                  className="rounded"
-                                />
-                                <label className="text-sm">Use custom billing address</label>
-                              </div>
-                            )}
-                          />
-                          {form.watch("useCustomBillingAddress") ? (
-                            <FormField
-                              control={form.control}
-                              name="customBillingAddress"
-                              render={({ field }) => (
-                                <Textarea
-                                  {...field}
-                                  placeholder="Enter custom billing address"
-                                  className="mt-2 text-gray-600"
-                                />
-                              )}
-                            />
-                          ) : (
-                            <p className="text-gray-600 mt-1">{selectedShop.place}</p>
-                          )}
-                        </div>
+                        <p className="text-gray-600 mt-1">{selectedShop.place}</p>
                       )}
                     </div>
 
@@ -396,11 +420,11 @@ export default function CreateInvoice() {
                       <div className="space-y-2">
                         <div>
                           <Label className="text-sm text-gray-600">Invoice #</Label>
-                          <p className="font-semibold">INV-{Date.now().toString().slice(-6)}</p>
+                          <p className="font-semibold">{invoice.invoiceNo}</p>
                         </div>
                         <div>
                           <Label className="text-sm text-gray-600">Date</Label>
-                          <p className="font-semibold">{new Date().toLocaleDateString()}</p>
+                          <p className="font-semibold">{new Date(invoice.invoiceDate).toLocaleDateString()}</p>
                         </div>
                         <div>
                           <Label className="text-sm text-gray-600">Transaction ID</Label>
@@ -419,7 +443,7 @@ export default function CreateInvoice() {
 
                 <Separator className="my-8" />
 
-                {/* Customer and Settings Section */}
+                {/* Customer and Settings Section - Same layout as create page */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                   {/* Bill To */}
                   <div>
@@ -557,7 +581,7 @@ export default function CreateInvoice() {
                     )}
                   </div>
 
-                  {/* Invoice Settings */}
+                  {/* Invoice Settings - Same as create page */}
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <FormField
@@ -673,7 +697,7 @@ export default function CreateInvoice() {
 
                 <Separator className="my-8" />
 
-                {/* Items Section */}
+                {/* Items Section - Same as create page but with pre-filled items */}
                 <div className="mb-8">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-gray-900">Items</h3>
@@ -846,7 +870,7 @@ export default function CreateInvoice() {
 
                 <Separator className="my-8" />
 
-                {/* Totals Section */}
+                {/* Totals Section - Same as create page */}
                 <div className="flex justify-end">
                   <div className="w-96 space-y-4">
                     {/* Overall Discount */}
@@ -944,209 +968,26 @@ export default function CreateInvoice() {
 
                 <Separator className="my-8" />
 
-                {/* Additional Fields */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  <div>
-                    <FormField
-                      control={form.control}
-                      name="remark"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Remarks (Optional)</FormLabel>
-                          <FormControl>
-                            <Textarea {...field} placeholder="Enter any remarks..." />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <div>
-                    <FormField
-                      control={form.control}
-                      name="termsAndConditions"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Terms and Conditions (Optional)</FormLabel>
-                          <FormControl>
-                            <Textarea {...field} placeholder="Enter terms and conditions..." />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-
-                {/* Signature Section */}
-                <div className="mt-8">
-                  <h4 className="text-lg font-semibold mb-4">Signature</h4>
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="signatureType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Signature Type</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="NONE">No Signature</SelectItem>
-                              <SelectItem value="IMAGE">Image Signature</SelectItem>
-                              <SelectItem value="DIGITAL">Digital Signature</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    {form.watch("signatureType") !== "NONE" && (
-                      <div className="lg:col-span-2">
-                        <FormField
-                          control={form.control}
-                          name="signatureData"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>
-                                {form.watch("signatureType") === "IMAGE" ? "Image URL" : "Digital Signature Text"}
-                              </FormLabel>
-                              <FormControl>
-                                {form.watch("signatureType") === "IMAGE" ? (
-                                  <Input {...field} placeholder="Enter image URL" />
-                                ) : (
-                                  <Textarea {...field} placeholder="Enter signature text" />
-                                )}
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
+                {/* Additional Fields - Same as create page */}
+                <div>
+                  <FormField
+                    control={form.control}
+                    name="remark"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Remarks (Optional)</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} placeholder="Enter any remarks..." />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
                     )}
-                  </div>
+                  />
                 </div>
               </CardContent>
             </Card>
           </form>
         </Form>
-
-        {/* Preview Dialog */}
-        <Dialog open={isPreviewDialogOpen} onOpenChange={setIsPreviewDialogOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Invoice Preview</DialogTitle>
-            </DialogHeader>
-            
-            {selectedCustomer && selectedShop && (
-              <div className="space-y-6 p-6 bg-white text-black">
-                {/* Invoice Header */}
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h2 className="text-2xl font-bold text-black">{selectedShop.name}</h2>
-                    <p className="text-gray-600">{selectedShop.place}</p>
-                  </div>
-                  <div className="text-right">
-                    <h3 className="text-xl font-bold text-black">INVOICE</h3>
-                    <p className="text-gray-600">INV-{Date.now().toString().slice(-6)}</p>
-                    <p className="text-gray-600">{new Date().toLocaleDateString()}</p>
-                  </div>
-                </div>
-
-                <Separator className="border-black" />
-
-                {/* Invoice Details */}
-                <div className="grid grid-cols-2 gap-8">
-                  <div>
-                    <h4 className="font-semibold text-black mb-2">Bill To:</h4>
-                    <p className="text-gray-600">{selectedCustomer.name}</p>
-                    <p className="text-gray-600">{selectedCustomer.place}</p>
-                    <p className="text-gray-600">{selectedCustomer.phone}</p>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-black mb-2">Payment Details:</h4>
-                    <p className="text-gray-600">Status: {form.watch("paymentStatus")}</p>
-                    <p className="text-gray-600">Mode: {form.watch("paymentMode")}</p>
-                    <p className="text-gray-600">Type: {form.watch("billType")} {form.watch("saleType")}</p>
-                  </div>
-                </div>
-
-                {/* Items Table */}
-                <div>
-                  <h4 className="font-semibold text-black mb-4">Items:</h4>
-                  <div className="border border-black">
-                    <table className="w-full">
-                      <thead className="bg-gray-100">
-                        <tr>
-                          <th className="border-b border-black p-2 text-left text-black">Product</th>
-                          <th className="border-b border-black p-2 text-right text-black">Qty</th>
-                          <th className="border-b border-black p-2 text-right text-black">Rate</th>
-                          <th className="border-b border-black p-2 text-right text-black">Discount</th>
-                          <th className="border-b border-black p-2 text-right text-black">Total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {totals.items.map((item, index) => (
-                          <tr key={index}>
-                            <td className="border-b border-black p-2 text-black">{item?.product?.name || 'Product'}</td>
-                            <td className="border-b border-black p-2 text-right text-black">{item?.quantity}</td>
-                            <td className="border-b border-black p-2 text-right text-black">₹{item?.unitPrice?.toFixed(2)}</td>
-                            <td className="border-b border-black p-2 text-right text-black">₹{item?.discountAmount?.toFixed(2)}</td>
-                            <td className="border-b border-black p-2 text-right text-black">₹{item?.totalPrice?.toFixed(2)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                {/* Totals */}
-                <div className="flex justify-end">
-                  <div className="w-64 space-y-2">
-                    <div className="flex justify-between text-black">
-                      <span>Subtotal:</span>
-                      <span>₹{totals.subtotal.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-gray-600">
-                      <span>Tax (Not included):</span>
-                      <span>₹{totals.totalTax.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-gray-600">
-                      <span>Discount:</span>
-                      <span>-₹{totals.totalDiscount.toFixed(2)}</span>
-                    </div>
-                    <Separator className="border-black" />
-                    <div className="flex justify-between font-bold text-lg text-black">
-                      <span>Grand Total:</span>
-                      <span>₹{totals.grandTotal.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-black">
-                      <span>Amount Paid:</span>
-                      <span>₹{(form.watch("amountPaid") || 0).toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between font-semibold text-black">
-                      <span>Balance:</span>
-                      <span>₹{(totals.grandTotal - (form.watch("amountPaid") || 0)).toFixed(2)}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Remarks */}
-                {form.watch("remark") && (
-                  <div>
-                    <h4 className="font-semibold text-black mb-2">Remarks:</h4>
-                    <p className="text-gray-600">{form.watch("remark")}</p>
-                  </div>
-                )}
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );

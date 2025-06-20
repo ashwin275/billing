@@ -11,6 +11,7 @@ import SignUp from "@/pages/auth/signup";
 import ForgotPassword from "@/pages/auth/forgot-password";
 import Dashboard from "@/pages/dashboard/dashboard";
 import CreateInvoice from "@/pages/create-invoice";
+import EditInvoice from "@/pages/edit-invoice";
 import ProtectedRoute from "@/components/auth/protected-route";
 import NotFound from "@/pages/not-found";
 
@@ -51,6 +52,13 @@ function Router() {
       <Route path="/create-invoice">
         <ProtectedRoute>
           <CreateInvoice />
+        </ProtectedRoute>
+      </Route>
+      
+      {/* Protected invoice edit route */}
+      <Route path="/edit-invoice/:id">
+        <ProtectedRoute>
+          <EditInvoice />
         </ProtectedRoute>
       </Route>
 
