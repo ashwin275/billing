@@ -18,7 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
 import { useToast } from "@/hooks/use-toast";
-import { SignatureInput } from "@/components/ui/signature-input";
+
 import { productsApi, customersApi, shopsApi, invoicesApi } from "@/lib/api";
 import { Product, Customer, Shop, InvoiceInput } from "@/types/api";
 
@@ -823,14 +823,7 @@ export default function EditInvoice() {
                                 </div>
                               ` : ''}
                             </div>
-                            <div class="signature-section">
-                              ${form.getValues('signature') ? `
-                                <img src="${form.getValues('signature')}" alt="Signature" style="height: 40px; max-width: 150px; object-fit: contain; margin: 0 auto 10px;" />
-                              ` : `
-                                <div class="signature-line"></div>
-                              `}
-                              <div class="signature-text">${previewData.shop.name}<br>Signature</div>
-                            </div>
+
                           </div>
                         </div>
                       </div>
@@ -1274,14 +1267,7 @@ export default function EditInvoice() {
                                 </div>
                               ` : ''}
                             </div>
-                            <div class="signature-section">
-                              ${formData.signature ? `
-                                <img src="${formData.signature}" alt="Signature" style="height: 40px; max-width: 150px; object-fit: contain; margin: 0 auto 10px;" />
-                              ` : `
-                                <div class="signature-line"></div>
-                              `}
-                              <div class="signature-text">${invoiceData.shop.name}<br>Signature</div>
-                            </div>
+
                           </div>
                         </div>
 

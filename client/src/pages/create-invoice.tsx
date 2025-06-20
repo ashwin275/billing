@@ -755,14 +755,7 @@ export default function CreateInvoice() {
                                 </div>
                               ` : ''}
                             </div>
-                            <div class="signature-section">
-                              ${form.getValues('signature') ? `
-                                <img src="${form.getValues('signature')}" alt="Signature" style="height: 40px; max-width: 150px; object-fit: contain; margin: 0 auto 10px;" />
-                              ` : `
-                                <div class="signature-line"></div>
-                              `}
-                              <div class="signature-text">${previewData.shop.name}<br>Signature</div>
-                            </div>
+
                           </div>
                         </div>
                       </div>
@@ -1207,14 +1200,7 @@ export default function CreateInvoice() {
                                 </div>
                               ` : ''}
                             </div>
-                            <div class="signature-section">
-                              ${formData.signature ? `
-                                <img src="${formData.signature}" alt="Signature" style="height: 40px; max-width: 150px; object-fit: contain; margin: 0 auto 10px;" />
-                              ` : `
-                                <div class="signature-line"></div>
-                              `}
-                              <div class="signature-text">${invoiceData.shop.name}<br>Signature</div>
-                            </div>
+
                           </div>
                         </div>
 
