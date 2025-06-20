@@ -319,95 +319,162 @@ export default function CreateInvoice() {
                 
                 const doc = new jsPDF();
                 
-                // Header
-                doc.setFontSize(20);
-                doc.text(selectedShop?.name || "Shop Name", 20, 20);
+                // Header with better formatting
+                doc.setFontSize(24);
+                doc.setFont("helvetica", "bold");
+                doc.text(selectedShop?.name || "Shop Name", 20, 25);
+                
+                doc.setFontSize(10);
+                doc.setFont("helvetica", "normal");
+                doc.text(selectedShop?.place || "Shop Address", 20, 35);
+                
+                // Invoice title and details - right aligned
+                doc.setFontSize(28);
+                doc.setFont("helvetica", "bold");
+                doc.text("INVOICE", 210 - doc.getTextWidth("INVOICE"), 25);
+                
+                doc.setFontSize(10);
+                doc.setFont("helvetica", "normal");
+                const invoiceText = `Invoice #: ${invoiceNo}`;
+                doc.text(invoiceText, 210 - doc.getTextWidth(invoiceText), 35);
+                const dateText = `Date: ${new Date().toLocaleDateString()}`;
+                doc.text(dateText, 210 - doc.getTextWidth(dateText), 42);
+                
+                // Horizontal line
+                doc.setLineWidth(0.5);
+                doc.line(20, 50, 190, 50);
+                
+                // Bill To and Payment Details sections
                 doc.setFontSize(12);
-                doc.text(selectedShop?.place || "Shop Address", 20, 30);
+                doc.setFont("helvetica", "bold");
+                doc.text("Bill To:", 20, 65);
+                doc.text("Payment Details:", 120, 65);
                 
-                doc.setFontSize(16);
-                doc.text("INVOICE", 150, 20);
                 doc.setFontSize(10);
-                doc.text(`Invoice #: ${invoiceNo}`, 150, 30);
-                doc.text(`Date: ${new Date().toLocaleDateString()}`, 150, 35);
+                doc.setFont("helvetica", "normal");
+                doc.text(selectedCustomer?.name || "Customer", 20, 75);
+                doc.text(selectedCustomer?.place || "Address", 20, 82);
+                doc.text(selectedCustomer?.phone?.toString() || "Phone", 20, 89);
                 
-                // Customer Details
-                doc.setFontSize(12);
-                doc.text("Bill To:", 20, 50);
+                doc.text(`Status: ${formData.paymentStatus}`, 120, 75);
+                doc.text(`Mode: ${formData.paymentMode}`, 120, 82);
+                doc.text(`Type: ${formData.billType} ${formData.saleType}`, 120, 89);
+                
+                // Items table with proper formatting
+                let yPos = 110;
+                
+                // Table header with background
+                doc.setFillColor(240, 240, 240);
+                doc.rect(20, yPos - 5, 170, 12, 'F');
+                
                 doc.setFontSize(10);
-                doc.text(selectedCustomer?.name || "Customer", 20, 60);
-                doc.text(selectedCustomer?.place || "Address", 20, 65);
-                doc.text(selectedCustomer?.phone?.toString() || "Phone", 20, 70);
+                doc.setFont("helvetica", "bold");
+                doc.text("Product", 25, yPos);
+                doc.text("Qty", 100, yPos);
+                doc.text("Rate", 120, yPos);
+                doc.text("Discount", 145, yPos);
+                doc.text("Total", 170, yPos);
                 
-                // Payment Details
-                doc.text("Payment Details:", 120, 50);
-                doc.text(`Status: ${formData.paymentStatus}`, 120, 60);
-                doc.text(`Mode: ${formData.paymentMode}`, 120, 65);
-                doc.text(`Type: ${formData.billType} ${formData.saleType}`, 120, 70);
+                // Table border
+                doc.setLineWidth(0.3);
+                doc.rect(20, yPos - 5, 170, 12);
                 
-                // Items Table Header
-                let yPos = 90;
-                doc.setFontSize(10);
-                doc.text("Product", 20, yPos);
-                doc.text("Qty", 80, yPos);
-                doc.text("Rate", 100, yPos);
-                doc.text("Discount", 130, yPos);
-                doc.text("Total", 160, yPos);
-                doc.line(20, yPos + 2, 180, yPos + 2);
+                yPos += 15;
+                doc.setFont("helvetica", "normal");
                 
-                // Items
-                yPos += 10;
-                totals.items.forEach((item) => {
+                // Items with proper alignment
+                totals.items.forEach((item, index) => {
                   if (item) {
-                    doc.text(item.product?.name || "Product", 20, yPos);
-                    doc.text(item.quantity.toString(), 80, yPos);
-                    doc.text(`₹${item.unitPrice?.toFixed(2)}`, 100, yPos);
-                    doc.text(`₹${item.discountAmount?.toFixed(2)}`, 130, yPos);
-                    doc.text(`₹${item.totalPrice?.toFixed(2)}`, 160, yPos);
-                    yPos += 8;
+                    if (index % 2 === 0) {
+                      doc.setFillColor(250, 250, 250);
+                      doc.rect(20, yPos - 5, 170, 10, 'F');
+                    }
+                    
+                    doc.text(item.product?.name || "Product", 25, yPos);
+                    doc.text(item.quantity.toString(), 105, yPos);
+                    doc.text(`₹${item.unitPrice?.toFixed(2)}`, 125, yPos);
+                    doc.text(`₹${item.discountAmount?.toFixed(2)}`, 150, yPos);
+                    const totalText = `₹${item.totalPrice?.toFixed(2)}`;
+                    doc.text(totalText, 190 - doc.getTextWidth(totalText), yPos);
+                    
+                    doc.rect(20, yPos - 5, 170, 10);
+                    yPos += 10;
                   }
                 });
                 
-                // Line before totals
-                doc.line(20, yPos, 180, yPos);
+                // Totals section with proper alignment
+                yPos += 10;
+                doc.setLineWidth(0.5);
+                doc.line(120, yPos, 190, yPos);
                 yPos += 10;
                 
-                // Totals
-                doc.text(`Subtotal: ₹${totals.subtotal.toFixed(2)}`, 120, yPos);
-                yPos += 8;
-                doc.text(`Tax (Not included): ₹${totals.totalTax.toFixed(2)}`, 120, yPos);
-                yPos += 8;
-                doc.text(`Discount: -₹${totals.totalDiscount.toFixed(2)}`, 120, yPos);
-                yPos += 8;
+                const totalsData = [
+                  { label: "Subtotal:", value: `₹${totals.subtotal.toFixed(2)}` },
+                  { label: "Tax (Not included):", value: `₹${totals.totalTax.toFixed(2)}` },
+                  { label: "Discount:", value: `-₹${totals.totalDiscount.toFixed(2)}` }
+                ];
+                
+                totalsData.forEach(item => {
+                  doc.setFont("helvetica", "normal");
+                  doc.text(item.label, 125, yPos);
+                  doc.text(item.value, 190 - doc.getTextWidth(item.value), yPos);
+                  yPos += 7;
+                });
+                
+                // Grand total with emphasis
+                doc.setLineWidth(0.8);
+                doc.line(120, yPos, 190, yPos);
+                yPos += 10;
+                
                 doc.setFontSize(12);
-                doc.text(`Grand Total: ₹${totals.grandTotal.toFixed(2)}`, 120, yPos);
-                yPos += 8;
-                doc.setFontSize(10);
-                doc.text(`Amount Paid: ₹${(formData.amountPaid || 0).toFixed(2)}`, 120, yPos);
-                yPos += 8;
-                doc.text(`Balance: ₹${(totals.grandTotal - (formData.amountPaid || 0)).toFixed(2)}`, 120, yPos);
+                doc.setFont("helvetica", "bold");
+                doc.text("Grand Total:", 125, yPos);
+                const grandTotalText = `₹${totals.grandTotal.toFixed(2)}`;
+                doc.text(grandTotalText, 190 - doc.getTextWidth(grandTotalText), yPos);
                 
-                // Terms and Conditions
-                yPos += 20;
+                yPos += 10;
                 doc.setFontSize(10);
+                doc.setFont("helvetica", "normal");
+                doc.text("Amount Paid:", 125, yPos);
+                const amountPaidText = `₹${(formData.amountPaid || 0).toFixed(2)}`;
+                doc.text(amountPaidText, 190 - doc.getTextWidth(amountPaidText), yPos);
+                
+                yPos += 7;
+                doc.setFont("helvetica", "bold");
+                doc.text("Balance:", 125, yPos);
+                const balanceText = `₹${(totals.grandTotal - (formData.amountPaid || 0)).toFixed(2)}`;
+                doc.text(balanceText, 190 - doc.getTextWidth(balanceText), yPos);
+                
+                // Terms and Conditions with better formatting
+                yPos += 25;
+                doc.setFontSize(11);
+                doc.setFont("helvetica", "bold");
                 doc.text("Terms and Conditions:", 20, yPos);
-                yPos += 8;
-                doc.setFontSize(8);
-                doc.text("1. Payment is due within 30 days of invoice date.", 20, yPos);
-                yPos += 5;
-                doc.text("2. Late payments may incur additional charges.", 20, yPos);
-                yPos += 5;
-                doc.text("3. Goods once sold cannot be returned without prior approval.", 20, yPos);
-                yPos += 5;
-                doc.text("4. Any disputes must be resolved within 7 days of delivery.", 20, yPos);
                 
-                // Remarks
+                yPos += 8;
+                doc.setFontSize(9);
+                doc.setFont("helvetica", "normal");
+                const terms = [
+                  "1. Payment is due within 30 days of invoice date.",
+                  "2. Late payments may incur additional charges.",
+                  "3. Goods once sold cannot be returned without prior approval.",
+                  "4. Any disputes must be resolved within 7 days of delivery."
+                ];
+                
+                terms.forEach(term => {
+                  doc.text(term, 20, yPos);
+                  yPos += 6;
+                });
+                
+                // Remarks if present
                 if (formData.remark) {
-                  yPos += 15;
-                  doc.setFontSize(10);
+                  yPos += 10;
+                  doc.setFontSize(11);
+                  doc.setFont("helvetica", "bold");
                   doc.text("Remarks:", 20, yPos);
                   yPos += 8;
-                  doc.setFontSize(8);
+                  doc.setFontSize(9);
+                  doc.setFont("helvetica", "normal");
                   doc.text(formData.remark, 20, yPos);
                 }
                 

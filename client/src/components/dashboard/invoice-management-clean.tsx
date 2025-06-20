@@ -179,93 +179,162 @@ export default function InvoiceManagement() {
     
     const doc = new jsPDF();
     
-    // Header
-    doc.setFontSize(20);
-    doc.text(invoice.shop?.name || "Shop Name", 20, 20);
+    // Header with better formatting
+    doc.setFontSize(24);
+    doc.setFont("helvetica", "bold");
+    doc.text(invoice.shop?.name || "Shop Name", 20, 25);
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(invoice.shop?.place || "Shop Address", 20, 35);
+    
+    // Invoice title and details - right aligned
+    doc.setFontSize(28);
+    doc.setFont("helvetica", "bold");
+    doc.text("INVOICE", 210 - doc.getTextWidth("INVOICE"), 25);
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    const invoiceText = `Invoice #: ${invoice.invoiceNo}`;
+    doc.text(invoiceText, 210 - doc.getTextWidth(invoiceText), 35);
+    const dateText = `Date: ${new Date(invoice.invoiceDate).toLocaleDateString()}`;
+    doc.text(dateText, 210 - doc.getTextWidth(dateText), 42);
+    
+    // Horizontal line
+    doc.setLineWidth(0.5);
+    doc.line(20, 50, 190, 50);
+    
+    // Bill To and Payment Details sections
     doc.setFontSize(12);
-    doc.text(invoice.shop?.place || "Shop Address", 20, 30);
+    doc.setFont("helvetica", "bold");
+    doc.text("Bill To:", 20, 65);
+    doc.text("Payment Details:", 120, 65);
     
-    doc.setFontSize(16);
-    doc.text("INVOICE", 150, 20);
     doc.setFontSize(10);
-    doc.text(`Invoice #: ${invoice.invoiceNo}`, 150, 30);
-    doc.text(`Date: ${new Date(invoice.invoiceDate).toLocaleDateString()}`, 150, 35);
+    doc.setFont("helvetica", "normal");
+    doc.text("Customer Name", 20, 75);
+    doc.text("Customer Address", 20, 82);
+    doc.text("Customer Phone", 20, 89);
     
-    // Customer Details (placeholder as we don't have customer data in invoice object)
-    doc.setFontSize(12);
-    doc.text("Bill To:", 20, 50);
+    doc.text(`Status: ${invoice.paymentStatus}`, 120, 75);
+    doc.text(`Mode: ${invoice.paymentMode}`, 120, 82);
+    doc.text(`Type: ${invoice.billType} ${invoice.saleType}`, 120, 89);
+    
+    // Items table with proper formatting
+    let yPos = 110;
+    
+    // Table header with background
+    doc.setFillColor(240, 240, 240);
+    doc.rect(20, yPos - 5, 170, 12, 'F');
+    
     doc.setFontSize(10);
-    doc.text("Customer Name", 20, 60);
-    doc.text("Customer Address", 20, 65);
-    doc.text("Customer Phone", 20, 70);
+    doc.setFont("helvetica", "bold");
+    doc.text("Product", 25, yPos);
+    doc.text("Qty", 100, yPos);
+    doc.text("Rate", 120, yPos);
+    doc.text("Discount", 145, yPos);
+    doc.text("Total", 170, yPos);
     
-    // Payment Details
-    doc.text("Payment Details:", 120, 50);
-    doc.text(`Status: ${invoice.paymentStatus}`, 120, 60);
-    doc.text(`Mode: ${invoice.paymentMode}`, 120, 65);
-    doc.text(`Type: ${invoice.billType} ${invoice.saleType}`, 120, 70);
+    // Table border
+    doc.setLineWidth(0.3);
+    doc.rect(20, yPos - 5, 170, 12);
     
-    // Items Table Header
-    let yPos = 90;
-    doc.setFontSize(10);
-    doc.text("Product", 20, yPos);
-    doc.text("Qty", 80, yPos);
-    doc.text("Rate", 100, yPos);
-    doc.text("Discount", 130, yPos);
-    doc.text("Total", 160, yPos);
-    doc.line(20, yPos + 2, 180, yPos + 2);
+    yPos += 15;
+    doc.setFont("helvetica", "normal");
     
-    // Items
-    yPos += 10;
+    // Items with proper alignment
     if (invoice.saleItems) {
-      invoice.saleItems.forEach((item) => {
-        doc.text(item.product?.name || "Product", 20, yPos);
-        doc.text(item.quantity.toString(), 80, yPos);
-        doc.text(`₹${item.unitPrice?.toFixed(2)}`, 100, yPos);
-        doc.text(`₹${item.discount?.toFixed(2)}`, 130, yPos);
-        doc.text(`₹${item.totalPrice?.toFixed(2)}`, 160, yPos);
-        yPos += 8;
+      invoice.saleItems.forEach((item, index) => {
+        if (index % 2 === 0) {
+          doc.setFillColor(250, 250, 250);
+          doc.rect(20, yPos - 5, 170, 10, 'F');
+        }
+        
+        doc.text(item.product?.name || "Product", 25, yPos);
+        doc.text(item.quantity.toString(), 105, yPos);
+        doc.text(`₹${item.unitPrice?.toFixed(2)}`, 125, yPos);
+        doc.text(`₹${item.discount?.toFixed(2)}`, 150, yPos);
+        const totalText = `₹${item.totalPrice?.toFixed(2)}`;
+        doc.text(totalText, 190 - doc.getTextWidth(totalText), yPos);
+        
+        doc.rect(20, yPos - 5, 170, 10);
+        yPos += 10;
       });
     }
     
-    // Line before totals
-    doc.line(20, yPos, 180, yPos);
+    // Totals section with proper alignment
+    yPos += 10;
+    doc.setLineWidth(0.5);
+    doc.line(120, yPos, 190, yPos);
     yPos += 10;
     
-    // Totals
-    doc.text(`Total Amount: ₹${invoice.totalAmount?.toFixed(2)}`, 120, yPos);
-    yPos += 8;
-    doc.text(`Tax: ₹${invoice.tax?.toFixed(2)}`, 120, yPos);
-    yPos += 8;
-    doc.text(`Discount: -₹${invoice.discount?.toFixed(2)}`, 120, yPos);
-    yPos += 8;
+    const totalsData = [
+      { label: "Total Amount:", value: `₹${invoice.totalAmount?.toFixed(2)}` },
+      { label: "Tax:", value: `₹${invoice.tax?.toFixed(2)}` },
+      { label: "Discount:", value: `-₹${invoice.discount?.toFixed(2)}` }
+    ];
+    
+    totalsData.forEach(item => {
+      doc.setFont("helvetica", "normal");
+      doc.text(item.label, 125, yPos);
+      doc.text(item.value, 190 - doc.getTextWidth(item.value), yPos);
+      yPos += 7;
+    });
+    
+    // Grand total with emphasis
+    doc.setLineWidth(0.8);
+    doc.line(120, yPos, 190, yPos);
+    yPos += 10;
+    
     doc.setFontSize(12);
-    doc.text(`Grand Total: ₹${invoice.totalAmount?.toFixed(2)}`, 120, yPos);
-    yPos += 8;
-    doc.setFontSize(10);
-    doc.text(`Amount Paid: ₹${(invoice.amountPaid || 0).toFixed(2)}`, 120, yPos);
+    doc.setFont("helvetica", "bold");
+    doc.text("Grand Total:", 125, yPos);
+    const grandTotalText = `₹${invoice.totalAmount?.toFixed(2)}`;
+    doc.text(grandTotalText, 190 - doc.getTextWidth(grandTotalText), yPos);
     
-    // Terms and Conditions
-    yPos += 20;
+    yPos += 10;
     doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text("Amount Paid:", 125, yPos);
+    const amountPaidText = `₹${(invoice.amountPaid || 0).toFixed(2)}`;
+    doc.text(amountPaidText, 190 - doc.getTextWidth(amountPaidText), yPos);
+    
+    yPos += 7;
+    doc.setFont("helvetica", "bold");
+    doc.text("Balance:", 125, yPos);
+    const balanceText = `₹${((invoice.totalAmount || 0) - (invoice.amountPaid || 0)).toFixed(2)}`;
+    doc.text(balanceText, 190 - doc.getTextWidth(balanceText), yPos);
+    
+    // Terms and Conditions with better formatting
+    yPos += 25;
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
     doc.text("Terms and Conditions:", 20, yPos);
-    yPos += 8;
-    doc.setFontSize(8);
-    doc.text("1. Payment is due within 30 days of invoice date.", 20, yPos);
-    yPos += 5;
-    doc.text("2. Late payments may incur additional charges.", 20, yPos);
-    yPos += 5;
-    doc.text("3. Goods once sold cannot be returned without prior approval.", 20, yPos);
-    yPos += 5;
-    doc.text("4. Any disputes must be resolved within 7 days of delivery.", 20, yPos);
     
-    // Remarks
+    yPos += 8;
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    const terms = [
+      "1. Payment is due within 30 days of invoice date.",
+      "2. Late payments may incur additional charges.",
+      "3. Goods once sold cannot be returned without prior approval.",
+      "4. Any disputes must be resolved within 7 days of delivery."
+    ];
+    
+    terms.forEach(term => {
+      doc.text(term, 20, yPos);
+      yPos += 6;
+    });
+    
+    // Remarks if present
     if (invoice.remark) {
-      yPos += 15;
-      doc.setFontSize(10);
+      yPos += 10;
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
       doc.text("Remarks:", 20, yPos);
       yPos += 8;
-      doc.setFontSize(8);
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
       doc.text(invoice.remark, 20, yPos);
     }
     
