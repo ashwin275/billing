@@ -174,29 +174,102 @@ export default function InvoiceManagement() {
   };
 
   // Handle download
-  const handleDownload = (invoice: Invoice) => {
-    // Create a simplified invoice document for download
-    const invoiceData = {
-      invoiceNo: invoice.invoiceNo,
-      date: new Date(invoice.invoiceDate).toLocaleDateString(),
-      shop: invoice.shop?.name || 'Shop Name',
-      customerId: invoice.customerId,
-      totalAmount: invoice.totalAmount,
-      paymentStatus: invoice.paymentStatus,
-      paymentMode: invoice.paymentMode,
-      items: invoice.saleItems || []
-    };
-
-    const dataStr = JSON.stringify(invoiceData, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `invoice-${invoice.invoiceNo}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+  const handleDownload = async (invoice: Invoice) => {
+    const { jsPDF } = await import('jspdf');
+    
+    const doc = new jsPDF();
+    
+    // Header
+    doc.setFontSize(20);
+    doc.text(invoice.shop?.name || "Shop Name", 20, 20);
+    doc.setFontSize(12);
+    doc.text(invoice.shop?.place || "Shop Address", 20, 30);
+    
+    doc.setFontSize(16);
+    doc.text("INVOICE", 150, 20);
+    doc.setFontSize(10);
+    doc.text(`Invoice #: ${invoice.invoiceNo}`, 150, 30);
+    doc.text(`Date: ${new Date(invoice.invoiceDate).toLocaleDateString()}`, 150, 35);
+    
+    // Customer Details (placeholder as we don't have customer data in invoice object)
+    doc.setFontSize(12);
+    doc.text("Bill To:", 20, 50);
+    doc.setFontSize(10);
+    doc.text("Customer Name", 20, 60);
+    doc.text("Customer Address", 20, 65);
+    doc.text("Customer Phone", 20, 70);
+    
+    // Payment Details
+    doc.text("Payment Details:", 120, 50);
+    doc.text(`Status: ${invoice.paymentStatus}`, 120, 60);
+    doc.text(`Mode: ${invoice.paymentMode}`, 120, 65);
+    doc.text(`Type: ${invoice.billType} ${invoice.saleType}`, 120, 70);
+    
+    // Items Table Header
+    let yPos = 90;
+    doc.setFontSize(10);
+    doc.text("Product", 20, yPos);
+    doc.text("Qty", 80, yPos);
+    doc.text("Rate", 100, yPos);
+    doc.text("Discount", 130, yPos);
+    doc.text("Total", 160, yPos);
+    doc.line(20, yPos + 2, 180, yPos + 2);
+    
+    // Items
+    yPos += 10;
+    if (invoice.saleItems) {
+      invoice.saleItems.forEach((item) => {
+        doc.text(item.product?.name || "Product", 20, yPos);
+        doc.text(item.quantity.toString(), 80, yPos);
+        doc.text(`₹${item.unitPrice?.toFixed(2)}`, 100, yPos);
+        doc.text(`₹${item.discount?.toFixed(2)}`, 130, yPos);
+        doc.text(`₹${item.totalPrice?.toFixed(2)}`, 160, yPos);
+        yPos += 8;
+      });
+    }
+    
+    // Line before totals
+    doc.line(20, yPos, 180, yPos);
+    yPos += 10;
+    
+    // Totals
+    doc.text(`Total Amount: ₹${invoice.totalAmount?.toFixed(2)}`, 120, yPos);
+    yPos += 8;
+    doc.text(`Tax: ₹${invoice.tax?.toFixed(2)}`, 120, yPos);
+    yPos += 8;
+    doc.text(`Discount: -₹${invoice.discount?.toFixed(2)}`, 120, yPos);
+    yPos += 8;
+    doc.setFontSize(12);
+    doc.text(`Grand Total: ₹${invoice.totalAmount?.toFixed(2)}`, 120, yPos);
+    yPos += 8;
+    doc.setFontSize(10);
+    doc.text(`Amount Paid: ₹${(invoice.amountPaid || 0).toFixed(2)}`, 120, yPos);
+    
+    // Terms and Conditions
+    yPos += 20;
+    doc.setFontSize(10);
+    doc.text("Terms and Conditions:", 20, yPos);
+    yPos += 8;
+    doc.setFontSize(8);
+    doc.text("1. Payment is due within 30 days of invoice date.", 20, yPos);
+    yPos += 5;
+    doc.text("2. Late payments may incur additional charges.", 20, yPos);
+    yPos += 5;
+    doc.text("3. Goods once sold cannot be returned without prior approval.", 20, yPos);
+    yPos += 5;
+    doc.text("4. Any disputes must be resolved within 7 days of delivery.", 20, yPos);
+    
+    // Remarks
+    if (invoice.remark) {
+      yPos += 15;
+      doc.setFontSize(10);
+      doc.text("Remarks:", 20, yPos);
+      yPos += 8;
+      doc.setFontSize(8);
+      doc.text(invoice.remark, 20, yPos);
+    }
+    
+    doc.save(`invoice-${invoice.invoiceNo}.pdf`);
   };
 
   // Get status badge variant

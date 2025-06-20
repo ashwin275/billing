@@ -376,42 +376,114 @@ export default function EditInvoice() {
             </Button>
             <Button 
               variant="outline"
-              onClick={() => {
+              onClick={async () => {
+                const { jsPDF } = await import('jspdf');
                 const formData = form.getValues();
-                const invoiceData = {
-                  invoiceId: invoiceId,
-                  invoiceNo: invoice?.invoiceNo || `INV-${Date.now().toString().slice(-6)}`,
-                  shop: selectedShop?.name || "Shop",
-                  customer: selectedCustomer?.name || "Customer",
-                  invoiceDate: invoice?.invoiceDate || new Date().toISOString(),
-                  items: totals.items,
-                  totals: totals,
-                  paymentDetails: {
-                    paymentMode: formData.paymentMode,
-                    paymentStatus: formData.paymentStatus,
-                    billType: formData.billType,
-                    saleType: formData.saleType,
-                  },
-                  remark: formData.remark,
-                };
                 
-                const dataStr = JSON.stringify(invoiceData, null, 2);
-                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-                const exportFileDefaultName = `invoice-${invoice?.invoiceNo || Date.now()}.json`;
+                const doc = new jsPDF();
                 
-                const linkElement = document.createElement('a');
-                linkElement.setAttribute('href', dataUri);
-                linkElement.setAttribute('download', exportFileDefaultName);
-                linkElement.click();
+                // Header
+                doc.setFontSize(20);
+                doc.text(selectedShop?.name || "Shop Name", 20, 20);
+                doc.setFontSize(12);
+                doc.text(selectedShop?.place || "Shop Address", 20, 30);
+                
+                doc.setFontSize(16);
+                doc.text("INVOICE", 150, 20);
+                doc.setFontSize(10);
+                doc.text(`Invoice #: ${invoice?.invoiceNo}`, 150, 30);
+                doc.text(`Date: ${invoice?.invoiceDate ? new Date(invoice.invoiceDate).toLocaleDateString() : new Date().toLocaleDateString()}`, 150, 35);
+                
+                // Customer Details
+                doc.setFontSize(12);
+                doc.text("Bill To:", 20, 50);
+                doc.setFontSize(10);
+                doc.text(selectedCustomer?.name || "Customer", 20, 60);
+                doc.text(selectedCustomer?.place || "Address", 20, 65);
+                doc.text(selectedCustomer?.phone?.toString() || "Phone", 20, 70);
+                
+                // Payment Details
+                doc.text("Payment Details:", 120, 50);
+                doc.text(`Status: ${formData.paymentStatus}`, 120, 60);
+                doc.text(`Mode: ${formData.paymentMode}`, 120, 65);
+                doc.text(`Type: ${formData.billType} ${formData.saleType}`, 120, 70);
+                
+                // Items Table Header
+                let yPos = 90;
+                doc.setFontSize(10);
+                doc.text("Product", 20, yPos);
+                doc.text("Qty", 80, yPos);
+                doc.text("Rate", 100, yPos);
+                doc.text("Discount", 130, yPos);
+                doc.text("Total", 160, yPos);
+                doc.line(20, yPos + 2, 180, yPos + 2);
+                
+                // Items
+                yPos += 10;
+                totals.items.forEach((item) => {
+                  if (item) {
+                    doc.text(item.product?.name || "Product", 20, yPos);
+                    doc.text(item.quantity.toString(), 80, yPos);
+                    doc.text(`₹${item.unitPrice?.toFixed(2)}`, 100, yPos);
+                    doc.text(`₹${item.discountAmount?.toFixed(2)}`, 130, yPos);
+                    doc.text(`₹${item.totalPrice?.toFixed(2)}`, 160, yPos);
+                    yPos += 8;
+                  }
+                });
+                
+                // Line before totals
+                doc.line(20, yPos, 180, yPos);
+                yPos += 10;
+                
+                // Totals
+                doc.text(`Subtotal: ₹${totals.subtotal.toFixed(2)}`, 120, yPos);
+                yPos += 8;
+                doc.text(`Tax (Not included): ₹${totals.totalTax.toFixed(2)}`, 120, yPos);
+                yPos += 8;
+                doc.text(`Discount: -₹${totals.totalDiscount.toFixed(2)}`, 120, yPos);
+                yPos += 8;
+                doc.setFontSize(12);
+                doc.text(`Grand Total: ₹${totals.grandTotal.toFixed(2)}`, 120, yPos);
+                yPos += 8;
+                doc.setFontSize(10);
+                doc.text(`Amount Paid: ₹${(formData.amountPaid || 0).toFixed(2)}`, 120, yPos);
+                yPos += 8;
+                doc.text(`Balance: ₹${(totals.grandTotal - (formData.amountPaid || 0)).toFixed(2)}`, 120, yPos);
+                
+                // Terms and Conditions
+                yPos += 20;
+                doc.setFontSize(10);
+                doc.text("Terms and Conditions:", 20, yPos);
+                yPos += 8;
+                doc.setFontSize(8);
+                doc.text("1. Payment is due within 30 days of invoice date.", 20, yPos);
+                yPos += 5;
+                doc.text("2. Late payments may incur additional charges.", 20, yPos);
+                yPos += 5;
+                doc.text("3. Goods once sold cannot be returned without prior approval.", 20, yPos);
+                yPos += 5;
+                doc.text("4. Any disputes must be resolved within 7 days of delivery.", 20, yPos);
+                
+                // Remarks
+                if (formData.remark) {
+                  yPos += 15;
+                  doc.setFontSize(10);
+                  doc.text("Remarks:", 20, yPos);
+                  yPos += 8;
+                  doc.setFontSize(8);
+                  doc.text(formData.remark, 20, yPos);
+                }
+                
+                doc.save(`invoice-${invoice?.invoiceNo}.pdf`);
               }}
               disabled={!selectedCustomer || !selectedShop}
             >
               <Download className="h-4 w-4 mr-2" />
-              Download
+              Download PDF
             </Button>
             <Button 
               onClick={() => form.handleSubmit(onSubmit)()}
-              disabled={updateInvoiceMutation.isPending}
+              disabled={updateInvoiceMutation.isPending || !form.formState.isDirty}
             >
               <Save className="h-4 w-4 mr-2" />
               {updateInvoiceMutation.isPending ? "Updating..." : "Update Invoice"}
@@ -1140,6 +1212,17 @@ export default function EditInvoice() {
                     <p className="text-gray-600">{form.watch("remark")}</p>
                   </div>
                 )}
+
+                {/* Terms and Conditions */}
+                <div className="mt-8">
+                  <h4 className="font-semibold text-black mb-2">Terms and Conditions:</h4>
+                  <div className="text-sm text-gray-600 space-y-1">
+                    <p>1. Payment is due within 30 days of invoice date.</p>
+                    <p>2. Late payments may incur additional charges.</p>
+                    <p>3. Goods once sold cannot be returned without prior approval.</p>
+                    <p>4. Any disputes must be resolved within 7 days of delivery.</p>
+                  </div>
+                </div>
               </div>
             )}
           </DialogContent>
