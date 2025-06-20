@@ -22,7 +22,7 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
 
   return (
     <div className={`invoice-template ${isPreview ? 'preview-mode' : 'print-mode'}`}>
-      <style jsx>{`
+      <style dangerouslySetInnerHTML={{__html: `
         .invoice-template {
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
           max-width: 210mm;
@@ -345,7 +345,7 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
           margin: 0;
           size: A4;
         }
-      `}</style>
+      `}} />
 
       {/* Header */}
       <div className="invoice-header">
