@@ -19,7 +19,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
 import { useToast } from "@/hooks/use-toast";
-import { SignatureInput } from "@/components/ui/signature-input";
+
 import { productsApi, customersApi, shopsApi, invoicesApi } from "@/lib/api";
 import { Product, Customer, Shop, InvoiceInput } from "@/types/api";
 
@@ -1908,58 +1908,7 @@ export default function CreateInvoice() {
                   </div>
                 </div>
 
-                {/* Signature Section */}
-                <div className="mt-8">
-                  <h4 className="text-lg font-semibold mb-4">Signature</h4>
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="signatureType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Signature Type</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="NONE">No Signature</SelectItem>
-                              <SelectItem value="IMAGE">Image Signature</SelectItem>
-                              <SelectItem value="DIGITAL">Digital Signature</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    {form.watch("signatureType") !== "NONE" && (
-                      <div className="lg:col-span-2">
-                        <FormField
-                          control={form.control}
-                          name="signatureData"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>
-                                {form.watch("signatureType") === "IMAGE" ? "Image URL" : "Digital Signature Text"}
-                              </FormLabel>
-                              <FormControl>
-                                {form.watch("signatureType") === "IMAGE" ? (
-                                  <Input {...field} placeholder="Enter image URL" />
-                                ) : (
-                                  <Textarea {...field} placeholder="Enter signature text" />
-                                )}
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
+
               </CardContent>
             </Card>
           </form>

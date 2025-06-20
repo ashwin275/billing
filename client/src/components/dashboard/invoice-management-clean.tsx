@@ -343,9 +343,6 @@ export default function InvoiceManagementClean() {
             }
             
             .bottom-section {
-              display: grid;
-              grid-template-columns: 2fr 1fr;
-              gap: 25px;
               margin-top: auto;
               margin-bottom: 20px;
             }
@@ -380,49 +377,7 @@ export default function InvoiceManagementClean() {
               color: #2d3748;
             }
             
-            .signature-section {
-              text-align: center;
-              padding: 15px;
-            }
-            
-            .signature-image {
-              max-width: 120px;
-              max-height: 50px;
-              margin: 0 auto 8px;
-              display: block;
-            }
-            
-            .signature-line {
-              border-top: 2px solid #2d3748;
-              width: 100px;
-              margin: 20px auto 8px;
-            }
-            
-            .signature-text {
-              color: #4a5568;
-              font-size: 11px;
-              font-weight: 500;
-              line-height: 1.3;
-            }
-            
-            .invoice-footer {
-              background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-              height: 30px;
-              position: relative;
-              margin-top: auto;
-              flex-shrink: 0;
-            }
-            
-            .invoice-footer::before {
-              content: '';
-              position: absolute;
-              top: -15px;
-              left: 0;
-              width: 100%;
-              height: 30px;
-              background: white;
-              border-radius: 0 0 50% 50% / 0 0 100% 100%;
-            }
+
             
             @media print {
               body {
@@ -564,26 +519,8 @@ export default function InvoiceManagementClean() {
                   ` : ''}
                 </div>
                 
-                <div class="signature-section">
-                  ${invoiceData.signature ? `
-                    <img 
-                      src="${invoiceData.signature}" 
-                      alt="Signature" 
-                      class="signature-image"
-                    />
-                  ` : `
-                    <div class="signature-line"></div>
-                  `}
-                  <div class="signature-text">
-                    ${invoiceData.shop?.name || 'Shop Name'}<br />
-                    Signature
-                  </div>
-                </div>
               </div>
             </div>
-
-            <!-- Footer -->
-            <div class="invoice-footer"></div>
           </div>
           
           <script>

@@ -248,9 +248,6 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
         }
 
         .bottom-section {
-          display: grid;
-          grid-template-columns: 2fr 1fr;
-          gap: 40px;
           margin-top: 30px;
         }
 
@@ -284,48 +281,7 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
           color: #2d3748;
         }
 
-        .signature-section {
-          text-align: center;
-          padding: 25px;
-        }
 
-        .signature-image {
-          max-width: 150px;
-          max-height: 60px;
-          margin: 0 auto 10px;
-          display: block;
-        }
-
-        .signature-line {
-          border-top: 2px solid #2d3748;
-          width: 120px;
-          margin: 30px auto 10px;
-        }
-
-        .signature-text {
-          color: #4a5568;
-          font-size: 13px;
-          font-weight: 500;
-          line-height: 1.4;
-        }
-
-        .invoice-footer {
-          background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-          height: 50px;
-          position: relative;
-          margin-top: 30px;
-        }
-
-        .invoice-footer::before {
-          content: '';
-          position: absolute;
-          top: -25px;
-          left: 0;
-          width: 100%;
-          height: 50px;
-          background: white;
-          border-radius: 0 0 50% 50% / 0 0 100% 100%;
-        }
 
         @media print {
           .invoice-template {
@@ -488,27 +444,8 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
               </div>
             )}
           </div>
-          
-          <div className="signature-section">
-            {invoice.signature ? (
-              <img 
-                src={invoice.signature} 
-                alt="Signature" 
-                className="signature-image"
-              />
-            ) : (
-              <div className="signature-line"></div>
-            )}
-            <div className="signature-text">
-              {invoice.shop?.name || 'Shop Name'}<br />
-              Signature
-            </div>
-          </div>
         </div>
       </div>
-
-      {/* Footer */}
-      <div className="invoice-footer"></div>
     </div>
   );
 };
