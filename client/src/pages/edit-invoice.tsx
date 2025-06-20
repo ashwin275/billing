@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowLeft, Plus, Trash2, Save, User, MapPin, Phone } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save, User, MapPin, Phone, Eye, Download } from "lucide-react";
 import { Link, useLocation, useRoute } from "wouter";
 
 import { Button } from "@/components/ui/button";
@@ -63,6 +63,7 @@ export default function EditInvoice() {
   const queryClient = useQueryClient();
   
   const [isAddCustomerDialogOpen, setIsAddCustomerDialogOpen] = useState(false);
+  const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [selectedShop, setSelectedShop] = useState<Shop | null>(null);
 
@@ -365,6 +366,49 @@ export default function EditInvoice() {
             <h1 className="text-2xl font-bold text-gray-900">Edit Invoice #{invoice.invoiceNo}</h1>
           </div>
           <div className="flex items-center space-x-2">
+            <Button 
+              variant="outline"
+              onClick={() => setIsPreviewDialogOpen(true)}
+              disabled={!selectedCustomer || !selectedShop}
+            >
+              <Eye className="h-4 w-4 mr-2" />
+              Preview
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => {
+                const formData = form.getValues();
+                const invoiceData = {
+                  invoiceId: invoiceId,
+                  invoiceNo: invoice?.invoiceNo || `INV-${Date.now().toString().slice(-6)}`,
+                  shop: selectedShop?.name || "Shop",
+                  customer: selectedCustomer?.name || "Customer",
+                  invoiceDate: invoice?.invoiceDate || new Date().toISOString(),
+                  items: totals.items,
+                  totals: totals,
+                  paymentDetails: {
+                    paymentMode: formData.paymentMode,
+                    paymentStatus: formData.paymentStatus,
+                    billType: formData.billType,
+                    saleType: formData.saleType,
+                  },
+                  remark: formData.remark,
+                };
+                
+                const dataStr = JSON.stringify(invoiceData, null, 2);
+                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                const exportFileDefaultName = `invoice-${invoice?.invoiceNo || Date.now()}.json`;
+                
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri);
+                linkElement.setAttribute('download', exportFileDefaultName);
+                linkElement.click();
+              }}
+              disabled={!selectedCustomer || !selectedShop}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download
+            </Button>
             <Button 
               onClick={() => form.handleSubmit(onSubmit)()}
               disabled={updateInvoiceMutation.isPending}
@@ -988,6 +1032,118 @@ export default function EditInvoice() {
             </Card>
           </form>
         </Form>
+
+        {/* Preview Dialog */}
+        <Dialog open={isPreviewDialogOpen} onOpenChange={setIsPreviewDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Invoice Preview - #{invoice?.invoiceNo}</DialogTitle>
+            </DialogHeader>
+            
+            {selectedCustomer && selectedShop && (
+              <div className="space-y-6 p-6 bg-white text-black">
+                {/* Invoice Header */}
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h2 className="text-2xl font-bold text-black">{selectedShop.name}</h2>
+                    <p className="text-gray-600">{selectedShop.place}</p>
+                  </div>
+                  <div className="text-right">
+                    <h3 className="text-xl font-bold text-black">INVOICE</h3>
+                    <p className="text-gray-600">{invoice?.invoiceNo}</p>
+                    <p className="text-gray-600">{invoice?.invoiceDate ? new Date(invoice.invoiceDate).toLocaleDateString() : new Date().toLocaleDateString()}</p>
+                  </div>
+                </div>
+
+                <Separator className="border-black" />
+
+                {/* Invoice Details */}
+                <div className="grid grid-cols-2 gap-8">
+                  <div>
+                    <h4 className="font-semibold text-black mb-2">Bill To:</h4>
+                    <p className="text-gray-600">{selectedCustomer.name}</p>
+                    <p className="text-gray-600">{selectedCustomer.place}</p>
+                    <p className="text-gray-600">{selectedCustomer.phone}</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-black mb-2">Payment Details:</h4>
+                    <p className="text-gray-600">Status: {form.watch("paymentStatus")}</p>
+                    <p className="text-gray-600">Mode: {form.watch("paymentMode")}</p>
+                    <p className="text-gray-600">Type: {form.watch("billType")} {form.watch("saleType")}</p>
+                  </div>
+                </div>
+
+                {/* Items Table */}
+                <div>
+                  <h4 className="font-semibold text-black mb-4">Items:</h4>
+                  <div className="border border-black">
+                    <table className="w-full">
+                      <thead className="bg-gray-100">
+                        <tr>
+                          <th className="border-b border-black p-2 text-left text-black">Product</th>
+                          <th className="border-b border-black p-2 text-right text-black">Qty</th>
+                          <th className="border-b border-black p-2 text-right text-black">Rate</th>
+                          <th className="border-b border-black p-2 text-right text-black">Discount</th>
+                          <th className="border-b border-black p-2 text-right text-black">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {totals.items.map((item, index) => (
+                          <tr key={index}>
+                            <td className="border-b border-black p-2 text-black">{item?.product?.name || 'Product'}</td>
+                            <td className="border-b border-black p-2 text-right text-black">{item?.quantity}</td>
+                            <td className="border-b border-black p-2 text-right text-black">₹{item?.unitPrice?.toFixed(2)}</td>
+                            <td className="border-b border-black p-2 text-right text-black">₹{item?.discountAmount?.toFixed(2)}</td>
+                            <td className="border-b border-black p-2 text-right text-black">₹{item?.totalPrice?.toFixed(2)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Totals */}
+                <div className="flex justify-end">
+                  <div className="w-64 space-y-2">
+                    <div className="flex justify-between text-black">
+                      <span>Subtotal:</span>
+                      <span>₹{totals.subtotal.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-gray-600">
+                      <span>Tax (Not included):</span>
+                      <span>₹{totals.totalTax.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-gray-600">
+                      <span>Discount:</span>
+                      <span>-₹{totals.totalDiscount.toFixed(2)}</span>
+                    </div>
+                    <Separator className="border-black" />
+                    <div className="flex justify-between font-bold text-lg text-black">
+                      <span>Grand Total:</span>
+                      <span>₹{totals.grandTotal.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-black">
+                      <span>Amount Paid:</span>
+                      <span>₹{(form.watch("amountPaid") || 0).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between font-semibold text-black">
+                      <span>Balance:</span>
+                      <span>₹{(totals.grandTotal - (form.watch("amountPaid") || 0)).toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Remarks */}
+                {form.watch("remark") && (
+                  <div>
+                    <h4 className="font-semibold text-black mb-2">Remarks:</h4>
+                    <p className="text-gray-600">{form.watch("remark")}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

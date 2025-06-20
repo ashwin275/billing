@@ -310,9 +310,18 @@ export const invoicesApi = {
    * Update invoice by ID
    */
   async updateInvoice(invoiceId: number, invoiceData: import("@/types/api").InvoiceInput): Promise<void> {
+    const updatePayload = {
+      invoiceId: invoiceId,
+      ...invoiceData,
+      userId: 1, // Default user ID
+      salesId: 2, // Default sales ID
+      totalAmount: 0, // Will be calculated on backend
+      tax: 0, // Will be calculated on backend
+    };
+    
     return apiRequest(`/invoice/update/${invoiceId}`, {
       method: 'POST',
-      body: JSON.stringify(invoiceData),
+      body: JSON.stringify(updatePayload),
     });
   },
 

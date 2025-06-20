@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowLeft, Plus, Trash2, Save, Eye, FileText, User, Building2, Calendar, CreditCard, Percent, Hash, Phone, MapPin } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save, Eye, Download, FileText, User, Building2, Calendar, CreditCard, Percent, Hash, Phone, MapPin } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
 import { Button } from "@/components/ui/button";
@@ -309,6 +309,40 @@ export default function CreateInvoice() {
             >
               <Eye className="h-4 w-4 mr-2" />
               Preview
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => {
+                const formData = form.getValues();
+                const invoiceData = {
+                  shop: selectedShop?.name || "Shop",
+                  customer: selectedCustomer?.name || "Customer",
+                  invoiceNo: `INV-${Date.now().toString().slice(-6)}`,
+                  invoiceDate: new Date().toISOString(),
+                  items: totals.items,
+                  totals: totals,
+                  paymentDetails: {
+                    paymentMode: formData.paymentMode,
+                    paymentStatus: formData.paymentStatus,
+                    billType: formData.billType,
+                    saleType: formData.saleType,
+                  },
+                  remark: formData.remark,
+                };
+                
+                const dataStr = JSON.stringify(invoiceData, null, 2);
+                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                const exportFileDefaultName = `invoice-${Date.now()}.json`;
+                
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri);
+                linkElement.setAttribute('download', exportFileDefaultName);
+                linkElement.click();
+              }}
+              disabled={!selectedCustomer || !selectedShop}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download
             </Button>
             <Button 
               onClick={() => form.handleSubmit(onSubmit)()}
