@@ -304,7 +304,472 @@ export default function CreateInvoice() {
           <div className="flex items-center space-x-2">
             <Button 
               variant="outline"
-              onClick={() => setIsPreviewDialogOpen(true)}
+              onClick={() => {
+                if (!selectedCustomer || !selectedShop) return;
+                
+                const formData = form.getValues();
+                const previewData = {
+                  invoiceNo: `INV-${Date.now().toString().slice(-6)}`,
+                  invoiceDate: new Date().toISOString(),
+                  shop: {
+                    name: selectedShop.name,
+                    place: selectedShop.place,
+                    tagline: "Quality Products & Services"
+                  },
+                  customer: {
+                    name: selectedCustomer.name,
+                    place: selectedCustomer.place,
+                    phone: selectedCustomer.phone
+                  },
+                  paymentDetails: {
+                    paymentStatus: formData.paymentStatus,
+                    paymentMode: formData.paymentMode,
+                    billType: formData.billType,
+                    saleType: formData.saleType
+                  },
+                  items: totals.items.filter(item => item),
+                  totals,
+                  amountPaid: formData.amountPaid || 0,
+                  remark: formData.remark
+                };
+                
+                // Create preview window with modern compact design
+                const previewWindow = window.open('', '_blank', 'width=900,height=700,scrollbars=yes');
+                if (!previewWindow) return;
+
+                previewWindow.document.write(`
+                  <!DOCTYPE html>
+                  <html>
+                    <head>
+                      <title>Invoice Preview - ${previewData.invoiceNo}</title>
+                      <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+                        
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+                        
+                        body { 
+                          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+                          background: #f8fafc;
+                          padding: 20px;
+                          line-height: 1.4;
+                        }
+                        
+                        .invoice-container {
+                          max-width: 800px;
+                          margin: 0 auto;
+                          background: white;
+                          border-radius: 12px;
+                          overflow: hidden;
+                          box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+                          position: relative;
+                          page-break-inside: avoid;
+                        }
+                        
+                        .header-wave {
+                          background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+                          height: 120px;
+                          position: relative;
+                          overflow: hidden;
+                        }
+                        
+                        .header-wave::after {
+                          content: '';
+                          position: absolute;
+                          bottom: -30px;
+                          left: 0;
+                          width: 100%;
+                          height: 60px;
+                          background: white;
+                          border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+                        }
+                        
+                        .header-content {
+                          position: relative;
+                          z-index: 2;
+                          color: white;
+                          padding: 25px 40px;
+                          display: flex;
+                          justify-content: space-between;
+                          align-items: flex-start;
+                        }
+                        
+                        .logo-section {
+                          display: flex;
+                          align-items: center;
+                          gap: 12px;
+                        }
+                        
+                        .logo-placeholder {
+                          width: 45px;
+                          height: 45px;
+                          background: rgba(255,255,255,0.2);
+                          border-radius: 8px;
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                          font-size: 18px;
+                          font-weight: bold;
+                          border: 2px solid rgba(255,255,255,0.3);
+                        }
+                        
+                        .company-info h1 {
+                          font-size: 24px;
+                          font-weight: 700;
+                          margin-bottom: 3px;
+                          text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                        }
+                        
+                        .company-tagline {
+                          font-size: 12px;
+                          opacity: 0.9;
+                          font-weight: 300;
+                        }
+                        
+                        .invoice-title {
+                          text-align: right;
+                        }
+                        
+                        .invoice-title h2 {
+                          font-size: 32px;
+                          font-weight: 300;
+                          letter-spacing: 2px;
+                          margin-bottom: 5px;
+                          text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                        }
+                        
+                        .invoice-meta {
+                          font-size: 12px;
+                          opacity: 0.9;
+                        }
+                        
+                        .content-section {
+                          padding: 40px 40px 30px;
+                        }
+                        
+                        .bill-to-section {
+                          display: grid;
+                          grid-template-columns: 1fr 1fr;
+                          gap: 40px;
+                          margin-bottom: 30px;
+                        }
+                        
+                        .info-block h3 {
+                          color: #2d3748;
+                          font-size: 14px;
+                          font-weight: 600;
+                          margin-bottom: 10px;
+                          padding-bottom: 5px;
+                          border-bottom: 2px solid #e2e8f0;
+                        }
+                        
+                        .info-block p {
+                          color: #4a5568;
+                          line-height: 1.5;
+                          margin-bottom: 3px;
+                          font-size: 13px;
+                        }
+                        
+                        .customer-name {
+                          font-weight: 600;
+                          color: #2d3748;
+                          font-size: 15px;
+                        }
+                        
+                        .items-table {
+                          width: 100%;
+                          border-collapse: collapse;
+                          margin-bottom: 25px;
+                          border-radius: 8px;
+                          overflow: hidden;
+                          box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                        }
+                        
+                        .items-table thead tr {
+                          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                          color: white;
+                        }
+                        
+                        .items-table th {
+                          padding: 12px 10px;
+                          font-weight: 600;
+                          font-size: 12px;
+                          letter-spacing: 0.5px;
+                        }
+                        
+                        .items-table td {
+                          padding: 10px;
+                          border-bottom: 1px solid #e2e8f0;
+                          color: #4a5568;
+                          font-size: 12px;
+                        }
+                        
+                        .items-table tbody tr:last-child td {
+                          border-bottom: none;
+                        }
+                        
+                        .text-right { text-align: right; }
+                        .text-center { text-align: center; }
+                        .text-left { text-align: left; }
+                        
+                        .totals-section {
+                          display: flex;
+                          justify-content: flex-end;
+                          margin-bottom: 25px;
+                        }
+                        
+                        .totals-box {
+                          background: #f7fafc;
+                          padding: 20px;
+                          border-radius: 8px;
+                          min-width: 280px;
+                        }
+                        
+                        .total-line {
+                          display: flex;
+                          justify-content: space-between;
+                          padding: 4px 0;
+                          color: #4a5568;
+                          font-size: 13px;
+                        }
+                        
+                        .grand-total {
+                          border-top: 2px solid #e2e8f0;
+                          margin-top: 10px;
+                          padding-top: 10px;
+                          font-size: 16px;
+                          font-weight: 700;
+                          color: #2d3748;
+                        }
+                        
+                        .balance {
+                          font-weight: 600;
+                          font-size: 14px;
+                        }
+                        
+                        .balance.positive { color: #e53e3e; }
+                        .balance.negative { color: #38a169; }
+                        
+                        .bottom-section {
+                          display: grid;
+                          grid-template-columns: 2fr 1fr;
+                          gap: 25px;
+                        }
+                        
+                        .terms-section {
+                          background: #f7fafc;
+                          padding: 15px;
+                          border-radius: 8px;
+                        }
+                        
+                        .terms-section h3 {
+                          color: #2d3748;
+                          font-size: 14px;
+                          font-weight: 600;
+                          margin-bottom: 8px;
+                        }
+                        
+                        .terms-section p {
+                          color: #4a5568;
+                          font-size: 11px;
+                          line-height: 1.4;
+                          margin-bottom: 4px;
+                        }
+                        
+                        .signature-section {
+                          text-align: center;
+                          padding: 15px;
+                        }
+                        
+                        .signature-line {
+                          border-top: 2px solid #2d3748;
+                          width: 120px;
+                          margin: 25px auto 8px;
+                        }
+                        
+                        .signature-text {
+                          color: #4a5568;
+                          font-size: 12px;
+                          font-weight: 500;
+                        }
+                        
+                        .preview-controls {
+                          position: fixed;
+                          top: 20px;
+                          right: 20px;
+                          background: white;
+                          padding: 12px;
+                          border-radius: 6px;
+                          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                          z-index: 1000;
+                        }
+                        
+                        .preview-controls button {
+                          margin-left: 8px;
+                          padding: 6px 12px;
+                          border: none;
+                          border-radius: 4px;
+                          cursor: pointer;
+                          font-weight: 500;
+                          font-size: 13px;
+                        }
+                        
+                        .btn-close {
+                          background: #e53e3e;
+                          color: white;
+                        }
+                        
+                        .btn-print {
+                          background: #4299e1;
+                          color: white;
+                        }
+                        
+                        @media print {
+                          body { 
+                            background: white;
+                            padding: 0;
+                          }
+                          .invoice-container {
+                            box-shadow: none;
+                            border-radius: 0;
+                            page-break-inside: avoid;
+                          }
+                          .preview-controls {
+                            display: none;
+                          }
+                        }
+                      </style>
+                    </head>
+                    <body>
+                      <div class="preview-controls">
+                        <button class="btn-print" onclick="window.print()">Print</button>
+                        <button class="btn-close" onclick="window.close()">Close</button>
+                      </div>
+                      
+                      <div class="invoice-container">
+                        <!-- Header Wave Section -->
+                        <div class="header-wave">
+                          <div class="header-content">
+                            <div class="logo-section">
+                              <div class="logo-placeholder">
+                                ${previewData.shop.name.charAt(0)}
+                              </div>
+                              <div class="company-info">
+                                <h1>${previewData.shop.name}</h1>
+                                <div class="company-tagline">${previewData.shop.tagline}</div>
+                              </div>
+                            </div>
+                            <div class="invoice-title">
+                              <h2>INVOICE</h2>
+                              <div class="invoice-meta">
+                                <div><strong>Invoice #:</strong> ${previewData.invoiceNo}</div>
+                                <div><strong>Date:</strong> ${new Date(previewData.invoiceDate).toLocaleDateString()}</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Content Section -->
+                        <div class="content-section">
+                          <!-- Bill To Section -->
+                          <div class="bill-to-section">
+                            <div class="info-block">
+                              <h3>Invoice To:</h3>
+                              <p class="customer-name">${previewData.customer.name}</p>
+                              <p>📍 ${previewData.customer.place}</p>
+                              <p>📞 ${previewData.customer.phone}</p>
+                            </div>
+                            <div class="info-block">
+                              <h3>Payment Info:</h3>
+                              <p><strong>Status:</strong> ${previewData.paymentDetails.paymentStatus}</p>
+                              <p><strong>Mode:</strong> ${previewData.paymentDetails.paymentMode}</p>
+                              <p><strong>Type:</strong> ${previewData.paymentDetails.billType} ${previewData.paymentDetails.saleType}</p>
+                            </div>
+                          </div>
+
+                          <!-- Items Table -->
+                          <table class="items-table">
+                            <thead>
+                              <tr>
+                                <th class="text-left">Item Description</th>
+                                <th class="text-center">Qty.</th>
+                                <th class="text-right">Price</th>
+                                <th class="text-right">Discount</th>
+                                <th class="text-right">Total</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              ${previewData.items.map((item, index) => `
+                                <tr>
+                                  <td class="text-left">
+                                    <div style="font-weight: 600; color: #2d3748;">${item.product.name}</div>
+                                  </td>
+                                  <td class="text-center">${item.quantity.toString().padStart(2, '0')}</td>
+                                  <td class="text-right">₹${item.unitPrice.toFixed(2)}</td>
+                                  <td class="text-right">₹${item.discountAmount.toFixed(2)}</td>
+                                  <td class="text-right" style="font-weight: 600; color: #2d3748;">₹${item.totalPrice.toFixed(2)}</td>
+                                </tr>
+                              `).join('')}
+                            </tbody>
+                          </table>
+
+                          <!-- Totals Section -->
+                          <div class="totals-section">
+                            <div class="totals-box">
+                              <div class="total-line">
+                                <span>Sub Total:</span>
+                                <span>₹${previewData.totals.subtotal.toFixed(2)}</span>
+                              </div>
+                              <div class="total-line">
+                                <span>Discount:</span>
+                                <span>- ₹${previewData.totals.totalDiscount.toFixed(2)}</span>
+                              </div>
+                              <div class="total-line">
+                                <span>Tax - GST:</span>
+                                <span>₹${previewData.totals.totalTax.toFixed(2)}</span>
+                              </div>
+                              <div class="total-line grand-total">
+                                <span>Total:</span>
+                                <span>₹${previewData.totals.grandTotal.toFixed(2)}</span>
+                              </div>
+                              <div class="total-line">
+                                <span>Amount Paid:</span>
+                                <span>₹${previewData.amountPaid.toFixed(2)}</span>
+                              </div>
+                              <div class="total-line balance ${(previewData.totals.grandTotal - previewData.amountPaid) > 0 ? 'positive' : 'negative'}">
+                                <span>Balance:</span>
+                                <span>₹${(previewData.totals.grandTotal - previewData.amountPaid).toFixed(2)}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <!-- Bottom Section -->
+                          <div class="bottom-section">
+                            <div class="terms-section">
+                              <h3>Terms & Conditions</h3>
+                              <p>1. Payment is due within 30 days of invoice date.</p>
+                              <p>2. Late payments may incur additional charges.</p>
+                              <p>3. Goods once sold cannot be returned without prior approval.</p>
+                              <p>4. Any disputes must be resolved within 7 days of delivery.</p>
+                              ${previewData.remark ? `
+                                <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #e2e8f0;">
+                                  <strong>Remarks:</strong><br>
+                                  ${previewData.remark}
+                                </div>
+                              ` : ''}
+                            </div>
+                            <div class="signature-section">
+                              <div class="signature-line"></div>
+                              <div class="signature-text">${previewData.shop.name}<br>Signature</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </body>
+                  </html>
+                `);
+                
+                previewWindow.document.close();
+              }}
               disabled={!selectedCustomer || !selectedShop}
             >
               <Eye className="h-4 w-4 mr-2" />
@@ -357,24 +822,22 @@ export default function CreateInvoice() {
                         
                         body { 
                           font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-                          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                          min-height: 100vh;
-                          padding: 40px 20px;
+                          background: white;
+                          padding: 0;
+                          line-height: 1.4;
                         }
                         
                         .invoice-container {
                           max-width: 800px;
                           margin: 0 auto;
                           background: white;
-                          border-radius: 20px;
-                          overflow: hidden;
-                          box-shadow: 0 25px 50px rgba(0,0,0,0.15);
                           position: relative;
+                          page-break-inside: avoid;
                         }
                         
                         .header-wave {
                           background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-                          height: 200px;
+                          height: 120px;
                           position: relative;
                           overflow: hidden;
                         }
@@ -382,10 +845,10 @@ export default function CreateInvoice() {
                         .header-wave::after {
                           content: '';
                           position: absolute;
-                          bottom: -50px;
+                          bottom: -30px;
                           left: 0;
                           width: 100%;
-                          height: 100px;
+                          height: 60px;
                           background: white;
                           border-radius: 50% 50% 0 0 / 100% 100% 0 0;
                         }
@@ -394,7 +857,7 @@ export default function CreateInvoice() {
                           position: relative;
                           z-index: 2;
                           color: white;
-                          padding: 40px 50px;
+                          padding: 25px 40px;
                           display: flex;
                           justify-content: space-between;
                           align-items: flex-start;
@@ -403,31 +866,31 @@ export default function CreateInvoice() {
                         .logo-section {
                           display: flex;
                           align-items: center;
-                          gap: 15px;
+                          gap: 12px;
                         }
                         
                         .logo-placeholder {
-                          width: 60px;
-                          height: 60px;
+                          width: 45px;
+                          height: 45px;
                           background: rgba(255,255,255,0.2);
-                          border-radius: 12px;
+                          border-radius: 8px;
                           display: flex;
                           align-items: center;
                           justify-content: center;
-                          font-size: 24px;
+                          font-size: 18px;
                           font-weight: bold;
                           border: 2px solid rgba(255,255,255,0.3);
                         }
                         
                         .company-info h1 {
-                          font-size: 32px;
+                          font-size: 24px;
                           font-weight: 700;
-                          margin-bottom: 5px;
+                          margin-bottom: 3px;
                           text-shadow: 0 2px 10px rgba(0,0,0,0.1);
                         }
                         
                         .company-tagline {
-                          font-size: 14px;
+                          font-size: 12px;
                           opacity: 0.9;
                           font-weight: 300;
                         }
@@ -437,57 +900,58 @@ export default function CreateInvoice() {
                         }
                         
                         .invoice-title h2 {
-                          font-size: 48px;
+                          font-size: 32px;
                           font-weight: 300;
-                          letter-spacing: 3px;
-                          margin-bottom: 10px;
+                          letter-spacing: 2px;
+                          margin-bottom: 5px;
                           text-shadow: 0 2px 10px rgba(0,0,0,0.1);
                         }
                         
                         .invoice-meta {
-                          font-size: 14px;
+                          font-size: 12px;
                           opacity: 0.9;
                         }
                         
                         .content-section {
-                          padding: 60px 50px 50px;
+                          padding: 40px 40px 30px;
                         }
                         
                         .bill-to-section {
                           display: grid;
                           grid-template-columns: 1fr 1fr;
-                          gap: 60px;
-                          margin-bottom: 50px;
+                          gap: 40px;
+                          margin-bottom: 30px;
                         }
                         
                         .info-block h3 {
                           color: #2d3748;
-                          font-size: 16px;
+                          font-size: 14px;
                           font-weight: 600;
-                          margin-bottom: 15px;
-                          padding-bottom: 8px;
+                          margin-bottom: 10px;
+                          padding-bottom: 5px;
                           border-bottom: 2px solid #e2e8f0;
                         }
                         
                         .info-block p {
                           color: #4a5568;
-                          line-height: 1.6;
-                          margin-bottom: 5px;
+                          line-height: 1.5;
+                          margin-bottom: 3px;
+                          font-size: 13px;
                         }
                         
                         .customer-name {
                           font-weight: 600;
                           color: #2d3748;
-                          font-size: 18px;
+                          font-size: 15px;
                         }
                         
                         .items-table {
                           width: 100%;
                           border-collapse: collapse;
-                          margin-bottom: 40px;
-                          border-radius: 12px;
+                          margin-bottom: 25px;
+                          border-radius: 8px;
                           overflow: hidden;
-                          box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+                          box-shadow: 0 2px 4px rgba(0,0,0,0.05);
                         }
                         
                         .items-table thead tr {
@@ -496,20 +960,17 @@ export default function CreateInvoice() {
                         }
                         
                         .items-table th {
-                          padding: 20px 15px;
+                          padding: 12px 10px;
                           font-weight: 600;
-                          font-size: 14px;
+                          font-size: 12px;
                           letter-spacing: 0.5px;
                         }
                         
                         .items-table td {
-                          padding: 18px 15px;
+                          padding: 10px;
                           border-bottom: 1px solid #e2e8f0;
                           color: #4a5568;
-                        }
-                        
-                        .items-table tbody tr:hover {
-                          background-color: #f7fafc;
+                          font-size: 12px;
                         }
                         
                         .items-table tbody tr:last-child td {
@@ -523,35 +984,36 @@ export default function CreateInvoice() {
                         .totals-section {
                           display: flex;
                           justify-content: flex-end;
-                          margin-bottom: 50px;
+                          margin-bottom: 25px;
                         }
                         
                         .totals-box {
                           background: #f7fafc;
-                          padding: 30px;
-                          border-radius: 12px;
-                          min-width: 350px;
+                          padding: 20px;
+                          border-radius: 8px;
+                          min-width: 280px;
                         }
                         
                         .total-line {
                           display: flex;
                           justify-content: space-between;
-                          padding: 8px 0;
+                          padding: 4px 0;
                           color: #4a5568;
+                          font-size: 13px;
                         }
                         
                         .grand-total {
                           border-top: 2px solid #e2e8f0;
-                          margin-top: 15px;
-                          padding-top: 15px;
-                          font-size: 20px;
+                          margin-top: 10px;
+                          padding-top: 10px;
+                          font-size: 16px;
                           font-weight: 700;
                           color: #2d3748;
                         }
                         
                         .balance {
                           font-weight: 600;
-                          font-size: 18px;
+                          font-size: 14px;
                         }
                         
                         .balance.positive { color: #e53e3e; }
@@ -560,63 +1022,44 @@ export default function CreateInvoice() {
                         .bottom-section {
                           display: grid;
                           grid-template-columns: 2fr 1fr;
-                          gap: 40px;
-                          margin-top: 40px;
+                          gap: 25px;
                         }
                         
                         .terms-section {
                           background: #f7fafc;
-                          padding: 25px;
-                          border-radius: 12px;
+                          padding: 15px;
+                          border-radius: 8px;
                         }
                         
                         .terms-section h3 {
                           color: #2d3748;
-                          font-size: 16px;
+                          font-size: 14px;
                           font-weight: 600;
-                          margin-bottom: 15px;
+                          margin-bottom: 8px;
                         }
                         
                         .terms-section p {
                           color: #4a5568;
-                          font-size: 13px;
-                          line-height: 1.6;
-                          margin-bottom: 8px;
+                          font-size: 11px;
+                          line-height: 1.4;
+                          margin-bottom: 4px;
                         }
                         
                         .signature-section {
                           text-align: center;
-                          padding: 25px;
+                          padding: 15px;
                         }
                         
                         .signature-line {
                           border-top: 2px solid #2d3748;
-                          width: 150px;
-                          margin: 40px auto 10px;
+                          width: 120px;
+                          margin: 25px auto 8px;
                         }
                         
                         .signature-text {
                           color: #4a5568;
-                          font-size: 14px;
+                          font-size: 12px;
                           font-weight: 500;
-                        }
-                        
-                        .footer-wave {
-                          background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-                          height: 80px;
-                          position: relative;
-                          margin-top: 40px;
-                        }
-                        
-                        .footer-wave::before {
-                          content: '';
-                          position: absolute;
-                          top: -40px;
-                          left: 0;
-                          width: 100%;
-                          height: 80px;
-                          background: white;
-                          border-radius: 0 0 50% 50% / 0 0 100% 100%;
                         }
                         
                         @media print {
@@ -627,6 +1070,7 @@ export default function CreateInvoice() {
                           .invoice-container {
                             box-shadow: none;
                             border-radius: 0;
+                            page-break-inside: avoid;
                           }
                         }
                       </style>
@@ -738,7 +1182,7 @@ export default function CreateInvoice() {
                               <p>3. Goods once sold cannot be returned without prior approval.</p>
                               <p>4. Any disputes must be resolved within 7 days of delivery.</p>
                               ${invoiceData.remark ? `
-                                <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
+                                <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #e2e8f0;">
                                   <strong>Remarks:</strong><br>
                                   ${invoiceData.remark}
                                 </div>
@@ -750,9 +1194,6 @@ export default function CreateInvoice() {
                             </div>
                           </div>
                         </div>
-
-                        <!-- Footer Wave -->
-                        <div class="footer-wave"></div>
                       </div>
                       
                       <script>
