@@ -174,8 +174,7 @@ export default function InvoiceManagement() {
   };
 
   // Handle download
-  const handleDownload = async (invoice: Invoice) => {
-    const { jsPDF } = await import('jspdf');
+  const handleDownload = (invoice: Invoice) => {
     
     const doc = new jsPDF();
     

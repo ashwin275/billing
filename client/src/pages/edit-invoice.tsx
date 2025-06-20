@@ -376,172 +376,201 @@ export default function EditInvoice() {
             </Button>
             <Button 
               variant="outline"
-              onClick={async () => {
-                const { jsPDF } = await import('jspdf');
+              onClick={() => {
                 const formData = form.getValues();
                 
-                const doc = new jsPDF();
+                const invoiceData = {
+                  invoiceNo: invoice?.invoiceNo || `INV-${Date.now().toString().slice(-6)}`,
+                  invoiceDate: invoice?.invoiceDate || new Date().toISOString(),
+                  shop: {
+                    name: selectedShop?.name || "Shop Name",
+                    place: selectedShop?.place || "Shop Address"
+                  },
+                  customer: {
+                    name: selectedCustomer?.name || "Customer",
+                    place: selectedCustomer?.place || "Address",
+                    phone: selectedCustomer?.phone?.toString() || "Phone"
+                  },
+                  paymentDetails: {
+                    paymentStatus: formData.paymentStatus,
+                    paymentMode: formData.paymentMode,
+                    billType: formData.billType,
+                    saleType: formData.saleType
+                  },
+                  items: totals.items.filter(item => item),
+                  totals,
+                  amountPaid: formData.amountPaid || 0,
+                  remark: formData.remark
+                };
+
+                // Create a new window for PDF generation
+                const printWindow = window.open('', '_blank');
+                if (!printWindow) return;
+
+                printWindow.document.write(`
+                  <!DOCTYPE html>
+                  <html>
+                    <head>
+                      <title>Invoice ${invoiceData.invoiceNo}</title>
+                      <style>
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+                        body { 
+                          font-family: Arial, sans-serif; 
+                          font-size: 14px; 
+                          line-height: 1.4; 
+                          color: #000; 
+                          background: white;
+                          padding: 20px;
+                        }
+                        .invoice-container { max-width: 800px; margin: 0 auto; }
+                        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; }
+                        .company-info h1 { font-size: 28px; font-weight: bold; margin-bottom: 8px; }
+                        .company-info p { font-size: 14px; color: #666; }
+                        .invoice-info { text-align: right; }
+                        .invoice-info h2 { font-size: 36px; font-weight: bold; margin-bottom: 16px; }
+                        .invoice-info p { margin-bottom: 4px; }
+                        .separator { border: none; border-top: 2px solid #000; margin: 20px 0; }
+                        .details-section { display: flex; justify-content: space-between; margin-bottom: 30px; }
+                        .details-column { width: 45%; }
+                        .details-column h3 { font-size: 16px; font-weight: bold; margin-bottom: 16px; }
+                        .details-column p { margin-bottom: 4px; line-height: 1.6; }
+                        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                        .items-table th { background-color: #f0f0f0; border: 1px solid #ddd; padding: 12px 8px; font-weight: bold; }
+                        .items-table td { border: 1px solid #ddd; padding: 10px 8px; }
+                        .items-table tr:nth-child(even) { background-color: #fafafa; }
+                        .text-left { text-align: left; }
+                        .text-center { text-align: center; }
+                        .text-right { text-align: right; }
+                        .totals-section { display: flex; justify-content: flex-end; margin-bottom: 30px; }
+                        .totals-box { width: 300px; }
+                        .totals-box .total-line { display: flex; justify-content: space-between; padding: 4px 0; margin-bottom: 8px; }
+                        .totals-box .separator-line { border-top: 2px solid #000; margin: 8px 0; }
+                        .totals-box .grand-total { font-size: 18px; font-weight: bold; padding: 8px 0; }
+                        .totals-box .balance { font-size: 16px; font-weight: bold; padding: 8px 0; }
+                        .balance.positive { color: #dc2626; }
+                        .balance.negative { color: #16a34a; }
+                        .terms-section h3 { font-size: 16px; font-weight: bold; margin-bottom: 16px; }
+                        .terms-section p { font-size: 12px; line-height: 1.6; margin-bottom: 6px; }
+                        .remarks-section { margin-top: 20px; }
+                        .remarks-section h3 { font-size: 16px; font-weight: bold; margin-bottom: 8px; }
+                        .remarks-section p { font-size: 12px; line-height: 1.6; }
+                        @media print {
+                          body { padding: 0; }
+                          .no-print { display: none; }
+                        }
+                      </style>
+                    </head>
+                    <body>
+                      <div class="invoice-container">
+                        <div class="header">
+                          <div class="company-info">
+                            <h1>${invoiceData.shop.name}</h1>
+                            <p>${invoiceData.shop.place}</p>
+                          </div>
+                          <div class="invoice-info">
+                            <h2>INVOICE</h2>
+                            <p><strong>Invoice #:</strong> ${invoiceData.invoiceNo}</p>
+                            <p><strong>Date:</strong> ${new Date(invoiceData.invoiceDate).toLocaleDateString()}</p>
+                          </div>
+                        </div>
+
+                        <hr class="separator">
+
+                        <div class="details-section">
+                          <div class="details-column">
+                            <h3>Bill To:</h3>
+                            <p><strong>${invoiceData.customer.name}</strong></p>
+                            <p>${invoiceData.customer.place}</p>
+                            <p>${invoiceData.customer.phone}</p>
+                          </div>
+                          <div class="details-column">
+                            <h3>Payment Details:</h3>
+                            <p><strong>Status:</strong> ${invoiceData.paymentDetails.paymentStatus}</p>
+                            <p><strong>Mode:</strong> ${invoiceData.paymentDetails.paymentMode}</p>
+                            <p><strong>Type:</strong> ${invoiceData.paymentDetails.billType} ${invoiceData.paymentDetails.saleType}</p>
+                          </div>
+                        </div>
+
+                        <table class="items-table">
+                          <thead>
+                            <tr>
+                              <th class="text-left">Product</th>
+                              <th class="text-center">Qty</th>
+                              <th class="text-right">Rate</th>
+                              <th class="text-right">Discount</th>
+                              <th class="text-right">Total</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            ${invoiceData.items.map(item => `
+                              <tr>
+                                <td class="text-left">${item.product.name}</td>
+                                <td class="text-center">${item.quantity}</td>
+                                <td class="text-right">₹${item.unitPrice.toFixed(2)}</td>
+                                <td class="text-right">₹${item.discountAmount.toFixed(2)}</td>
+                                <td class="text-right"><strong>₹${item.totalPrice.toFixed(2)}</strong></td>
+                              </tr>
+                            `).join('')}
+                          </tbody>
+                        </table>
+
+                        <div class="totals-section">
+                          <div class="totals-box">
+                            <div class="total-line">
+                              <span>Subtotal:</span>
+                              <span>₹${invoiceData.totals.subtotal.toFixed(2)}</span>
+                            </div>
+                            <div class="total-line">
+                              <span>Tax (Not included):</span>
+                              <span>₹${invoiceData.totals.totalTax.toFixed(2)}</span>
+                            </div>
+                            <div class="total-line">
+                              <span>Discount:</span>
+                              <span>-₹${invoiceData.totals.totalDiscount.toFixed(2)}</span>
+                            </div>
+                            <div class="separator-line"></div>
+                            <div class="total-line grand-total">
+                              <span>Grand Total:</span>
+                              <span>₹${invoiceData.totals.grandTotal.toFixed(2)}</span>
+                            </div>
+                            <div class="total-line">
+                              <span>Amount Paid:</span>
+                              <span>₹${invoiceData.amountPaid.toFixed(2)}</span>
+                            </div>
+                            <div class="total-line balance ${(invoiceData.totals.grandTotal - invoiceData.amountPaid) > 0 ? 'positive' : 'negative'}">
+                              <span>Balance:</span>
+                              <span>₹${(invoiceData.totals.grandTotal - invoiceData.amountPaid).toFixed(2)}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="terms-section">
+                          <h3>Terms and Conditions:</h3>
+                          <p>1. Payment is due within 30 days of invoice date.</p>
+                          <p>2. Late payments may incur additional charges.</p>
+                          <p>3. Goods once sold cannot be returned without prior approval.</p>
+                          <p>4. Any disputes must be resolved within 7 days of delivery.</p>
+                        </div>
+
+                        ${invoiceData.remark ? `
+                          <div class="remarks-section">
+                            <h3>Remarks:</h3>
+                            <p>${invoiceData.remark}</p>
+                          </div>
+                        ` : ''}
+                      </div>
+                      
+                      <script>
+                        window.onload = function() {
+                          window.print();
+                          setTimeout(function() { window.close(); }, 1000);
+                        }
+                      </script>
+                    </body>
+                  </html>
+                `);
                 
-                // Header with better formatting
-                doc.setFontSize(24);
-                doc.setFont("helvetica", "bold");
-                doc.text(selectedShop?.name || "Shop Name", 20, 25);
-                
-                doc.setFontSize(10);
-                doc.setFont("helvetica", "normal");
-                doc.text(selectedShop?.place || "Shop Address", 20, 35);
-                
-                // Invoice title and details - right aligned
-                doc.setFontSize(28);
-                doc.setFont("helvetica", "bold");
-                doc.text("INVOICE", 210 - doc.getTextWidth("INVOICE"), 25);
-                
-                doc.setFontSize(10);
-                doc.setFont("helvetica", "normal");
-                const invoiceText = `Invoice #: ${invoice?.invoiceNo}`;
-                doc.text(invoiceText, 210 - doc.getTextWidth(invoiceText), 35);
-                const dateText = `Date: ${invoice?.invoiceDate ? new Date(invoice.invoiceDate).toLocaleDateString() : new Date().toLocaleDateString()}`;
-                doc.text(dateText, 210 - doc.getTextWidth(dateText), 42);
-                
-                // Horizontal line
-                doc.setLineWidth(0.5);
-                doc.line(20, 50, 190, 50);
-                
-                // Bill To and Payment Details sections
-                doc.setFontSize(12);
-                doc.setFont("helvetica", "bold");
-                doc.text("Bill To:", 20, 65);
-                doc.text("Payment Details:", 120, 65);
-                
-                doc.setFontSize(10);
-                doc.setFont("helvetica", "normal");
-                doc.text(selectedCustomer?.name || "Customer", 20, 75);
-                doc.text(selectedCustomer?.place || "Address", 20, 82);
-                doc.text(selectedCustomer?.phone?.toString() || "Phone", 20, 89);
-                
-                doc.text(`Status: ${formData.paymentStatus}`, 120, 75);
-                doc.text(`Mode: ${formData.paymentMode}`, 120, 82);
-                doc.text(`Type: ${formData.billType} ${formData.saleType}`, 120, 89);
-                
-                // Items table with proper formatting
-                let yPos = 110;
-                
-                // Table header with background
-                doc.setFillColor(240, 240, 240);
-                doc.rect(20, yPos - 5, 170, 12, 'F');
-                
-                doc.setFontSize(10);
-                doc.setFont("helvetica", "bold");
-                doc.text("Product", 25, yPos);
-                doc.text("Qty", 100, yPos);
-                doc.text("Rate", 120, yPos);
-                doc.text("Discount", 145, yPos);
-                doc.text("Total", 170, yPos);
-                
-                // Table border
-                doc.setLineWidth(0.3);
-                doc.rect(20, yPos - 5, 170, 12);
-                
-                yPos += 15;
-                doc.setFont("helvetica", "normal");
-                
-                // Items with proper alignment
-                totals.items.forEach((item, index) => {
-                  if (item) {
-                    if (index % 2 === 0) {
-                      doc.setFillColor(250, 250, 250);
-                      doc.rect(20, yPos - 5, 170, 10, 'F');
-                    }
-                    
-                    doc.text(item.product?.name || "Product", 25, yPos);
-                    doc.text(item.quantity.toString(), 105, yPos);
-                    doc.text(`₹${item.unitPrice?.toFixed(2)}`, 125, yPos);
-                    doc.text(`₹${item.discountAmount?.toFixed(2)}`, 150, yPos);
-                    const totalText = `₹${item.totalPrice?.toFixed(2)}`;
-                    doc.text(totalText, 190 - doc.getTextWidth(totalText), yPos);
-                    
-                    doc.rect(20, yPos - 5, 170, 10);
-                    yPos += 10;
-                  }
-                });
-                
-                // Totals section with proper alignment
-                yPos += 10;
-                doc.setLineWidth(0.5);
-                doc.line(120, yPos, 190, yPos);
-                yPos += 10;
-                
-                const totalsData = [
-                  { label: "Subtotal:", value: `₹${totals.subtotal.toFixed(2)}` },
-                  { label: "Tax (Not included):", value: `₹${totals.totalTax.toFixed(2)}` },
-                  { label: "Discount:", value: `-₹${totals.totalDiscount.toFixed(2)}` }
-                ];
-                
-                totalsData.forEach(item => {
-                  doc.setFont("helvetica", "normal");
-                  doc.text(item.label, 125, yPos);
-                  doc.text(item.value, 190 - doc.getTextWidth(item.value), yPos);
-                  yPos += 7;
-                });
-                
-                // Grand total with emphasis
-                doc.setLineWidth(0.8);
-                doc.line(120, yPos, 190, yPos);
-                yPos += 10;
-                
-                doc.setFontSize(12);
-                doc.setFont("helvetica", "bold");
-                doc.text("Grand Total:", 125, yPos);
-                const grandTotalText = `₹${totals.grandTotal.toFixed(2)}`;
-                doc.text(grandTotalText, 190 - doc.getTextWidth(grandTotalText), yPos);
-                
-                yPos += 10;
-                doc.setFontSize(10);
-                doc.setFont("helvetica", "normal");
-                doc.text("Amount Paid:", 125, yPos);
-                const amountPaidText = `₹${(formData.amountPaid || 0).toFixed(2)}`;
-                doc.text(amountPaidText, 190 - doc.getTextWidth(amountPaidText), yPos);
-                
-                yPos += 7;
-                doc.setFont("helvetica", "bold");
-                doc.text("Balance:", 125, yPos);
-                const balanceText = `₹${(totals.grandTotal - (formData.amountPaid || 0)).toFixed(2)}`;
-                doc.text(balanceText, 190 - doc.getTextWidth(balanceText), yPos);
-                
-                // Terms and Conditions with better formatting
-                yPos += 25;
-                doc.setFontSize(11);
-                doc.setFont("helvetica", "bold");
-                doc.text("Terms and Conditions:", 20, yPos);
-                
-                yPos += 8;
-                doc.setFontSize(9);
-                doc.setFont("helvetica", "normal");
-                const terms = [
-                  "1. Payment is due within 30 days of invoice date.",
-                  "2. Late payments may incur additional charges.",
-                  "3. Goods once sold cannot be returned without prior approval.",
-                  "4. Any disputes must be resolved within 7 days of delivery."
-                ];
-                
-                terms.forEach(term => {
-                  doc.text(term, 20, yPos);
-                  yPos += 6;
-                });
-                
-                // Remarks if present
-                if (formData.remark) {
-                  yPos += 10;
-                  doc.setFontSize(11);
-                  doc.setFont("helvetica", "bold");
-                  doc.text("Remarks:", 20, yPos);
-                  yPos += 8;
-                  doc.setFontSize(9);
-                  doc.setFont("helvetica", "normal");
-                  doc.text(formData.remark, 20, yPos);
-                }
-                
-                doc.save(`invoice-${invoice?.invoiceNo}.pdf`);
+                printWindow.document.close();
               }}
               disabled={!selectedCustomer || !selectedShop}
             >
