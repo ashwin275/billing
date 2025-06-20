@@ -391,6 +391,60 @@ export const dashboardApi = {
 };
 
 /**
+ * Reports API endpoints
+ */
+export const reportsApi = {
+  /**
+   * Get top products for a shop
+   */
+  async getTopProducts(shopId: number): Promise<any[]> {
+    return await apiRequest(`/api/reports/shop/${shopId}/top-products`);
+  },
+
+  /**
+   * Get top customers for a shop
+   */
+  async getTopCustomers(shopId: number): Promise<any[]> {
+    return await apiRequest(`/api/reports/shop/${shopId}/top-customers`);
+  },
+
+  /**
+   * Get sales summary for a shop with date range
+   */
+  async getSalesSummary(shopId: number, from: string, to: string): Promise<any> {
+    return await apiRequest(`/api/reports/shop/${shopId}/sales-summary?from=${from}&to=${to}`);
+  },
+
+  /**
+   * Get discount summary for a shop with date range
+   */
+  async getDiscountSummary(shopId: number, from: string, to: string): Promise<any> {
+    return await apiRequest(`/api/reports/shop/${shopId}/discount-summary?from=${from}&to=${to}`);
+  },
+
+  /**
+   * Get inventory movement for a shop with date range
+   */
+  async getInventoryMovement(shopId: number, from: string, to: string): Promise<any[]> {
+    return await apiRequest(`/api/reports/shop/${shopId}/inventory-movement?from=${from}&to=${to}`);
+  },
+
+  /**
+   * Get time insights for a shop with date range
+   */
+  async getTimeInsights(shopId: number, from: string, to: string): Promise<any> {
+    return await apiRequest(`/api/reports/shop/${shopId}/time-insights?from=${from}&to=${to}`);
+  },
+
+  /**
+   * Get deadstock for a shop with date range
+   */
+  async getDeadstock(shopId: number, from: string, to: string): Promise<any[]> {
+    return await apiRequest(`/api/reports/shop/${shopId}/deadstock?from=${from}&to=${to}`);
+  },
+};
+
+/**
  * Generic API error handler
  */
 export function handleApiError(error: unknown): string {
