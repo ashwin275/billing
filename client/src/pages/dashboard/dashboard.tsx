@@ -14,6 +14,7 @@ import {
   Save,
   Menu
 } from "lucide-react";
+import { Link } from "wouter";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

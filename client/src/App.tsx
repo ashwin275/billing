@@ -50,16 +50,22 @@ function Router() {
       </Route>
       
       {/* Protected invoice creation route */}
-      <Route path="/create-invoice">
+      <Route path="/invoices/create">
         <ProtectedRoute>
           <CreateInvoice />
         </ProtectedRoute>
       </Route>
       
       {/* Protected invoice edit route */}
-      <Route path="/edit-invoice/:id">
+      <Route path="/invoices/edit/:id">
         <ProtectedRoute>
           <EditInvoice />
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/reports">
+        <ProtectedRoute>
+          <Reports />
         </ProtectedRoute>
       </Route>
 
