@@ -45,8 +45,7 @@ const invoiceSchema = z.object({
   transactionId: z.string().min(1, "Transaction ID is required"),
   saleItems: z.array(saleItemSchema).min(1, "At least one item is required"),
   termsAndConditions: z.string().optional(),
-  signatureType: z.enum(["NONE", "IMAGE", "DIGITAL"]).default("NONE"),
-  signatureData: z.string().optional(),
+  signature: z.string().optional(),
   useCustomBillingAddress: z.boolean().default(false),
   customBillingAddress: z.string().optional(),
 });
@@ -1063,6 +1062,24 @@ export default function CreateInvoice() {
                           color: #4a5568;
                           font-size: 12px;
                           font-weight: 500;
+                        }
+                        
+                        .footer-wave {
+                          background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+                          height: 60px;
+                          position: relative;
+                          margin-top: 30px;
+                        }
+                        
+                        .footer-wave::before {
+                          content: '';
+                          position: absolute;
+                          top: -30px;
+                          left: 0;
+                          width: 100%;
+                          height: 60px;
+                          background: white;
+                          border-radius: 0 0 50% 50% / 0 0 100% 100%;
                         }
                         
                         @media print {
