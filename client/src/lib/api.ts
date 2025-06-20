@@ -36,9 +36,9 @@ async function apiRequest<T>(
     const response = await fetch(url, config);
     
     if (!response.ok) {
-      // Handle 404 as empty data for GET requests
-      if (response.status === 404 && (!options.method || options.method === 'GET')) {
-        console.log(`API returned 404 for ${endpoint}, treating as empty data`);
+      // Handle 404 and 403 as empty data for GET requests
+      if ((response.status === 404 || response.status === 403) && (!options.method || options.method === 'GET')) {
+        console.log(`API returned ${response.status} for ${endpoint}, treating as empty data`);
         return [] as unknown as T;
       }
       

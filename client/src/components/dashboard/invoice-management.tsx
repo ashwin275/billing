@@ -323,7 +323,7 @@ export default function InvoiceManagement() {
       const cgstAmount = (lineTotal * cgstRate) / 100;
       const sgstAmount = (lineTotal * sgstRate) / 100;
       const taxAmount = cgstAmount + sgstAmount;
-      const totalPrice = lineTotal + taxAmount;
+      const totalPrice = lineTotal; // Don't add tax to total price
 
       return {
         product,
@@ -353,7 +353,7 @@ export default function InvoiceManagement() {
       totalDiscount = formData.discount;
     }
     
-    const grandTotal = subtotal + totalTax - totalDiscount;
+    const grandTotal = subtotal - totalDiscount; // Exclude tax from grand total
 
     return {
       customer,
@@ -1478,10 +1478,10 @@ export default function InvoiceManagement() {
           {invoicePreview && (
             <div className="space-y-6 bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-lg">
               {/* Header */}
-              <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500">
+              <div className="bg-white p-6 border-b border-gray-300">
                 <div className="text-center">
-                  <h2 className="text-3xl font-bold text-gray-800">{invoicePreview.shop.name}</h2>
-                  <div className="mt-2 text-gray-600">
+                  <h2 className="text-2xl font-bold text-black">{invoicePreview.shop.name}</h2>
+                  <div className="mt-2 text-black">
                     {invoicePreview.useCustomBillingAddress && invoicePreview.customBillingAddress ? (
                       <div className="whitespace-pre-wrap">{invoicePreview.customBillingAddress}</div>
                     ) : (
@@ -1493,58 +1493,58 @@ export default function InvoiceManagement() {
 
               {/* Customer Details */}
               <div className="grid grid-cols-2 gap-6">
-                <div className="bg-green-50 p-4 rounded-lg border-l-4 border-green-400">
-                  <h3 className="font-semibold mb-2 text-green-800">Bill To:</h3>
-                  <p className="text-green-700 font-medium">{invoicePreview.customer.name}</p>
-                  <p className="text-green-600">{invoicePreview.customer.place}</p>
-                  <p className="text-green-600">{invoicePreview.customer.phone}</p>
+                <div className="bg-white p-4 border border-gray-300">
+                  <h3 className="font-semibold mb-2 text-black">Bill To:</h3>
+                  <p className="text-black font-medium">{invoicePreview.customer.name}</p>
+                  <p className="text-black">{invoicePreview.customer.place}</p>
+                  <p className="text-black">{invoicePreview.customer.phone}</p>
                 </div>
-                <div className="bg-blue-600 text-white p-4 rounded-lg text-right">
-                  <p className="text-xl font-bold mb-2">INVOICE</p>
-                  <p><strong>Invoice #:</strong> INV-{Date.now().toString().slice(-6)}</p>
-                  <p><strong>Date:</strong> {new Date().toLocaleDateString()}</p>
+                <div className="bg-white border border-gray-300 p-4 text-right">
+                  <p className="text-xl font-bold mb-2 text-black">INVOICE</p>
+                  <p className="text-black"><strong>Invoice #:</strong> INV-{Date.now().toString().slice(-6)}</p>
+                  <p className="text-black"><strong>Date:</strong> {new Date().toLocaleDateString()}</p>
                 </div>
               </div>
 
               {/* Items Table */}
-              <div className="bg-white rounded-lg overflow-hidden shadow-sm">
+              <div className="bg-white border border-gray-300">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
-                      <TableHead className="text-white font-semibold">Product</TableHead>
-                      <TableHead className="text-white font-semibold">HSN</TableHead>
-                      <TableHead className="text-white font-semibold">Qty</TableHead>
-                      <TableHead className="text-white font-semibold">Rate</TableHead>
-                      <TableHead className="text-white font-semibold">Discount</TableHead>
-                      <TableHead className="text-white font-semibold">CGST</TableHead>
-                      <TableHead className="text-white font-semibold">SGST</TableHead>
-                      <TableHead className="text-white font-semibold">Total</TableHead>
+                    <TableRow className="bg-white border-b-2 border-black">
+                      <TableHead className="text-black font-bold border-r border-gray-300">Product</TableHead>
+                      <TableHead className="text-black font-bold border-r border-gray-300">HSN</TableHead>
+                      <TableHead className="text-black font-bold border-r border-gray-300">Qty</TableHead>
+                      <TableHead className="text-black font-bold border-r border-gray-300">Rate</TableHead>
+                      <TableHead className="text-black font-bold border-r border-gray-300">Discount</TableHead>
+                      <TableHead className="text-black font-bold border-r border-gray-300">CGST</TableHead>
+                      <TableHead className="text-black font-bold border-r border-gray-300">SGST</TableHead>
+                      <TableHead className="text-black font-bold">Total</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {invoicePreview.items.map((item, index) => (
-                      <TableRow key={index} className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}>
-                        <TableCell>
+                      <TableRow key={index} className="bg-white border-b border-gray-300">
+                        <TableCell className="border-r border-gray-300">
                           <div>
-                            <div className="font-medium text-gray-800">{item.product.name}</div>
-                            <div className="text-xs text-gray-500">{item.product.description}</div>
+                            <div className="font-medium text-black">{item.product.name}</div>
+                            <div className="text-xs text-black">{item.product.description}</div>
                           </div>
                         </TableCell>
-                        <TableCell className="text-blue-600 font-medium">{item.product.hsn}</TableCell>
-                        <TableCell className="text-center font-medium">{item.quantity}</TableCell>
-                        <TableCell className="text-green-600 font-medium">₹{item.unitPrice.toFixed(2)}</TableCell>
-                        <TableCell>
+                        <TableCell className="text-black font-medium border-r border-gray-300">{item.product.hsn}</TableCell>
+                        <TableCell className="text-center font-medium text-black border-r border-gray-300">{item.quantity}</TableCell>
+                        <TableCell className="text-black font-medium border-r border-gray-300">₹{item.unitPrice.toFixed(2)}</TableCell>
+                        <TableCell className="border-r border-gray-300">
                           <div>
-                            <div className="text-orange-600 font-medium">₹{item.discountAmount.toFixed(2)}</div>
-                            <div className="text-xs text-gray-500">
+                            <div className="text-black font-medium">₹{item.discountAmount.toFixed(2)}</div>
+                            <div className="text-xs text-black">
                               {item.discountType === 'PERCENTAGE' ? `${item.discount}%` : 'Amount'}
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="border-r border-gray-300">
                           <div>
-                            <div className="text-purple-600 font-medium">₹{item.cgstAmount.toFixed(2)}</div>
-                            <div className="text-xs text-gray-500">{item.cgst}%</div>
+                            <div className="text-black font-medium">₹{item.cgstAmount.toFixed(2)}</div>
+                            <div className="text-xs text-black">{item.cgst}%</div>
                           </div>
                         </TableCell>
                         <TableCell>
