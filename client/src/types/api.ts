@@ -138,6 +138,7 @@ export interface Invoice {
   paymentStatus: 'PAID' | 'PENDING' | 'OVERDUE';
   paymentMode: 'CASH' | 'CARD' | 'UPI' | 'CHEQUE' | 'BANK_TRANSFER';
   remark: string;
+  signature?: string;
   shop: Shop;
   sales: {
     saleId: number | null;
@@ -186,6 +187,7 @@ export interface InvoiceInput {
   billType: 'GST' | 'NON_GST';
   saleType: 'RETAIL' | 'WHOLESALE';
   transactionId: string;
+  signature?: string;
   saleItems: SaleItemInput[];
 }
 

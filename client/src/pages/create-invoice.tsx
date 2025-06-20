@@ -659,7 +659,6 @@ export default function CreateInvoice() {
                               </div>
                             </div>
                             <div class="invoice-title">
-                              <h2>INVOICE</h2>
                               <div class="invoice-meta">
                                 <div><strong>Invoice #:</strong> ${previewData.invoiceNo}</div>
                                 <div><strong>Date:</strong> ${new Date(previewData.invoiceDate).toLocaleDateString()}</div>
@@ -758,7 +757,11 @@ export default function CreateInvoice() {
                               ` : ''}
                             </div>
                             <div class="signature-section">
-                              <div class="signature-line"></div>
+                              ${form.getValues('signature') ? `
+                                <img src="${form.getValues('signature')}" alt="Signature" style="height: 40px; max-width: 150px; object-fit: contain; margin: 0 auto 10px;" />
+                              ` : `
+                                <div class="signature-line"></div>
+                              `}
                               <div class="signature-text">${previewData.shop.name}<br>Signature</div>
                             </div>
                           </div>
@@ -1090,7 +1093,6 @@ export default function CreateInvoice() {
                               </div>
                             </div>
                             <div class="invoice-title">
-                              <h2>INVOICE</h2>
                               <div class="invoice-meta">
                                 <div><strong>Invoice #:</strong> ${invoiceData.invoiceNo}</div>
                                 <div><strong>Date:</strong> ${new Date(invoiceData.invoiceDate).toLocaleDateString()}</div>
@@ -1189,11 +1191,18 @@ export default function CreateInvoice() {
                               ` : ''}
                             </div>
                             <div class="signature-section">
-                              <div class="signature-line"></div>
+                              ${formData.signature ? `
+                                <img src="${formData.signature}" alt="Signature" style="height: 40px; max-width: 150px; object-fit: contain; margin: 0 auto 10px;" />
+                              ` : `
+                                <div class="signature-line"></div>
+                              `}
                               <div class="signature-text">${invoiceData.shop.name}<br>Signature</div>
                             </div>
                           </div>
                         </div>
+
+                        <!-- Footer Wave -->
+                        <div class="footer-wave"></div>
                       </div>
                       
                       <script>
