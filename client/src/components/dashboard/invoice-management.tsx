@@ -1476,7 +1476,7 @@ export default function InvoiceManagement() {
           </DialogHeader>
           
           {invoicePreview && (
-            <div className="space-y-6 bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-lg">
+            <div className="space-y-6 bg-white p-6 border border-gray-300">
               {/* Header */}
               <div className="bg-white p-6 border-b border-gray-300">
                 <div className="text-center">
@@ -1547,13 +1547,13 @@ export default function InvoiceManagement() {
                             <div className="text-xs text-black">{item.cgst}%</div>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="border-r border-gray-300">
                           <div>
-                            <div className="text-pink-600 font-medium">₹{item.sgstAmount.toFixed(2)}</div>
-                            <div className="text-xs text-gray-500">{item.sgst}%</div>
+                            <div className="text-black font-medium">₹{item.sgstAmount.toFixed(2)}</div>
+                            <div className="text-xs text-black">{item.sgst}%</div>
                           </div>
                         </TableCell>
-                        <TableCell className="font-bold text-lg text-blue-800">₹{item.totalPrice.toFixed(2)}</TableCell>
+                        <TableCell className="font-bold text-lg text-black">₹{item.totalPrice.toFixed(2)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -1561,45 +1561,45 @@ export default function InvoiceManagement() {
               </div>
 
               {/* Totals */}
-              <div className="bg-white p-6 rounded-lg shadow-sm space-y-3">
-                <div className="flex justify-between text-gray-700">
+              <div className="bg-white p-6 border border-gray-300 space-y-3">
+                <div className="flex justify-between text-black">
                   <span className="font-medium">Subtotal:</span>
-                  <span className="text-green-600 font-semibold">₹{invoicePreview.subtotal.toFixed(2)}</span>
+                  <span className="text-black font-semibold">₹{invoicePreview.subtotal.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-gray-700">
+                <div className="flex justify-between text-black">
                   <span className="font-medium">Total CGST:</span>
-                  <span className="text-purple-600 font-semibold">₹{invoicePreview.items.reduce((sum, item) => sum + item.cgstAmount, 0).toFixed(2)}</span>
+                  <span className="text-black font-semibold">₹{invoicePreview.items.reduce((sum, item) => sum + item.cgstAmount, 0).toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-gray-700">
+                <div className="flex justify-between text-black">
                   <span className="font-medium">Total SGST:</span>
-                  <span className="text-pink-600 font-semibold">₹{invoicePreview.items.reduce((sum, item) => sum + item.sgstAmount, 0).toFixed(2)}</span>
+                  <span className="text-black font-semibold">₹{invoicePreview.items.reduce((sum, item) => sum + item.sgstAmount, 0).toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-gray-700">
-                  <span className="font-medium">Total Tax:</span>
-                  <span className="text-indigo-600 font-semibold">₹{invoicePreview.totalTax.toFixed(2)}</span>
+                <div className="flex justify-between text-black">
+                  <span className="font-medium">Total Tax (Not included in total):</span>
+                  <span className="text-black font-semibold">₹{invoicePreview.totalTax.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-gray-700">
+                <div className="flex justify-between text-black">
                   <span className="font-medium">Overall Discount:</span>
-                  <span className="text-orange-600 font-semibold">₹{invoicePreview.totalDiscount.toFixed(2)}</span>
+                  <span className="text-black font-semibold">₹{invoicePreview.totalDiscount.toFixed(2)}</span>
                 </div>
-                <Separator className="bg-gradient-to-r from-blue-400 to-purple-400 h-1" />
-                <div className="flex justify-between text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 text-white p-3 rounded">
+                <hr className="border-black border-t-2" />
+                <div className="flex justify-between text-xl font-bold text-black p-3 border-2 border-black">
                   <span>Grand Total:</span>
                   <span>₹{invoicePreview.grandTotal.toFixed(2)}</span>
                 </div>
                 {invoicePreview.dueDate && (
-                  <div className="flex justify-between text-sm bg-yellow-50 p-2 rounded border-l-4 border-yellow-400">
-                    <span className="font-medium text-yellow-800">Due Date:</span>
-                    <span className="text-yellow-700">{invoicePreview.dueDate}</span>
+                  <div className="flex justify-between text-sm bg-white p-2 border border-gray-300">
+                    <span className="font-medium text-black">Due Date:</span>
+                    <span className="text-black">{invoicePreview.dueDate}</span>
                   </div>
                 )}
               </div>
 
               {/* Terms and Conditions */}
               {invoicePreview.termsAndConditions && (
-                <div className="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-400">
-                  <h4 className="font-semibold mb-2 text-yellow-800">Terms and Conditions:</h4>
-                  <p className="text-sm text-yellow-700 whitespace-pre-wrap">
+                <div className="bg-white p-4 border border-gray-300">
+                  <h4 className="font-semibold mb-2 text-black">Terms and Conditions:</h4>
+                  <p className="text-sm text-black whitespace-pre-wrap">
                     {invoicePreview.termsAndConditions}
                   </p>
                 </div>
@@ -1607,18 +1607,18 @@ export default function InvoiceManagement() {
 
               {/* Signature */}
               {invoicePreview.signatureType && invoicePreview.signatureType !== 'NONE' && (
-                <div className="bg-gray-50 p-6 rounded-lg text-right">
+                <div className="bg-white p-6 border border-gray-300 text-right">
                   <div className="inline-block">
-                    <div className="text-sm text-gray-600 mb-4 font-medium">Authorized Signature:</div>
+                    <div className="text-sm text-black mb-4 font-medium">Authorized Signature:</div>
                     {invoicePreview.signatureType === 'IMAGE' && invoicePreview.signatureData && (
                       <img 
                         src={invoicePreview.signatureData} 
                         alt="Signature" 
-                        className="max-h-20 border-b-2 border-gray-400"
+                        className="max-h-20 border-b-2 border-black"
                       />
                     )}
                     {invoicePreview.signatureType === 'DIGITAL' && (
-                      <div className="border-b-2 border-gray-400 pb-2 min-w-[300px] min-h-[80px] text-center font-mono text-lg whitespace-pre-wrap">
+                      <div className="border-b-2 border-black pb-2 min-w-[300px] min-h-[80px] text-center font-mono text-lg whitespace-pre-wrap text-black">
                         {invoicePreview.signatureData}
                       </div>
                     )}
