@@ -139,7 +139,7 @@ export default function CreateInvoice() {
         description: "The invoice has been saved and can be viewed in the invoice list.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/invoices/all"] });
-      setLocation("/dashboard");
+      // Stay on the current page instead of redirecting
     },
     onError: (error: any) => {
       toast({
@@ -329,7 +329,7 @@ export default function CreateInvoice() {
                             <FormLabel className="text-sm text-gray-600">Shop</FormLabel>
                             <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
                               <FormControl>
-                                <SelectTrigger className="border-none text-2xl font-bold text-gray-900 p-0 h-auto">
+                                <SelectTrigger className="border border-gray-300 text-2xl font-bold text-gray-900 p-3 h-auto rounded-md">
                                   <SelectValue placeholder="Select Shop" />
                                 </SelectTrigger>
                               </FormControl>

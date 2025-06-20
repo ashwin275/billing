@@ -300,6 +300,13 @@ export const invoicesApi = {
   },
 
   /**
+   * Get invoice by ID
+   */
+  async getInvoiceById(invoiceId: number): Promise<import("@/types/api").Invoice> {
+    return apiRequest(`/invoice/${invoiceId}`);
+  },
+
+  /**
    * Update invoice by ID
    */
   async updateInvoice(invoiceId: number, invoiceData: import("@/types/api").InvoiceInput): Promise<void> {

@@ -25,6 +25,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -50,7 +60,9 @@ export default function InvoiceManagement() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
   const [sortField, setSortField] = useState<keyof Invoice>("invoiceDate");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
@@ -141,9 +153,17 @@ export default function InvoiceManagement() {
   const currentInvoices = filteredInvoices.slice(startIndex, startIndex + itemsPerPage);
 
   // Handle delete
-  const handleDelete = (invoiceId: number) => {
-    if (window.confirm("Are you sure you want to delete this invoice?")) {
-      deleteInvoiceMutation.mutate(invoiceId);
+  const handleDelete = (invoice: Invoice) => {
+    setInvoiceToDelete(invoice);
+    setIsDeleteDialogOpen(true);
+  };
+
+  // Confirm delete
+  const confirmDelete = () => {
+    if (invoiceToDelete) {
+      deleteInvoiceMutation.mutate(invoiceToDelete.invoiceId);
+      setIsDeleteDialogOpen(false);
+      setInvoiceToDelete(null);
     }
   };
 
@@ -151,6 +171,32 @@ export default function InvoiceManagement() {
   const handlePreview = (invoice: Invoice) => {
     setSelectedInvoice(invoice);
     setIsPreviewDialogOpen(true);
+  };
+
+  // Handle download
+  const handleDownload = (invoice: Invoice) => {
+    // Create a simplified invoice document for download
+    const invoiceData = {
+      invoiceNo: invoice.invoiceNo,
+      date: new Date(invoice.invoiceDate).toLocaleDateString(),
+      shop: invoice.shop?.name || 'Shop Name',
+      customerId: invoice.customerId,
+      totalAmount: invoice.totalAmount,
+      paymentStatus: invoice.paymentStatus,
+      paymentMode: invoice.paymentMode,
+      items: invoice.saleItems || []
+    };
+
+    const dataStr = JSON.stringify(invoiceData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `invoice-${invoice.invoiceNo}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   // Get status badge variant
@@ -332,14 +378,33 @@ export default function InvoiceManagement() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handlePreview(invoice)}
+                            title="Preview Invoice"
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleDelete(invoice.invoiceId)}
+                            onClick={() => handleDownload(invoice)}
+                            title="Download Invoice"
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                          <Link href={`/edit-invoice/${invoice.invoiceId}`}>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              title="Edit Invoice"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </Link>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(invoice)}
                             disabled={deleteInvoiceMutation.isPending}
+                            title="Delete Invoice"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -514,6 +579,34 @@ export default function InvoiceManagement() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Invoice</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete invoice #{invoiceToDelete?.invoiceNo}? 
+              This action cannot be undone and will permanently remove the invoice from your records.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setIsDeleteDialogOpen(false);
+              setInvoiceToDelete(null);
+            }}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              disabled={deleteInvoiceMutation.isPending}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleteInvoiceMutation.isPending ? "Deleting..." : "Delete Invoice"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
