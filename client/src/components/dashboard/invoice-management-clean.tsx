@@ -464,18 +464,18 @@ export default function InvoiceManagement() {
             
             .footer-wave {
               background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-              height: 80px;
+              height: 60px;
               position: relative;
-              margin-top: 40px;
+              margin-top: 30px;
             }
             
             .footer-wave::before {
               content: '';
               position: absolute;
-              top: -40px;
+              top: -30px;
               left: 0;
               width: 100%;
-              height: 80px;
+              height: 60px;
               background: white;
               border-radius: 0 0 50% 50% / 0 0 100% 100%;
             }

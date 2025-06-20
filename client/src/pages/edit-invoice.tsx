@@ -191,6 +191,7 @@ export default function EditInvoice() {
         billType: invoice.billType || "GST",
         saleType: invoice.saleType || "RETAIL",
         transactionId: invoice.transactionId || `TXN${Date.now()}`,
+        signature: invoice.signature || "",
         saleItems: invoice.saleItems && invoice.saleItems.length > 0 
           ? invoice.saleItems.map(item => ({
               productId: item.product?.productId || 0,
@@ -1923,6 +1924,28 @@ export default function EditInvoice() {
                       </FormItem>
                     )}
                   />
+                  {/* Signature Section */}
+                  <FormField
+                    control={form.control}
+                    name="signature"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <SignatureInput
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="Add signature"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Submit Button */}
+                  <Button type="submit" className="w-full" disabled={updateInvoiceMutation.isPending}>
+                    {updateInvoiceMutation.isPending ? "Updating..." : "Update Invoice"}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
