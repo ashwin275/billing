@@ -94,7 +94,7 @@ function DashboardOverview({ onNavigate }: { onNavigate: (section: string) => vo
               <SelectItem value="365">This year</SelectItem>
             </SelectContent>
           </Select>
-          <Link href="/create-invoice">
+          <Link href="/invoices/create">
             <Button className="w-full xs:w-auto">
               <Plus className="mr-2 h-4 w-4 flex-shrink-0" />
               <span className="truncate">New Invoice</span>
