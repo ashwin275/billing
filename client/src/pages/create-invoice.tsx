@@ -1668,7 +1668,7 @@ export default function CreateInvoice() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => append({ productId: 0, quantity: 1, discount: 0, discountType: "PERCENTAGE", unitPrice: 0 })}
+                        onClick={() => append({ productId: 0, quantity: 1, discount: 0, discountType: "AMOUNT", unitPrice: 0 })}
                       >
                         <Plus className="h-4 w-4 mr-2" />
                         Add Single Item
@@ -1715,7 +1715,7 @@ export default function CreateInvoice() {
                       const selectedProduct = Array.isArray(products) ? products.find(p => p.productId === form.watch(`saleItems.${index}.productId`)) : null;
                       const quantity = form.watch(`saleItems.${index}.quantity`) || 0;
                       const discount = form.watch(`saleItems.${index}.discount`) || 0;
-                      const discountType = form.watch(`saleItems.${index}.discountType`) || "PERCENTAGE";
+                      const discountType = form.watch(`saleItems.${index}.discountType`) || "AMOUNT";
                       
                       let itemTotal = 0;
                       let cgstAmount = 0;
@@ -1738,11 +1738,11 @@ export default function CreateInvoice() {
                         const lineTotal = baseAmount - discountAmount;
                         
                         if (billType === 'GST') {
-                          cgstAmount = (lineTotal * selectedProduct.cgst) / 100;
-                          sgstAmount = (lineTotal * selectedProduct.sgst) / 100;
+                          cgstAmount = (lineTotal * (selectedProduct.cgst || 0)) / 100;
+                          sgstAmount = (lineTotal * (selectedProduct.sgst || 0)) / 100;
                         }
                         
-                        itemTotal = lineTotal; // Tax not included in total
+                        itemTotal = lineTotal + cgstAmount + sgstAmount;
                       }
 
                       return (
