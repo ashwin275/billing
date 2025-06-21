@@ -393,12 +393,11 @@ export default function Reports() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {Array.isArray(topCustomers) && topCustomers.length > 0 && topCustomers.map((customer, index) => (
+                  {Array.isArray(topCustomers) && topCustomers.length > 0 ? topCustomers.map((customer, index) => (
                     <TableRow key={index} className="hover:bg-sky-50">
                       <TableCell className="font-medium text-gray-700">{customer.name || 'N/A'}</TableCell>
                       <TableCell className="text-right font-semibold text-sky-600">{customer.value || '0'}</TableCell>
                     </TableRow>
-                  ))}
                   )) : (
                     <TableRow>
                       <TableCell colSpan={2} className="text-center text-muted-foreground">
