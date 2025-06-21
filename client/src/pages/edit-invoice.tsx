@@ -1238,12 +1238,12 @@ export default function EditInvoice() {
                               ${invoiceData.items.map((item, index) => `
                                 <tr>
                                   <td class="text-left">
-                                    <div style="font-weight: 600; color: #2d3748;">${item.product.name}</div>
+                                    <div style="font-weight: 600; color: #2d3748;">${item?.product?.name || 'N/A'}</div>
                                   </td>
-                                  <td class="text-center">${item.quantity.toString().padStart(2, '0')}</td>
-                                  <td class="text-right">₹${item.unitPrice.toFixed(2)}</td>
-                                  <td class="text-right">₹${item.discountAmount.toFixed(2)}</td>
-                                  <td class="text-right" style="font-weight: 600; color: #2d3748;">₹${item.totalPrice.toFixed(2)}</td>
+                                  <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
+                                  <td class="text-right">₹${item?.unitPrice?.toFixed(2) || '0.00'}</td>
+                                  <td class="text-right">₹${item?.discountAmount?.toFixed(2) || '0.00'}</td>
+                                  <td class="text-right" style="font-weight: 600; color: #2d3748;">₹${item?.totalPrice?.toFixed(2) || '0.00'}</td>
                                 </tr>
                               `).join('')}
                             </tbody>
