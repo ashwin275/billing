@@ -317,8 +317,24 @@ export default function EditInvoice() {
     setSelectedShop(shop || null);
   }, [form.watch("shopId"), shops]);
 
-  if (!match) {
-    return <div>Invoice not found</div>;
+  if (!match || !invoiceId) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="max-w-5xl mx-auto">
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <h3 className="text-lg font-semibold mb-2">Invoice not found</h3>
+              <p className="text-muted-foreground text-center mb-4">
+                The invoice you're looking for doesn't exist or the URL is invalid.
+              </p>
+              <Link href="/dashboard">
+                <Button variant="outline">Back to Dashboard</Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
   }
 
   if (isLoadingInvoice) {

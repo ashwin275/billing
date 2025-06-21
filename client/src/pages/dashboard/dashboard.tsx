@@ -241,17 +241,19 @@ function DashboardOverview({ onNavigate }: { onNavigate: (section: string) => vo
         </CardHeader>
         <CardContent className="p-4 sm:p-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            <Button variant="outline" className="h-auto p-3 sm:p-4 justify-start">
-              <div className="flex items-center space-x-2 sm:space-x-3 w-full">
-                <div className="h-8 w-8 sm:h-10 sm:w-10 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Plus className="h-4 w-4 sm:h-5 sm:w-5 text-primary-600" />
+            <Link href="/invoices/create">
+              <Button variant="outline" className="h-auto p-3 sm:p-4 justify-start w-full">
+                <div className="flex items-center space-x-2 sm:space-x-3 w-full">
+                  <div className="h-8 w-8 sm:h-10 sm:w-10 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Plus className="h-4 w-4 sm:h-5 sm:w-5 text-primary-600" />
+                  </div>
+                  <div className="text-left min-w-0 flex-1">
+                    <p className="font-medium text-slate-900 text-sm sm:text-base truncate">Create Invoice</p>
+                    <p className="text-xs sm:text-sm text-slate-500 truncate">Generate new invoice</p>
+                  </div>
                 </div>
-                <div className="text-left min-w-0 flex-1">
-                  <p className="font-medium text-slate-900 text-sm sm:text-base truncate">Create Invoice</p>
-                  <p className="text-xs sm:text-sm text-slate-500 truncate">Generate new invoice</p>
-                </div>
-              </div>
-            </Button>
+              </Button>
+            </Link>
 
             <Button 
               variant="outline" 
