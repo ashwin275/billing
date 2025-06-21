@@ -313,21 +313,18 @@ export default function ProductsManagement() {
     setProductToEdit(product);
     editForm.reset({
       name: product.name,
-      productNumber: product.productNumber,
       hsn: product.hsn.toString(),
       description: product.description,
       quantity: product.quantity,
       ourPrice: product.ourPrice,
       wholesaleRate: product.wholesaleRate,
       retailRate: product.retailRate,
-      taxRate: product.taxRate,
       cgst: product.cgst,
       sgst: product.sgst,
       category: product.category,
       imageUrl: product.imageUrl,
       expiry: product.expiry.split('T')[0], // Convert to date format
       barcode: product.barcode,
-      shopId: product.shopId || (shops?.[0]?.shopId || 1),
     });
     setIsEditDialogOpen(true);
   };
