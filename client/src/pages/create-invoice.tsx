@@ -148,15 +148,37 @@ export default function CreateInvoice() {
     onSuccess: () => {
       toast({
         title: "Invoice created successfully",
-        description: "The invoice has been saved and can be viewed in the invoice list.",
+        description: "The invoice has been created and saved.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/invoices/all"] });
-      // Stay on the current page instead of redirecting
+      setLocation("/dashboard");
     },
     onError: (error: any) => {
       toast({
         title: "Failed to create invoice",
-        description: error?.detail || error?.message || "An error occurred while creating the invoice.",
+        description: error?.detail || error?.message || "Failed to create invoice.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Update invoice mutation
+  const updateInvoiceMutation = useMutation({
+    mutationFn: async (invoiceData: InvoiceInput) => {
+      await invoicesApi.updateInvoice(parseInt(editInvoiceId!), invoiceData);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Invoice updated successfully",
+        description: "The invoice has been updated.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices/all"] });
+      setLocation("/dashboard");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to update invoice",
+        description: error?.detail || error?.message || "Failed to update invoice.",
         variant: "destructive",
       });
     },
@@ -270,7 +292,11 @@ export default function CreateInvoice() {
       })),
     };
 
-    createInvoiceMutation.mutate(invoiceInput);
+    if (isEditMode) {
+      updateInvoiceMutation.mutate(invoiceInput);
+    } else {
+      createInvoiceMutation.mutate(invoiceInput);
+    }
   };
 
   // Handle add customer
