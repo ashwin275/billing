@@ -337,9 +337,9 @@ export default function Reports() {
                 </TableHeader>
                 <TableBody>
                   {topProducts.map((product, index) => (
-                    <TableRow key={index}>
-                      <TableCell className="font-medium">{product.productName}</TableCell>
-                      <TableCell className="text-right">{product.totalQuantity}</TableCell>
+                    <TableRow key={index} className="hover:bg-teal-50">
+                      <TableCell className="font-medium text-gray-700">{product.productName}</TableCell>
+                      <TableCell className="text-right font-semibold text-teal-600">{product.totalQuantity}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -362,9 +362,9 @@ export default function Reports() {
                 </TableHeader>
                 <TableBody>
                   {topCustomers.length > 0 ? topCustomers.map((customer, index) => (
-                    <TableRow key={index}>
-                      <TableCell className="font-medium">{customer.name || 'N/A'}</TableCell>
-                      <TableCell className="text-right">{customer.value || '0'}</TableCell>
+                    <TableRow key={index} className="hover:bg-sky-50">
+                      <TableCell className="font-medium text-gray-700">{customer.name || 'N/A'}</TableCell>
+                      <TableCell className="text-right font-semibold text-sky-600">{customer.value || '0'}</TableCell>
                     </TableRow>
                   )) : (
                     <TableRow>
