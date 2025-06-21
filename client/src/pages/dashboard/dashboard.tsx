@@ -48,21 +48,32 @@ function DashboardOverview({ onNavigate }: { onNavigate: (section: string) => vo
     queryFn: () => shopsApi.getAllShops(),
   });
 
-  const { data: customers = [] } = useQuery({
-    queryKey: ["/api/customers/all"],
-    queryFn: () => customersApi.getAllCustomers(),
-  });
+  // Calculate real stats from API data
+  const totalRevenue = invoices.reduce((sum, invoice) => sum + (invoice.totalAmount || 0), 0);
+  const pendingPayments = invoices
+    .filter(invoice => invoice.paymentStatus !== 'PAID')
+    .reduce((sum, invoice) => sum + (invoice.totalAmount || 0), 0);
+  const activeShops = shops.filter(shop => shop.status === 'ACTIVE').length;
+  const totalShops = shops.length;
 
-  const { data: products = [] } = useQuery({
-    queryKey: ["/api/products/all"],
-    queryFn: () => productsApi.getAllProducts(),
-  });
+  // Recent invoices from real data
+  const recentInvoices = invoices
+    .sort((a, b) => new Date(b.invoiceDate).getTime() - new Date(a.invoiceDate).getTime())
+    .slice(0, 3)
+    .map(invoice => ({
+      id: invoice.invoiceId.toString(),
+      number: invoice.invoiceNo,
+      client: invoice.shop?.name || 'Unknown',
+      amount: `₹${invoice.totalAmount?.toFixed(2) || '0.00'}`,
+      status: invoice.paymentStatus.toLowerCase() as 'paid' | 'pending'
+    }));
 
-  // Calculate dynamic stats
-  const activeShops = Array.isArray(shops) ? shops.filter(shop => shop.status === 'ACTIVE').length : 0;
-  const totalShops = Array.isArray(shops) ? shops.length : 0;
-  const activeUsers = Array.isArray(users) ? users.filter(user => user.status === 'ACTIVE').length : 0;
-  const totalUsers = Array.isArray(users) ? users.length : 0;
+  const dashboardStats = {
+    totalRevenue: `₹${totalRevenue.toFixed(2)}`,
+    totalInvoices: invoices.length,
+    activeShops: activeShops,
+    pendingPayments: `₹${pendingPayments.toFixed(2)}`
+  };
 
   return (
     <div className="space-y-6">
