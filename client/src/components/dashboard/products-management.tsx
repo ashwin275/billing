@@ -285,10 +285,26 @@ export default function ProductsManagement() {
   const onEditProduct = (data: ProductFormData) => {
     if (!productToEdit) return;
     
+    // Get shopId from JWT token
+    const token = getAuthToken();
+    let shopId = productToEdit.shopId; // Keep existing shopId as fallback
+    
+    if (token) {
+      try {
+        const decoded = decodeToken(token);
+        shopId = decoded.shopId || productToEdit.shopId;
+      } catch (error) {
+        console.warn('Failed to decode token:', error);
+      }
+    }
+    
     const productUpdate = {
       ...productToEdit,
       ...data,
+      productNumber: productToEdit.productNumber, // Keep existing product number
       hsn: typeof data.hsn === 'string' ? parseInt(data.hsn) : data.hsn,
+      taxRate: data.cgst + data.sgst, // Calculate tax rate from CGST + SGST
+      shopId: shopId, // Use shopId from token
     };
     
     updateProductMutation.mutate({
@@ -1049,13 +1065,13 @@ export default function ProductsManagement() {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={editForm.handleSubmit(onEditProduct)} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-name">Product Name</Label>
                 <Input
                   id="edit-name"
                   {...editForm.register("name")}
-                  placeholder="Enter product name"
+                  placeholder="Samsung Galaxy S24"
                 />
                 {editForm.formState.errors.name && (
                   <p className="text-sm text-destructive">
@@ -1064,22 +1080,6 @@ export default function ProductsManagement() {
                 )}
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="edit-productNumber">Product Number</Label>
-                <Input
-                  id="edit-productNumber"
-                  {...editForm.register("productNumber")}
-                  placeholder="P1001"
-                />
-                {editForm.formState.errors.productNumber && (
-                  <p className="text-sm text-destructive">
-                    {editForm.formState.errors.productNumber.message}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-hsn">HSN Code</Label>
                 <Input
@@ -1140,7 +1140,7 @@ export default function ProductsManagement() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="edit-ourPrice">Our Price</Label>
+                <Label htmlFor="edit-ourPrice">Purchase Price</Label>
                 <Input
                   id="edit-ourPrice"
                   type="number"
@@ -1172,7 +1172,7 @@ export default function ProductsManagement() {
               </div>
             </div>
                 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-retailRate">Retail Rate</Label>
                 <Input
@@ -1190,29 +1190,13 @@ export default function ProductsManagement() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="edit-taxRate">Tax Rate (%)</Label>
-                <Input
-                  id="edit-taxRate"
-                  type="number"
-                  step="0.01"
-                  {...editForm.register("taxRate", { valueAsNumber: true })}
-                  placeholder="18.0"
-                />
-                {editForm.formState.errors.taxRate && (
-                  <p className="text-sm text-destructive">
-                    {editForm.formState.errors.taxRate.message}
-                  </p>
-                )}
-              </div>
-              
-              <div className="space-y-2">
                 <Label htmlFor="edit-cgst">CGST (%)</Label>
                 <Input
                   id="edit-cgst"
                   type="number"
                   step="0.01"
                   {...editForm.register("cgst", { valueAsNumber: true })}
-                  placeholder="9.0"
+                  placeholder="9.00"
                 />
                 {editForm.formState.errors.cgst && (
                   <p className="text-sm text-destructive">
@@ -1228,7 +1212,7 @@ export default function ProductsManagement() {
                   type="number"
                   step="0.01"
                   {...editForm.register("sgst", { valueAsNumber: true })}
-                  placeholder="9.0"
+                  placeholder="9.00"
                 />
                 {editForm.formState.errors.sgst && (
                   <p className="text-sm text-destructive">
