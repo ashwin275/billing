@@ -11,10 +11,13 @@ import {
   UserCircle,
   ChevronRight,
   Menu,
-  X
+  X,
+  Shield,
+  Users
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usersApi, productsApi } from "@/lib/api";
+import { getAuthToken, decodeToken } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 
 interface SidebarProps {
@@ -41,6 +44,19 @@ interface NavItem {
 export default function Sidebar({ activeSection, onSectionChange, isMobileOpen, setIsMobileOpen }: SidebarProps) {
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  // Check if user is admin
+  const isAdmin = () => {
+    const token = getAuthToken();
+    if (!token) return false;
+    
+    try {
+      const decoded = decodeToken(token);
+      return decoded.roleName === "ROLE_ADMIN";
+    } catch (error) {
+      return false;
+    }
+  };
 
   // Fetch users count
   const { data: users } = useQuery({
