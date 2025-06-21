@@ -53,8 +53,8 @@ function DashboardOverview({ onNavigate }: { onNavigate: (section: string) => vo
   const pendingPayments = Array.isArray(invoices) ? invoices
     .filter(invoice => invoice.paymentStatus !== 'PAID')
     .reduce((sum, invoice) => sum + (invoice.totalAmount || 0), 0) : 0;
-  const activeShops = Array.isArray(shops) ? shops.filter(shop => shop.status === 'ACTIVE').length : 0;
   const totalShops = Array.isArray(shops) ? shops.length : 0;
+  const activeShops = totalShops; // Show total shops as active shops
 
   // Recent invoices from real data with safety checks
   const recentInvoices = Array.isArray(invoices) ? invoices
@@ -94,10 +94,12 @@ function DashboardOverview({ onNavigate }: { onNavigate: (section: string) => vo
               <SelectItem value="365">This year</SelectItem>
             </SelectContent>
           </Select>
-          <Button className="w-full xs:w-auto" onClick={() => onNavigate('invoices')}>
-            <Plus className="mr-2 h-4 w-4 flex-shrink-0" />
-            <span className="truncate">New Invoice</span>
-          </Button>
+          <Link href="/create-invoice">
+            <Button className="w-full xs:w-auto">
+              <Plus className="mr-2 h-4 w-4 flex-shrink-0" />
+              <span className="truncate">New Invoice</span>
+            </Button>
+          </Link>
         </div>
       </div>
 
@@ -150,7 +152,7 @@ function DashboardOverview({ onNavigate }: { onNavigate: (section: string) => vo
                 <p className="text-lg sm:text-2xl font-bold text-slate-900 mt-1">{activeShops}</p>
                 <p className="text-xs sm:text-sm text-violet-600 mt-1 truncate">
                   <TrendingUp className="inline h-3 w-3 mr-1 flex-shrink-0" />
-                  {totalShops > 0 ? `${totalShops} total shops` : 'No shops yet'}
+                  All shops active
                 </p>
               </div>
               <div className="h-10 w-10 sm:h-12 sm:w-12 bg-violet-100 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
