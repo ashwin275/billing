@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
 import { shopsApi, reportsApi } from "@/lib/api";
 
-const LIGHT_COLORS = ['#a7f3d0', '#67e8f9', '#bfdbfe', '#c7d2fe', '#5eead4', '#7dd3fc'];
+const LIGHT_COLORS = ['#9AE68C', '#ABF1BC', '#CFFFF6', '#AEE7F8', '#87CDF6', '#FCA36B'];
 
 export default function Reports() {
   const [selectedShopId, setSelectedShopId] = useState<number | null>(null);
@@ -195,9 +195,9 @@ export default function Reports() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Deadstock Items</p>
-                  <p className="text-3xl font-bold text-blue-500">{deadstock.length}</p>
+                  <p className="text-3xl font-bold text-red-400">{deadstock.length}</p>
                 </div>
-                <AlertTriangle className="h-8 w-8 text-blue-400" />
+                <AlertTriangle className="h-8 w-8 text-red-300" />
               </div>
             </CardContent>
           </Card>
@@ -313,7 +313,11 @@ export default function Reports() {
                   <XAxis dataKey="productName" />
                   <YAxis />
                   <Tooltip formatter={(value) => [`₹${value}`, 'Discount']} />
-                  <Bar dataKey="discount" fill="#ff7300" />
+                  <Bar dataKey="discount">
+                    {discountSummary.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill="#FCA36B" />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -383,7 +387,7 @@ export default function Reports() {
         {deadstock.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-red-600">
+              <CardTitle className="flex items-center gap-2 text-red-400">
                 <AlertTriangle className="h-5 w-5" />
                 Deadstock Alert
               </CardTitle>
@@ -391,7 +395,7 @@ export default function Reports() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {deadstock.map((item, index) => (
-                  <Badge key={index} variant="destructive" className="p-2">
+                  <Badge key={index} className="p-2 bg-red-100 text-red-600 hover:bg-red-200">
                     {item.productName || `Item ${index + 1}`}
                   </Badge>
                 ))}
