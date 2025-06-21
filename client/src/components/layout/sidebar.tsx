@@ -97,12 +97,7 @@ export default function Sidebar({ activeSection, onSectionChange, isMobileOpen, 
       icon: FileText,
       category: "Billing"
     },
-    {
-      id: "shops",
-      label: "Shops",
-      icon: Store,
-      category: "Billing"
-    },
+
     {
       id: "customers",
       label: "Customers",
@@ -130,6 +125,12 @@ export default function Sidebar({ activeSection, onSectionChange, isMobileOpen, 
       label: "Users",
       icon: Users,
       badge: activeUsersCount > 0 ? activeUsersCount : undefined,
+      category: "Admin"
+    },
+    {
+      id: "shops",
+      label: "Shops",
+      icon: Store,
       category: "Admin"
     }
   ];
