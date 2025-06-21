@@ -1,420 +1,314 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Calendar, TrendingUp, Users, Package, Clock, AlertTriangle, BarChart3 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
-import { TrendingUp, Package, Users, ShoppingCart, Download, ArrowLeft, Clock, AlertTriangle, Activity, BarChart3 } from "lucide-react";
-import { reportsApi, shopsApi } from "@/lib/api";
-import { format } from "date-fns";
+import { reportsApi } from "@/lib/api";
 
 export default function Reports() {
-  const [selectedShop, setSelectedShop] = useState<number | null>(null);
   const [dateRange, setDateRange] = useState({
-    from: format(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
-    to: format(new Date(), 'yyyy-MM-dd')
+    from: "2025-06-01",
+    to: "2025-06-18"
   });
+  const [selectedShop] = useState(1); // Default shop ID
 
-  // Fetch shops
-  const { data: shops = [] } = useQuery({
-    queryKey: ["/shop/all"],
-    queryFn: () => shopsApi.getAllShops(),
-  });
-
-  // Fetch report data only when shop is selected
+  // Fetch all reports data
   const { data: topProducts = [] } = useQuery({
-    queryKey: ["/reports/top-products", selectedShop],
-    queryFn: () => reportsApi.getTopProducts(selectedShop!),
-    enabled: !!selectedShop,
-  });
-
-  const { data: salesSummary = [] } = useQuery({
-    queryKey: ["/reports/sales-summary", selectedShop, dateRange],
-    queryFn: () => reportsApi.getSalesSummary(selectedShop!, dateRange.from, dateRange.to),
-    enabled: !!selectedShop,
-  });
-
-  const { data: discountSummary = [] } = useQuery({
-    queryKey: ["/reports/discount-summary", selectedShop, dateRange],
-    queryFn: () => reportsApi.getDiscountSummary(selectedShop!, dateRange.from, dateRange.to),
-    enabled: !!selectedShop,
-  });
-
-  const { data: inventoryMovement = [] } = useQuery({
-    queryKey: ["/reports/inventory-movement", selectedShop, dateRange],
-    queryFn: () => reportsApi.getInventoryMovement(selectedShop!, dateRange.from, dateRange.to),
-    enabled: !!selectedShop,
-  });
-
-  const { data: timeInsights } = useQuery({
-    queryKey: ["/reports/time-insights", selectedShop, dateRange],
-    queryFn: () => reportsApi.getTimeInsights(selectedShop!, dateRange.from, dateRange.to),
-    enabled: !!selectedShop,
-  });
-
-  const { data: deadstock = [] } = useQuery({
-    queryKey: ["/reports/deadstock", selectedShop, dateRange],
-    queryFn: () => reportsApi.getDeadstock(selectedShop!, dateRange.from, dateRange.to),
-    enabled: !!selectedShop,
+    queryKey: ["/api/reports/top-products", selectedShop],
+    queryFn: () => reportsApi.getTopProducts(selectedShop),
   });
 
   const { data: topCustomers = [] } = useQuery({
-    queryKey: ["/reports/top-customers", selectedShop],
-    queryFn: () => reportsApi.getTopCustomers(selectedShop!),
-    enabled: !!selectedShop,
+    queryKey: ["/api/reports/top-customers", selectedShop],
+    queryFn: () => reportsApi.getTopCustomers(selectedShop),
   });
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#ff7300'];
+  const { data: salesSummary } = useQuery({
+    queryKey: ["/api/reports/sales-summary", selectedShop, dateRange.from, dateRange.to],
+    queryFn: () => reportsApi.getSalesSummary(selectedShop, dateRange.from, dateRange.to),
+  });
 
-  if (!selectedShop) {
-    return (
-      <div className="min-h-screen bg-gray-50 p-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Reports & Analytics</h1>
-            <p className="text-gray-600 mt-2">Select a shop to view comprehensive reports and business insights</p>
+  const { data: discountSummary } = useQuery({
+    queryKey: ["/api/reports/discount-summary", selectedShop, dateRange.from, dateRange.to],
+    queryFn: () => reportsApi.getDiscountSummary(selectedShop, dateRange.from, dateRange.to),
+  });
+
+  const { data: inventoryMovement = [] } = useQuery({
+    queryKey: ["/api/reports/inventory-movement", selectedShop, dateRange.from, dateRange.to],
+    queryFn: () => reportsApi.getInventoryMovement(selectedShop, dateRange.from, dateRange.to),
+  });
+
+  const { data: timeInsights } = useQuery({
+    queryKey: ["/api/reports/time-insights", selectedShop, dateRange.from, dateRange.to],
+    queryFn: () => reportsApi.getTimeInsights(selectedShop, dateRange.from, dateRange.to),
+  });
+
+  const { data: deadstock = [] } = useQuery({
+    queryKey: ["/api/reports/deadstock", selectedShop, dateRange.from, dateRange.to],
+    queryFn: () => reportsApi.getDeadstock(selectedShop, dateRange.from, dateRange.to),
+  });
+
+  return (
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">Business Reports</h1>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Label htmlFor="from-date">From:</Label>
+            <Input
+              id="from-date"
+              type="date"
+              value={dateRange.from}
+              onChange={(e) => setDateRange(prev => ({ ...prev, from: e.target.value }))}
+              className="w-auto"
+            />
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {shops.map((shop: any) => (
-              <Card key={shop.shopId} className="hover:shadow-lg transition-all duration-200 cursor-pointer border-2 hover:border-blue-200" onClick={() => setSelectedShop(shop.shopId)}>
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center justify-between">
-                    <span className="text-lg">{shop.name}</span>
-                    <Badge variant={shop.status === 'ACTIVE' ? 'default' : 'secondary'} className="text-xs">
-                      {shop.status}
-                    </Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <p className="text-gray-600 text-sm">{shop.place}</p>
-                    <div className="flex items-center text-sm text-gray-500">
-                      <BarChart3 className="h-4 w-4 mr-2" />
-                      <span>View Analytics</span>
-                    </div>
-                    <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                      <Activity className="h-4 w-4 mr-2" />
-                      Generate Reports
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+          <div className="flex items-center gap-2">
+            <Label htmlFor="to-date">To:</Label>
+            <Input
+              id="to-date"
+              type="date"
+              value={dateRange.to}
+              onChange={(e) => setDateRange(prev => ({ ...prev, to: e.target.value }))}
+              className="w-auto"
+            />
           </div>
         </div>
       </div>
-    );
-  }
 
-  const selectedShopData = shops.find((shop: any) => shop.shopId === selectedShop);
-  const totalSales = salesSummary.reduce((sum: number, item: any) => sum + item.totalSales, 0);
-  const totalDiscount = discountSummary.reduce((sum: number, item: any) => sum + item.discount, 0);
-  const totalMovement = inventoryMovement.reduce((sum: number, item: any) => sum + item.quantityMoved, 0);
+      <Tabs defaultValue="products" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-7">
+          <TabsTrigger value="products">Top Products</TabsTrigger>
+          <TabsTrigger value="customers">Top Customers</TabsTrigger>
+          <TabsTrigger value="sales">Sales Summary</TabsTrigger>
+          <TabsTrigger value="discounts">Discounts</TabsTrigger>
+          <TabsTrigger value="inventory">Inventory</TabsTrigger>
+          <TabsTrigger value="time">Time Insights</TabsTrigger>
+          <TabsTrigger value="deadstock">Deadstock</TabsTrigger>
+        </TabsList>
 
-  return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
-          <div>
-            <Button variant="outline" onClick={() => setSelectedShop(null)} className="mb-4">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Shops
-            </Button>
-            <h1 className="text-3xl font-bold text-gray-900">
-              {selectedShopData?.name} Analytics
-            </h1>
-            <p className="text-gray-600 mt-2">{selectedShopData?.place}</p>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 mt-4 lg:mt-0">
-            <div className="flex items-center space-x-2">
-              <Label htmlFor="from" className="text-sm">From:</Label>
-              <Input
-                id="from"
-                type="date"
-                value={dateRange.from}
-                onChange={(e) => setDateRange(prev => ({ ...prev, from: e.target.value }))}
-                className="w-auto text-sm"
-              />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Label htmlFor="to" className="text-sm">To:</Label>
-              <Input
-                id="to"
-                type="date"
-                value={dateRange.to}
-                onChange={(e) => setDateRange(prev => ({ ...prev, to: e.target.value }))}
-                className="w-auto text-sm"
-              />
-            </div>
-            <Button variant="outline" className="text-sm">
-              <Download className="h-4 w-4 mr-2" />
-              Export Reports
-            </Button>
-          </div>
-        </div>
-
-        {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-blue-100 text-sm">Total Sales</p>
-                  <p className="text-2xl font-bold">₹{totalSales.toFixed(2)}</p>
-                </div>
-                <TrendingUp className="h-8 w-8 text-blue-200" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-green-100 text-sm">Products Sold</p>
-                  <p className="text-2xl font-bold">{totalMovement}</p>
-                </div>
-                <Package className="h-8 w-8 text-green-200" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-purple-100 text-sm">Total Discounts</p>
-                  <p className="text-2xl font-bold">₹{totalDiscount.toFixed(2)}</p>
-                </div>
-                <ShoppingCart className="h-8 w-8 text-purple-200" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-orange-100 text-sm">Peak Hour</p>
-                  <p className="text-2xl font-bold">{timeInsights?.peakHour || 0}:00</p>
-                </div>
-                <Clock className="h-8 w-8 text-orange-200" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Charts Row 1 */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Sales Trend */}
+        {/* Top Products Report */}
+        <TabsContent value="products">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <TrendingUp className="h-5 w-5 mr-2 text-blue-600" />
-                Sales Trend
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                Top Selling Products
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={salesSummary}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="period" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => [`₹${value}`, 'Sales']} />
-                  <Area type="monotone" dataKey="totalSales" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.3} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          {/* Top Products */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Package className="h-5 w-5 mr-2 text-green-600" />
-                Top Products by Quantity
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={topProducts}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="productName" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="totalQuantity" fill="#10b981" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Charts Row 2 */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Inventory Movement */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Activity className="h-5 w-5 mr-2 text-purple-600" />
-                Inventory Movement
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={inventoryMovement}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ productName, percent }) => `${productName} ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="quantityMoved"
-                  >
-                    {inventoryMovement.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          {/* Time Insights */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Clock className="h-5 w-5 mr-2 text-orange-600" />
-                Business Time Insights
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-orange-600 mb-2">
-                    {timeInsights?.peakHour || 0}:00
-                  </div>
-                  <p className="text-gray-600">Peak Business Hour</p>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-4 bg-green-50 rounded-lg">
-                    <div className="text-lg font-semibold text-green-600">
-                      {timeInsights?.bestDay || 'N/A'}
+              <div className="space-y-4">
+                {topProducts.map((product: any, index: number) => (
+                  <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-4">
+                      <Badge variant="secondary">#{index + 1}</Badge>
+                      <div>
+                        <h3 className="font-semibold">{product.productName}</h3>
+                      </div>
                     </div>
-                    <p className="text-sm text-gray-600">Best Day</p>
-                  </div>
-                  
-                  <div className="text-center p-4 bg-red-50 rounded-lg">
-                    <div className="text-lg font-semibold text-red-600">
-                      {timeInsights?.worstDay || 'N/A'}
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-blue-600">{product.totalQuantity} units</p>
                     </div>
-                    <p className="text-sm text-gray-600">Slow Day</p>
                   </div>
-                </div>
+                ))}
+                {topProducts.length === 0 && (
+                  <p className="text-center text-gray-500 py-8">No products data available</p>
+                )}
               </div>
             </CardContent>
           </Card>
-        </div>
+        </TabsContent>
 
-        {/* Tables Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Discount Summary Table */}
+        {/* Top Customers Report */}
+        <TabsContent value="customers">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <ShoppingCart className="h-5 w-5 mr-2 text-purple-600" />
-                Discount Summary
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Product</TableHead>
-                    <TableHead className="text-right">Discount (₹)</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {discountSummary.length > 0 ? discountSummary.map((item, index) => (
-                    <TableRow key={index}>
-                      <TableCell className="font-medium">{item.productName}</TableCell>
-                      <TableCell className="text-right">₹{item.discount.toFixed(2)}</TableCell>
-                    </TableRow>
-                  )) : (
-                    <TableRow>
-                      <TableCell colSpan={2} className="text-center text-gray-500">
-                        No discounts in selected period
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-
-          {/* Top Customers */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Users className="h-5 w-5 mr-2 text-blue-600" />
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
                 Top Customers
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {topCustomers.length > 0 ? topCustomers.slice(0, 6).map((customer: any, index: number) => (
-                  <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center">
-                      <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold mr-3">
-                        {index + 1}
+              <div className="space-y-4">
+                {topCustomers.map((customer: any, index: number) => (
+                  <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-4">
+                      <Badge variant="secondary">#{index + 1}</Badge>
+                      <div>
+                        <h3 className="font-semibold">{customer.name}</h3>
+                        <p className="text-sm text-gray-600">{customer.place}</p>
                       </div>
-                      <span className="font-medium">{customer.name}</span>
                     </div>
-                    <Badge variant="outline" className="text-green-600">
-                      ₹{customer.totalSpent || '0.00'}
-                    </Badge>
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-green-600">₹{customer.totalSpent?.toFixed(2) || '0.00'}</p>
+                      <p className="text-sm text-gray-600">{customer.orderCount || 0} orders</p>
+                    </div>
                   </div>
-                )) : (
-                  <div className="text-center text-gray-500 py-4">
-                    No customer data available
+                ))}
+                {topCustomers.length === 0 && (
+                  <p className="text-center text-gray-500 py-8">No customers data available</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Sales Summary Report */}
+        <TabsContent value="sales">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Sales Summary
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-blue-50 p-6 rounded-lg">
+                  <h3 className="font-semibold text-blue-800">Total Revenue</h3>
+                  <p className="text-2xl font-bold text-blue-600">₹{salesSummary?.totalRevenue?.toFixed(2) || '0.00'}</p>
+                </div>
+                <div className="bg-green-50 p-6 rounded-lg">
+                  <h3 className="font-semibold text-green-800">Total Orders</h3>
+                  <p className="text-2xl font-bold text-green-600">{salesSummary?.totalOrders || 0}</p>
+                </div>
+                <div className="bg-purple-50 p-6 rounded-lg">
+                  <h3 className="font-semibold text-purple-800">Average Order Value</h3>
+                  <p className="text-2xl font-bold text-purple-600">₹{salesSummary?.averageOrderValue?.toFixed(2) || '0.00'}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Discount Summary Report */}
+        <TabsContent value="discounts">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5" />
+                Discount Summary
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-orange-50 p-6 rounded-lg">
+                  <h3 className="font-semibold text-orange-800">Total Discounts Given</h3>
+                  <p className="text-2xl font-bold text-orange-600">₹{discountSummary?.totalDiscounts?.toFixed(2) || '0.00'}</p>
+                </div>
+                <div className="bg-red-50 p-6 rounded-lg">
+                  <h3 className="font-semibold text-red-800">Discount Percentage</h3>
+                  <p className="text-2xl font-bold text-red-600">{discountSummary?.discountPercentage?.toFixed(1) || '0.0'}%</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Inventory Movement Report */}
+        <TabsContent value="inventory">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                Inventory Movement
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {inventoryMovement.map((item: any, index: number) => (
+                  <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div>
+                      <h3 className="font-semibold">{item.productName}</h3>
+                      <p className="text-sm text-gray-600">Stock: {item.currentStock}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-blue-600">{item.quantityMoved} units moved</p>
+                      <p className="text-sm text-gray-600">{item.movementType}</p>
+                    </div>
+                  </div>
+                ))}
+                {inventoryMovement.length === 0 && (
+                  <p className="text-center text-gray-500 py-8">No inventory movement data available</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Time Insights Report */}
+        <TabsContent value="time">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Time Insights
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-indigo-50 p-6 rounded-lg">
+                  <h3 className="font-semibold text-indigo-800">Peak Hour</h3>
+                  <p className="text-2xl font-bold text-indigo-600">
+                    {timeInsights?.peakHour !== -1 ? `${timeInsights?.peakHour}:00` : 'No data'}
+                  </p>
+                </div>
+                <div className="bg-green-50 p-6 rounded-lg">
+                  <h3 className="font-semibold text-green-800">Best Day</h3>
+                  <p className="text-2xl font-bold text-green-600">
+                    {timeInsights?.bestDay || 'No data'}
+                  </p>
+                </div>
+                <div className="bg-red-50 p-6 rounded-lg">
+                  <h3 className="font-semibold text-red-800">Worst Day</h3>
+                  <p className="text-2xl font-bold text-red-600">
+                    {timeInsights?.worstDay || 'No data'}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Deadstock Report */}
+        <TabsContent value="deadstock">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5" />
+                Deadstock Analysis
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {deadstock.map((item: any, index: number) => (
+                  <div key={index} className="flex items-center justify-between p-4 bg-red-50 rounded-lg border-l-4 border-red-500">
+                    <div>
+                      <h3 className="font-semibold text-red-800">{item.productName}</h3>
+                      <p className="text-sm text-red-600">Last sold: {item.lastSoldDate || 'Never'}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-red-600">{item.stockQuantity} units</p>
+                      <p className="text-sm text-red-600">₹{item.stockValue?.toFixed(2) || '0.00'} value</p>
+                    </div>
+                  </div>
+                ))}
+                {deadstock.length === 0 && (
+                  <div className="text-center py-8">
+                    <AlertTriangle className="h-12 w-12 text-green-500 mx-auto mb-4" />
+                    <p className="text-green-600 font-semibold">Great! No deadstock found</p>
+                    <p className="text-gray-500">All products are moving well</p>
                   </div>
                 )}
               </div>
             </CardContent>
           </Card>
-        </div>
-
-        {/* Deadstock Alert */}
-        {deadstock.length > 0 && (
-          <Card className="mb-8 border-red-200">
-            <CardHeader>
-              <CardTitle className="flex items-center text-red-600">
-                <AlertTriangle className="h-5 w-5 mr-2" />
-                Deadstock Alert
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="bg-red-50 p-4 rounded-lg">
-                <p className="text-red-800 font-medium mb-2">
-                  {deadstock.length} items identified as deadstock
-                </p>
-                <p className="text-sm text-red-600">
-                  These products haven't moved in the selected period. Consider promotional strategies.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
