@@ -1663,15 +1663,39 @@ export default function CreateInvoice() {
                 <div className="mb-8">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-gray-900">Items</h3>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => append({ productId: 0, quantity: 1, discount: 0, discountType: "PERCENTAGE" })}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Item
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => append({ productId: 0, quantity: 1, discount: 0, discountType: "PERCENTAGE", unitPrice: 0 })}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Single Item
+                      </Button>
+                      <ProductSearchDialog
+                        products={Array.isArray(products) ? products : []}
+                        saleType={form.watch("saleType")}
+                        onSelect={(selectedProducts) => {
+                          selectedProducts.forEach((product) => {
+                            const rate = form.watch("saleType") === 'RETAIL' ? product.retailRate : product.wholesaleRate;
+                            append({
+                              productId: product.productId,
+                              quantity: product.quantity,
+                              unitPrice: rate,
+                              discount: product.discountAmount || 0,
+                              discountType: "AMOUNT"
+                            });
+                          });
+                        }}
+                        trigger={
+                          <Button variant="outline" size="sm">
+                            <Plus className="mr-2 h-4 w-4" />
+                            Add Multiple Items
+                          </Button>
+                        }
+                      />
+                    </div>
                   </div>
 
                   <div className="border rounded-lg overflow-hidden">
@@ -1702,15 +1726,16 @@ export default function CreateInvoice() {
                         const billType = form.watch("billType");
                         const unitPrice = saleType === 'RETAIL' ? selectedProduct.retailRate : selectedProduct.wholesaleRate;
                         
+                        const baseAmount = unitPrice * quantity;
                         let discountAmount = 0;
+                        
                         if (discountType === 'PERCENTAGE') {
-                          discountAmount = (unitPrice * discount) / 100;
+                          discountAmount = (baseAmount * discount) / 100;
                         } else {
-                          discountAmount = discount;
+                          discountAmount = discount; // Apply discount to total, not per quantity
                         }
                         
-                        const discountedPrice = unitPrice - discountAmount;
-                        const lineTotal = discountedPrice * quantity;
+                        const lineTotal = baseAmount - discountAmount;
                         
                         if (billType === 'GST') {
                           cgstAmount = (lineTotal * selectedProduct.cgst) / 100;
