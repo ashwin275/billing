@@ -66,6 +66,7 @@ import { useToast } from "@/hooks/use-toast";
 
 import { productsApi, shopsApi, handleApiError } from "@/lib/api";
 import { Product, ProductInput } from "@/types/api";
+import { getAuthToken, decodeToken } from "@/lib/auth";
 
 // Form validation schema for products
 const productSchema = z.object({
@@ -463,31 +464,17 @@ export default function ProductsManagement() {
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={addForm.handleSubmit(onAddProduct)} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="add-name">Product Name</Label>
                     <Input
                       id="add-name"
                       {...addForm.register("name")}
-                      placeholder="Enter product name"
+                      placeholder="Samsung Galaxy S24"
                     />
                     {addForm.formState.errors.name && (
                       <p className="text-sm text-destructive">
                         {addForm.formState.errors.name.message}
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="add-productNumber">Product Number</Label>
-                    <Input
-                      id="add-productNumber"
-                      {...addForm.register("productNumber")}
-                      placeholder="P1001"
-                    />
-                    {addForm.formState.errors.productNumber && (
-                      <p className="text-sm text-destructive">
-                        {addForm.formState.errors.productNumber.message}
                       </p>
                     )}
                   </div>
@@ -584,7 +571,7 @@ export default function ProductsManagement() {
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="add-retailRate">Retail Rate</Label>
                     <Input
@@ -602,29 +589,13 @@ export default function ProductsManagement() {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="add-taxRate">Tax Rate (%)</Label>
-                    <Input
-                      id="add-taxRate"
-                      type="number"
-                      step="0.01"
-                      {...addForm.register("taxRate", { valueAsNumber: true })}
-                      placeholder="18.0"
-                    />
-                    {addForm.formState.errors.taxRate && (
-                      <p className="text-sm text-destructive">
-                        {addForm.formState.errors.taxRate.message}
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
                     <Label htmlFor="add-cgst">CGST (%)</Label>
                     <Input
                       id="add-cgst"
                       type="number"
                       step="0.01"
                       {...addForm.register("cgst", { valueAsNumber: true })}
-                      placeholder="9.0"
+                      placeholder="9.00"
                     />
                     {addForm.formState.errors.cgst && (
                       <p className="text-sm text-destructive">
@@ -640,7 +611,7 @@ export default function ProductsManagement() {
                       type="number"
                       step="0.01"
                       {...addForm.register("sgst", { valueAsNumber: true })}
-                      placeholder="9.0"
+                      placeholder="9.00"
                     />
                     {addForm.formState.errors.sgst && (
                       <p className="text-sm text-destructive">
@@ -650,7 +621,21 @@ export default function ProductsManagement() {
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="add-imageUrl">Image URL</Label>
+                    <Input
+                      id="add-imageUrl"
+                      {...addForm.register("imageUrl")}
+                      placeholder="https://example.com/product.jpg"
+                    />
+                    {addForm.formState.errors.imageUrl && (
+                      <p className="text-sm text-destructive">
+                        {addForm.formState.errors.imageUrl.message}
+                      </p>
+                    )}
+                  </div>
+                  
                   <div className="space-y-2">
                     <Label htmlFor="add-expiry">Expiry Date</Label>
                     <Input
@@ -670,7 +655,7 @@ export default function ProductsManagement() {
                     <Input
                       id="add-barcode"
                       {...addForm.register("barcode")}
-                      placeholder="8901234567890"
+                      placeholder="1234567890123"
                     />
                     {addForm.formState.errors.barcode && (
                       <p className="text-sm text-destructive">
@@ -679,38 +664,7 @@ export default function ProductsManagement() {
                     )}
                   </div>
                 </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="add-imageUrl">Image URL</Label>
-                    <Input
-                      id="add-imageUrl"
-                      type="url"
-                      {...addForm.register("imageUrl")}
-                      placeholder="https://example.com/product.jpg"
-                    />
-                    {addForm.formState.errors.imageUrl && (
-                      <p className="text-sm text-destructive">
-                        {addForm.formState.errors.imageUrl.message}
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="add-shopId">Shop ID</Label>
-                    <Input
-                      id="add-shopId"
-                      type="number"
-                      {...addForm.register("shopId", { valueAsNumber: true })}
-                      placeholder="1"
-                    />
-                    {addForm.formState.errors.shopId && (
-                      <p className="text-sm text-destructive">
-                        {addForm.formState.errors.shopId.message}
-                      </p>
-                    )}
-                  </div>
-                </div>
+
                 
                 <div className="flex justify-end space-x-2 pt-4">
                   <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
