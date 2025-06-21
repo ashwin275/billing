@@ -37,15 +37,15 @@ export default function InvoiceManagementClean() {
     mutationFn: (invoiceId: number) => invoicesApi.deleteInvoice(invoiceId),
     onSuccess: () => {
       toast({
-        title: "Invoice deleted",
-        description: "Invoice has been successfully deleted.",
+        title: "Success",
+        description: "Invoice has been permanently deleted.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/invoices/all"] });
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to delete invoice",
-        description: error?.detail || error?.message || "Failed to delete invoice.",
+        title: "Delete Failed",
+        description: error?.detail || error?.message || "Unable to delete invoice. Please try again.",
         variant: "destructive",
       });
     },
@@ -82,10 +82,19 @@ export default function InvoiceManagementClean() {
     }
   };
 
-  // Handle delete
-  const handleDeleteInvoice = (invoiceId: number) => {
-    if (confirm("Are you sure you want to delete this invoice?")) {
-      deleteInvoiceMutation.mutate(invoiceId);
+  // Handle delete with enhanced confirmation
+  const handleDeleteInvoice = (invoice: Invoice) => {
+    const confirmed = window.confirm(
+      `⚠️ DELETE CONFIRMATION\n\n` +
+      `Invoice: #${invoice.invoiceNo}\n` +
+      `Amount: ₹${invoice.totalAmount?.toFixed(2) || '0.00'}\n` +
+      `Status: ${invoice.paymentStatus}\n\n` +
+      `This action will permanently delete this invoice and cannot be undone.\n\n` +
+      `Are you absolutely sure you want to proceed?`
+    );
+    
+    if (confirmed) {
+      deleteInvoiceMutation.mutate(invoice.invoiceId);
     }
   };
 
@@ -676,8 +685,9 @@ export default function InvoiceManagementClean() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleDeleteInvoice(invoice.invoiceId)}
+                          onClick={() => handleDeleteInvoice(invoice)}
                           disabled={deleteInvoiceMutation.isPending}
+                          className="hover:bg-red-50 hover:border-red-200 hover:text-red-600"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

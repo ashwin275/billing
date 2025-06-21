@@ -59,7 +59,7 @@ const customerSchema = z.object({
 type CustomerFormData = z.infer<typeof customerSchema>;
 
 export default function EditInvoice() {
-  const [match, params] = useRoute("/edit-invoice/:id");
+  const [match, params] = useRoute("/invoices/edit/:id");
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -270,6 +270,17 @@ export default function EditInvoice() {
 
   // Handle form submission
   const onSubmit = (data: InvoiceFormData) => {
+    if (!invoiceId) {
+      toast({
+        title: "Error",
+        description: "Invalid invoice ID",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const totals = calculateTotals();
+    
     const invoiceInput: InvoiceInput = {
       customerId: data.customerId,
       shopId: data.shopId,
