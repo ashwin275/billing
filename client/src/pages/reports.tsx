@@ -95,7 +95,7 @@ export default function Reports() {
                   <SelectValue placeholder="Choose a shop to view reports" />
                 </SelectTrigger>
                 <SelectContent>
-                  {shops.map((shop) => (
+                  {Array.isArray(shops) && shops.map((shop) => (
                     <SelectItem key={shop.shopId} value={shop.shopId.toString()}>
                       {shop.name} - {shop.place}
                     </SelectItem>
@@ -127,7 +127,7 @@ export default function Reports() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {shops.map((shop) => (
+                {Array.isArray(shops) && shops.map((shop) => (
                   <SelectItem key={shop.shopId} value={shop.shopId.toString()}>
                     {shop.name}
                   </SelectItem>
