@@ -151,7 +151,7 @@ export default function CreateInvoice() {
         description: "The invoice has been created and saved.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/invoices/all"] });
-      setLocation("/dashboard");
+      setLocation("/dashboard?tab=invoices");
     },
     onError: (error: any) => {
       toast({
@@ -173,7 +173,7 @@ export default function CreateInvoice() {
         description: "The invoice has been updated.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/invoices/all"] });
-      setLocation("/dashboard");
+      setLocation("/dashboard?tab=invoices");
     },
     onError: (error: any) => {
       toast({

@@ -15,7 +15,7 @@ import {
   Menu
 } from "lucide-react";
 import { Link } from "wouter";
-import { invoicesApi, shopsApi, customersApi, productsApi } from "@/lib/api";
+import { shopsApi, usersApi, invoicesApi, customersApi, productsApi } from "@/lib/api";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,37 +30,32 @@ import ShopsManagement from "@/components/dashboard/shops-management";
 import CustomersManagement from "@/components/dashboard/customers-management";
 import InvoiceManagement from "@/components/dashboard/invoice-management-clean";
 import ProfileManagement from "@/components/dashboard/profile-management";
-import { shopsApi, usersApi } from "@/lib/api";
 
-// Mock data for dashboard stats - in real app this would come from API
-const dashboardStats = {
-  totalRevenue: "₹1,24,560",
-  totalInvoices: 347,
-  activeShops: 12,
-  pendingPayments: "₹23,450"
-};
 
-// Mock data for recent invoices - in real app this would come from API
-const recentInvoices = [
-  { id: "1", number: "INV-001", client: "ABC Company", amount: "₹12,500", status: "paid" as const },
-  { id: "2", number: "INV-002", client: "XYZ Corp", amount: "₹8,750", status: "pending" as const },
-  { id: "3", number: "INV-003", client: "Tech Solutions", amount: "₹15,200", status: "paid" as const }
-];
 
 /**
  * Dashboard overview component showing stats and recent activity
  */
 function DashboardOverview({ onNavigate }: { onNavigate: (section: string) => void }) {
-  // Fetch shops data for statistics
+  // Fetch real data for dashboard
+  const { data: invoices = [] } = useQuery({
+    queryKey: ["/api/invoices/all"],
+    queryFn: () => invoicesApi.getAllInvoices(),
+  });
+
   const { data: shops = [] } = useQuery({
-    queryKey: ["/api/shop/all"],
+    queryKey: ["/shop/all"],
     queryFn: () => shopsApi.getAllShops(),
   });
 
-  // Fetch users data for statistics
-  const { data: users = [] } = useQuery({
-    queryKey: ["/api/users/all"],
-    queryFn: () => usersApi.getAllUsers(),
+  const { data: customers = [] } = useQuery({
+    queryKey: ["/api/customers/all"],
+    queryFn: () => customersApi.getAllCustomers(),
+  });
+
+  const { data: products = [] } = useQuery({
+    queryKey: ["/api/products/all"],
+    queryFn: () => productsApi.getAllProducts(),
   });
 
   // Calculate dynamic stats
