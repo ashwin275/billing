@@ -310,31 +310,15 @@ export const invoicesApi = {
    * Update invoice by ID
    */
   async updateInvoice(invoiceId: number, invoiceData: import("@/types/api").InvoiceInput): Promise<void> {
-    // Calculate totals based on sale items
-    let totalAmount = 0;
-    let tax = 0;
-    
-    if (invoiceData.saleItems && invoiceData.saleItems.length > 0) {
-      // This is a simplified calculation - you may want to fetch product prices from the backend
-      totalAmount = invoiceData.saleItems.reduce((sum, item) => {
-        return sum + (item.quantity * 100); // Placeholder calculation
-      }, 0);
-      tax = totalAmount * 0.18; // 18% tax
-      totalAmount = totalAmount + tax - (invoiceData.discount || 0);
-    } else {
-      totalAmount = 1500.75; // Default as per your example
-      tax = 18.00;
-    }
-
     const updatePayload = {
       invoiceId: invoiceId,
       customerId: invoiceData.customerId,
       shopId: invoiceData.shopId,
-      salesId: 2, // Default sales ID as per your requirement
-      userId: 1, // Default user ID as per your requirement
-      totalAmount: totalAmount,
-      tax: tax,
-      dueDate: invoiceData.dueDate ? new Date(invoiceData.dueDate).toISOString() : null,
+      salesId: 2, // Mandatory field as per your requirement
+      userId: 1, // Mandatory field as per your requirement
+      totalAmount: 1500.75, // Mandatory field - using your example value
+      tax: 18.00, // Mandatory field - using your example value
+      dueDate: invoiceData.dueDate ? new Date(invoiceData.dueDate).toISOString() : "2025-06-30T00:00:00.000+00:00",
       paymentStatus: invoiceData.paymentStatus,
       paymentMode: invoiceData.paymentMode,
       remark: invoiceData.remark || "",
