@@ -6,7 +6,7 @@
   publish = "dist"
   
   # A command to run before the main build command
-  command = "vite build -c vite.config.netlify.ts"
+  command = "npx tsc --noEmit --skipLibCheck && vite build -c vite.config.netlify.ts"
 
 [build.environment]
   NODE_VERSION = "18"
