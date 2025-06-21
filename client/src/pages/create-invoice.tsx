@@ -1726,35 +1726,15 @@ export default function CreateInvoice() {
                               control={form.control}
                               name={`saleItems.${index}.productId`}
                               render={({ field }) => (
-                                <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
-                                  <SelectTrigger className="border-dashed">
-                                    <SelectValue placeholder="Search and select product" />
-                                  </SelectTrigger>
-                                  <SelectContent className="max-h-60 overflow-y-auto shadow-lg border-2">
-                                    <div className="p-2 border-b sticky top-0 bg-white z-10">
-                                      <Input
-                                        placeholder="Search products..."
-                                        className="h-8"
-                                        onChange={(e) => {
-                                          const searchTerm = e.target.value.toLowerCase();
-                                          const items = document.querySelectorAll('[data-product-item]');
-                                          items.forEach((item: any) => {
-                                            const text = item.textContent.toLowerCase();
-                                            item.style.display = text.includes(searchTerm) ? 'block' : 'none';
-                                          });
-                                        }}
-                                      />
-                                    </div>
-                                    {Array.isArray(products) ? products.map((product) => (
-                                      <SelectItem key={product.productId} value={product.productId.toString()} data-product-item>
-                                        <div className="flex flex-col py-1">
-                                          <span className="font-medium">{product.name}</span>
-                                          <span className="text-xs text-gray-500">HSN: {product.hsn} | Stock: {product.stock} | ₹{product.retailRate}</span>
-                                        </div>
-                                      </SelectItem>
-                                    )) : null}
-                                  </SelectContent>
-                                </Select>
+                                <ProductSearchDialog
+                                  products={Array.isArray(products) ? products : []}
+                                  selectedProductId={field.value}
+                                  onSelect={(product) => {
+                                    field.onChange(product.productId);
+                                    const rate = form.watch("saleType") === 'RETAIL' ? product.retailRate : product.wholesaleRate;
+                                    form.setValue(`saleItems.${index}.unitPrice`, rate);
+                                  }}
+                                />
                               )}
                             />
                           </div>
