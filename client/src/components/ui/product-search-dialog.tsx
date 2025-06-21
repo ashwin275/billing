@@ -11,6 +11,7 @@ interface Product {
   stock: number;
   retailRate: number;
   wholesaleRate: number;
+  category?: string;
 }
 
 interface ProductSearchDialogProps {
@@ -32,7 +33,8 @@ export function ProductSearchDialog({
   const filteredProducts = Array.isArray(products) 
     ? products.filter(product =>
         product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.hsn.toLowerCase().includes(searchTerm.toLowerCase())
+        product.hsn.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (product.category && product.category.toLowerCase().includes(searchTerm.toLowerCase()))
       )
     : [];
 
@@ -64,7 +66,7 @@ export function ProductSearchDialog({
           <div className="relative">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search products..."
+              placeholder="Search by name, HSN, or category..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-8"
@@ -91,6 +93,7 @@ export function ProductSearchDialog({
                     <div className="text-left">
                       <div className="font-medium">{product.name}</div>
                       <div className="text-xs text-muted-foreground">
+                        {product.category && <span className="bg-gray-100 px-1 rounded text-xs mr-2">{product.category}</span>}
                         HSN: {product.hsn} • Stock: {product.stock} • ₹{product.retailRate}
                       </div>
                     </div>
