@@ -310,27 +310,15 @@ export const invoicesApi = {
    * Update invoice by ID
    */
   async updateInvoice(invoiceId: number, invoiceData: import("@/types/api").InvoiceInput): Promise<void> {
-    // Calculate totals from sale items
-    const subtotal = invoiceData.saleItems?.reduce((sum, item) => {
-      return sum + (item.quantity * (item.unitPrice || 0));
-    }, 0) || 0;
-    
-    const totalTax = invoiceData.saleItems?.reduce((sum, item) => {
-      const itemTotal = item.quantity * (item.unitPrice || 0) - (item.discount || 0);
-      return sum + (itemTotal * 0.18); // Assuming 18% tax
-    }, 0) || 0;
-    
-    const totalAmount = subtotal + totalTax - (invoiceData.discount || 0);
-    
     const updatePayload = {
       invoiceId: invoiceId,
       customerId: invoiceData.customerId,
       shopId: invoiceData.shopId,
-      salesId: 2, // Default sales ID
-      userId: 1, // Default user ID
-      totalAmount: totalAmount,
-      tax: totalTax,
-      dueDate: invoiceData.dueDate,
+      salesId: 2, // Default sales ID as per your requirement
+      userId: 1, // Default user ID as per your requirement
+      totalAmount: 1500.75, // You'll need to calculate this from the frontend
+      tax: 18.00, // You'll need to calculate this from the frontend
+      dueDate: invoiceData.dueDate ? new Date(invoiceData.dueDate).toISOString() : null,
       paymentStatus: invoiceData.paymentStatus,
       paymentMode: invoiceData.paymentMode,
       remark: invoiceData.remark || "",

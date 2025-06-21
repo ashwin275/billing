@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertTriangle } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { invoicesApi } from "@/lib/api";
@@ -22,6 +23,8 @@ export default function InvoiceManagementClean() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -82,19 +85,17 @@ export default function InvoiceManagementClean() {
     }
   };
 
-  // Handle delete with enhanced confirmation
+  // Handle delete with modal confirmation
   const handleDeleteInvoice = (invoice: Invoice) => {
-    const confirmed = window.confirm(
-      `⚠️ DELETE CONFIRMATION\n\n` +
-      `Invoice: #${invoice.invoiceNo}\n` +
-      `Amount: ₹${invoice.totalAmount?.toFixed(2) || '0.00'}\n` +
-      `Status: ${invoice.paymentStatus}\n\n` +
-      `This action will permanently delete this invoice and cannot be undone.\n\n` +
-      `Are you absolutely sure you want to proceed?`
-    );
-    
-    if (confirmed) {
-      deleteInvoiceMutation.mutate(invoice.invoiceId);
+    setInvoiceToDelete(invoice);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (invoiceToDelete) {
+      deleteInvoiceMutation.mutate(invoiceToDelete.invoiceId);
+      setIsDeleteDialogOpen(false);
+      setInvoiceToDelete(null);
     }
   };
 
@@ -677,7 +678,7 @@ export default function InvoiceManagementClean() {
                         >
                           <Download className="h-4 w-4" />
                         </Button>
-                        <Link href={`/invoices/edit/${invoice.invoiceId}`}>
+                        <Link href={`/invoices/create?edit=${invoice.invoiceId}`}>
                           <Button variant="outline" size="sm">
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -751,6 +752,49 @@ export default function InvoiceManagementClean() {
           {selectedInvoice && (
             <InvoiceTemplate invoice={selectedInvoice} isPreview={true} />
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="h-5 w-5" />
+              Delete Invoice
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-sm text-red-800 mb-2">
+                <strong>You are about to permanently delete:</strong>
+              </p>
+              <div className="space-y-1 text-sm">
+                <p><strong>Invoice:</strong> #{invoiceToDelete?.invoiceNo}</p>
+                <p><strong>Amount:</strong> ₹{invoiceToDelete?.totalAmount?.toFixed(2) || '0.00'}</p>
+                <p><strong>Status:</strong> {invoiceToDelete?.paymentStatus}</p>
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              This action cannot be undone. The invoice will be permanently removed from your records.
+            </p>
+          </div>
+          <div className="flex justify-end space-x-2 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={deleteInvoiceMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={deleteInvoiceMutation.isPending}
+            >
+              {deleteInvoiceMutation.isPending ? "Deleting..." : "Delete Invoice"}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

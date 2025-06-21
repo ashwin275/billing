@@ -67,6 +67,11 @@ export default function CreateInvoice() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
+  // Check if we're in edit mode
+  const searchParams = new URLSearchParams(window.location.search);
+  const editInvoiceId = searchParams.get('edit');
+  const isEditMode = !!editInvoiceId;
+  
   const [isAddCustomerDialogOpen, setIsAddCustomerDialogOpen] = useState(false);
   const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -285,6 +290,34 @@ export default function CreateInvoice() {
     const shop = shops.find(s => s.shopId === shopId);
     setSelectedShop(shop || null);
   }, [form.watch("shopId"), shops]);
+
+  // Populate form with edit data
+  useEffect(() => {
+    if (isEditMode && editInvoice) {
+      form.reset({
+        customerId: editInvoice.customerId,
+        shopId: editInvoice.shopId,
+        discount: editInvoice.discount || 0,
+        discountType: "PERCENTAGE",
+        amountPaid: editInvoice.amountPaid || 0,
+        paymentMode: editInvoice.paymentMode,
+        paymentStatus: editInvoice.paymentStatus,
+        remark: editInvoice.remark || "",
+        dueDate: editInvoice.dueDate ? editInvoice.dueDate.split('T')[0] : null,
+        billType: editInvoice.billType || "GST",
+        saleType: editInvoice.saleType || "RETAIL",
+        transactionId: editInvoice.transactionId || `TXN${Date.now()}`,
+        saleItems: editInvoice.saleItems && editInvoice.saleItems.length > 0 
+          ? editInvoice.saleItems.map(item => ({
+              productId: item.product?.productId || 0,
+              quantity: item.quantity,
+              discount: item.discount,
+              discountType: "PERCENTAGE" as const,
+            }))
+          : [{ productId: 0, quantity: 1, discount: 0, discountType: "PERCENTAGE" as const }],
+      });
+    }
+  }, [isEditMode, editInvoice, form]);
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
