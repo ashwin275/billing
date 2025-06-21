@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
 import { shopsApi, reportsApi } from "@/lib/api";
 
-const LIGHT_COLORS = ['#9AE68C', '#ABF1BC', '#CFFFF6', '#AEE7F8', '#87CDF6', '#FCA36B'];
+const LIGHT_COLORS = ['#4ade80', '#22d3ee', '#3b82f6', '#8b5cf6', '#10b981', '#f97316'];
 
 export default function Reports() {
   const [selectedShopId, setSelectedShopId] = useState<number | null>(null);
@@ -245,7 +245,7 @@ export default function Reports() {
                   <XAxis dataKey="period" />
                   <YAxis />
                   <Tooltip formatter={(value) => [`₹${value}`, 'Sales']} />
-                  <Line type="monotone" dataKey="totalSales" stroke="#5eead4" strokeWidth={3} />
+                  <Line type="monotone" dataKey="totalSales" stroke="#10b981" strokeWidth={3} />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
@@ -288,7 +288,7 @@ export default function Reports() {
                     labelLine={false}
                     label={({ productName, percent }) => `${productName} ${(percent * 100).toFixed(0)}%`}
                     outerRadius={80}
-                    fill="#67e8f9"
+                    fill="#22d3ee"
                     dataKey="quantityMoved"
                   >
                     {inventoryMovement.map((entry, index) => (
