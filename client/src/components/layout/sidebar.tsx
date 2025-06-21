@@ -90,12 +90,7 @@ export default function Sidebar({ activeSection, onSectionChange, isMobileOpen, 
       badge: productsCount > 0 ? productsCount : undefined,
       category: "Products"
     },
-    {
-      id: "add-users",
-      label: "Add Users",
-      icon: UserPlus,
-      category: "User Management"
-    },
+
     {
       id: "invoice",
       label: "Invoice",
