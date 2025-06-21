@@ -223,7 +223,7 @@ export default function Reports() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Deadstock Items</p>
-                  <p className="text-3xl font-bold text-red-400">{deadstock.length}</p>
+                  <p className="text-3xl font-bold text-red-400">{Array.isArray(deadstock) ? deadstock.length : 0}</p>
                 </div>
                 <AlertTriangle className="h-8 w-8 text-red-300" />
               </div>
@@ -292,7 +292,7 @@ export default function Reports() {
                   <YAxis />
                   <Tooltip />
                   <Bar dataKey="totalQuantity">
-                    {topProducts.map((entry, index) => (
+                    {Array.isArray(topProducts) && topProducts.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={LIGHT_COLORS[index % LIGHT_COLORS.length]} />
                     ))}
                   </Bar>
@@ -319,7 +319,7 @@ export default function Reports() {
                     fill="#22d3ee"
                     dataKey="quantityMoved"
                   >
-                    {inventoryMovement.map((entry, index) => (
+                    {Array.isArray(inventoryMovement) && inventoryMovement.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={LIGHT_COLORS[index % LIGHT_COLORS.length]} />
                     ))}
                   </Pie>
@@ -342,7 +342,7 @@ export default function Reports() {
                   <YAxis />
                   <Tooltip formatter={(value) => [`₹${value}`, 'Discount']} />
                   <Bar dataKey="discount">
-                    {discountSummary.map((entry: any, index: number) => (
+                    {Array.isArray(discountSummary) && discountSummary.map((entry: any, index: number) => (
                       <Cell key={`cell-${index}`} fill="#FCA36B" />
                     ))}
                   </Bar>
@@ -368,7 +368,7 @@ export default function Reports() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {topProducts.map((product, index) => (
+                  {Array.isArray(topProducts) && topProducts.map((product, index) => (
                     <TableRow key={index} className="hover:bg-teal-50">
                       <TableCell className="font-medium text-gray-700">{product.productName}</TableCell>
                       <TableCell className="text-right font-semibold text-teal-600">{product.totalQuantity}</TableCell>
@@ -393,11 +393,12 @@ export default function Reports() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {topCustomers.length > 0 ? topCustomers.map((customer, index) => (
+                  {Array.isArray(topCustomers) && topCustomers.length > 0 && topCustomers.map((customer, index) => (
                     <TableRow key={index} className="hover:bg-sky-50">
                       <TableCell className="font-medium text-gray-700">{customer.name || 'N/A'}</TableCell>
                       <TableCell className="text-right font-semibold text-sky-600">{customer.value || '0'}</TableCell>
                     </TableRow>
+                  ))}
                   )) : (
                     <TableRow>
                       <TableCell colSpan={2} className="text-center text-muted-foreground">
@@ -412,7 +413,7 @@ export default function Reports() {
         </div>
 
         {/* Deadstock Alert */}
-        {deadstock.length > 0 && (
+        {Array.isArray(deadstock) && deadstock.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-red-400">
@@ -422,7 +423,7 @@ export default function Reports() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {deadstock.map((item, index) => (
+                {Array.isArray(deadstock) && deadstock.map((item, index) => (
                   <Badge key={index} className="p-2 bg-red-100 text-red-600 hover:bg-red-200">
                     {item.productName || `Item ${index + 1}`}
                   </Badge>

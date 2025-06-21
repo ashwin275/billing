@@ -324,7 +324,7 @@ export default function EditInvoice() {
   // Update selected shop when form changes
   useEffect(() => {
     const shopId = form.watch("shopId");
-    const shop = shops.find(s => s.shopId === shopId);
+    const shop = Array.isArray(shops) ? shops.find(s => s.shopId === shopId) : null;
     setSelectedShop(shop || null);
   }, [form.watch("shopId"), shops]);
 
