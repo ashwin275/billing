@@ -364,7 +364,9 @@ export default function CreateInvoice() {
                 Back to Dashboard
               </Button>
             </Link>
-            <h1 className="text-2xl font-bold text-gray-900">Create Invoice</h1>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {isEditMode ? "Edit Invoice" : "Create Invoice"}
+            </h1>
           </div>
           <div className="flex items-center space-x-2">
             <Button 
@@ -1292,10 +1294,13 @@ export default function CreateInvoice() {
             </Button>
             <Button 
               onClick={() => form.handleSubmit(onSubmit)()}
-              disabled={createInvoiceMutation.isPending}
+              disabled={isEditMode ? updateInvoiceMutation.isPending : createInvoiceMutation.isPending}
             >
               <Save className="h-4 w-4 mr-2" />
-              {createInvoiceMutation.isPending ? "Creating..." : "Create Invoice"}
+              {isEditMode 
+                ? (updateInvoiceMutation.isPending ? "Updating..." : "Update Invoice")
+                : (createInvoiceMutation.isPending ? "Creating..." : "Create Invoice")
+              }
             </Button>
           </div>
         </div>
