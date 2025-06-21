@@ -1666,6 +1666,39 @@ export default function EditInvoice() {
                     </Button>
                   </div>
 
+                  <div className="flex justify-end gap-2 mb-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => append({ productId: 0, quantity: 1, discount: 0, discountType: "PERCENTAGE", unitPrice: 0 })}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Single Item
+                    </Button>
+                    <ProductSearchDialog
+                      products={Array.isArray(products) ? products : []}
+                      saleType={form.watch("saleType")}
+                      onSelect={(selectedProducts) => {
+                        selectedProducts.forEach((product) => {
+                          const rate = form.watch("saleType") === 'RETAIL' ? product.retailRate : product.wholesaleRate;
+                          append({
+                            productId: product.productId,
+                            quantity: product.quantity,
+                            unitPrice: rate,
+                            discount: product.discountAmount || 0,
+                            discountType: "AMOUNT"
+                          });
+                        });
+                      }}
+                      trigger={
+                        <Button variant="outline">
+                          <Plus className="mr-2 h-4 w-4" />
+                          Add Multiple Items
+                        </Button>
+                      }
+                    />
+                  </div>
+
                   <div className="border rounded-lg overflow-hidden">
                     <div className="grid grid-cols-12 gap-4 p-4 bg-gray-50 font-semibold text-sm">
                       <div className="col-span-3">Product</div>
