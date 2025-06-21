@@ -93,6 +93,13 @@ export default function CreateInvoice() {
     queryFn: () => shopsApi.getAllShops(),
   });
 
+  // Fetch invoice data if in edit mode
+  const { data: editInvoice } = useQuery({
+    queryKey: ["/api/invoices", editInvoiceId],
+    queryFn: () => invoicesApi.getInvoiceById(parseInt(editInvoiceId!)),
+    enabled: isEditMode && !!editInvoiceId,
+  });
+
   // Main invoice form
   const form = useForm<InvoiceFormData>({
     resolver: zodResolver(invoiceSchema),
