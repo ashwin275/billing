@@ -158,9 +158,7 @@ export function ProductSearchDialog({
                   ))}
                 </SelectContent>
               </Select>
-              <Button variant="outline" className="whitespace-nowrap">
-                + Create New Item
-              </Button>
+
             </div>
 
             <div className="flex-1 overflow-auto border rounded-lg">

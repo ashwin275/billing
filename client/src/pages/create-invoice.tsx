@@ -1704,9 +1704,7 @@ export default function CreateInvoice() {
                       <div className="col-span-1">HSN</div>
                       <div className="col-span-1">Qty</div>
                       <div className="col-span-1">Rate</div>
-                      <div className="col-span-2">Discount</div>
-                      <div className="col-span-1">CGST</div>
-                      <div className="col-span-1">SGST</div>
+                      <div className="col-span-4">Discount</div>
                       <div className="col-span-1">Total</div>
                       <div className="col-span-1">Action</div>
                     </div>
@@ -1735,14 +1733,7 @@ export default function CreateInvoice() {
                           discountAmount = discount; // Apply discount to total, not per quantity
                         }
                         
-                        const lineTotal = baseAmount - discountAmount;
-                        
-                        if (billType === 'GST') {
-                          cgstAmount = (lineTotal * (selectedProduct.cgst || 0)) / 100;
-                          sgstAmount = (lineTotal * (selectedProduct.sgst || 0)) / 100;
-                        }
-                        
-                        itemTotal = lineTotal + cgstAmount + sgstAmount;
+                        itemTotal = baseAmount - discountAmount;
                       }
 
                       return (
