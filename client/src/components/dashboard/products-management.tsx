@@ -334,11 +334,11 @@ export default function ProductsManagement() {
       hsn: product.hsn.toString(),
       description: product.description,
       quantity: product.quantity,
-      ourPrice: product.ourPrice,
-      wholesaleRate: product.wholesaleRate,
-      retailRate: product.retailRate,
-      cgst: product.cgst,
-      sgst: product.sgst,
+      ourPrice: product.purchasePrice || product.ourPrice || 0, // Map purchasePrice to ourPrice
+      wholesaleRate: product.wholesaleRate || 0,
+      retailRate: product.retailRate || 0,
+      cgst: product.cgst || 9,
+      sgst: product.sgst || 9,
       category: product.category,
       imageUrl: product.imageUrl,
       expiry: product.expiry.split('T')[0], // Convert to date format
@@ -929,10 +929,10 @@ export default function ProductsManagement() {
                           <Badge variant="outline" className="text-xs">Retail</Badge>
                         </div>
                         <div className="text-xs text-slate-500">
-                          Wholesale: {formatCurrency(product.wholesaleRate)}
+                          Wholesale: {formatCurrency(product.wholesaleRate || 0)}
                         </div>
                         <div className="text-xs text-slate-500">
-                          Purchase Price: {formatCurrency(product.ourPrice)}
+                          Purchase Price: {formatCurrency(product.purchasePrice || product.ourPrice || 0)}
                         </div>
                       </div>
                     </TableCell>
