@@ -27,7 +27,7 @@ export default function Reports() {
 
   // Set default shop if available
   useEffect(() => {
-    if (shops.length > 0 && !selectedShopId) {
+    if (Array.isArray(shops) && shops.length > 0 && !selectedShopId) {
       setSelectedShopId(shops[0].shopId);
     }
   }, [shops, selectedShopId]);
