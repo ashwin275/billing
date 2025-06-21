@@ -48,16 +48,16 @@ function DashboardOverview({ onNavigate }: { onNavigate: (section: string) => vo
     queryFn: () => shopsApi.getAllShops(),
   });
 
-  // Calculate real stats from API data
-  const totalRevenue = invoices.reduce((sum, invoice) => sum + (invoice.totalAmount || 0), 0);
-  const pendingPayments = invoices
+  // Calculate real stats from API data with safety checks
+  const totalRevenue = Array.isArray(invoices) ? invoices.reduce((sum, invoice) => sum + (invoice.totalAmount || 0), 0) : 0;
+  const pendingPayments = Array.isArray(invoices) ? invoices
     .filter(invoice => invoice.paymentStatus !== 'PAID')
-    .reduce((sum, invoice) => sum + (invoice.totalAmount || 0), 0);
-  const activeShops = shops.filter(shop => shop.status === 'ACTIVE').length;
-  const totalShops = shops.length;
+    .reduce((sum, invoice) => sum + (invoice.totalAmount || 0), 0) : 0;
+  const activeShops = Array.isArray(shops) ? shops.filter(shop => shop.status === 'ACTIVE').length : 0;
+  const totalShops = Array.isArray(shops) ? shops.length : 0;
 
-  // Recent invoices from real data
-  const recentInvoices = invoices
+  // Recent invoices from real data with safety checks
+  const recentInvoices = Array.isArray(invoices) ? invoices
     .sort((a, b) => new Date(b.invoiceDate).getTime() - new Date(a.invoiceDate).getTime())
     .slice(0, 3)
     .map(invoice => ({
@@ -66,7 +66,7 @@ function DashboardOverview({ onNavigate }: { onNavigate: (section: string) => vo
       client: invoice.shop?.name || 'Unknown',
       amount: `₹${invoice.totalAmount?.toFixed(2) || '0.00'}`,
       status: invoice.paymentStatus.toLowerCase() as 'paid' | 'pending'
-    }));
+    })) : [];
 
   const dashboardStats = {
     totalRevenue: `₹${totalRevenue.toFixed(2)}`,
