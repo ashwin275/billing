@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
 import { shopsApi, reportsApi } from "@/lib/api";
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
+const LIGHT_COLORS = ['#cbd5e1', '#94a3b8', '#64748b', '#475569', '#334155', '#1e293b'];
 
 export default function Reports() {
   const [selectedShopId, setSelectedShopId] = useState<number | null>(null);
@@ -123,7 +123,7 @@ export default function Reports() {
           
           <div className="flex flex-col sm:flex-row gap-3">
             <Select value={selectedShopId?.toString()} onValueChange={(value) => setSelectedShopId(parseInt(value))}>
-              <SelectTrigger className="w-full sm:w-48">
+              <SelectTrigger className="w-full sm:w-64">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
