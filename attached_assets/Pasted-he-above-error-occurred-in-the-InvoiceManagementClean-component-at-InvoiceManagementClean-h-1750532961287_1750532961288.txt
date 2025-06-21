@@ -1,0 +1,57 @@
+he above error occurred in the <InvoiceManagementClean> component:
+
+    at InvoiceManagementClean (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.dev/src/components/dashboard/invoice-management-clean.tsx:34:39)
+    at div
+    at main
+    at div
+    at div
+    at div
+    at DashboardLayout (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.dev/src/components/layout/dashboard-layout.tsx:18:43)
+    at Dashboard (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.dev/src/pages/dashboard/dashboard.tsx:856:45)
+    at ProtectedRoute (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.dev/src/components/auth/protected-route.tsx:19:42)
+    at Route (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=74844324:323:16)
+    at Switch (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=74844324:379:17)
+    at Router
+    at Provider (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-JCDXHMNF.js?v=74844324:38:15)
+    at TooltipProvider (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=74844324:60:5)
+    at QueryClientProvider (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=74844324:2805:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ chunk-WERSD76P.js?v=74844324:14032
+update.callback @ chunk-WERSD76P.js?v=74844324:14052
+callCallback @ chunk-WERSD76P.js?v=74844324:11248
+commitUpdateQueue @ chunk-WERSD76P.js?v=74844324:11265
+commitLayoutEffectOnFiber @ chunk-WERSD76P.js?v=74844324:17093
+commitLayoutMountEffects_complete @ chunk-WERSD76P.js?v=74844324:17980
+commitLayoutEffects_begin @ chunk-WERSD76P.js?v=74844324:17969
+commitLayoutEffects @ chunk-WERSD76P.js?v=74844324:17920
+commitRootImpl @ chunk-WERSD76P.js?v=74844324:19353
+commitRoot @ chunk-WERSD76P.js?v=74844324:19277
+performSyncWorkOnRoot @ chunk-WERSD76P.js?v=74844324:18895
+flushSyncCallbacks @ chunk-WERSD76P.js?v=74844324:9119
+(anonymous) @ chunk-WERSD76P.js?v=74844324:18627Understand this error
+chunk-WERSD76P.js?v=74844324:9129 Uncaught TypeError: invoices.filter is not a function
+    at InvoiceManagementClean (invoice-management-clean.tsx:58:37)
+    at renderWithHooks (chunk-WERSD76P.js?v=74844324:11548:26)
+    at mountIndeterminateComponent (chunk-WERSD76P.js?v=74844324:14926:21)
+    at beginWork (chunk-WERSD76P.js?v=74844324:15914:22)
+    at beginWork$1 (chunk-WERSD76P.js?v=74844324:19753:22)
+    at performUnitOfWork (chunk-WERSD76P.js?v=74844324:19198:20)
+    at workLoopSync (chunk-WERSD76P.js?v=74844324:19137:13)
+    at renderRootSync (chunk-WERSD76P.js?v=74844324:19116:15)
+    at recoverFromConcurrentError (chunk-WERSD76P.js?v=74844324:18736:28)
+    at performSyncWorkOnRoot (chunk-WERSD76P.js?v=74844324:18879:28)
+InvoiceManagementClean @ invoice-management-clean.tsx:58
+renderWithHooks @ chunk-WERSD76P.js?v=74844324:11548
+mountIndeterminateComponent @ chunk-WERSD76P.js?v=74844324:14926
+beginWork @ chunk-WERSD76P.js?v=74844324:15914
+beginWork$1 @ chunk-WERSD76P.js?v=74844324:19753
+performUnitOfWork @ chunk-WERSD76P.js?v=74844324:19198
+workLoopSync @ chunk-WERSD76P.js?v=74844324:19137
+renderRootSync @ chunk-WERSD76P.js?v=74844324:19116
+recoverFromConcurrentError @ chunk-WERSD76P.js?v=74844324:18736
+performSyncWorkOnRoot @ chunk-WERSD76P.js?v=74844324:18879
+flushSyncCallbacks @ chunk-WERSD76P.js?v=74844324:9119
+(anonymous) @ chunk-WERSD76P.js?v=74844324:18627Understand this error
