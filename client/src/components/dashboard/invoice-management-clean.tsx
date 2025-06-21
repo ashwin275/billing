@@ -55,10 +55,10 @@ export default function InvoiceManagementClean() {
   });
 
   // Filter and sort invoices
-  const filteredInvoices = invoices.filter(invoice =>
+  const filteredInvoices = Array.isArray(invoices) ? invoices.filter(invoice =>
     invoice.invoiceNo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     invoice.shop?.name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ) : [];
 
   const sortedInvoices = [...filteredInvoices].sort((a, b) => {
     const aValue = a[sortField];

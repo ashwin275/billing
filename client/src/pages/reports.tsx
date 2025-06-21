@@ -75,7 +75,7 @@ export default function Reports() {
     enabled: !!selectedShopId,
   });
 
-  const selectedShop = shops.find(shop => shop.shopId === selectedShopId);
+  const selectedShop = Array.isArray(shops) ? shops.find(shop => shop.shopId === selectedShopId) : null;
 
   const totalSales = Array.isArray(salesSummary) ? salesSummary.reduce((sum: number, item: any) => sum + item.totalSales, 0) : 0;
   const totalDiscounts = Array.isArray(discountSummary) ? discountSummary.reduce((sum: number, item: any) => sum + item.discount, 0) : 0;
