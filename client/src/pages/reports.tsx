@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
 import { shopsApi, reportsApi } from "@/lib/api";
 
-const LIGHT_COLORS = ['#fef3c7', '#fde2e7', '#e0f2fe', '#f3e8ff', '#ecfdf5', '#fdf2f8'];
+const LIGHT_COLORS = ['#a7f3d0', '#67e8f9', '#bfdbfe', '#c7d2fe', '#5eead4', '#7dd3fc'];
 
 export default function Reports() {
   const [selectedShopId, setSelectedShopId] = useState<number | null>(null);
@@ -159,9 +159,9 @@ export default function Reports() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Sales</p>
-                  <p className="text-3xl font-bold text-emerald-500">₹{totalSales.toFixed(2)}</p>
+                  <p className="text-3xl font-bold text-teal-500">₹{totalSales.toFixed(2)}</p>
                 </div>
-                <TrendingUp className="h-8 w-8 text-emerald-400" />
+                <TrendingUp className="h-8 w-8 text-teal-400" />
               </div>
             </CardContent>
           </Card>
@@ -171,9 +171,9 @@ export default function Reports() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Discounts</p>
-                  <p className="text-3xl font-bold text-sky-500">₹{totalDiscounts.toFixed(2)}</p>
+                  <p className="text-3xl font-bold text-cyan-500">₹{totalDiscounts.toFixed(2)}</p>
                 </div>
-                <Percent className="h-8 w-8 text-sky-400" />
+                <Percent className="h-8 w-8 text-cyan-400" />
               </div>
             </CardContent>
           </Card>
@@ -183,9 +183,9 @@ export default function Reports() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Inventory Moved</p>
-                  <p className="text-3xl font-bold text-amber-500">{totalInventoryMoved} units</p>
+                  <p className="text-3xl font-bold text-sky-500">{totalInventoryMoved} units</p>
                 </div>
-                <Package className="h-8 w-8 text-amber-400" />
+                <Package className="h-8 w-8 text-sky-400" />
               </div>
             </CardContent>
           </Card>
@@ -195,9 +195,9 @@ export default function Reports() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Deadstock Items</p>
-                  <p className="text-3xl font-bold text-rose-500">{deadstock.length}</p>
+                  <p className="text-3xl font-bold text-blue-500">{deadstock.length}</p>
                 </div>
-                <AlertTriangle className="h-8 w-8 text-rose-400" />
+                <AlertTriangle className="h-8 w-8 text-blue-400" />
               </div>
             </CardContent>
           </Card>
@@ -215,15 +215,15 @@ export default function Reports() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-emerald-400">{timeInsights.peakHour}:00</div>
+                  <div className="text-3xl font-bold text-teal-400">{timeInsights.peakHour}:00</div>
                   <p className="text-sm text-muted-foreground">Peak Hour</p>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-sky-400">{timeInsights.bestDay}</div>
+                  <div className="text-3xl font-bold text-cyan-400">{timeInsights.bestDay}</div>
                   <p className="text-sm text-muted-foreground">Best Day</p>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-amber-400">{timeInsights.worstDay}</div>
+                  <div className="text-3xl font-bold text-sky-400">{timeInsights.worstDay}</div>
                   <p className="text-sm text-muted-foreground">Worst Day</p>
                 </div>
               </div>
@@ -245,7 +245,7 @@ export default function Reports() {
                   <XAxis dataKey="period" />
                   <YAxis />
                   <Tooltip formatter={(value) => [`₹${value}`, 'Sales']} />
-                  <Line type="monotone" dataKey="totalSales" stroke="#a7f3d0" strokeWidth={3} />
+                  <Line type="monotone" dataKey="totalSales" stroke="#5eead4" strokeWidth={3} />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
@@ -288,7 +288,7 @@ export default function Reports() {
                     labelLine={false}
                     label={({ productName, percent }) => `${productName} ${(percent * 100).toFixed(0)}%`}
                     outerRadius={80}
-                    fill="#fed7aa"
+                    fill="#67e8f9"
                     dataKey="quantityMoved"
                   >
                     {inventoryMovement.map((entry, index) => (
