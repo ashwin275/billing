@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Package } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Search, Package, Filter } from "lucide-react";
 
 interface Product {
   productId: number;
@@ -29,14 +30,28 @@ export function ProductSearchDialog({
 }: ProductSearchDialogProps) {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
-  const filteredProducts = Array.isArray(products) 
-    ? products.filter(product =>
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  // Get unique categories
+  const categories = useMemo(() => {
+    if (!Array.isArray(products)) return [];
+    const uniqueCategories = [...new Set(products.map(p => p.category).filter(Boolean))];
+    return uniqueCategories.sort();
+  }, [products]);
+
+  const filteredProducts = useMemo(() => {
+    if (!Array.isArray(products)) return [];
+    
+    return products.filter(product => {
+      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         product.hsn.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (product.category && product.category.toLowerCase().includes(searchTerm.toLowerCase()))
-      )
-    : [];
+        (product.category && product.category.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+      const matchesCategory = selectedCategory === "all" || product.category === selectedCategory;
+      
+      return matchesSearch && matchesCategory;
+    });
+  }, [products, searchTerm, selectedCategory]);
 
   const selectedProduct = Array.isArray(products) 
     ? products.find(p => p.productId === selectedProductId)
@@ -46,6 +61,7 @@ export function ProductSearchDialog({
     onSelect(product);
     setOpen(false);
     setSearchTerm("");
+    setSelectedCategory("all");
   };
 
   return (
@@ -63,14 +79,30 @@ export function ProductSearchDialog({
           <DialogTitle>Select Product</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <div className="relative">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by name, HSN, or category..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8"
-            />
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by name or HSN..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8"
+              />
+            </div>
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="w-32">
+                <Filter className="h-4 w-4 mr-1" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                {categories.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="max-h-60 overflow-y-auto border rounded-md">
             {filteredProducts.length === 0 ? (
