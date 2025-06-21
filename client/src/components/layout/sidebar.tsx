@@ -123,8 +123,20 @@ export default function Sidebar({ activeSection, onSectionChange, isMobileOpen, 
     }
   ];
 
-  // Group navigation items by category
-  const groupedNavItems = navigationItems.reduce((acc, item) => {
+  // Admin-only navigation items
+  const adminItems: NavItem[] = [
+    {
+      id: "add-users",
+      label: "Users",
+      icon: Users,
+      badge: activeUsersCount > 0 ? activeUsersCount : undefined,
+      category: "Admin"
+    }
+  ];
+
+  // Group navigation items by category including admin items if user is admin
+  const allItems = [...navigationItems, ...(isAdmin() ? adminItems : [])];
+  const groupedNavItems = allItems.reduce((acc, item) => {
     const category = item.category || "Other";
     if (!acc[category]) {
       acc[category] = [];
