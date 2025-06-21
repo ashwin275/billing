@@ -155,54 +155,50 @@ export default function Reports() {
         {/* Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">₹{totalSales.toFixed(2)}</div>
-              <p className="text-xs text-muted-foreground">
-                {salesSummary.length} sales periods
-              </p>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Sales</p>
+                  <p className="text-3xl font-bold text-emerald-600">₹{totalSales.toFixed(2)}</p>
+                </div>
+                <TrendingUp className="h-8 w-8 text-emerald-500" />
+              </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Discounts</CardTitle>
-              <Percent className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">₹{totalDiscounts.toFixed(2)}</div>
-              <p className="text-xs text-muted-foreground">
-                {discountSummary.length} products with discounts
-              </p>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Discounts</p>
+                  <p className="text-3xl font-bold text-blue-600">₹{totalDiscounts.toFixed(2)}</p>
+                </div>
+                <Percent className="h-8 w-8 text-blue-500" />
+              </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Inventory Movement</CardTitle>
-              <Package className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalInventoryMoved}</div>
-              <p className="text-xs text-muted-foreground">
-                units moved
-              </p>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Inventory Moved</p>
+                  <p className="text-3xl font-bold text-orange-600">{totalInventoryMoved} units</p>
+                </div>
+                <Package className="h-8 w-8 text-orange-500" />
+              </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Deadstock Items</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{deadstock.length}</div>
-              <p className="text-xs text-muted-foreground">
-                items need attention
-              </p>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Deadstock Items</p>
+                  <p className="text-3xl font-bold text-pink-600">{deadstock.length}</p>
+                </div>
+                <AlertTriangle className="h-8 w-8 text-pink-500" />
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -267,10 +263,11 @@ export default function Reports() {
                   <XAxis dataKey="productName" />
                   <YAxis />
                   <Tooltip />
-                  <Bar dataKey="totalQuantity" fill="#93c5fd" />
-                  {topProducts.map((entry, index) => (
-                    <Bar key={`bar-${index}`} dataKey="totalQuantity" fill={LIGHT_COLORS[index % LIGHT_COLORS.length]} />
-                  ))}
+                  <Bar dataKey="totalQuantity">
+                    {topProducts.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={LIGHT_COLORS[index % LIGHT_COLORS.length]} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
