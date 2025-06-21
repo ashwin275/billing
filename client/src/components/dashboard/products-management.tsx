@@ -70,21 +70,18 @@ import { Product, ProductInput } from "@/types/api";
 // Form validation schema for products
 const productSchema = z.object({
   name: z.string().min(2, "Product name must be at least 2 characters"),
-  productNumber: z.string().min(1, "Product number is required"),
   hsn: z.string().min(1, "HSN code is required"),
   description: z.string().min(5, "Description must be at least 5 characters"),
   quantity: z.number().min(0, "Quantity must be 0 or greater"),
   ourPrice: z.number().min(0, "Our price must be 0 or greater"),
   wholesaleRate: z.number().min(0, "Wholesale rate must be 0 or greater"),
   retailRate: z.number().min(0, "Retail rate must be 0 or greater"),
-  taxRate: z.number().min(0, "Tax rate must be 0 or greater").max(100, "Tax rate cannot exceed 100%"),
   cgst: z.number().min(0, "CGST must be 0 or greater").max(50, "CGST cannot exceed 50%"),
   sgst: z.number().min(0, "SGST must be 0 or greater").max(50, "SGST cannot exceed 50%"),
   category: z.string().min(2, "Category must be at least 2 characters"),
   imageUrl: z.string().url("Must be a valid URL"),
   expiry: z.string().min(1, "Expiry date is required"),
   barcode: z.string().min(1, "Barcode is required"),
-  shopId: z.number().min(1, "Shop ID is required"),
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
@@ -103,6 +100,7 @@ export default function ProductsManagement() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [sortField, setSortField] = useState<keyof Product>("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
@@ -129,21 +127,18 @@ export default function ProductsManagement() {
     resolver: zodResolver(productSchema),
     defaultValues: {
       name: "",
-      productNumber: "",
       hsn: "",
       description: "",
       quantity: 0,
       ourPrice: 0,
       wholesaleRate: 0,
       retailRate: 0,
-      taxRate: 18,
       cgst: 9,
       sgst: 9,
       category: "",
       imageUrl: "https://example.com/product.jpg",
       expiry: "2025-12-31",
       barcode: "",
-      shopId: 1,
     },
   });
 
@@ -361,15 +356,23 @@ export default function ProductsManagement() {
       <ArrowDown className="h-4 w-4" />;
   };
 
+  // Get unique categories for filter dropdown
+  const categories = Array.isArray(products) ? 
+    [...new Set(products.map(product => product.category))].sort() : [];
+
   // Filter and sort products
-  const filteredProducts = Array.isArray(products) ? products.filter(product => 
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.productNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.hsn.toString().includes(searchTerm) ||
-    product.barcode.includes(searchTerm)
-  ) : [];
+  const filteredProducts = Array.isArray(products) ? products.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.productNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.hsn.toString().includes(searchTerm) ||
+      product.barcode.includes(searchTerm);
+    
+    const matchesCategory = selectedCategory === "all" || product.category === selectedCategory;
+    
+    return matchesSearch && matchesCategory;
+  }) : [];
 
   const sortedProducts = filteredProducts.sort((a, b) => {
     let aValue: any = a[sortField];
@@ -549,7 +552,7 @@ export default function ProductsManagement() {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="add-ourPrice">Our Price</Label>
+                    <Label htmlFor="add-ourPrice">Purchase Price</Label>
                     <Input
                       id="add-ourPrice"
                       type="number"
@@ -915,7 +918,7 @@ export default function ProductsManagement() {
                           Wholesale: {formatCurrency(product.wholesaleRate)}
                         </div>
                         <div className="text-xs text-slate-500">
-                          Our Price: {formatCurrency(product.ourPrice)}
+                          Purchase Price: {formatCurrency(product.ourPrice)}
                         </div>
                       </div>
                     </TableCell>
