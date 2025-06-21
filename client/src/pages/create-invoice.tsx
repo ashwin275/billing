@@ -1722,21 +1722,30 @@ export default function CreateInvoice() {
 
                       return (
                         <div key={field.id} className="grid grid-cols-12 gap-4 p-4 border-b items-center">
-                          <div className="col-span-3">
-                            <FormField
-                              control={form.control}
-                              name={`saleItems.${index}.productId`}
-                              render={({ field }) => (
-                                <ProductSearchDialog
-                                  products={Array.isArray(products) ? products : []}
-                                  selectedProductId={field.value}
-                                  onSelect={(product) => {
-                                    field.onChange(product.productId);
-                                    const rate = form.watch("saleType") === 'RETAIL' ? product.retailRate : product.wholesaleRate;
-                                    form.setValue(`saleItems.${index}.unitPrice`, rate);
-                                  }}
-                                />
-                              )}
+                          <div className="col-span-12">
+                            <ProductSearchDialog
+                              products={Array.isArray(products) ? products : []}
+                              saleType={form.watch("saleType")}
+                              onSelect={(selectedProducts) => {
+                                // Clear existing items and add selected products
+                                const currentItems = form.getValues('saleItems') || [];
+                                
+                                // Add new products to the form
+                                selectedProducts.forEach((product, idx) => {
+                                  const rate = form.watch("saleType") === 'RETAIL' ? product.retailRate : product.wholesaleRate;
+                                  form.setValue(`saleItems.${currentItems.length + idx}.productId`, product.productId);
+                                  form.setValue(`saleItems.${currentItems.length + idx}.quantity`, product.quantity);
+                                  form.setValue(`saleItems.${currentItems.length + idx}.unitPrice`, rate);
+                                  form.setValue(`saleItems.${currentItems.length + idx}.discount`, product.discountAmount || 0);
+                                  form.setValue(`saleItems.${currentItems.length + idx}.discountType`, "AMOUNT");
+                                });
+                              }}
+                              trigger={
+                                <Button variant="outline" className="w-full border-dashed">
+                                  <Plus className="mr-2 h-4 w-4" />
+                                  Add Items
+                                </Button>
+                              }
                             />
                           </div>
                           

@@ -3,7 +3,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Package, Filter } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Search, Package, Filter, Plus, Minus, X } from "lucide-react";
 
 interface Product {
   productId: number;
@@ -15,22 +17,30 @@ interface Product {
   category?: string;
 }
 
+interface SelectedProduct extends Product {
+  quantity: number;
+  discountAmount?: number;
+}
+
 interface ProductSearchDialogProps {
   products: Product[];
-  onSelect: (product: Product) => void;
+  onSelect: (products: SelectedProduct[]) => void;
   selectedProductId?: number;
   trigger?: React.ReactNode;
+  saleType?: 'RETAIL' | 'WHOLESALE';
 }
 
 export function ProductSearchDialog({ 
   products, 
   onSelect, 
   selectedProductId,
-  trigger 
+  trigger,
+  saleType = 'RETAIL'
 }: ProductSearchDialogProps) {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>([]);
 
   // Get unique categories
   const categories = useMemo(() => {
@@ -53,15 +63,58 @@ export function ProductSearchDialog({
     });
   }, [products, searchTerm, selectedCategory]);
 
-  const selectedProduct = Array.isArray(products) 
-    ? products.find(p => p.productId === selectedProductId)
-    : null;
+  const totalAmount = useMemo(() => {
+    return selectedProducts.reduce((total, product) => {
+      const rate = saleType === 'RETAIL' ? product.retailRate : product.wholesaleRate;
+      const subtotal = rate * product.quantity;
+      const discountedSubtotal = subtotal - (product.discountAmount || 0);
+      return total + discountedSubtotal;
+    }, 0);
+  }, [selectedProducts, saleType]);
 
-  const handleSelect = (product: Product) => {
-    onSelect(product);
+  const handleAddProduct = (product: Product) => {
+    const existingIndex = selectedProducts.findIndex(p => p.productId === product.productId);
+    if (existingIndex >= 0) {
+      // Update quantity if already selected
+      const updated = [...selectedProducts];
+      updated[existingIndex].quantity += 1;
+      setSelectedProducts(updated);
+    } else {
+      // Add new product
+      setSelectedProducts([...selectedProducts, { ...product, quantity: 1, discountAmount: 0 }]);
+    }
+  };
+
+  const handleQuantityChange = (productId: number, quantity: number) => {
+    if (quantity <= 0) {
+      setSelectedProducts(selectedProducts.filter(p => p.productId !== productId));
+    } else {
+      setSelectedProducts(selectedProducts.map(p => 
+        p.productId === productId ? { ...p, quantity } : p
+      ));
+    }
+  };
+
+  const handleDiscountChange = (productId: number, discountAmount: number) => {
+    setSelectedProducts(selectedProducts.map(p => 
+      p.productId === productId ? { ...p, discountAmount: Math.max(0, discountAmount) } : p
+    ));
+  };
+
+  const handleRemoveProduct = (productId: number) => {
+    setSelectedProducts(selectedProducts.filter(p => p.productId !== productId));
+  };
+
+  const handleDone = () => {
+    onSelect(selectedProducts);
     setOpen(false);
     setSearchTerm("");
     setSelectedCategory("all");
+    setSelectedProducts([]);
+  };
+
+  const isProductSelected = (productId: number) => {
+    return selectedProducts.some(p => p.productId === productId);
   };
 
   return (
@@ -70,70 +123,235 @@ export function ProductSearchDialog({
         {trigger || (
           <Button variant="outline" className="w-full justify-start border-dashed">
             <Package className="mr-2 h-4 w-4" />
-            {selectedProduct ? selectedProduct.name : "Select Product"}
+            Add Items
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Select Product</DialogTitle>
+          <DialogTitle>Add Items</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by name or HSN..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8"
-              />
-            </div>
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="w-32">
-                <Filter className="h-4 w-4 mr-1" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                {categories.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="max-h-60 overflow-y-auto border rounded-md">
-            {filteredProducts.length === 0 ? (
-              <div className="p-4 text-center text-muted-foreground">
-                No products found
+        
+        <div className="flex gap-4 flex-1 overflow-hidden">
+          {/* Product Selection Side */}
+          <div className="flex-1 flex flex-col space-y-4">
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search Items"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-8"
+                />
               </div>
-            ) : (
-              <div className="space-y-1 p-2">
-                {filteredProducts.map((product) => (
-                  <Button
-                    key={product.productId}
-                    variant="ghost"
-                    className={`w-full justify-start h-auto p-3 ${
-                      selectedProductId === product.productId 
-                        ? "bg-primary/10 border border-primary/20" 
-                        : ""
-                    }`}
-                    onClick={() => handleSelect(product)}
-                  >
-                    <div className="text-left">
-                      <div className="font-medium">{product.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {product.category && <span className="bg-gray-100 px-1 rounded text-xs mr-2">{product.category}</span>}
-                        HSN: {product.hsn} • Stock: {product.stock} • ₹{product.retailRate}
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Select Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {categories.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button variant="outline" className="whitespace-nowrap">
+                + Create New Item
+              </Button>
+            </div>
+
+            <div className="flex-1 overflow-auto border rounded-lg">
+              <Table>
+                <TableHeader className="sticky top-0 bg-white">
+                  <TableRow>
+                    <TableHead>Item Name</TableHead>
+                    <TableHead>Item Code</TableHead>
+                    <TableHead>Sales Price</TableHead>
+                    <TableHead>Purchase Price</TableHead>
+                    <TableHead>Current Stock</TableHead>
+                    <TableHead>Quantity</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredProducts.map((product) => {
+                    const selectedProduct = selectedProducts.find(p => p.productId === product.productId);
+                    const rate = saleType === 'RETAIL' ? product.retailRate : product.wholesaleRate;
+                    
+                    return (
+                      <TableRow key={product.productId}>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{product.name}</div>
+                            {product.category && (
+                              <Badge variant="secondary" className="text-xs mt-1">
+                                {product.category}
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {product.hsn}
+                        </TableCell>
+                        <TableCell>₹{rate}</TableCell>
+                        <TableCell>₹{product.retailRate}</TableCell>
+                        <TableCell>
+                          <div className={`text-sm ${product.stock <= 5 ? 'text-red-600' : ''}`}>
+                            {product.stock} PCS
+                            {product.stock <= 5 && (
+                              <div className="text-xs text-red-500">Insufficient Stock</div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {selectedProduct ? (
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 w-8 p-0"
+                                onClick={() => handleQuantityChange(product.productId, selectedProduct.quantity - 1)}
+                              >
+                                <Minus className="h-3 w-3" />
+                              </Button>
+                              <span className="w-8 text-center">{selectedProduct.quantity}</span>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 w-8 p-0"
+                                onClick={() => handleQuantityChange(product.productId, selectedProduct.quantity + 1)}
+                              >
+                                <Plus className="h-3 w-3" />
+                              </Button>
+                              <span className="text-sm text-muted-foreground ml-2">PCS</span>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 w-8 p-0 text-red-500"
+                                onClick={() => handleRemoveProduct(product.productId)}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleAddProduct(product)}
+                              className="text-blue-600"
+                            >
+                              + Add
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+
+          {/* Selected Items Side */}
+          {selectedProducts.length > 0 && (
+            <div className="w-80 border-l pl-4 flex flex-col">
+              <div className="font-medium mb-4">
+                Show {selectedProducts.length} Items Selected
+              </div>
+              
+              <div className="flex-1 overflow-auto space-y-3">
+                {selectedProducts.map((product) => {
+                  const rate = saleType === 'RETAIL' ? product.retailRate : product.wholesaleRate;
+                  const subtotal = rate * product.quantity;
+                  const discountedSubtotal = subtotal - (product.discountAmount || 0);
+                  
+                  return (
+                    <div key={product.productId} className="p-3 border rounded-lg space-y-2">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="font-medium text-sm">{product.name}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {product.hsn} • ₹{rate} × {product.quantity}
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 w-6 p-0"
+                          onClick={() => handleRemoveProduct(product.productId)}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-6 w-6 p-0"
+                          onClick={() => handleQuantityChange(product.productId, product.quantity - 1)}
+                        >
+                          <Minus className="h-3 w-3" />
+                        </Button>
+                        <span className="w-8 text-center text-sm">{product.quantity}</span>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-6 w-6 p-0"
+                          onClick={() => handleQuantityChange(product.productId, product.quantity + 1)}
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                        <span className="text-xs text-muted-foreground">PCS</span>
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-sm">
+                          <span>Subtotal:</span>
+                          <span>₹{subtotal.toFixed(2)}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="number"
+                            placeholder="Discount"
+                            className="h-6 text-xs"
+                            value={product.discountAmount || ''}
+                            onChange={(e) => handleDiscountChange(product.productId, parseFloat(e.target.value) || 0)}
+                          />
+                          <span className="text-xs">₹</span>
+                        </div>
+                        <div className="flex justify-between text-sm font-medium">
+                          <span>Total:</span>
+                          <span>₹{discountedSubtotal.toFixed(2)}</span>
+                        </div>
                       </div>
                     </div>
-                  </Button>
-                ))}
+                  );
+                })}
               </div>
-            )}
-          </div>
+              
+              <div className="border-t pt-4 mt-4">
+                <div className="flex justify-between font-bold text-lg">
+                  <span>Total Amount:</span>
+                  <span>₹{totalAmount.toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="flex justify-between pt-4 border-t">
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleDone}
+            disabled={selectedProducts.length === 0}
+          >
+            Done
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
