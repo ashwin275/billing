@@ -1687,9 +1687,10 @@ export default function EditInvoice() {
                       <div className="col-span-1">HSN</div>
                       <div className="col-span-1">Qty</div>
                       <div className="col-span-1">Rate</div>
-                      <div className="col-span-4">Discount</div>
+                      <div className="col-span-2">Discount</div>
+                      <div className="col-span-1">CGST</div>
+                      <div className="col-span-1">SGST</div>
                       <div className="col-span-1">Total</div>
-                      <div className="col-span-1">Action</div>
                     </div>
 
                     {fields.map((field, index) => {
@@ -1704,7 +1705,6 @@ export default function EditInvoice() {
                       
                       if (selectedProduct) {
                         const saleType = form.watch("saleType");
-                        const billType = form.watch("billType");
                         const unitPrice = saleType === 'RETAIL' ? selectedProduct.retailRate : selectedProduct.wholesaleRate;
                         
                         const baseAmount = unitPrice * quantity;
@@ -1713,10 +1713,14 @@ export default function EditInvoice() {
                         if (discountType === 'PERCENTAGE') {
                           discountAmount = (baseAmount * discount) / 100;
                         } else {
-                          discountAmount = discount; // Apply discount to total, not per quantity
+                          discountAmount = discount;
                         }
                         
                         itemTotal = baseAmount - discountAmount;
+                        
+                        // Calculate CGST/SGST for display only (not added to total)
+                        cgstAmount = (itemTotal * (selectedProduct.cgst || 0)) / 100;
+                        sgstAmount = (itemTotal * (selectedProduct.sgst || 0)) / 100;
                       }
 
                       return (
