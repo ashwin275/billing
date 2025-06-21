@@ -219,7 +219,7 @@ export default function Reports() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-blue-600">{timeInsights.peakHour}:00</div>
+                  <div className="text-3xl font-bold text-slate-700">{timeInsights.peakHour}:00</div>
                   <p className="text-sm text-muted-foreground">Peak Hour</p>
                 </div>
                 <div className="text-center">
@@ -249,7 +249,7 @@ export default function Reports() {
                   <XAxis dataKey="period" />
                   <YAxis />
                   <Tooltip formatter={(value) => [`₹${value}`, 'Sales']} />
-                  <Line type="monotone" dataKey="totalSales" stroke="#8884d8" strokeWidth={2} />
+                  <Line type="monotone" dataKey="totalSales" stroke="#64748b" strokeWidth={2} />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
@@ -267,7 +267,7 @@ export default function Reports() {
                   <XAxis dataKey="productName" />
                   <YAxis />
                   <Tooltip />
-                  <Bar dataKey="totalQuantity" fill="#8884d8" />
+                  <Bar dataKey="totalQuantity" fill="#94a3b8" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -288,11 +288,11 @@ export default function Reports() {
                     labelLine={false}
                     label={({ productName, percent }) => `${productName} ${(percent * 100).toFixed(0)}%`}
                     outerRadius={80}
-                    fill="#8884d8"
+                    fill="#94a3b8"
                     dataKey="quantityMoved"
                   >
                     {inventoryMovement.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell key={`cell-${index}`} fill={LIGHT_COLORS[index % LIGHT_COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip />
