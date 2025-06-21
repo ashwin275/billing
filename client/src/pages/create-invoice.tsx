@@ -1204,8 +1204,7 @@ export default function CreateInvoice() {
                           </div>
                         </div>
 
-                        <!-- Footer Wave -->
-                        <div class="footer-wave"></div>
+
                       </div>
                       
                       <script>

@@ -1271,8 +1271,7 @@ export default function EditInvoice() {
                           </div>
                         </div>
 
-                        <!-- Footer Wave -->
-                        <div class="footer-wave"></div>
+
                       </div>
                       
                       <script>
