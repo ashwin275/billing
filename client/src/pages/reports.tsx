@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Calendar, TrendingUp, Package, Users, Clock, AlertTriangle, Percent, ArrowUpDown } from "lucide-react";
+import { Calendar, TrendingUp, Package, Users, Clock, AlertTriangle, Percent, ArrowUpDown, Store } from "lucide-react";
+import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -81,6 +82,33 @@ export default function Reports() {
   const totalDiscounts = Array.isArray(discountSummary) ? discountSummary.reduce((sum: number, item: any) => sum + item.discount, 0) : 0;
   const totalInventoryMoved = Array.isArray(inventoryMovement) ? inventoryMovement.reduce((sum: number, item: any) => sum + item.quantityMoved, 0) : 0;
 
+  if (!Array.isArray(shops) || shops.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="max-w-7xl mx-auto">
+          <Card className="max-w-md mx-auto mt-20">
+            <CardHeader>
+              <CardTitle className="text-center flex items-center justify-center gap-2">
+                <Store className="h-6 w-6" />
+                No Shops Available
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+              <p className="text-gray-600">
+                You need to add shops before viewing reports.
+              </p>
+              <Link href="/dashboard">
+                <Button className="w-full">
+                  Go to Dashboard
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   if (!selectedShopId) {
     return (
       <div className="min-h-screen bg-gray-50 p-4">
@@ -95,7 +123,7 @@ export default function Reports() {
                   <SelectValue placeholder="Choose a shop to view reports" />
                 </SelectTrigger>
                 <SelectContent>
-                  {Array.isArray(shops) && shops.map((shop) => (
+                  {shops.map((shop) => (
                     <SelectItem key={shop.shopId} value={shop.shopId.toString()}>
                       {shop.name} - {shop.place}
                     </SelectItem>

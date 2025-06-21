@@ -214,7 +214,7 @@ export default function CreateInvoice() {
     if (!selectedCustomer || !selectedShop) return { subtotal: 0, totalTax: 0, totalDiscount: 0, grandTotal: 0, items: [] };
 
     const items = formData.saleItems.map(item => {
-      const product = products.find(p => p.productId === item.productId);
+      const product = Array.isArray(products) ? products.find(p => p.productId === item.productId) : null;
       if (!product) return null;
 
       const unitPrice = formData.saleType === 'RETAIL' ? product.retailRate : product.wholesaleRate;
@@ -313,7 +313,7 @@ export default function CreateInvoice() {
   // Update selected customer when form changes
   useEffect(() => {
     const customerId = form.watch("customerId");
-    const customer = customers.find(c => c.customerId === customerId);
+    const customer = Array.isArray(customers) ? customers.find(c => c.customerId === customerId) : null;
     setSelectedCustomer(customer || null);
   }, [form.watch("customerId"), customers]);
 
@@ -1687,7 +1687,7 @@ export default function CreateInvoice() {
                     </div>
 
                     {fields.map((field, index) => {
-                      const selectedProduct = products.find(p => p.productId === form.watch(`saleItems.${index}.productId`));
+                      const selectedProduct = Array.isArray(products) ? products.find(p => p.productId === form.watch(`saleItems.${index}.productId`)) : null;
                       const quantity = form.watch(`saleItems.${index}.quantity`) || 0;
                       const discount = form.watch(`saleItems.${index}.discount`) || 0;
                       const discountType = form.watch(`saleItems.${index}.discountType`) || "PERCENTAGE";
