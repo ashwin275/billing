@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
 import { shopsApi, reportsApi } from "@/lib/api";
 
-const LIGHT_COLORS = ['#cbd5e1', '#94a3b8', '#64748b', '#475569', '#334155', '#1e293b'];
+const LIGHT_COLORS = ['#86efac', '#93c5fd', '#fbbf24', '#f9a8d4', '#a78bfa', '#34d399'];
 
 export default function Reports() {
   const [selectedShopId, setSelectedShopId] = useState<number | null>(null);
@@ -219,15 +219,15 @@ export default function Reports() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-slate-700">{timeInsights.peakHour}:00</div>
+                  <div className="text-3xl font-bold text-emerald-600">{timeInsights.peakHour}:00</div>
                   <p className="text-sm text-muted-foreground">Peak Hour</p>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-green-600">{timeInsights.bestDay}</div>
+                  <div className="text-3xl font-bold text-blue-600">{timeInsights.bestDay}</div>
                   <p className="text-sm text-muted-foreground">Best Day</p>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-red-600">{timeInsights.worstDay}</div>
+                  <div className="text-3xl font-bold text-orange-600">{timeInsights.worstDay}</div>
                   <p className="text-sm text-muted-foreground">Worst Day</p>
                 </div>
               </div>
@@ -249,7 +249,7 @@ export default function Reports() {
                   <XAxis dataKey="period" />
                   <YAxis />
                   <Tooltip formatter={(value) => [`₹${value}`, 'Sales']} />
-                  <Line type="monotone" dataKey="totalSales" stroke="#64748b" strokeWidth={2} />
+                  <Line type="monotone" dataKey="totalSales" stroke="#34d399" strokeWidth={3} />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
@@ -267,7 +267,10 @@ export default function Reports() {
                   <XAxis dataKey="productName" />
                   <YAxis />
                   <Tooltip />
-                  <Bar dataKey="totalQuantity" fill="#94a3b8" />
+                  <Bar dataKey="totalQuantity" fill="#93c5fd" />
+                  {topProducts.map((entry, index) => (
+                    <Bar key={`bar-${index}`} dataKey="totalQuantity" fill={LIGHT_COLORS[index % LIGHT_COLORS.length]} />
+                  ))}
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -288,7 +291,7 @@ export default function Reports() {
                     labelLine={false}
                     label={({ productName, percent }) => `${productName} ${(percent * 100).toFixed(0)}%`}
                     outerRadius={80}
-                    fill="#94a3b8"
+                    fill="#fbbf24"
                     dataKey="quantityMoved"
                   >
                     {inventoryMovement.map((entry, index) => (
