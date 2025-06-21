@@ -1722,30 +1722,33 @@ export default function CreateInvoice() {
 
                       return (
                         <div key={field.id} className="grid grid-cols-12 gap-4 p-4 border-b items-center">
-                          <div className="col-span-12">
-                            <ProductSearchDialog
-                              products={Array.isArray(products) ? products : []}
-                              saleType={form.watch("saleType")}
-                              onSelect={(selectedProducts) => {
-                                // Clear existing items and add selected products
-                                const currentItems = form.getValues('saleItems') || [];
-                                
-                                // Add new products to the form
-                                selectedProducts.forEach((product, idx) => {
-                                  const rate = form.watch("saleType") === 'RETAIL' ? product.retailRate : product.wholesaleRate;
-                                  form.setValue(`saleItems.${currentItems.length + idx}.productId`, product.productId);
-                                  form.setValue(`saleItems.${currentItems.length + idx}.quantity`, product.quantity);
-                                  form.setValue(`saleItems.${currentItems.length + idx}.unitPrice`, rate);
-                                  form.setValue(`saleItems.${currentItems.length + idx}.discount`, product.discountAmount || 0);
-                                  form.setValue(`saleItems.${currentItems.length + idx}.discountType`, "AMOUNT");
-                                });
-                              }}
-                              trigger={
-                                <Button variant="outline" className="w-full border-dashed">
-                                  <Plus className="mr-2 h-4 w-4" />
-                                  Add Items
-                                </Button>
-                              }
+                          <div className="col-span-3">
+                            <FormField
+                              control={form.control}
+                              name={`saleItems.${index}.productId`}
+                              render={({ field }) => (
+                                <Select onValueChange={(value) => {
+                                  const productId = parseInt(value);
+                                  const product = Array.isArray(products) ? products.find(p => p.productId === productId) : null;
+                                  const rate = form.watch("saleType") === 'RETAIL' ? product?.retailRate : product?.wholesaleRate;
+                                  field.onChange(productId);
+                                  form.setValue(`saleItems.${index}.unitPrice`, rate || 0);
+                                }} value={field.value?.toString()}>
+                                  <SelectTrigger className="border-dashed">
+                                    <SelectValue placeholder="Select product" />
+                                  </SelectTrigger>
+                                  <SelectContent className="max-h-60 overflow-y-auto">
+                                    {Array.isArray(products) ? products.map((product) => (
+                                      <SelectItem key={product.productId} value={product.productId.toString()}>
+                                        <div className="flex flex-col">
+                                          <span className="font-medium">{product.name}</span>
+                                          <span className="text-xs text-gray-500">HSN: {product.hsn} | Stock: {product.stock}</span>
+                                        </div>
+                                      </SelectItem>
+                                    )) : null}
+                                  </SelectContent>
+                                </Select>
+                              )}
                             />
                           </div>
                           

@@ -53,8 +53,8 @@ export function ProductSearchDialog({
     if (!Array.isArray(products)) return [];
     
     return products.filter(product => {
-      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.hsn.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      const matchesSearch = product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (product.hsn && String(product.hsn).toLowerCase().includes(searchTerm.toLowerCase())) ||
         (product.category && product.category.toLowerCase().includes(searchTerm.toLowerCase()));
       
       const matchesCategory = selectedCategory === "all" || product.category === selectedCategory;
@@ -127,7 +127,7 @@ export function ProductSearchDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-7xl max-h-[95vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Add Items</DialogTitle>
         </DialogHeader>
