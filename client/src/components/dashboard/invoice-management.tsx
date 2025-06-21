@@ -1,1369 +1,654 @@
-// Invoice management component with comprehensive billing functionality
-import { useState, useEffect } from "react";
+// Invoice Management Component with PDF Generation
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm, useFieldArray } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { 
-  FileText, Plus, Trash2, Download, Search, Eye, Edit,
-  Calculator, Receipt, Users, Store, ArrowUpDown, ArrowUp, ArrowDown,
-  Calendar, CreditCard, DollarSign, Package, X
-} from "lucide-react";
-import { Link } from "wouter";
-
+import { Eye, Download, Edit, Trash2, Plus, Search, Filter, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertTriangle } from "lucide-react";
+import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { invoicesApi } from "@/lib/api";
+import { Invoice } from "@/types/api";
+import InvoiceTemplate from "@/components/invoice/InvoiceTemplate";
 
-import { invoicesApi, customersApi, shopsApi, productsApi, handleApiError } from "@/lib/api";
-import { cn } from "@/lib/utils";
-import { Invoice, Customer, Shop, Product, InvoiceInput, SaleItemInput } from "@/types/api";
-
-// Form validation schema for invoices
-const invoiceSchema = z.object({
-  customerId: z.number().min(1, "Please select a customer"),
-  shopId: z.number().min(1, "Please select a shop"),
-  discount: z.number().min(0, "Discount cannot be negative"),
-  discountType: z.enum(['PERCENTAGE', 'AMOUNT']),
-  amountPaid: z.number().min(0, "Amount paid cannot be negative"),
-  paymentMode: z.enum(['CASH', 'CARD', 'UPI', 'CHEQUE', 'BANK_TRANSFER']),
-  paymentStatus: z.enum(['PAID', 'PENDING', 'OVERDUE']),
-  remark: z.string().optional(),
-  dueDate: z.string().nullable().optional(),
-  billType: z.enum(['GST', 'NON_GST']),
-  saleType: z.enum(['RETAIL', 'WHOLESALE']),
-  transactionId: z.string().min(1, "Transaction ID is required"),
-  termsAndConditions: z.string().optional(),
-  signatureType: z.enum(['NONE', 'IMAGE', 'DIGITAL']).optional(),
-  signatureData: z.string().optional(),
-  useCustomBillingAddress: z.boolean().optional(),
-  customBillingAddress: z.string().optional(),
-  saleItems: z.array(z.object({
-    productId: z.number().min(1, "Please select a product"),
-    quantity: z.number().min(1, "Quantity must be at least 1"),
-    discount: z.number().min(0, "Discount cannot be negative"),
-    discountType: z.enum(['PERCENTAGE', 'AMOUNT']),
-  })).min(1, "At least one product is required"),
-});
-
-type InvoiceFormData = z.infer<typeof invoiceSchema>;
-
-// Customer creation schema
-const customerSchema = z.object({
-  name: z.string().min(1, "Customer name is required"),
-  place: z.string().min(1, "Place is required"),
-  phone: z.string().min(10, "Phone number must be at least 10 digits"),
-  shopId: z.number().min(1, "Shop is required"),
-});
-
-type CustomerFormData = z.infer<typeof customerSchema>;
-
-interface InvoicePreview {
-  customer: Customer;
-  shop: Shop;
-  items: Array<{
-    product: Product;
-    quantity: number;
-    discount: number;
-    discountType: 'PERCENTAGE' | 'AMOUNT';
-    discountAmount: number;
-    unitPrice: number;
-    lineTotal: number;
-    cgst: number;
-    sgst: number;
-    cgstAmount: number;
-    sgstAmount: number;
-    taxAmount: number;
-    totalPrice: number;
-  }>;
-  subtotal: number;
-  totalDiscount: number;
-  totalTax: number;
-  grandTotal: number;
-  dueDate?: string | null;
-  termsAndConditions?: string;
-  signatureType?: 'NONE' | 'IMAGE' | 'DIGITAL';
-  signatureData?: string;
-  useCustomBillingAddress?: boolean;
-  customBillingAddress?: string;
-}
-
-/**
- * InvoiceManagement component for creating and managing invoices
- */
-export default function InvoiceManagement() {
+export default function InvoiceManagementClean() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
-  const [isCustomerDialogOpen, setIsCustomerDialogOpen] = useState(false);
-  const [invoicePreview, setInvoicePreview] = useState<InvoicePreview | null>(null);
   const [sortField, setSortField] = useState<keyof Invoice>("invoiceDate");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Form for creating invoices
-  const form = useForm<InvoiceFormData>({
-    resolver: zodResolver(invoiceSchema),
-    defaultValues: {
-      customerId: 0,
-      shopId: 0,
-      discount: 0,
-      discountType: 'AMOUNT',
-      amountPaid: 0,
-      paymentMode: 'CASH',
-      paymentStatus: 'PAID',
-      remark: '',
-      dueDate: null,
-      billType: 'GST',
-      saleType: 'RETAIL',
-      transactionId: '',
-      termsAndConditions: '',
-      signatureType: 'NONE',
-      signatureData: '',
-      useCustomBillingAddress: false,
-      customBillingAddress: '',
-      saleItems: [{ productId: 0, quantity: 1, discount: 0, discountType: 'AMOUNT' }],
-    },
-  });
-
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "saleItems",
-  });
-
-  // Customer creation form
-  const customerForm = useForm<CustomerFormData>({
-    resolver: zodResolver(customerSchema),
-    defaultValues: {
-      name: "",
-      place: "",
-      phone: "",
-      shopId: 0,
-    },
-  });
-
-  // Fetch data
-  const { data: invoices, isLoading, error } = useQuery({
-    queryKey: ["/api/invoice/all"],
+  // Fetch invoices
+  const { data: invoices = [], isLoading } = useQuery({
+    queryKey: ["/api/invoices/all"],
     queryFn: () => invoicesApi.getAllInvoices(),
   });
 
-  const { data: customers } = useQuery({
-    queryKey: ["/api/customer/all"],
-    queryFn: () => customersApi.getAllCustomers(),
-  });
-
-  const { data: shops } = useQuery({
-    queryKey: ["/api/shop/all"],
-    queryFn: () => shopsApi.getAllShops(),
-  });
-
-  const { data: products } = useQuery({
-    queryKey: ["/api/products/all"],
-    queryFn: () => productsApi.getAllProducts(),
-  });
-
-  // Add invoice mutation
-  const addInvoiceMutation = useMutation({
-    mutationFn: async (invoiceData: InvoiceInput) => {
-      const response = await invoicesApi.addInvoice(invoiceData);
-      return response;
-    },
+  // Delete invoice mutation
+  const deleteInvoiceMutation = useMutation({
+    mutationFn: (invoiceId: number) => invoicesApi.deleteInvoice(invoiceId),
     onSuccess: () => {
       toast({
-        title: "Invoice created",
-        description: "Invoice has been successfully created.",
+        title: "Success",
+        description: "Invoice has been permanently deleted.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/invoice/all"] });
-      setIsCreateDialogOpen(false);
-      form.reset();
-      // PDF will be generated on demand from the table
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices/all"] });
     },
     onError: (error: any) => {
-      let errorMessage = "Failed to create invoice. Please try again.";
-      
-      if (error?.response?.data) {
-        const errorData = error.response.data;
-        errorMessage = errorData.detail || errorData.title || errorMessage;
-      } else if (error?.detail) {
-        errorMessage = error.detail;
-      } else if (error?.title) {
-        errorMessage = error.title;
-      } else if (error?.message) {
-        errorMessage = error.message;
-      }
-      
       toast({
-        title: "Failed to create invoice",
-        description: errorMessage,
+        title: "Delete Failed",
+        description: error?.detail || error?.message || "Unable to delete invoice. Please try again.",
         variant: "destructive",
       });
     },
   });
-
-  // Add customer mutation
-  const addCustomerMutation = useMutation({
-    mutationFn: async (customerData: any) => {
-      const response = await customersApi.addCustomer(customerData);
-      return response;
-    },
-    onSuccess: (data, variables) => {
-      toast({
-        title: "Customer added",
-        description: "Customer has been successfully added.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/customer/all"] });
-      setIsCustomerDialogOpen(false);
-      customerForm.reset();
-      
-      // Auto-select the newly created customer in the invoice form
-      // Since we don't get the ID back, we'll refresh and let user select manually
-    },
-    onError: (error: any) => {
-      let errorMessage = "Failed to add customer. Please try again.";
-      
-      if (error?.response?.data) {
-        const errorData = error.response.data;
-        errorMessage = errorData.detail || errorData.title || errorMessage;
-      } else if (error?.detail) {
-        errorMessage = error.detail;
-      } else if (error?.title) {
-        errorMessage = error.title;
-      } else if (error?.message) {
-        errorMessage = error.message;
-      }
-      
-      toast({
-        title: "Failed to add customer",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    },
-  });
-
-  /**
-   * Calculate invoice totals with detailed product-wise breakdown
-   */
-  const calculateInvoiceTotals = (formData: InvoiceFormData) => {
-    if (!customers || !shops || !products) return null;
-
-    const customer = customers.find(c => c.customerId === formData.customerId);
-    const shop = shops.find(s => s.shopId === formData.shopId);
-
-    if (!customer || !shop) return null;
-
-    const items = formData.saleItems.map(item => {
-      const product = products.find(p => p.productId === item.productId);
-      if (!product) return null;
-
-      const unitPrice = formData.saleType === 'RETAIL' ? product.retailRate : product.wholesaleRate;
-      
-      // Calculate discount amount based on type
-      let discountAmount = 0;
-      if (item.discountType === 'PERCENTAGE') {
-        discountAmount = (unitPrice * item.discount) / 100;
-      } else {
-        discountAmount = item.discount;
-      }
-      
-      const discountedPrice = unitPrice - discountAmount;
-      const lineTotal = discountedPrice * item.quantity;
-      
-      // Calculate CGST and SGST from product data
-      const cgstRate = formData.billType === 'GST' ? product.cgst : 0;
-      const sgstRate = formData.billType === 'GST' ? product.sgst : 0;
-      
-      const cgstAmount = (lineTotal * cgstRate) / 100;
-      const sgstAmount = (lineTotal * sgstRate) / 100;
-      const taxAmount = cgstAmount + sgstAmount;
-      const totalPrice = lineTotal; // Don't add tax to total price
-
-      return {
-        product,
-        quantity: item.quantity,
-        discount: item.discount,
-        discountType: item.discountType,
-        discountAmount,
-        unitPrice,
-        lineTotal,
-        cgst: cgstRate,
-        sgst: sgstRate,
-        cgstAmount,
-        sgstAmount,
-        taxAmount,
-        totalPrice,
-      };
-    }).filter(Boolean);
-
-    const subtotal = items.reduce((sum, item) => sum + item!.lineTotal, 0);
-    const totalTax = items.reduce((sum, item) => sum + item!.taxAmount, 0);
-    
-    // Calculate overall discount
-    let totalDiscount = 0;
-    if (formData.discountType === 'PERCENTAGE') {
-      totalDiscount = (subtotal * formData.discount) / 100;
-    } else {
-      totalDiscount = formData.discount;
-    }
-    
-    const grandTotal = subtotal - totalDiscount; // Exclude tax from grand total
-
-    return {
-      customer,
-      shop,
-      items: items as any[],
-      subtotal,
-      totalDiscount,
-      totalTax,
-      grandTotal,
-      dueDate: formData.dueDate,
-      termsAndConditions: formData.termsAndConditions,
-      signatureType: formData.signatureType,
-      signatureData: formData.signatureData,
-      useCustomBillingAddress: formData.useCustomBillingAddress,
-      customBillingAddress: formData.customBillingAddress,
-    };
-  };
-
-  /**
-   * Handle form submission
-   */
-  const onSubmit = (data: InvoiceFormData) => {
-    const invoiceInput: InvoiceInput = {
-      customerId: data.customerId,
-      shopId: data.shopId,
-      discount: data.discount,
-      amountPaid: data.amountPaid,
-      paymentMode: data.paymentMode,
-      paymentStatus: data.paymentStatus,
-      remark: data.remark || '',
-      dueDate: data.dueDate || null,
-      billType: data.billType,
-      saleType: data.saleType,
-      transactionId: data.transactionId,
-      saleItems: data.saleItems,
-    };
-
-    addInvoiceMutation.mutate(invoiceInput);
-  };
-
-  /**
-   * Handle customer creation form submission
-   */
-  const onAddCustomer = (data: CustomerFormData) => {
-    const customerInput = {
-      name: data.name,
-      place: data.place,
-      phone: data.phone,
-      shopId: data.shopId,
-    };
-
-    addCustomerMutation.mutate(customerInput);
-  };
-
-  /**
-   * Handle invoice preview
-   */
-  const handlePreview = () => {
-    const formData = form.getValues();
-    const preview = calculateInvoiceTotals(formData);
-    if (preview) {
-      setInvoicePreview(preview);
-      setIsPreviewDialogOpen(true);
-    } else {
-      toast({
-        title: "Preview Error",
-        description: "Please select customer, shop, and products to preview.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  /**
-   * Generate PDF download for invoice
-   */
-  const handleDownloadPDF = async (invoice: Invoice) => {
-    // Get customer data first
-    const customer = customers?.find(c => c.customerId === invoice.customerId);
-    
-    // Create a detailed HTML invoice for printing
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-
-    const invoiceHTML = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Invoice - ${invoice.invoiceNo}</title>
-        <style>
-          body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.4; }
-          .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
-          .company { font-size: 28px; font-weight: bold; color: #333; }
-          .company-details { font-size: 14px; color: #666; margin-top: 10px; }
-          .invoice-info { display: flex; justify-content: space-between; margin-bottom: 30px; }
-          .billing-section { display: flex; justify-content: space-between; margin-bottom: 30px; }
-          .billing-box { width: 45%; border: 1px solid #ddd; padding: 15px; border-radius: 5px; }
-          .table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-          .table th, .table td { padding: 12px 8px; border: 1px solid #ddd; text-align: left; }
-          .table th { background-color: #f8f9fa; font-weight: bold; }
-          .table td { vertical-align: top; }
-          .totals { margin-top: 20px; text-align: right; width: 300px; margin-left: auto; }
-          .total-row { display: flex; justify-content: space-between; margin: 8px 0; padding: 5px 0; }
-          .subtotal { border-top: 1px solid #ddd; padding-top: 8px; }
-          .grand-total { font-weight: bold; font-size: 18px; border-top: 2px solid #333; padding-top: 8px; }
-          .tax-breakdown { font-size: 14px; color: #666; }
-          .footer { margin-top: 40px; text-align: center; font-size: 12px; color: #666; }
-          .payment-info { margin-top: 20px; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <div class="company">${invoice.shop?.name || 'Shop Name'}</div>
-          <div class="company-details">
-            ${invoice.shop?.place || 'Location'}<br>
-            ${invoice.shop?.owner?.phone || 'Phone'} | ${invoice.shop?.owner?.email || 'Email'}
-          </div>
-        </div>
-        
-        <div class="invoice-info">
-          <div>
-            <strong>Invoice #:</strong> ${invoice.invoiceNo}<br>
-            <strong>Date:</strong> ${invoice.invoiceDate}<br>
-            <strong>Sales ID:</strong> ${invoice.salesId}
-          </div>
-          <div>
-            <strong>Payment Mode:</strong> ${invoice.paymentMode}<br>
-            <strong>Status:</strong> ${invoice.paymentStatus}<br>
-            ${invoice.dueDate ? `<strong>Due Date:</strong> ${invoice.dueDate}<br>` : ''}
-          </div>
-        </div>
-
-        <div class="billing-section">
-          <div class="billing-box">
-            <strong>Bill To:</strong><br>
-            ${customer ? `
-              ${customer.name}<br>
-              ${customer.place}<br>
-              Phone: ${customer.phone}
-            ` : `
-              Customer ID: ${invoice.customerId}<br>
-              Address: Not Available
-            `}
-          </div>
-          <div class="billing-box">
-            <strong>Bill From:</strong><br>
-            ${invoice.shop?.name || 'Shop Name'}<br>
-            ${invoice.shop?.place || 'Location'}<br>
-            ${invoice.shop?.owner?.phone || 'Phone'}
-          </div>
-        </div>
-
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Item</th>
-              <th>HSN</th>
-              <th>Qty</th>
-              <th>Rate</th>
-              <th>CGST</th>
-              <th>SGST</th>
-              <th>Tax</th>
-              <th>Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td colspan="8" style="text-align: center; padding: 20px; color: #666;">
-                Product details not available in current invoice data
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div class="payment-info">
-          <strong>Remarks:</strong> ${invoice.remark || 'No remarks'}
-        </div>
-
-        <div class="totals">
-          <div class="total-row subtotal">
-            <span>Subtotal:</span>
-            <span>₹${(invoice.totalAmount - invoice.tax).toFixed(2)}</span>
-          </div>
-          <div class="total-row tax-breakdown">
-            <span>Tax:</span>
-            <span>₹${invoice.tax.toFixed(2)}</span>
-          </div>
-          <div class="total-row">
-            <span>Discount:</span>
-            <span>₹${invoice.discount.toFixed(2)}</span>
-          </div>
-          <div class="total-row grand-total">
-            <span>Grand Total:</span>
-            <span>₹${invoice.totalAmount.toFixed(2)}</span>
-          </div>
-          <div class="total-row">
-            <span>Amount Paid:</span>
-            <span>₹${invoice.amountPaid?.toFixed(2) || '0.00'}</span>
-          </div>
-        </div>
-
-        <div class="footer">
-          <p>Thank you for your business!</p>
-          <p>Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</p>
-        </div>
-      </body>
-      </html>
-    `;
-
-    printWindow.document.write(invoiceHTML);
-    printWindow.document.close();
-    printWindow.print();
-  };
-
-  /**
-   * Auto-generate transaction ID
-   */
-  const generateTransactionId = () => {
-    const timestamp = Date.now();
-    const random = Math.floor(Math.random() * 1000);
-    return `TXN${timestamp}${random}`;
-  };
-
-  // Auto-generate transaction ID when form opens
-  useEffect(() => {
-    if (isCreateDialogOpen && !form.getValues('transactionId')) {
-      form.setValue('transactionId', generateTransactionId());
-    }
-  }, [isCreateDialogOpen, form]);
 
   // Filter and sort invoices
-  const filteredInvoices = Array.isArray(invoices) ? invoices.filter(invoice =>
+  const filteredInvoices = invoices.filter(invoice =>
     invoice.invoiceNo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    invoice.shop?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    invoice.remark?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    invoice.paymentMode?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) : [];
+    invoice.shop?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const sortedInvoices = [...filteredInvoices].sort((a, b) => {
-    let aValue = a[sortField];
-    let bValue = b[sortField];
-
-    if (aValue == null && bValue == null) return 0;
-    if (aValue == null) return sortDirection === "asc" ? 1 : -1;
-    if (bValue == null) return sortDirection === "asc" ? -1 : 1;
-
-    if (typeof aValue === 'string' && typeof bValue === 'string') {
-      aValue = aValue.toLowerCase();
-      bValue = bValue.toLowerCase();
-    }
-
-    if (aValue < bValue) {
-      return sortDirection === "asc" ? -1 : 1;
-    }
-    if (aValue > bValue) {
-      return sortDirection === "asc" ? 1 : -1;
-    }
+    const aValue = a[sortField];
+    const bValue = b[sortField];
+    
+    if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+    if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
     return 0;
   });
 
   // Pagination
-  const totalInvoices = sortedInvoices.length;
-  const totalPages = Math.ceil(totalInvoices / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentInvoices = sortedInvoices.slice(startIndex, endIndex);
+  const paginatedInvoices = sortedInvoices.slice(startIndex, endIndex);
+  const totalPages = Math.ceil(sortedInvoices.length / itemsPerPage);
+
+  // Handle sort
+  const handleSort = (field: keyof Invoice) => {
+    if (field === sortField) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  // Handle delete with modal confirmation
+  const handleDeleteInvoice = (invoice: Invoice) => {
+    setInvoiceToDelete(invoice);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (invoiceToDelete) {
+      deleteInvoiceMutation.mutate(invoiceToDelete.invoiceId);
+      setIsDeleteDialogOpen(false);
+      setInvoiceToDelete(null);
+    }
+  };
+
+  // Handle preview
+  const handlePreview = (invoice: Invoice) => {
+    setSelectedInvoice(invoice);
+    setIsPreviewDialogOpen(true);
+  };
+
+  // Generate PDF using the new template system
+  const handleDownloadPDF = (invoiceData: Invoice) => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Invoice ${invoiceData.invoiceNo}</title>
+          <style>
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            
+            @page {
+              margin: 0;
+              size: A4 portrait;
+            }
+            
+            body {
+              font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+              background: white;
+              color: #000;
+              line-height: 1.6;
+              margin: 0;
+              padding: 0;
+            }
+            
+            .invoice-template {
+              width: 210mm;
+              min-height: 297mm;
+              margin: 0 auto;
+              background: white;
+              display: flex;
+              flex-direction: column;
+            }
+            
+            .invoice-header {
+              background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+              color: white;
+              padding: 30px;
+              position: relative;
+              overflow: hidden;
+              flex-shrink: 0;
+            }
+            
+            .invoice-header::after {
+              content: '';
+              position: absolute;
+              bottom: -20px;
+              left: 0;
+              width: 100%;
+              height: 40px;
+              background: white;
+              border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+            }
+            
+            .header-content {
+              position: relative;
+              z-index: 2;
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
+            }
+            
+            .company-info {
+              display: flex;
+              align-items: center;
+              gap: 15px;
+            }
+            
+            .company-logo {
+              width: 50px;
+              height: 50px;
+              background: rgba(255, 255, 255, 0.2);
+              border-radius: 8px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 20px;
+              font-weight: bold;
+              border: 2px solid rgba(255, 255, 255, 0.3);
+            }
+            
+            .company-details h1 {
+              font-size: 24px;
+              font-weight: 700;
+              margin: 0 0 5px 0;
+              text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            }
+            
+            .company-tagline {
+              font-size: 12px;
+              opacity: 0.9;
+              margin: 0;
+            }
+            
+            .invoice-meta {
+              text-align: right;
+            }
+            
+            .invoice-meta h2 {
+              font-size: 28px;
+              font-weight: 300;
+              letter-spacing: 2px;
+              margin: 0 0 8px 0;
+              text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            }
+            
+            .invoice-number {
+              font-size: 14px;
+              font-weight: 600;
+              margin: 3px 0;
+            }
+            
+            .invoice-date {
+              font-size: 12px;
+              opacity: 0.9;
+              margin: 3px 0;
+            }
+            
+            .invoice-body {
+              padding: 30px;
+              flex: 1;
+              display: flex;
+              flex-direction: column;
+            }
+            
+            .billing-section {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 30px;
+              margin-bottom: 25px;
+            }
+            
+            .billing-block h3 {
+              color: #2d3748;
+              font-size: 14px;
+              font-weight: 600;
+              margin: 0 0 10px 0;
+              padding-bottom: 5px;
+              border-bottom: 2px solid #e2e8f0;
+            }
+            
+            .billing-block p {
+              color: #4a5568;
+              margin: 3px 0;
+              font-size: 12px;
+            }
+            
+            .customer-name {
+              font-weight: 600;
+              font-size: 14px;
+              color: #2d3748;
+            }
+            
+            .items-table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 20px;
+              border-radius: 6px;
+              overflow: hidden;
+              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+            
+            .items-table thead {
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            }
+            
+            .items-table th {
+              color: white;
+              font-weight: 600;
+              padding: 10px 8px;
+              text-align: left;
+              font-size: 11px;
+              letter-spacing: 0.3px;
+            }
+            
+            .items-table th.text-right {
+              text-align: right;
+            }
+            
+            .items-table td {
+              padding: 8px;
+              border-bottom: 1px solid #e2e8f0;
+              color: #4a5568;
+              font-size: 11px;
+            }
+            
+            .items-table td.text-right {
+              text-align: right;
+            }
+            
+            .items-table tbody tr:last-child td {
+              border-bottom: none;
+            }
+            
+            .product-name {
+              font-weight: 600;
+              color: #2d3748;
+            }
+            
+            .totals-section {
+              display: flex;
+              justify-content: flex-end;
+              margin-bottom: 25px;
+            }
+            
+            .totals-table {
+              min-width: 250px;
+            }
+            
+            .total-row {
+              display: flex;
+              justify-content: space-between;
+              padding: 5px 0;
+              color: #4a5568;
+              font-size: 12px;
+            }
+            
+            .total-row.grand-total {
+              border-top: 2px solid #e2e8f0;
+              margin-top: 8px;
+              padding-top: 10px;
+              font-size: 16px;
+              font-weight: 700;
+              color: #2d3748;
+            }
+            
+            .total-row.balance {
+              font-weight: 600;
+              font-size: 14px;
+            }
+            
+            .balance.positive {
+              color: #e53e3e;
+            }
+            
+            .balance.negative {
+              color: #38a169;
+            }
+            
+            .bottom-section {
+              margin-top: auto;
+              margin-bottom: 20px;
+            }
+            
+            .terms-section {
+              background: #f7fafc;
+              padding: 15px;
+              border-radius: 6px;
+            }
+            
+            .terms-section h3 {
+              color: #2d3748;
+              font-size: 14px;
+              font-weight: 600;
+              margin: 0 0 10px 0;
+            }
+            
+            .terms-section p {
+              color: #4a5568;
+              font-size: 11px;
+              margin: 5px 0;
+              line-height: 1.4;
+            }
+            
+            .remarks-section {
+              margin-top: 15px;
+              padding-top: 10px;
+              border-top: 1px solid #e2e8f0;
+            }
+            
+            .remarks-section strong {
+              color: #2d3748;
+            }
+            
+
+            
+            @media print {
+              body {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="invoice-template">
+            <!-- Header -->
+            <div class="invoice-header">
+              <div class="header-content">
+                <div class="company-info">
+                  <div class="company-logo">
+                    ${invoiceData.shop?.name?.charAt(0) || 'S'}
+                  </div>
+                  <div class="company-details">
+                    <h1>${invoiceData.shop?.name || 'Shop Name'}</h1>
+                    <p class="company-tagline">Quality Products & Services</p>
+                  </div>
+                </div>
+                <div class="invoice-meta">
+                  <h2>INVOICE</h2>
+                  <div class="invoice-number">#${invoiceData.invoiceNo}</div>
+                  <div class="invoice-date">
+                    ${new Date(invoiceData.invoiceDate).toLocaleDateString('en-IN', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Body -->
+            <div class="invoice-body">
+              <!-- Billing Information -->
+              <div class="billing-section">
+                <div class="billing-block">
+                  <h3>Bill To</h3>
+                  <div class="customer-name">
+                    ${invoiceData.sales?.customerId ? 'Customer Name' : 'Walk-in Customer'}
+                  </div>
+                  <p>Phone: ${invoiceData.sales?.customerId || 'N/A'}</p>
+                  <p>Location: ${invoiceData.shop?.place || 'Shop Location'}</p>
+                </div>
+                <div class="billing-block">
+                  <h3>Payment Details</h3>
+                  <p><strong>Status:</strong> ${invoiceData.paymentStatus}</p>
+                  <p><strong>Mode:</strong> ${invoiceData.paymentMode}</p>
+                  <p><strong>Type:</strong> ${invoiceData.billType} ${invoiceData.saleType}</p>
+                  ${invoiceData.dueDate ? `<p><strong>Due Date:</strong> ${new Date(invoiceData.dueDate).toLocaleDateString('en-IN')}</p>` : ''}
+                  ${invoiceData.transactionId ? `<p><strong>Transaction ID:</strong> ${invoiceData.transactionId}</p>` : ''}
+                </div>
+              </div>
+
+              <!-- Items Table -->
+              <table class="items-table">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>HSN</th>
+                    <th class="text-right">Qty</th>
+                    <th class="text-right">Rate</th>
+                    <th class="text-right">Discount</th>
+                    <th class="text-right">CGST</th>
+                    <th class="text-right">SGST</th>
+                    <th class="text-right">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${invoiceData.saleItems && invoiceData.saleItems.length > 0 ? (
+                    invoiceData.saleItems.map(item => `
+                      <tr>
+                        <td>
+                          <div class="product-name">${item.product?.name || 'Product'}</div>
+                          ${item.product?.description ? `<div style="font-size: 10px; color: #718096;">${item.product.description}</div>` : ''}
+                        </td>
+                        <td>${item.product?.hsn || 'N/A'}</td>
+                        <td class="text-right">${item.quantity}</td>
+                        <td class="text-right">₹${item.unitPrice?.toFixed(2) || '0.00'}</td>
+                        <td class="text-right">₹${item.discount?.toFixed(2) || '0.00'}</td>
+                        <td class="text-right">₹${item.cgst?.toFixed(2) || '0.00'}</td>
+                        <td class="text-right">₹${item.sgst?.toFixed(2) || '0.00'}</td>
+                        <td class="text-right">₹${item.totalPrice?.toFixed(2) || '0.00'}</td>
+                      </tr>
+                    `).join('')
+                  ) : '<tr><td colspan="8" style="text-align: center; padding: 20px; color: #9ca3af;">No items found</td></tr>'}
+                </tbody>
+              </table>
+
+              <!-- Totals -->
+              <div class="totals-section">
+                <div class="totals-table">
+                  <div class="total-row">
+                    <span>Subtotal:</span>
+                    <span>₹${((invoiceData.totalAmount || 0) - (invoiceData.tax || 0)).toFixed(2)}</span>
+                  </div>
+                  <div class="total-row">
+                    <span>Tax:</span>
+                    <span>₹${(invoiceData.tax || 0).toFixed(2)}</span>
+                  </div>
+                  <div class="total-row">
+                    <span>Discount:</span>
+                    <span>₹${(invoiceData.discount || 0).toFixed(2)}</span>
+                  </div>
+                  <div class="total-row grand-total">
+                    <span>Total Amount:</span>
+                    <span>₹${(invoiceData.totalAmount || 0).toFixed(2)}</span>
+                  </div>
+                  <div class="total-row">
+                    <span>Amount Paid:</span>
+                    <span>₹${(invoiceData.amountPaid || 0).toFixed(2)}</span>
+                  </div>
+                  <div class="total-row balance ${((invoiceData.totalAmount || 0) - (invoiceData.amountPaid || 0)) > 0 ? 'positive' : 'negative'}">
+                    <span>Balance:</span>
+                    <span>₹${((invoiceData.totalAmount || 0) - (invoiceData.amountPaid || 0)).toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Bottom Section -->
+              <div class="bottom-section">
+                <div class="terms-section">
+                  <h3>Terms & Conditions</h3>
+                  <p>1. Payment is due within 30 days of invoice date.</p>
+                  <p>2. Late payments may incur additional charges.</p>
+                  <p>3. Goods once sold cannot be returned without prior approval.</p>
+                  <p>4. Any disputes must be resolved within 7 days of delivery.</p>
+                  
+                  ${invoiceData.remark ? `
+                    <div class="remarks-section">
+                      <strong>Remarks:</strong><br />
+                      ${invoiceData.remark}
+                    </div>
+                  ` : ''}
+                </div>
+                
+              </div>
+            </div>
+          </div>
+          
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(function() { window.close(); }, 1000);
+            }
+          </script>
+        </body>
+      </html>
+    `);
+    
+    printWindow.document.close();
+  };
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-slate-900">Invoice Management</h1>
-        </div>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-center h-32">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              <span className="ml-2">Loading invoices...</span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-slate-900">Invoice Management</h1>
-        </div>
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-center">
-              <p className="text-destructive mb-4">Failed to load invoices. Please try again.</p>
-              <Button onClick={() => window.location.reload()}>Refresh Page</Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <Card>
+        <CardContent className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <span className="ml-2">Loading invoices...</span>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
-          <div className="min-w-0 flex-1">
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 truncate">Invoice Management</h1>
-            <p className="text-sm sm:text-base text-slate-600 mt-1">Create and manage invoices for your business</p>
-          </div>
-          <Link href="/create-invoice">
-            <Button className="w-full sm:w-auto">
-              <Plus className="h-4 w-4 mr-2 flex-shrink-0" />
-              <span>Create Invoice</span>
-            </Button>
-          </Link>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="customerId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Customer</FormLabel>
-                          <Select onValueChange={(value) => {
-                            if (value === "add_new") {
-                              // Open add customer dialog
-                              setIsCustomerDialogOpen(true);
-                            } else {
-                              field.onChange(parseInt(value));
-                            }
-                          }} value={field.value?.toString()}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select customer" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="add_new" className="text-blue-600 font-medium">
-                                + Add New Customer
-                              </SelectItem>
-                              {Array.isArray(customers) ? customers.map((customer) => (
-                                <SelectItem key={customer.customerId} value={customer.customerId.toString()}>
-                                  {customer.name} - {customer.place}
-                                </SelectItem>
-                              )) : null}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="shopId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Shop</FormLabel>
-                          <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select shop" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {Array.isArray(shops) ? shops.map((shop) => (
-                                <SelectItem key={shop.shopId} value={shop.shopId.toString()}>
-                                  {shop.name} - {shop.place}
-                                </SelectItem>
-                              )) : null}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  {/* Invoice Details */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="billType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Bill Type</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="GST">GST Bill</SelectItem>
-                              <SelectItem value="NON_GST">Non-GST Bill</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="saleType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Sale Type</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="RETAIL">Retail</SelectItem>
-                              <SelectItem value="WHOLESALE">Wholesale</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="transactionId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Transaction ID</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Auto-generated" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  {/* Products Section */}
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-semibold">Products</h3>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => append({ productId: 0, quantity: 1, discount: 0, discountType: 'AMOUNT' })}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Product
-                      </Button>
-                    </div>
-
-                    {fields.map((field, index) => (
-                      <div key={field.id} className="grid grid-cols-1 md:grid-cols-6 gap-4 p-4 border rounded-lg">
-                        <FormField
-                          control={form.control}
-                          name={`saleItems.${index}.productId`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Product</FormLabel>
-                              <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select product" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {Array.isArray(products) ? products.map((product) => (
-                                    <SelectItem key={product.productId} value={product.productId.toString()}>
-                                      {product.name} - ₹{product.retailRate} (CGST: {product.cgst}%, SGST: {product.sgst}%)
-                                    </SelectItem>
-                                  )) : null}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name={`saleItems.${index}.quantity`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Quantity</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  min="1"
-                                  {...field}
-                                  onChange={(e) => {
-                                    const value = e.target.value;
-                                    if (value === '') {
-                                      field.onChange('');
-                                    } else {
-                                      field.onChange(parseInt(value) || 1);
-                                    }
-                                  }}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name={`saleItems.${index}.discountType`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Discount Type</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="AMOUNT">Amount (₹)</SelectItem>
-                                  <SelectItem value="PERCENTAGE">Percentage (%)</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name={`saleItems.${index}.discount`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>
-                                Discount {form.watch(`saleItems.${index}.discountType`) === 'PERCENTAGE' ? '(%)' : '(₹)'}
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  step="0.01"
-                                  {...field}
-                                  onChange={(e) => {
-                                    const value = e.target.value;
-                                    if (value === '') {
-                                      field.onChange('');
-                                    } else {
-                                      field.onChange(parseFloat(value) || 0);
-                                    }
-                                  }}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <div className="flex flex-col justify-end space-y-2">
-                          {products && form.watch(`saleItems.${index}.productId`) && (
-                            <div className="text-xs text-muted-foreground">
-                              {(() => {
-                                const product = products.find(p => p.productId === form.watch(`saleItems.${index}.productId`));
-                                return product ? `CGST: ${product.cgst}% | SGST: ${product.sgst}%` : '';
-                              })()}
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="flex items-end">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => remove(index)}
-                            disabled={fields.length === 1}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Payment Details */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="paymentMode"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Payment Mode</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="CASH">Cash</SelectItem>
-                              <SelectItem value="CARD">Card</SelectItem>
-                              <SelectItem value="UPI">UPI</SelectItem>
-                              <SelectItem value="CHEQUE">Cheque</SelectItem>
-                              <SelectItem value="BANK_TRANSFER">Bank Transfer</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="paymentStatus"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Payment Status</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="PAID">Paid</SelectItem>
-                              <SelectItem value="PENDING">Pending</SelectItem>
-                              <SelectItem value="OVERDUE">Overdue</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="discountType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Overall Discount Type</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="AMOUNT">Amount (₹)</SelectItem>
-                              <SelectItem value="PERCENTAGE">Percentage (%)</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="discount"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>
-                            Overall Discount {form.watch('discountType') === 'PERCENTAGE' ? '(%)' : '(₹)'}
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              placeholder="0.00"
-                              {...field}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                if (value === '') {
-                                  field.onChange('');
-                                } else {
-                                  field.onChange(parseFloat(value) || 0);
-                                }
-                              }}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="amountPaid"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Amount Paid (₹)</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              placeholder="0.00"
-                              {...field}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                if (value === '') {
-                                  field.onChange('');
-                                } else {
-                                  field.onChange(parseFloat(value) || 0);
-                                }
-                              }}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  {/* Due Date */}
-                  <FormField
-                    control={form.control}
-                    name="dueDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Due Date (Optional)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="date"
-                            {...field}
-                            value={field.value || ''}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* Billing Address Options */}
-                  <div className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="useCustomBillingAddress"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <input
-                              type="checkbox"
-                              checked={field.value}
-                              onChange={field.onChange}
-                              className="rounded border border-input"
-                            />
-                          </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel>Use Custom Billing Address</FormLabel>
-                            <FormDescription>
-                              Check this to use a different billing address instead of the shop address
-                            </FormDescription>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-
-                    {form.watch('useCustomBillingAddress') && (
-                      <FormField
-                        control={form.control}
-                        name="customBillingAddress"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Custom Billing Address</FormLabel>
-                            <FormControl>
-                              <Textarea 
-                                placeholder="Enter the billing address for this invoice..."
-                                className="min-h-[100px]"
-                                {...field} 
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    )}
-                  </div>
-
-                  {/* Terms and Conditions */}
-                  <FormField
-                    control={form.control}
-                    name="termsAndConditions"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Terms and Conditions</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            placeholder="Enter terms and conditions for this invoice..."
-                            className="min-h-[100px]"
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* Signature Options */}
-                  <div className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="signatureType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Signature</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="NONE">No Signature</SelectItem>
-                              <SelectItem value="IMAGE">Upload Image</SelectItem>
-                              <SelectItem value="DIGITAL">Digital Signature</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    {form.watch('signatureType') === 'IMAGE' && (
-                      <FormField
-                        control={form.control}
-                        name="signatureData"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Upload Signature Image</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) {
-                                    const reader = new FileReader();
-                                    reader.onload = (e) => {
-                                      field.onChange(e.target?.result as string);
-                                    };
-                                    reader.readAsDataURL(file);
-                                  }
-                                }}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    )}
-
-                    {form.watch('signatureType') === 'DIGITAL' && (
-                      <FormField
-                        control={form.control}
-                        name="signatureData"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Digital Signature</FormLabel>
-                            <FormControl>
-                              <Textarea 
-                                placeholder="Enter your signature text or draw your signature using text characters..."
-                                className="min-h-[120px] font-mono text-lg"
-                                {...field} 
-                              />
-                            </FormControl>
-                            <FormDescription>
-                              You can type your name, create ASCII art signature, or use special characters for your digital signature
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    )}
-                  </div>
-
-                  <FormField
-                    control={form.control}
-                    name="remark"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Remarks</FormLabel>
-                        <FormControl>
-                          <Textarea placeholder="Additional notes..." {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="flex justify-between space-x-2 pt-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handlePreview}
-                    >
-                      <Eye className="h-4 w-4 mr-2" />
-                      Preview
-                    </Button>
-                    
-                    <div className="flex space-x-2">
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        onClick={() => setIsCreateDialogOpen(false)}
-                        disabled={addInvoiceMutation.isPending}
-                      >
-                        Cancel
-                      </Button>
-                      <Button type="submit" disabled={addInvoiceMutation.isPending}>
-                        {addInvoiceMutation.isPending ? "Creating..." : "Create Invoice"}
-                      </Button>
-                    </div>
-                  </div>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Invoice Management</h2>
+          <p className="text-muted-foreground">Manage and track all your invoices</p>
         </div>
-        
-        {/* Statistics Badges */}
-        <div className="flex flex-wrap gap-2 sm:gap-3">
-          <Badge variant="outline" className="text-xs sm:text-sm px-2 py-1">
-            {totalInvoices} of {invoices?.length || 0} Total
-          </Badge>
-          <Badge variant="default" className="text-xs sm:text-sm px-2 py-1 bg-green-600">
-            {Array.isArray(invoices) ? invoices.filter(invoice => invoice.paymentStatus === 'PAID').length : 0} Paid
-          </Badge>
-          <Badge variant="secondary" className="text-xs sm:text-sm px-2 py-1">
-            {Array.isArray(invoices) ? invoices.filter(invoice => invoice.paymentStatus === 'PENDING').length : 0} Pending
-          </Badge>
-        </div>
+        <Link href="/invoices/create">
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Invoice
+          </Button>
+        </Link>
       </div>
 
-      {/* Invoices Table */}
       <Card>
-        <CardHeader className="p-4 sm:p-6">
-          <div className="flex flex-col gap-4">
-            <CardTitle className="flex items-center space-x-2 text-base sm:text-lg">
-              <FileText className="h-4 w-4 sm:h-5 sm:w-5" />
-              <span>All Invoices</span>
-            </CardTitle>
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search invoices..."
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="pl-10 w-full"
-              />
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>All Invoices</CardTitle>
+            <div className="flex items-center space-x-2">
+              <div className="relative">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search invoices..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-8 w-[300px]"
+                />
+              </div>
+              <Button variant="outline" size="sm">
+                <Filter className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
+        <CardContent>
+          <div className="rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Invoice</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead className="hidden md:table-cell">Shop</TableHead>
-                  <TableHead>Amount</TableHead>
+                  <TableHead 
+                    className="cursor-pointer select-none"
+                    onClick={() => handleSort("invoiceNo")}
+                  >
+                    <div className="flex items-center">
+                      Invoice #
+                      <ArrowUpDown className="ml-2 h-3 w-3" />
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer select-none"
+                    onClick={() => handleSort("invoiceDate")}
+                  >
+                    <div className="flex items-center">
+                      Date
+                      <ArrowUpDown className="ml-2 h-3 w-3" />
+                    </div>
+                  </TableHead>
+                  <TableHead>Shop</TableHead>
+                  <TableHead 
+                    className="cursor-pointer select-none"
+                    onClick={() => handleSort("totalAmount")}
+                  >
+                    <div className="flex items-center">
+                      Amount
+                      <ArrowUpDown className="ml-2 h-3 w-3" />
+                    </div>
+                  </TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {currentInvoices.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8">
-                      <div className="flex flex-col items-center space-y-2">
-                        <FileText className="h-8 w-8 text-muted-foreground" />
-                        <p className="text-muted-foreground">No invoices found</p>
-                        <p className="text-sm text-muted-foreground">Create your first invoice to get started</p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  Array.isArray(currentInvoices) && currentInvoices.length > 0 ? currentInvoices.map((invoice) => (
-                    <TableRow key={invoice.invoiceId}>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <div className="font-medium">{invoice.invoiceNo || 'N/A'}</div>
-                        <div className="text-sm text-slate-600">{invoice.invoiceDate || 'N/A'}</div>
-                      </div>
+                {paginatedInvoices.map((invoice) => (
+                  <TableRow key={invoice.invoiceId}>
+                    <TableCell className="font-medium">
+                      {invoice.invoiceNo}
                     </TableCell>
                     <TableCell>
-                      <div className="space-y-1">
-                        <div className="font-medium">Customer ID: {invoice.customerId}</div>
-                        <div className="text-sm text-slate-600">{invoice.remark || 'No remarks'}</div>
-                      </div>
+                      {new Date(invoice.invoiceDate).toLocaleDateString()}
                     </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      <div className="space-y-1">
+                    <TableCell>
+                      <div>
                         <div className="font-medium">{invoice.shop?.name || 'Unknown Shop'}</div>
-                        <div className="text-sm text-slate-600">{invoice.shop?.place || 'Unknown Location'}</div>
+                        <div className="text-sm text-muted-foreground">{invoice.shop?.place || 'Unknown Location'}</div>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="space-y-1">
+                      <div>
                         <div className="font-medium">₹{invoice.totalAmount?.toFixed(2) || '0.00'}</div>
-                        <div className="text-sm text-slate-600">{invoice.paymentMode || 'N/A'}</div>
+                        <div className="text-sm text-muted-foreground">{invoice.paymentMode || 'N/A'}</div>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -1382,483 +667,134 @@ export default function InvoiceManagement() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            handleDownloadPDF(invoice);
-                          }}
+                          onClick={() => handlePreview(invoice)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDownloadPDF(invoice)}
                         >
                           <Download className="h-4 w-4" />
                         </Button>
+                        <Link href={`/invoices/create?edit=${invoice.invoiceId}`}>
+                          <Button variant="outline" size="sm">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteInvoice(invoice)}
+                          disabled={deleteInvoiceMutation.isPending}
+                          className="hover:bg-red-50 hover:border-red-200 hover:text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </TableCell>
-                    </TableRow>
-                  )) : (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-12">
-                        <div className="flex flex-col items-center space-y-3 text-slate-500">
-                          <FileText className="h-12 w-12" />
-                          <div className="space-y-1">
-                            <h3 className="font-medium">No invoices found</h3>
-                            <p className="text-sm">Create your first invoice to get started</p>
-                          </div>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )
-                )}
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </div>
 
           {/* Pagination */}
-          {totalInvoices > 0 && (
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 px-4 py-4 border-t">
-              <div className="text-xs sm:text-sm text-slate-700 text-center sm:text-left">
-                Showing {startIndex + 1} to {Math.min(endIndex, totalInvoices)} of {totalInvoices} invoices
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between space-x-2 py-4">
+              <div className="text-sm text-muted-foreground">
+                Showing {startIndex + 1} to {Math.min(endIndex, sortedInvoices.length)} of {sortedInvoices.length} invoices
               </div>
-              <Pagination>
-                <PaginationContent className="flex-wrap justify-center">
-                  <PaginationItem>
-                    <PaginationPrevious 
-                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                      className={cn(
-                        currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer",
-                        "text-xs sm:text-sm"
-                      )}
-                    />
-                  </PaginationItem>
-                  {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                    const page = i + Math.max(1, currentPage - 2);
-                    return page <= totalPages ? (
-                      <PaginationItem key={page}>
-                        <PaginationLink
-                          onClick={() => setCurrentPage(page)}
-                          isActive={currentPage === page}
-                          className="cursor-pointer text-xs sm:text-sm min-w-8 h-8"
-                        >
-                          {page}
-                        </PaginationLink>
-                      </PaginationItem>
-                    ) : null;
-                  })}
-                  <PaginationItem>
-                    <PaginationNext 
-                      onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                      className={cn(
-                        currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer",
-                        "text-xs sm:text-sm"
-                      )}
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                <div className="flex items-center space-x-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <Button
+                      key={page}
+                      variant={page === currentPage ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(page)}
+                      className="w-8 h-8 p-0"
+                    >
+                      {page}
+                    </Button>
+                  ))}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Invoice Preview Dialog */}
+      {/* Preview Dialog */}
       <Dialog open={isPreviewDialogOpen} onOpenChange={setIsPreviewDialogOpen}>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-blue-600">Invoice Preview</DialogTitle>
+            <DialogTitle>Invoice Preview - #{selectedInvoice?.invoiceNo}</DialogTitle>
           </DialogHeader>
           
-          {invoicePreview && (
-            <div className="space-y-6 bg-white p-6 border border-gray-300">
-              {/* Header */}
-              <div className="bg-white p-6 border-b border-gray-300">
-                <div className="text-center">
-                  <h2 className="text-2xl font-bold text-black">{invoicePreview.shop.name}</h2>
-                  <div className="mt-2 text-black">
-                    {invoicePreview.useCustomBillingAddress && invoicePreview.customBillingAddress ? (
-                      <div className="whitespace-pre-wrap">{invoicePreview.customBillingAddress}</div>
-                    ) : (
-                      <p>{invoicePreview.shop.place}</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Customer Details */}
-              <div className="grid grid-cols-2 gap-6">
-                <div className="bg-white p-4 border border-gray-300">
-                  <h3 className="font-semibold mb-2 text-black">Bill To:</h3>
-                  <p className="text-black font-medium">{invoicePreview.customer.name}</p>
-                  <p className="text-black">{invoicePreview.customer.place}</p>
-                  <p className="text-black">{invoicePreview.customer.phone}</p>
-                </div>
-                <div className="bg-white border border-gray-300 p-4 text-right">
-                  <p className="text-xl font-bold mb-2 text-black">INVOICE</p>
-                  <p className="text-black"><strong>Invoice #:</strong> INV-{Date.now().toString().slice(-6)}</p>
-                  <p className="text-black"><strong>Date:</strong> {new Date().toLocaleDateString()}</p>
-                </div>
-              </div>
-
-              {/* Items Table */}
-              <div className="bg-white border border-gray-300">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-white border-b-2 border-black">
-                      <TableHead className="text-black font-bold border-r border-gray-300">Product</TableHead>
-                      <TableHead className="text-black font-bold border-r border-gray-300">HSN</TableHead>
-                      <TableHead className="text-black font-bold border-r border-gray-300">Qty</TableHead>
-                      <TableHead className="text-black font-bold border-r border-gray-300">Rate</TableHead>
-                      <TableHead className="text-black font-bold border-r border-gray-300">Discount</TableHead>
-                      <TableHead className="text-black font-bold border-r border-gray-300">CGST</TableHead>
-                      <TableHead className="text-black font-bold border-r border-gray-300">SGST</TableHead>
-                      <TableHead className="text-black font-bold">Total</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {invoicePreview.items.map((item, index) => (
-                      <TableRow key={index} className="bg-white border-b border-gray-300">
-                        <TableCell className="border-r border-gray-300">
-                          <div>
-                            <div className="font-medium text-black">{item.product.name}</div>
-                            <div className="text-xs text-black">{item.product.description}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-black font-medium border-r border-gray-300">{item.product.hsn}</TableCell>
-                        <TableCell className="text-center font-medium text-black border-r border-gray-300">{item.quantity}</TableCell>
-                        <TableCell className="text-black font-medium border-r border-gray-300">₹{item.unitPrice.toFixed(2)}</TableCell>
-                        <TableCell className="border-r border-gray-300">
-                          <div>
-                            <div className="text-black font-medium">₹{item.discountAmount.toFixed(2)}</div>
-                            <div className="text-xs text-black">
-                              {item.discountType === 'PERCENTAGE' ? `${item.discount}%` : 'Amount'}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="border-r border-gray-300">
-                          <div>
-                            <div className="text-black font-medium">₹{item.cgstAmount.toFixed(2)}</div>
-                            <div className="text-xs text-black">{item.cgst}%</div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="border-r border-gray-300">
-                          <div>
-                            <div className="text-black font-medium">₹{item.sgstAmount.toFixed(2)}</div>
-                            <div className="text-xs text-black">{item.sgst}%</div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-bold text-lg text-black">₹{item.totalPrice.toFixed(2)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {/* Totals */}
-              <div className="bg-white p-6 border border-gray-300 space-y-3">
-                <div className="flex justify-between text-black">
-                  <span className="font-medium">Subtotal:</span>
-                  <span className="text-black font-semibold">₹{invoicePreview.subtotal.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-black">
-                  <span className="font-medium">Total CGST:</span>
-                  <span className="text-black font-semibold">₹{invoicePreview.items.reduce((sum, item) => sum + item.cgstAmount, 0).toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-black">
-                  <span className="font-medium">Total SGST:</span>
-                  <span className="text-black font-semibold">₹{invoicePreview.items.reduce((sum, item) => sum + item.sgstAmount, 0).toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-black">
-                  <span className="font-medium">Total Tax (Not included in total):</span>
-                  <span className="text-black font-semibold">₹{invoicePreview.totalTax.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-black">
-                  <span className="font-medium">Overall Discount:</span>
-                  <span className="text-black font-semibold">₹{invoicePreview.totalDiscount.toFixed(2)}</span>
-                </div>
-                <hr className="border-black border-t-2" />
-                <div className="flex justify-between text-xl font-bold text-black p-3 border-2 border-black">
-                  <span>Grand Total:</span>
-                  <span>₹{invoicePreview.grandTotal.toFixed(2)}</span>
-                </div>
-                {invoicePreview.dueDate && (
-                  <div className="flex justify-between text-sm bg-white p-2 border border-gray-300">
-                    <span className="font-medium text-black">Due Date:</span>
-                    <span className="text-black">{invoicePreview.dueDate}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Terms and Conditions */}
-              {invoicePreview.termsAndConditions && (
-                <div className="bg-white p-4 border border-gray-300">
-                  <h4 className="font-semibold mb-2 text-black">Terms and Conditions:</h4>
-                  <p className="text-sm text-black whitespace-pre-wrap">
-                    {invoicePreview.termsAndConditions}
-                  </p>
-                </div>
-              )}
-
-              {/* Signature */}
-              {invoicePreview.signatureType && invoicePreview.signatureType !== 'NONE' && (
-                <div className="bg-white p-6 border border-gray-300 text-right">
-                  <div className="inline-block">
-                    <div className="text-sm text-black mb-4 font-medium">Authorized Signature:</div>
-                    {invoicePreview.signatureType === 'IMAGE' && invoicePreview.signatureData && (
-                      <img 
-                        src={invoicePreview.signatureData} 
-                        alt="Signature" 
-                        className="max-h-20 border-b-2 border-black"
-                      />
-                    )}
-                    {invoicePreview.signatureType === 'DIGITAL' && (
-                      <div className="border-b-2 border-black pb-2 min-w-[300px] min-h-[80px] text-center font-mono text-lg whitespace-pre-wrap text-black">
-                        {invoicePreview.signatureData}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setIsPreviewDialogOpen(false)}>
-                  Close
-                </Button>
-                <Button onClick={(e) => {
-                  e.preventDefault();
-                  // Generate PDF from preview data
-                  const printWindow = window.open('', '_blank');
-                  if (!printWindow) return;
-
-                  const previewHTML = `
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                      <title>Invoice Preview - ${invoicePreview.shop.name}</title>
-                      <style>
-                        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.4; }
-                        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
-                        .company { font-size: 28px; font-weight: bold; color: #333; }
-                        .company-details { font-size: 14px; color: #666; margin-top: 10px; }
-                        .billing-section { display: flex; justify-content: space-between; margin-bottom: 30px; }
-                        .billing-box { width: 45%; border: 1px solid #ddd; padding: 15px; border-radius: 5px; }
-                        .table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-                        .table th, .table td { padding: 12px 8px; border: 1px solid #ddd; text-align: left; }
-                        .table th { background-color: #f8f9fa; font-weight: bold; }
-                        .totals { margin-top: 20px; text-align: right; width: 300px; margin-left: auto; }
-                        .total-row { display: flex; justify-content: space-between; margin: 8px 0; padding: 5px 0; }
-                        .grand-total { font-weight: bold; font-size: 18px; border-top: 2px solid #333; padding-top: 8px; }
-                      </style>
-                    </head>
-                    <body>
-                      <div class="header">
-                        <div class="company">${invoicePreview.shop.name}</div>
-                        <div class="company-details">
-                          ${invoicePreview.useCustomBillingAddress && invoicePreview.customBillingAddress ? 
-                            invoicePreview.customBillingAddress.replace(/\n/g, '<br>') : 
-                            invoicePreview.shop.place
-                          }
-                        </div>
-                      </div>
-                      
-                      <div class="billing-section">
-                        <div class="billing-box">
-                          <strong>Bill To:</strong><br>
-                          ${invoicePreview.customer.name}<br>
-                          ${invoicePreview.customer.place}<br>
-                          Phone: ${invoicePreview.customer.phone}
-                        </div>
-                        <div class="billing-box">
-                          <strong>Invoice Details:</strong><br>
-                          Invoice #: INV-${Date.now().toString().slice(-6)}<br>
-                          Date: ${new Date().toLocaleDateString()}<br>
-                          Status: Preview
-                        </div>
-                      </div>
-
-                      <table class="table">
-                        <thead>
-                          <tr>
-                            <th>Product</th>
-                            <th>HSN</th>
-                            <th>Qty</th>
-                            <th>Rate</th>
-                            <th>Discount</th>
-                            <th>CGST</th>
-                            <th>SGST</th>
-                            <th>Total</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          ${invoicePreview.items.map(item => `
-                            <tr>
-                              <td>
-                                <div style="font-weight: bold;">${item.product.name}</div>
-                                <div style="font-size: 12px; color: #666;">${item.product.description || ''}</div>
-                              </td>
-                              <td>${item.product.hsn}</td>
-                              <td>${item.quantity}</td>
-                              <td>₹${item.unitPrice.toFixed(2)}</td>
-                              <td>₹${item.discountAmount.toFixed(2)}</td>
-                              <td>₹${item.cgstAmount.toFixed(2)}</td>
-                              <td>₹${item.sgstAmount.toFixed(2)}</td>
-                              <td style="font-weight: bold;">₹${item.totalPrice.toFixed(2)}</td>
-                            </tr>
-                          `).join('')}
-                        </tbody>
-                      </table>
-
-                      <div class="totals">
-                        <div class="total-row">
-                          <span>Subtotal:</span>
-                          <span>₹${invoicePreview.subtotal.toFixed(2)}</span>
-                        </div>
-                        <div class="total-row">
-                          <span>Total CGST:</span>
-                          <span>₹${invoicePreview.items.reduce((sum, item) => sum + item.cgstAmount, 0).toFixed(2)}</span>
-                        </div>
-                        <div class="total-row">
-                          <span>Total SGST:</span>
-                          <span>₹${invoicePreview.items.reduce((sum, item) => sum + item.sgstAmount, 0).toFixed(2)}</span>
-                        </div>
-                        <div class="total-row">
-                          <span>Total Tax:</span>
-                          <span>₹${invoicePreview.totalTax.toFixed(2)}</span>
-                        </div>
-                        <div class="total-row">
-                          <span>Overall Discount:</span>
-                          <span>₹${invoicePreview.totalDiscount.toFixed(2)}</span>
-                        </div>
-                        <div class="total-row grand-total">
-                          <span>Grand Total:</span>
-                          <span>₹${invoicePreview.grandTotal.toFixed(2)}</span>
-                        </div>
-                        ${invoicePreview.dueDate ? `
-                          <div class="total-row" style="font-size: 14px; color: #666;">
-                            <span>Due Date:</span>
-                            <span>${invoicePreview.dueDate}</span>
-                          </div>
-                        ` : ''}
-                      </div>
-
-                      ${invoicePreview.termsAndConditions ? `
-                        <div style="margin-top: 30px;">
-                          <h4 style="font-weight: bold; margin-bottom: 10px;">Terms and Conditions:</h4>
-                          <p style="font-size: 12px; color: #666; white-space: pre-wrap; line-height: 1.4;">
-                            ${invoicePreview.termsAndConditions}
-                          </p>
-                        </div>
-                      ` : ''}
-
-                      ${invoicePreview.signatureType && invoicePreview.signatureType !== 'NONE' ? `
-                        <div class="signature-section">
-                          <div style="font-size: 14px; color: #333; margin-bottom: 15px; font-weight: bold;">Authorized Signature:</div>
-                          ${invoicePreview.signatureType === 'IMAGE' && invoicePreview.signatureData ? `
-                            <img src="${invoicePreview.signatureData}" alt="Signature" style="max-height: 60px; border-bottom: 2px solid #333;" />
-                          ` : ''}
-                          ${invoicePreview.signatureType === 'DIGITAL' && invoicePreview.signatureData ? `
-                            <div class="signature-box">
-                              ${invoicePreview.signatureData}
-                            </div>
-                          ` : ''}
-                        </div>
-                      ` : ''}
-                    </body>
-                    </html>
-                  `;
-
-                  printWindow.document.write(previewHTML);
-                  printWindow.document.close();
-                  printWindow.print();
-                }}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Download PDF
-                </Button>
-              </div>
-            </div>
+          {selectedInvoice && (
+            <InvoiceTemplate invoice={selectedInvoice} isPreview={true} />
           )}
         </DialogContent>
       </Dialog>
 
-      {/* Customer Creation Dialog */}
-      <Dialog open={isCustomerDialogOpen} onOpenChange={setIsCustomerDialogOpen}>
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Add New Customer</DialogTitle>
-            <DialogDescription>
-              Create a new customer to add to your invoice.
-            </DialogDescription>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="h-5 w-5" />
+              Delete Invoice
+            </DialogTitle>
           </DialogHeader>
-          <Form {...customerForm}>
-            <form onSubmit={customerForm.handleSubmit(onAddCustomer)} className="space-y-4">
-              <FormField
-                control={customerForm.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Customer Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter customer name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={customerForm.control}
-                name="place"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Place</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter place" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={customerForm.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter phone number" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={customerForm.control}
-                name="shopId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Shop</FormLabel>
-                    <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select shop" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {Array.isArray(shops) ? shops.map((shop) => (
-                          <SelectItem key={shop.shopId} value={shop.shopId.toString()}>
-                            {shop.name} - {shop.place}
-                          </SelectItem>
-                        )) : null}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="flex justify-end space-x-2">
-                <Button type="button" variant="outline" onClick={() => setIsCustomerDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={addCustomerMutation.isPending}>
-                  {addCustomerMutation.isPending ? "Adding..." : "Add Customer"}
-                </Button>
+          <div className="space-y-4">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-sm text-red-800 mb-2">
+                <strong>You are about to permanently delete:</strong>
+              </p>
+              <div className="space-y-1 text-sm">
+                <p><strong>Invoice:</strong> #{invoiceToDelete?.invoiceNo}</p>
+                <p><strong>Amount:</strong> ₹{invoiceToDelete?.totalAmount?.toFixed(2) || '0.00'}</p>
+                <p><strong>Status:</strong> {invoiceToDelete?.paymentStatus}</p>
               </div>
-            </form>
-          </Form>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              This action cannot be undone. The invoice will be permanently removed from your records.
+            </p>
+          </div>
+          <div className="flex justify-end space-x-2 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={deleteInvoiceMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={deleteInvoiceMutation.isPending}
+            >
+              {deleteInvoiceMutation.isPending ? "Deleting..." : "Delete Invoice"}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
