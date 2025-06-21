@@ -30,6 +30,7 @@ import ShopsManagement from "@/components/dashboard/shops-management";
 import CustomersManagement from "@/components/dashboard/customers-management";
 import InvoiceManagement from "@/components/dashboard/invoice-management-clean";
 import ProfileManagement from "@/components/dashboard/profile-management";
+import Reports from "@/pages/reports";
 
 
 
@@ -415,19 +416,7 @@ function Dashboard() {
         return <CustomersManagement />;
       
       case "report":
-        return (
-          <div className="text-center py-20">
-            <BarChart3 className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Reports & Analytics</h3>
-            <p className="text-gray-500 mb-4">Access comprehensive business reports and analytics with charts and insights.</p>
-            <Link href="/reports">
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                <BarChart3 className="h-4 w-4 mr-2" />
-                Open Reports Dashboard
-              </Button>
-            </Link>
-          </div>
-        );
+        return <Reports />;
       
       case "profile":
         return <ProfileManagement />;
