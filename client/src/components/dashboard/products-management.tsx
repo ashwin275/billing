@@ -255,10 +255,27 @@ export default function ProductsManagement() {
    * Handle add product form submission
    */
   const onAddProduct = (data: ProductFormData) => {
+    // Get shopId from JWT token
+    const token = getAuthToken();
+    let shopId = 1; // Default fallback
+    
+    if (token) {
+      try {
+        const decoded = decodeToken(token);
+        shopId = decoded.shopId || 1;
+      } catch (error) {
+        console.warn('Failed to decode token:', error);
+      }
+    }
+
     const productInput: ProductInput = {
       ...data,
+      productNumber: `P${Date.now()}`, // Auto-generate product number
       hsn: data.hsn.toString(),
+      taxRate: data.cgst + data.sgst, // Calculate tax rate from CGST + SGST
+      shopId: shopId, // Use shopId from token
     };
+    
     addProductsMutation.mutate([productInput]);
   };
 
@@ -705,17 +722,45 @@ export default function ProductsManagement() {
               <Package className="h-4 w-4 sm:h-5 sm:w-5" />
               <span>All Products</span>
             </CardTitle>
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search products..."
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setCurrentPage(1); // Reset to first page when searching
-                }}
-                className="pl-10 w-full"
-              />
+            
+            {/* Search and Filter Controls */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              {/* Search */}
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search products..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setCurrentPage(1); // Reset to first page when searching
+                  }}
+                  className="pl-10 w-full"
+                />
+              </div>
+              
+              {/* Category Filter */}
+              <div className="w-full sm:w-48">
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Filter by category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {categories.map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {/* Product Count */}
+              <div className="flex items-center gap-2 text-sm text-slate-600">
+                <Package className="h-4 w-4" />
+                <span>{totalProducts} product{totalProducts !== 1 ? 's' : ''}</span>
+              </div>
             </div>
           </div>
         </CardHeader>
