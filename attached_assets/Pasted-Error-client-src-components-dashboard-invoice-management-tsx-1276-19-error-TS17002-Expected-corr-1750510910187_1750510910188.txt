@@ -1,0 +1,48 @@
+Error: client/src/components/dashboard/invoice-management.tsx(1276,19): error TS17002: Expected corresponding JSX closing tag for 'div'.
+Error: client/src/components/dashboard/invoice-management.tsx(1277,17): error TS17002: Expected corresponding JSX closing tag for 'div'.
+Error: client/src/components/dashboard/invoice-management.tsx(1278,15): error TS17002: Expected corresponding JSX closing tag for 'div'.
+Error: client/src/components/dashboard/invoice-management.tsx(1279,11): error TS1005: ')' expected.
+Error: client/src/components/dashboard/invoice-management.tsx(1280,9): error TS1109: Expression expected.
+Error: client/src/components/dashboard/invoice-management.tsx(1283,14): error TS1005: ';' expected.
+Error: client/src/components/dashboard/invoice-management.tsx(1284,11): error TS2657: JSX expressions must have one parent element.
+Error: client/src/components/dashboard/invoice-management.tsx(1293,9): error TS1128: Declaration or statement expected.
+Error: client/src/components/dashboard/invoice-management.tsx(1294,7): error TS1109: Expression expected.
+Error: client/src/components/dashboard/invoice-management.tsx(1298,9): error TS2657: JSX expressions must have one parent element.
+Error: client/src/components/dashboard/invoice-management.tsx(1458,7): error TS1128: Declaration or statement expected.
+Error: client/src/components/dashboard/invoice-management.tsx(1461,15): error TS1005: ';' expected.
+Error: client/src/components/dashboard/invoice-management.tsx(1461,42): error TS1005: ';' expected.
+Error: client/src/components/dashboard/invoice-management.tsx(1776,7): error TS1128: Declaration or statement expected.
+Error: client/src/components/dashboard/invoice-management.tsx(1779,15): error TS1005: ';' expected.
+Error: client/src/components/dashboard/invoice-management.tsx(1779,43): error TS1005: ';' expected.
+Error: client/src/components/dashboard/invoice-management.tsx(1863,7): error TS1128: Declaration or statement expected.
+Error: client/src/components/dashboard/invoice-management.tsx(1864,5): error TS1109: Expression expected.
+Error: client/src/components/dashboard/invoice-management.tsx(1865,3): error TS1109: Expression expected.
+Error: client/src/components/dashboard/users-management-broken.tsx(611,23): error TS1128: Declaration or statement expected.
+Error: client/src/components/dashboard/users-management-broken.tsx(612,21): error TS1109: Expression expected.
+Error: client/src/components/dashboard/users-management-broken.tsx(619,21): error TS1128: Declaration or statement expected.
+Error: client/src/components/dashboard/users-management-broken.tsx(622,32): error TS1005: ';' expected.
+Error: client/src/components/dashboard/users-management-broken.tsx(631,21): error TS1128: Declaration or statement expected.
+Error: client/src/components/dashboard/users-management-broken.tsx(632,19): error TS1109: Expression expected.
+Error: client/src/components/dashboard/users-management-broken.tsx(633,17): error TS1109: Expression expected.
+Error: client/src/components/dashboard/users-management-broken.tsx(633,18): error TS1128: Declaration or statement expected.
+Error: client/src/components/dashboard/users-management-broken.tsx(633,19): error TS1128: Declaration or statement expected.
+Error: client/src/components/dashboard/users-management-broken.tsx(634,15): error TS1128: Declaration or statement expected.
+Error: client/src/components/dashboard/users-management-broken.tsx(635,13): error TS1109: Expression expected.
+Error: client/src/components/dashboard/users-management-broken.tsx(636,11): error TS1109: Expression expected.
+Error: client/src/components/dashboard/users-management-broken.tsx(638,18): error TS1005: ',' expected.
+Error: client/src/components/dashboard/users-management-broken.tsx(643,12): error TS1128: Declaration or statement expected.
+Error: client/src/components/dashboard/users-management-broken.tsx(644,9): error TS1128: Declaration or statement expected.
+Error: client/src/components/dashboard/users-management-broken.tsx(645,7): error TS1109: Expression expected.
+Error: client/src/components/dashboard/users-management-broken.tsx(648,20): error TS1005: ';' expected.
+Error: client/src/components/dashboard/users-management-broken.tsx(648,26): error TS1136: Property assignment expected.
+Error: client/src/components/dashboard/users-management-broken.tsx(648,28): error TS1005: ';' expected.
+Error: client/src/components/dashboard/users-management-broken.tsx(648,40): error TS1128: Declaration or statement expected.
+Error: client/src/components/dashboard/users-management-broken.tsx(648,56): error TS1136: Property assignment expected.
+Error: client/src/components/dashboard/users-management-broken.tsx(648,59): error TS1005: ';' expected.
+Error: client/src/components/dashboard/users-management-broken.tsx(648,83): error TS1128: Declaration or statement expected.
+Error: client/src/components/dashboard/users-management-broken.tsx(648,84): error TS1109: Expression expected.
+Error: client/src/components/dashboard/users-management-broken.tsx(681,7): error TS1128: Declaration or statement expected.
+Error: client/src/components/dashboard/users-management-broken.tsx(682,5): error TS1109: Expression expected.
+Error: client/src/components/dashboard/users-management-broken.tsx(683,3): error TS1109: Expression expected.
+Error: client/src/components/dashboard/users-management-broken.tsx(684,1): error TS1128: Declaration or statement expected.
+Error: Process completed with exit code 2.

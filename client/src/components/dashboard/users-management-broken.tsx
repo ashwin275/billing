@@ -608,18 +608,6 @@ export default function UsersManagement() {
     </div>
   );
 }
-                      </div>
-                    </TableCell>
-
-                    {/* Status */}
-                    <TableCell>
-                      <Badge variant={getStatusVariant(user.status)}>
-                        {user.status}
-                      </Badge>
-                    </TableCell>
-
-                    {/* Actions */}
-                    <TableCell className="text-right">
                       <Button
                         variant="ghost"
                         size="sm"
