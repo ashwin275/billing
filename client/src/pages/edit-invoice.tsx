@@ -1720,12 +1720,29 @@ export default function EditInvoice() {
                               render={({ field }) => (
                                 <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
                                   <SelectTrigger className="border-dashed">
-                                    <SelectValue placeholder="Select product" />
+                                    <SelectValue placeholder="Search and select product" />
                                   </SelectTrigger>
-                                  <SelectContent>
+                                  <SelectContent className="max-h-60 overflow-y-auto shadow-lg border-2">
+                                    <div className="p-2 border-b sticky top-0 bg-white z-10">
+                                      <Input
+                                        placeholder="Search products..."
+                                        className="h-8"
+                                        onChange={(e) => {
+                                          const searchTerm = e.target.value.toLowerCase();
+                                          const items = document.querySelectorAll('[data-product-item]');
+                                          items.forEach((item: any) => {
+                                            const text = item.textContent.toLowerCase();
+                                            item.style.display = text.includes(searchTerm) ? 'block' : 'none';
+                                          });
+                                        }}
+                                      />
+                                    </div>
                                     {Array.isArray(products) ? products.map((product) => (
-                                      <SelectItem key={product.productId} value={product.productId.toString()}>
-                                        {product.name}
+                                      <SelectItem key={product.productId} value={product.productId.toString()} data-product-item>
+                                        <div className="flex flex-col py-1">
+                                          <span className="font-medium">{product.name}</span>
+                                          <span className="text-xs text-gray-500">HSN: {product.hsn} | Stock: {product.stock} | ₹{product.retailRate}</span>
+                                        </div>
                                       </SelectItem>
                                     )) : null}
                                   </SelectContent>
@@ -1754,8 +1771,22 @@ export default function EditInvoice() {
                             />
                           </div>
                           
-                          <div className="col-span-1 text-sm text-gray-600">
-                            {selectedProduct ? `₹${(form.watch("saleType") === 'RETAIL' ? selectedProduct.retailRate : selectedProduct.wholesaleRate).toFixed(2)}` : '-'}
+                          <div className="col-span-1">
+                            <FormField
+                              control={form.control}
+                              name={`saleItems.${index}.unitPrice`}
+                              render={({ field }) => (
+                                <Input
+                                  {...field}
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                  className="text-center"
+                                  placeholder={selectedProduct ? `₹${(form.watch("saleType") === 'RETAIL' ? selectedProduct.retailRate : selectedProduct.wholesaleRate).toFixed(2)}` : 'Rate'}
+                                />
+                              )}
+                            />
                           </div>
                           
                           <div className="col-span-2">
