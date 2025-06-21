@@ -632,7 +632,10 @@ export default function InvoiceManagementClean() {
               </TableHeader>
               <TableBody>
                 {paginatedInvoices.map((invoice) => (
-                  <TableRow key={invoice.invoiceId}>
+                  <TableRow 
+                    key={invoice.invoiceId}
+                    className={invoice.paymentStatus === "PENDING" ? "bg-orange-50 border-l-4 border-l-orange-400" : ""}
+                  >
                     <TableCell className="font-medium">
                       {invoice.invoiceNo}
                     </TableCell>
