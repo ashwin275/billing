@@ -74,7 +74,7 @@ const productSchema = z.object({
   hsn: z.string().min(1, "HSN code is required"),
   description: z.string().min(5, "Description must be at least 5 characters"),
   quantity: z.number().min(0, "Quantity must be 0 or greater"),
-  ourPrice: z.number().min(0, "Our price must be 0 or greater"),
+  ourPrice: z.number().min(0, "Purchase price must be 0 or greater"),
   wholesaleRate: z.number().min(0, "Wholesale rate must be 0 or greater"),
   retailRate: z.number().min(0, "Retail rate must be 0 or greater"),
   cgst: z.number().min(0, "CGST must be 0 or greater").max(50, "CGST cannot exceed 50%"),
@@ -271,6 +271,7 @@ export default function ProductsManagement() {
     const productInput: ProductInput = {
       ...data,
       productNumber: `P${Date.now()}`, // Auto-generate product number
+      purchasePrice: data.ourPrice, // Map ourPrice to purchasePrice for API
       hsn: data.hsn.toString(),
       taxRate: data.cgst + data.sgst, // Calculate tax rate from CGST + SGST
       shopId: shopId, // Use shopId from token
@@ -302,6 +303,7 @@ export default function ProductsManagement() {
       ...productToEdit,
       ...data,
       productNumber: productToEdit.productNumber, // Keep existing product number
+      purchasePrice: data.ourPrice, // Map ourPrice to purchasePrice for API
       hsn: typeof data.hsn === 'string' ? parseInt(data.hsn) : data.hsn,
       taxRate: data.cgst + data.sgst, // Calculate tax rate from CGST + SGST
       shopId: shopId, // Use shopId from token
@@ -1252,51 +1254,7 @@ export default function ProductsManagement() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-barcode">Barcode</Label>
-                <Input
-                  id="edit-barcode"
-                  {...editForm.register("barcode")}
-                  placeholder="8901234567890"
-                />
-                {editForm.formState.errors.barcode && (
-                  <p className="text-sm text-destructive">
-                    {editForm.formState.errors.barcode.message}
-                  </p>
-                )}
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="edit-shopId">Shop</Label>
-                <Controller
-                  control={editForm.control}
-                  name="shopId"
-                  render={({ field }: { field: ControllerRenderProps<ProductFormData, "shopId"> }) => (
-                    <Select
-                      onValueChange={(value: string) => field.onChange(parseInt(value))}
-                      value={field.value?.toString() || ""}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select shop" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Array.isArray(shops) ? shops.map((shop: any) => (
-                          <SelectItem key={shop.shopId} value={shop.shopId.toString()}>
-                            {shop.name}
-                          </SelectItem>
-                        )) : null}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                {editForm.formState.errors.shopId && (
-                  <p className="text-sm text-destructive">
-                    {editForm.formState.errors.shopId.message}
-                  </p>
-                )}
-              </div>
-            </div>
+
             <div className="flex justify-end space-x-2 pt-4">
               <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
                 Cancel
