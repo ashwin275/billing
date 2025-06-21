@@ -64,8 +64,8 @@ export default function InvoiceManagementClean() {
     const aValue = a[sortField];
     const bValue = b[sortField];
     
-    if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
-    if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+    if ((aValue ?? 0) < (bValue ?? 0)) return sortDirection === "asc" ? -1 : 1;
+    if ((aValue ?? 0) > (bValue ?? 0)) return sortDirection === "asc" ? 1 : -1;
     return 0;
   });
 

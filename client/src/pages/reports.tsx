@@ -314,7 +314,7 @@ export default function Reports() {
                   <YAxis />
                   <Tooltip formatter={(value) => [`₹${value}`, 'Discount']} />
                   <Bar dataKey="discount">
-                    {discountSummary.map((entry, index) => (
+                    {discountSummary.map((entry: any, index: number) => (
                       <Cell key={`cell-${index}`} fill="#FCA36B" />
                     ))}
                   </Bar>

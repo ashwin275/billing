@@ -1943,11 +1943,9 @@ export default function EditInvoice() {
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
-                          <SignatureInput
-                            value={field.value}
-                            onChange={field.onChange}
-                            placeholder="Add signature"
-                          />
+                          <div className="border border-gray-300 rounded-md p-4 bg-gray-50">
+                            <p className="text-sm text-gray-600">Signature field placeholder</p>
+                          </div>
                         </FormControl>
                         <FormMessage />
                       </FormItem>

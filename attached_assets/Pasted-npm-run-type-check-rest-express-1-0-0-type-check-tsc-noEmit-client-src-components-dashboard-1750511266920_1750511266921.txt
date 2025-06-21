@@ -1,0 +1,170 @@
+npm run type-check
+
+
+> rest-express@1.0.0 type-check
+> tsc --noEmit
+
+client/src/components/dashboard/invoice-management-clean.tsx:67:9 - error TS18049: 'aValue' is possibly 'null' or 'undefined'.
+
+67     if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+           ~~~~~~
+
+client/src/components/dashboard/invoice-management-clean.tsx:67:18 - error TS18049: 'bValue' is possibly 'null' or 'undefined'.
+
+67     if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+                    ~~~~~~
+
+client/src/components/dashboard/invoice-management-clean.tsx:68:9 - error TS18049: 'aValue' is possibly 'null' or 'undefined'.
+
+68     if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+           ~~~~~~
+
+client/src/components/dashboard/invoice-management-clean.tsx:68:18 - error TS18049: 'bValue' is possibly 'null' or 'undefined'.
+
+68     if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+                    ~~~~~~
+
+client/src/components/dashboard/invoice-management.tsx:67:9 - error TS18049: 'aValue' is possibly 'null' or 'undefined'.
+
+67     if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+           ~~~~~~
+
+client/src/components/dashboard/invoice-management.tsx:67:18 - error TS18049: 'bValue' is possibly 'null' or 'undefined'.
+
+67     if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+                    ~~~~~~
+
+client/src/components/dashboard/invoice-management.tsx:68:9 - error TS18049: 'aValue' is possibly 'null' or 'undefined'.
+
+68     if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+           ~~~~~~
+
+client/src/components/dashboard/invoice-management.tsx:68:18 - error TS18049: 'bValue' is possibly 'null' or 'undefined'.
+
+68     if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+                    ~~~~~~
+
+client/src/pages/create-invoice.tsx:770:86 - error TS18047: 'item' is possibly 'null'.
+
+770                                     <div style="font-weight: 600; color: #2d3748;">${item.product.name}</div>
+                                                                                         ~~~~
+
+client/src/pages/create-invoice.tsx:772:61 - error TS18047: 'item' is possibly 'null'.
+
+772                                   <td class="text-center">${item.quantity.toString().padStart(2, '0')}</td>
+                                                                ~~~~
+
+client/src/pages/create-invoice.tsx:773:61 - error TS18047: 'item' is possibly 'null'.
+
+773                                   <td class="text-right">₹${item.unitPrice.toFixed(2)}</td>
+                                                                ~~~~
+
+client/src/pages/create-invoice.tsx:774:61 - error TS18047: 'item' is possibly 'null'.
+
+774                                   <td class="text-right">₹${item.discountAmount.toFixed(2)}</td>
+                                                                ~~~~
+
+client/src/pages/create-invoice.tsx:775:103 - error TS18047: 'item' is possibly 'null'.
+
+775                                   <td class="text-right" style="font-weight: 600; color: #2d3748;">₹${item.totalPrice.toFixed(2)}</td>
+                                                                                                          ~~~~
+
+client/src/pages/create-invoice.tsx:1215:86 - error TS18047: 'item' is possibly 'null'.
+
+1215                                     <div style="font-weight: 600; color: #2d3748;">${item.product.name}</div>
+                                                                                          ~~~~
+
+client/src/pages/create-invoice.tsx:1217:61 - error TS18047: 'item' is possibly 'null'.
+
+1217                                   <td class="text-center">${item.quantity.toString().padStart(2, '0')}</td>
+                                                                 ~~~~
+
+client/src/pages/create-invoice.tsx:1218:61 - error TS18047: 'item' is possibly 'null'.
+
+1218                                   <td class="text-right">₹${item.unitPrice.toFixed(2)}</td>
+                                                                 ~~~~
+
+client/src/pages/create-invoice.tsx:1219:61 - error TS18047: 'item' is possibly 'null'.
+
+1219                                   <td class="text-right">₹${item.discountAmount.toFixed(2)}</td>
+                                                                 ~~~~
+
+client/src/pages/create-invoice.tsx:1220:103 - error TS18047: 'item' is possibly 'null'.
+
+1220                                   <td class="text-right" style="font-weight: 600; color: #2d3748;">₹${item.totalPrice.toFixed(2)}</td>
+                                                                                                           ~~~~
+
+client/src/pages/edit-invoice.tsx:797:86 - error TS18047: 'item' is possibly 'null'.
+
+797                                     <div style="font-weight: 600; color: #2d3748;">${item.product.name}</div>
+                                                                                         ~~~~
+
+client/src/pages/edit-invoice.tsx:799:61 - error TS18047: 'item' is possibly 'null'.
+
+799                                   <td class="text-center">${item.quantity.toString().padStart(2, '0')}</td>
+                                                                ~~~~
+
+client/src/pages/edit-invoice.tsx:800:61 - error TS18047: 'item' is possibly 'null'.
+
+800                                   <td class="text-right">₹${item.unitPrice.toFixed(2)}</td>
+                                                                ~~~~
+
+client/src/pages/edit-invoice.tsx:801:61 - error TS18047: 'item' is possibly 'null'.
+
+801                                   <td class="text-right">₹${item.discountAmount.toFixed(2)}</td>
+                                                                ~~~~
+
+client/src/pages/edit-invoice.tsx:802:103 - error TS18047: 'item' is possibly 'null'.
+
+802                                   <td class="text-right" style="font-weight: 600; color: #2d3748;">₹${item.totalPrice.toFixed(2)}</td>
+                                                                                                          ~~~~
+
+client/src/pages/edit-invoice.tsx:1241:86 - error TS18047: 'item' is possibly 'null'.
+
+1241                                     <div style="font-weight: 600; color: #2d3748;">${item.product.name}</div>
+                                                                                          ~~~~
+
+client/src/pages/edit-invoice.tsx:1243:61 - error TS18047: 'item' is possibly 'null'.
+
+1243                                   <td class="text-center">${item.quantity.toString().padStart(2, '0')}</td>
+                                                                 ~~~~
+
+client/src/pages/edit-invoice.tsx:1244:61 - error TS18047: 'item' is possibly 'null'.
+
+1244                                   <td class="text-right">₹${item.unitPrice.toFixed(2)}</td>
+                                                                 ~~~~
+
+client/src/pages/edit-invoice.tsx:1245:61 - error TS18047: 'item' is possibly 'null'.
+
+1245                                   <td class="text-right">₹${item.discountAmount.toFixed(2)}</td>
+                                                                 ~~~~
+
+client/src/pages/edit-invoice.tsx:1246:103 - error TS18047: 'item' is possibly 'null'.
+
+1246                                   <td class="text-right" style="font-weight: 600; color: #2d3748;">₹${item.totalPrice.toFixed(2)}</td>
+                                                                                                           ~~~~
+
+client/src/pages/edit-invoice.tsx:1946:28 - error TS2304: Cannot find name 'SignatureInput'.
+
+1946                           <SignatureInput
+                                ~~~~~~~~~~~~~~
+
+client/src/pages/reports.tsx:317:43 - error TS7006: Parameter 'entry' implicitly has an 'any' type.
+
+317                     {discountSummary.map((entry, index) => (
+                                              ~~~~~
+
+client/src/pages/reports.tsx:317:50 - error TS7006: Parameter 'index' implicitly has an 'any' type.
+
+317                     {discountSummary.map((entry, index) => (
+                                                     ~~~~~
+
+
+Found 31 errors in 5 files.
+
+Errors  Files
+     4  client/src/components/dashboard/invoice-management-clean.tsx:67
+     4  client/src/components/dashboard/invoice-management.tsx:67
+    10  client/src/pages/create-invoice.tsx:770
+    11  client/src/pages/edit-invoice.tsx:797
+     2  client/src/pages/reports.tsx:317
