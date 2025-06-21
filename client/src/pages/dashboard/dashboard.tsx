@@ -15,6 +15,7 @@ import {
   Menu
 } from "lucide-react";
 import { Link } from "wouter";
+import { invoicesApi, shopsApi, customersApi, productsApi } from "@/lib/api";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -407,12 +408,17 @@ function Dashboard() {
       
       case "report":
         return (
-          <ContentPanel
-            title="Reports & Analytics"
-            description="Reports and analytics interface will be implemented here."
-            buttonText="Export Report"
-            buttonIcon={Download}
-          />
+          <div className="text-center py-20">
+            <BarChart3 className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Reports & Analytics</h3>
+            <p className="text-gray-500 mb-4">Access comprehensive business reports and analytics with charts and insights.</p>
+            <Link href="/reports">
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                <BarChart3 className="h-4 w-4 mr-2" />
+                Open Reports Dashboard
+              </Button>
+            </Link>
+          </div>
         );
       
       case "profile":
