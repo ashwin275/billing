@@ -208,21 +208,19 @@ export function ProductSearchDialog({
                         <TableCell>
                           {selectedProduct ? (
                             <div className="flex items-center gap-2">
-                              <Select 
-                                value={selectedProduct.quantity.toString()} 
-                                onValueChange={(value) => handleQuantityChange(product.productId, parseInt(value))}
-                              >
-                                <SelectTrigger className="w-20 h-8">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {Array.from({ length: Math.min(product.quantity || 0, 50) }, (_, i) => i + 1).map(num => (
-                                    <SelectItem key={num} value={num.toString()}>
-                                      {num}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                              <Input
+                                type="number"
+                                min="1"
+                                value={selectedProduct.quantity}
+                                onChange={(e) => {
+                                  const value = parseInt(e.target.value) || 1;
+                                  if (value >= 1) {
+                                    handleQuantityChange(product.productId, value);
+                                  }
+                                }}
+                                className="w-20 h-8 text-center"
+                                placeholder="Qty"
+                              />
                               <span className="text-xs text-gray-500">PCS</span>
                               <Input
                                 type="number"
