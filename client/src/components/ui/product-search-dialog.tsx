@@ -28,6 +28,7 @@ interface ProductSearchDialogProps {
   selectedProductId?: number;
   trigger?: React.ReactNode;
   saleType?: 'RETAIL' | 'WHOLESALE';
+  existingItems?: SelectedProduct[];
 }
 
 export function ProductSearchDialog({ 
@@ -35,12 +36,13 @@ export function ProductSearchDialog({
   onSelect, 
   selectedProductId,
   trigger,
-  saleType = 'RETAIL'
+  saleType = 'RETAIL',
+  existingItems = []
 }: ProductSearchDialogProps) {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>(existingItems);
 
   // Get unique categories
   const categories = useMemo(() => {
