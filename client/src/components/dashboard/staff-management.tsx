@@ -245,7 +245,11 @@ export default function StaffManagement() {
   const onSubmit = (data: StaffFormData) => {
     // Remove confirmPassword from the data before sending
     const { confirmPassword, ...staffData } = data;
-    addStaffMutation.mutate(staffData);
+    const staffDataWithConfirm = {
+      ...staffData,
+      confirmPassword: data.confirmPassword
+    };
+    addStaffMutation.mutate(staffDataWithConfirm);
   };
 
 

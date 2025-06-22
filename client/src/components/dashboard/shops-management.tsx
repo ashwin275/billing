@@ -56,6 +56,8 @@ import { shopsApi, handleApiError } from "@/lib/api";
 const shopSchema = z.object({
   name: z.string().min(2, "Shop name must be at least 2 characters"),
   place: z.string().min(2, "Place must be at least 2 characters"),
+  phone: z.string().min(10, "Phone number must be at least 10 digits"),
+  gstNo: z.string().min(1, "GST number is required"),
   status: z.enum(["CREATED", "ACTIVE", "INACTIVE"], { required_error: "Status is required" }),
   map: z.string().min(1, "Map URL is required"),
   userId: z.number().nullable().optional(),

@@ -1,0 +1,228 @@
+
+> rest-express@1.0.0 type-check
+> tsc --noEmit
+
+client/src/components/dashboard/customers-management.tsx:259:7 - error TS2353: Object literal may only specify known properties, and 'customerType' does not exist in type 'CustomerInput'.
+
+259       customerType: data.customerType,
+          ~~~~~~~~~~~~
+
+client/src/components/dashboard/customers-management.tsx:275:7 - error TS2353: Object literal may only specify known properties, and 'customerType' does not exist in type 'CustomerUpdate'.
+
+275       customerType: data.customerType,
+          ~~~~~~~~~~~~
+
+client/src/components/dashboard/customers-management.tsx:302:30 - error TS2339: Property 'customerType' does not exist on type 'Customer'.
+
+302       customerType: customer.customerType || "",
+                                 ~~~~~~~~~~~~
+
+client/src/components/dashboard/customers-management.tsx:608:49 - error TS2345: Argument of type '"customerType"' is not assignable to parameter of type 'keyof Customer'.
+
+608                       onClick={() => handleSort("customerType")}
+                                                    ~~~~~~~~~~~~~~
+
+client/src/components/dashboard/customers-management.tsx:612:36 - error TS2345: Argument of type '"customerType"' is not assignable to parameter of type 'keyof Customer'.
+
+612                       {getSortIcon("customerType")}
+                                       ~~~~~~~~~~~~~~
+
+client/src/components/dashboard/customers-management.tsx:618:49 - error TS2345: Argument of type '"loyaltyPoints"' is not assignable to parameter of type 'keyof Customer'.
+
+618                       onClick={() => handleSort("loyaltyPoints")}
+                                                    ~~~~~~~~~~~~~~~
+
+client/src/components/dashboard/customers-management.tsx:622:36 - error TS2345: Argument of type '"loyaltyPoints"' is not assignable to parameter of type 'keyof Customer'.
+
+622                       {getSortIcon("loyaltyPoints")}
+                                       ~~~~~~~~~~~~~~~
+
+client/src/components/dashboard/customers-management.tsx:670:35 - error TS2339: Property 'customerType' does not exist on type 'Customer'.
+
+670                         {customer.customerType || 'N/A'}
+                                      ~~~~~~~~~~~~
+
+client/src/components/dashboard/customers-management.tsx:677:35 - error TS2339: Property 'loyaltyPoints' does not exist on type 'Customer'.
+
+677                         {customer.loyaltyPoints ? `${customer.loyaltyPoints} pts` : 'N/A'}
+                                      ~~~~~~~~~~~~~
+
+client/src/components/dashboard/customers-management.tsx:677:63 - error TS2339: Property 'loyaltyPoints' does not exist on type 'Customer'.
+
+677                         {customer.loyaltyPoints ? `${customer.loyaltyPoints} pts` : 'N/A'}
+                                                                  ~~~~~~~~~~~~~
+
+client/src/components/dashboard/products-management.tsx:274:7 - error TS2353: Object literal may only specify known properties, and 'purchasePrice' does not exist in type 'ProductInput'.
+
+274       purchasePrice: data.ourPrice, // Map ourPrice to purchasePrice for API
+          ~~~~~~~~~~~~~
+
+client/src/components/dashboard/products-management.tsx:337:25 - error TS2339: Property 'purchasePrice' does not exist on type 'Product'.
+
+337       ourPrice: product.purchasePrice || product.ourPrice || 0, // Map purchasePrice to ourPrice
+                            ~~~~~~~~~~~~~
+
+client/src/components/dashboard/products-management.tsx:394:9 - error TS2802: Type 'Set<string>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+
+394     [...new Set(products.map(product => product.category))].sort() : [];
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+client/src/components/dashboard/products-management.tsx:935:62 - error TS2339: Property 'purchasePrice' does not exist on type 'Product'.
+
+935                           Our Price: {formatCurrency(product.purchasePrice || product.ourPrice || 0)}
+                                                                 ~~~~~~~~~~~~~
+
+client/src/components/dashboard/shops-management.tsx:125:7 - error TS2353: Object literal may only specify known properties, and 'phone' does not exist in type 'AsyncDefaultValues<{ map: string; name: string; status: "ACTIVE" | "INACTIVE" | "CREATED"; place: string; userId?: number | null | undefined; }> | { map?: string | undefined; name?: string | undefined; status?: "ACTIVE" | ... 2 more ... | undefined; place?: string | undefined; userId?: number | ... 1 more ... | unde...'.
+
+125       phone: "",
+          ~~~~~
+
+client/src/components/dashboard/shops-management.tsx:432:52 - error TS2345: Argument of type '(data: ShopFormData) => void' is not assignable to parameter of type 'SubmitHandler<TFieldValues>'.
+  Types of parameters 'data' and 'data' are incompatible.
+    Type 'TFieldValues' is not assignable to type '{ map: string; name: string; status: "ACTIVE" | "INACTIVE" | "CREATED"; place: string; userId?: number | null | undefined; }'.
+      Type 'FieldValues' is missing the following properties from type '{ map: string; name: string; status: "ACTIVE" | "INACTIVE" | "CREATED"; place: string; userId?: number | null | undefined; }': map, name, status, place
+
+432               <form onSubmit={addForm.handleSubmit(onAddShop)} className="space-y-4">
+                                                       ~~~~~~~~~
+
+client/src/components/dashboard/shops-management.tsx:497:42 - error TS2345: Argument of type '"phone"' is not assignable to parameter of type '"map" | "name" | "status" | "place" | "userId"'.
+
+497                     {...addForm.register("phone")}
+                                             ~~~~~~~
+
+client/src/components/dashboard/shops-management.tsx:500:45 - error TS2339: Property 'phone' does not exist on type 'FieldErrors<{ map: string; name: string; status: "ACTIVE" | "INACTIVE" | "CREATED"; place: string; userId?: number | null | undefined; }>'.
+
+500                   {addForm.formState.errors.phone && (
+                                                ~~~~~
+
+client/src/components/dashboard/shops-management.tsx:502:49 - error TS2339: Property 'phone' does not exist on type 'FieldErrors<{ map: string; name: string; status: "ACTIVE" | "INACTIVE" | "CREATED"; place: string; userId?: number | null | undefined; }>'.
+
+502                       {addForm.formState.errors.phone.message}
+                                                    ~~~~~
+
+client/src/components/dashboard/shops-management.tsx:511:42 - error TS2345: Argument of type '"gstNo"' is not assignable to parameter of type '"map" | "name" | "status" | "place" | "userId"'.
+
+511                     {...addForm.register("gstNo")}
+                                             ~~~~~~~
+
+client/src/components/dashboard/shops-management.tsx:514:45 - error TS2339: Property 'gstNo' does not exist on type 'FieldErrors<{ map: string; name: string; status: "ACTIVE" | "INACTIVE" | "CREATED"; place: string; userId?: number | null | undefined; }>'.
+
+514                   {addForm.formState.errors.gstNo && (
+                                                ~~~~~
+
+client/src/components/dashboard/shops-management.tsx:516:49 - error TS2339: Property 'gstNo' does not exist on type 'FieldErrors<{ map: string; name: string; status: "ACTIVE" | "INACTIVE" | "CREATED"; place: string; userId?: number | null | undefined; }>'.
+
+516                       {addForm.formState.errors.gstNo.message}
+                                                    ~~~~~
+
+client/src/components/dashboard/staff-management.tsx:248:29 - error TS2345: Argument of type '{ email: string; password: string; fullName: string; place: string; age: number; countryId: number; phone: string; }' is not assignable to parameter of type '{ email: string; password: string; fullName: string; place: string; age: number; countryId: number; phone: string; confirmPassword: string; }'.
+  Property 'confirmPassword' is missing in type '{ email: string; password: string; fullName: string; place: string; age: number; countryId: number; phone: string; }' but required in type '{ email: string; password: string; fullName: string; place: string; age: number; countryId: number; phone: string; confirmPassword: string; }'.
+
+248     addStaffMutation.mutate(staffData);
+                                ~~~~~~~~~
+
+  client/src/components/dashboard/staff-management.tsx:30:3
+    30   confirmPassword: z.string().min(6, "Please confirm your password"),
+         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    'confirmPassword' is declared here.
+
+client/src/components/ui/product-search-dialog.tsx:50:34 - error TS2802: Type 'Set<string | undefined>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+
+50     const uniqueCategories = [...new Set(products.map(p => p.category).filter(Boolean))];
+                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+client/src/components/ui/product-search-dialog.tsx:214:38 - error TS2339: Property 'quantity' does not exist on type 'Product'.
+
+214                             (product.quantity || 0) <= 5 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+                                         ~~~~~~~~
+
+client/src/components/ui/product-search-dialog.tsx:216:38 - error TS2339: Property 'quantity' does not exist on type 'Product'.
+
+216                             {product.quantity || 0} PCS
+                                         ~~~~~~~~
+
+client/src/components/ui/product-search-dialog.tsx:218:37 - error TS2339: Property 'quantity' does not exist on type 'Product'.
+
+218                           {(product.quantity || 0) <= 5 && (
+                                        ~~~~~~~~
+
+client/src/pages/create-invoice.tsx:1680:23 - error TS2322: Type 'import("/Users/ashwinrajck/Desktop/sample/BillingDashboard /client/src/types/api").Product[]' is not assignable to type 'Product[]'.
+  Property 'stock' is missing in type 'import("/Users/ashwinrajck/Desktop/sample/BillingDashboard /client/src/types/api").Product' but required in type 'Product'.
+
+1680                       products={Array.isArray(products) ? products : []}
+                           ~~~~~~~~
+
+  client/src/components/ui/product-search-dialog.tsx:14:3
+    14   stock: number;
+         ~~~~~
+    'stock' is declared here.
+  client/src/components/ui/product-search-dialog.tsx:26:3
+    26   products: Product[];
+         ~~~~~~~~
+    The expected type comes from property 'products' which is declared here on type 'IntrinsicAttributes & ProductSearchDialogProps'
+
+client/src/pages/create-invoice.tsx:1682:23 - error TS2322: Type '({ quantity: number; discountAmount: number; productId: number; productNumber: string; hsn: string | number; name: string; description: string; ourPrice: number; wholesaleRate: number; retailRate: number; ... 10 more ...; sgst: number; } | null)[]' is not assignable to type 'SelectedProduct[]'.
+  Type '{ quantity: number; discountAmount: number; productId: number; productNumber: string; hsn: string | number; name: string; description: string; ourPrice: number; wholesaleRate: number; retailRate: number; ... 10 more ...; sgst: number; } | null' is not assignable to type 'SelectedProduct'.
+    Type 'null' is not assignable to type 'SelectedProduct'.
+
+1682                       existingItems={fields.map((field, index) => {
+                           ~~~~~~~~~~~~~
+
+  client/src/components/ui/product-search-dialog.tsx:31:3
+    31   existingItems?: SelectedProduct[];
+         ~~~~~~~~~~~~~
+    The expected type comes from property 'existingItems' which is declared here on type 'IntrinsicAttributes & ProductSearchDialogProps'
+
+client/src/pages/edit-invoice.tsx:126:10 - error TS2304: Cannot find name 'isEditMode'.
+
+126     if (!isEditMode && fields.length > 0 && form.getValues('saleItems').some(item => item.productId === 0)) {
+             ~~~~~~~~~~
+
+client/src/pages/edit-invoice.tsx:129:21 - error TS2304: Cannot find name 'isEditMode'.
+
+129   }, [fields, form, isEditMode]);
+                        ~~~~~~~~~~
+
+client/src/pages/edit-invoice.tsx:1667:23 - error TS2322: Type 'import("/Users/ashwinrajck/Desktop/sample/BillingDashboard /client/src/types/api").Product[]' is not assignable to type 'Product[]'.
+  Property 'stock' is missing in type 'import("/Users/ashwinrajck/Desktop/sample/BillingDashboard /client/src/types/api").Product' but required in type 'Product'.
+
+1667                       products={Array.isArray(products) ? products : []}
+                           ~~~~~~~~
+
+  client/src/components/ui/product-search-dialog.tsx:14:3
+    14   stock: number;
+         ~~~~~
+    'stock' is declared here.
+  client/src/components/ui/product-search-dialog.tsx:26:3
+    26   products: Product[];
+         ~~~~~~~~
+    The expected type comes from property 'products' which is declared here on type 'IntrinsicAttributes & ProductSearchDialogProps'
+
+client/src/pages/edit-invoice.tsx:1669:23 - error TS2322: Type '({ quantity: number; discountAmount: number; productId: number; productNumber: string; hsn: string | number; name: string; description: string; ourPrice: number; wholesaleRate: number; retailRate: number; ... 10 more ...; sgst: number; } | null)[]' is not assignable to type 'SelectedProduct[]'.
+  Type '{ quantity: number; discountAmount: number; productId: number; productNumber: string; hsn: string | number; name: string; description: string; ourPrice: number; wholesaleRate: number; retailRate: number; ... 10 more ...; sgst: number; } | null' is not assignable to type 'SelectedProduct'.
+    Type 'null' is not assignable to type 'SelectedProduct'.
+
+1669                       existingItems={fields.map((field, index) => {
+                           ~~~~~~~~~~~~~
+
+  client/src/components/ui/product-search-dialog.tsx:31:3
+    31   existingItems?: SelectedProduct[];
+         ~~~~~~~~~~~~~
+    The expected type comes from property 'existingItems' which is declared here on type 'IntrinsicAttributes & ProductSearchDialogProps'
+
+client/src/pages/edit-invoice.tsx:1719:26 - error TS2304: Cannot find name 'Package'.
+
+1719                         <Package className="mx-auto h-12 w-12 mb-4 text-gray-400" />
+                              ~~~~~~~
+
+
+Found 34 errors in 7 files.
+
+Errors  Files
+    10  client/src/components/dashboard/customers-management.tsx:259
+     4  client/src/components/dashboard/products-management.tsx:274
+     8  client/src/components/dashboard/shops-management.tsx:125
+     1  client/src/components/dashboard/staff-management.tsx:248
+     4  client/src/components/ui/product-search-dialog.tsx:50
+     2  client/src/pages/create-invoice.tsx:1680
+     5  client/src/pages/edit-invoice.tsx:126

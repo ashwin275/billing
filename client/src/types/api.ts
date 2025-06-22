@@ -46,6 +46,8 @@ export interface Shop {
   shopId: number;
   name: string;
   place: string;
+  phone: string;
+  gstNo: string;
   status: 'CREATED' | 'ACTIVE' | 'INACTIVE';
   map: string;
   ownerId: number | null;
@@ -62,7 +64,9 @@ export interface Product {
   name: string;
   description: string;
   quantity: number;
+  stock: number;
   ourPrice: number;
+  purchasePrice: number;
   wholesaleRate: number;
   retailRate: number;
   taxRate: number;
@@ -85,6 +89,7 @@ export interface ProductInput {
   description: string;
   quantity: number;
   ourPrice: number;
+  purchasePrice: number;
   wholesaleRate: number;
   retailRate: number;
   taxRate: number;
@@ -102,6 +107,8 @@ export interface Customer {
   name: string;
   place: string;
   phone: string | number;
+  customerType: string;
+  loyaltyPoints: number;
   shop: Shop;
   shopId: number;
   totalSpend: number | null;
@@ -112,6 +119,7 @@ export interface CustomerInput {
   name: string;
   place: string;
   phone: string;
+  customerType: string;
   shopId: number;
 }
 
@@ -120,6 +128,7 @@ export interface CustomerUpdate {
   name: string;
   place: string;
   phone: number;
+  customerType: string;
 }
 
 export interface Invoice {
