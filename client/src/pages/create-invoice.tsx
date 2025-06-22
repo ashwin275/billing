@@ -227,16 +227,16 @@ export default function CreateInvoice() {
       if (!product) return null;
 
       const unitPrice = formData.saleType === 'RETAIL' ? product.retailRate : product.wholesaleRate;
+      const itemSubtotal = unitPrice * item.quantity;
       
       let discountAmount = 0;
       if (item.discountType === 'PERCENTAGE') {
-        discountAmount = (unitPrice * item.discount) / 100;
+        discountAmount = (itemSubtotal * item.discount) / 100;
       } else {
-        discountAmount = item.discount;
+        discountAmount = item.discount; // Apply discount to total product value
       }
       
-      const discountedPrice = unitPrice - discountAmount;
-      const lineTotal = discountedPrice * item.quantity;
+      const lineTotal = itemSubtotal - discountAmount;
       
       const cgstRate = formData.billType === 'GST' ? product.cgst : 0;
       const sgstRate = formData.billType === 'GST' ? product.sgst : 0;
@@ -253,6 +253,7 @@ export default function CreateInvoice() {
         discountType: item.discountType,
         discountAmount,
         unitPrice,
+        itemSubtotal,
         lineTotal,
         cgst: cgstRate,
         sgst: sgstRate,
