@@ -211,46 +211,21 @@ export default function StaffManagement() {
     },
   });
 
-  // Delete staff mutation
-  const deleteStaffMutation = useMutation({
-    mutationFn: staffApi.deleteStaff,
-    onSuccess: () => {
-      toast({
-        title: "Staff deleted successfully",
-        description: "The staff member has been removed from your team.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/users/shop/getstaff"] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Failed to delete staff",
-        description: error?.detail || error?.message || "Failed to delete staff member.",
-        variant: "destructive",
-      });
-    },
-  });
 
-  // Filter staffs based on search and place
+
+  // Filter staffs based on search only
   const filteredStaffs = staffs.filter((staff) => {
     const matchesSearch = staff.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          staff.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          staff.phone.includes(searchTerm);
-    const matchesPlace = selectedPlace === "all" || staff.place === selectedPlace;
-    return matchesSearch && matchesPlace;
+    return matchesSearch;
   });
-
-  // Get unique places for filter
-  const uniquePlaces = Array.from(new Set(staffs.map(staff => staff.place))).filter(Boolean);
 
   const onSubmit = (data: StaffFormData) => {
     addStaffMutation.mutate(data);
   };
 
-  const handleDeleteStaff = (userId: number) => {
-    if (confirm("Are you sure you want to delete this staff member?")) {
-      deleteStaffMutation.mutate(userId);
-    }
-  };
+
 
   if (isLoading) {
     return <div className="flex justify-center p-8">Loading staffs...</div>;
@@ -466,19 +441,6 @@ export default function StaffManagement() {
                 className="pl-8"
               />
             </div>
-            <Select value={selectedPlace} onValueChange={setSelectedPlace}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Filter by place" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Places</SelectItem>
-                {uniquePlaces.map((place) => (
-                  <SelectItem key={place} value={place}>
-                    {place}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
 
           {/* Staff Table */}
@@ -487,59 +449,33 @@ export default function StaffManagement() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Phone</TableHead>
+                  <TableHead>Place</TableHead>
+                  <TableHead>Country</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredStaffs.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                      {searchTerm || selectedPlace !== "all" ? "No staff members found matching your filters" : "No staff members found"}
+                      {searchTerm ? "No staff members found matching your search" : "No staff members found"}
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredStaffs.map((staff) => (
                     <TableRow key={staff.userId}>
-                      <TableCell>
-                        <div className="font-medium">{staff.fullName}</div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-1 text-sm">
-                            <Mail className="h-3 w-3" />
-                            {staff.email}
-                          </div>
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                            <Phone className="h-3 w-3" />
-                            {staff.phone}
-                          </div>
-                        </div>
-                      </TableCell>
+                      <TableCell className="font-medium">{staff.fullName}</TableCell>
+                      <TableCell>{staff.email}</TableCell>
+                      <TableCell>{staff.phone}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
+                          <MapPin className="h-4 w-4 text-gray-400" />
                           {staff.place}
                         </div>
                       </TableCell>
                       <TableCell>
-                        {staff.roles.map((role) => (
-                          <Badge key={role.roleId} variant="secondary">
-                            {role.roleName.replace('ROLE_', '')}
-                          </Badge>
-                        ))}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteStaff(staff.userId)}
-                          disabled={deleteStaffMutation.isPending}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {staff.country || 'N/A'}
                       </TableCell>
                     </TableRow>
                   ))
