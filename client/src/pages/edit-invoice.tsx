@@ -123,10 +123,10 @@ export default function EditInvoice() {
 
   // Prevent default items from being added
   useEffect(() => {
-    if (!isEditMode && fields.length > 0 && form.getValues('saleItems').some(item => item.productId === 0)) {
+    if (fields.length > 0 && form.getValues('saleItems').some(item => item.productId === 0)) {
       form.setValue('saleItems', []);
     }
-  }, [fields, form, isEditMode]);
+  }, [fields, form]);
 
   // Customer form
   const customerForm = useForm<CustomerFormData>({
