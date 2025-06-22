@@ -317,7 +317,8 @@ export function ProductSearchDialog({
                         <Input
                           type="text"
                           className="w-12 h-6 text-center text-xs"
-                          value={product.quantity.toString()}
+                          value={product.quantity === 1 ? '' : product.quantity.toString()}
+                          placeholder="1"
                           onChange={(e) => {
                             const value = e.target.value;
                             // Allow empty string or valid numbers
@@ -355,9 +356,9 @@ export function ProductSearchDialog({
                         <div className="flex items-center gap-2">
                           <Input
                             type="text"
-                            placeholder="Discount"
+                            placeholder="0"
                             className="h-6 text-xs"
-                            value={product.discountAmount ? product.discountAmount.toString() : ''}
+                            value={!product.discountAmount || product.discountAmount === 0 ? '' : product.discountAmount.toString()}
                             onChange={(e) => {
                               const value = e.target.value;
                               // Allow empty string or valid decimal numbers
