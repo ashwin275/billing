@@ -359,8 +359,15 @@ export function ProductSearchDialog({
                               const value = e.target.value;
                               // Allow empty string or valid decimal numbers
                               if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                                const discount = value === '' ? 0 : parseFloat(value) || 0;
-                                handleDiscountChange(product.productId, Math.max(0, discount));
+                                const discount = value === '' ? '' : parseFloat(value) || 0;
+                                handleDiscountChange(product.productId, discount);
+                              }
+                            }}
+                            onBlur={(e) => {
+                              // Ensure minimum value on blur
+                              const value = e.target.value;
+                              if (value === '') {
+                                handleDiscountChange(product.productId, 0);
                               }
                             }}
                           />

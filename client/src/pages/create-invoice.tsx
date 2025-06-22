@@ -1810,12 +1810,24 @@ export default function CreateInvoice() {
                                 name={`saleItems.${index}.discount`}
                                 render={({ field }) => (
                                   <Input
-                                    {...field}
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                                    className="flex-1"
+                                    type="text"
+                                    value={field.value || ''}
+                                    onChange={(e) => {
+                                      const value = e.target.value;
+                                      // Allow empty string or valid decimal numbers
+                                      if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                                        const discount = value === '' ? '' : parseFloat(value) || 0;
+                                        field.onChange(discount);
+                                      }
+                                    }}
+                                    onBlur={(e) => {
+                                      // Ensure minimum value on blur
+                                      const value = e.target.value;
+                                      if (value === '') {
+                                        field.onChange(0);
+                                      }
+                                    }}
+                                    className="flex-1 h-8"
                                   />
                                 )}
                               />
