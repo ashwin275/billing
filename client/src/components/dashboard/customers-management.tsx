@@ -112,6 +112,7 @@ export default function CustomersManagement() {
       place: "",
       phone: "",
       shopId: 0,
+      customerType: "",
     },
   });
 
@@ -252,6 +253,7 @@ export default function CustomersManagement() {
       place: data.place,
       phone: data.phone,
       shopId: data.shopId,
+      customerType: data.customerType,
     };
     addCustomerMutation.mutate(customerInput);
   };
