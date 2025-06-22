@@ -42,7 +42,7 @@ export function ProductSearchDialog({
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>(existingItems);
+  const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>([]);
 
   // Get unique categories
   const categories = useMemo(() => {
@@ -115,16 +115,13 @@ export function ProductSearchDialog({
       setSelectedCategory("all");
     } else {
       // Load existing items when dialog opens
-      setSelectedProducts(existingItems);
+      setSelectedProducts([...existingItems]);
     }
   };
 
   const handleDone = () => {
     onSelect(selectedProducts);
     setOpen(false);
-    setSearchTerm("");
-    setSelectedCategory("all");
-    setSelectedProducts([]);
   };
 
   const isProductSelected = (productId: number) => {

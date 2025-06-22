@@ -1666,7 +1666,19 @@ export default function EditInvoice() {
                     <ProductSearchDialog
                       products={Array.isArray(products) ? products : []}
                       saleType={form.watch("saleType")}
+                      existingItems={fields.map((field, index) => {
+                        const productId = form.watch(`saleItems.${index}.productId`);
+                        const product = Array.isArray(products) ? products.find(p => p.productId === productId) : null;
+                        if (!product) return null;
+                        return {
+                          ...product,
+                          quantity: form.watch(`saleItems.${index}.quantity`) || 1,
+                          discountAmount: form.watch(`saleItems.${index}.discount`) || 0
+                        };
+                      }).filter(Boolean)}
                       onSelect={(selectedProducts) => {
+                        // Replace all items with new selection
+                        form.setValue('saleItems', []);
                         selectedProducts.forEach((product) => {
                           const rate = form.watch("saleType") === 'RETAIL' ? product.retailRate : product.wholesaleRate;
                           append({
