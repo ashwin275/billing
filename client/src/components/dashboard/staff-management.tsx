@@ -26,8 +26,7 @@ const staffSchema = z.object({
   countryId: z.number().min(1, "Country is required"),
   phone: z.string().min(10, "Phone number must be at least 10 digits"),
   email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  shopsIds: z.array(z.number()).min(1, "At least one shop must be selected")
+  password: z.string().min(6, "Password must be at least 6 characters")
 });
 
 type StaffFormData = z.infer<typeof staffSchema>;
@@ -90,13 +89,40 @@ const staffApi = {
   },
   
   async addStaff(staffData: StaffFormData): Promise<void> {
-    // Mock implementation - in real app this would POST to /users/shop/staff
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        console.log("Mock: Adding staff member:", staffData);
-        resolve();
-      }, 500);
+    // Get shop ID from token
+    const token = getAuthToken();
+    if (!token) throw new Error("No authentication token found");
+    
+    const decoded = decodeToken(token);
+    const shopId = decoded.shopId;
+    
+    if (!shopId) throw new Error("No shop ID found in token");
+    
+    // Prepare data for API
+    const apiData = {
+      fullName: staffData.fullName,
+      place: staffData.place,
+      age: staffData.age,
+      countryId: staffData.countryId,
+      phone: staffData.phone,
+      email: staffData.email,
+      password: staffData.password,
+      shopsIds: [shopId]
+    };
+    
+    const response = await fetch("/users/shop/staff", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(apiData)
     });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+    }
   },
   
   async deleteStaff(userId: number): Promise<void> {
@@ -155,13 +181,7 @@ export default function StaffManagement() {
     queryFn: () => authApi.getCountries(),
   });
 
-  // Fetch shops for form
-  const { data: shops = [] } = useQuery({
-    queryKey: ["/shop/all"],
-    queryFn: async (): Promise<Shop[]> => {
-      return apiRequest("/shop/all");
-    },
-  });
+  // No need to fetch shops since we get shop ID from token
 
   // Add staff form
   const form = useForm<StaffFormData>({
@@ -173,8 +193,7 @@ export default function StaffManagement() {
       countryId: 0,
       phone: "",
       email: "",
-      password: "",
-      shopsIds: []
+      password: ""
     },
   });
 
@@ -371,30 +390,7 @@ export default function StaffManagement() {
                   )}
                 />
                 
-                <FormField
-                  control={form.control}
-                  name="shopsIds"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Assigned Shops</FormLabel>
-                      <Select onValueChange={(value) => field.onChange([parseInt(value)])} value={field.value?.[0]?.toString()}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select shop" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {shops.map((shop) => (
-                            <SelectItem key={shop.shopId} value={shop.shopId.toString()}>
-                              {shop.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {/* Shop assignment is handled automatically from token */}
                 
                 <div className="flex justify-end space-x-2 pt-4">
                   <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
