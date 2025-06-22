@@ -109,10 +109,14 @@ export default function StaffManagement() {
   }
 
   // Fetch staffs
-  const { data: staffs = [], isLoading } = useQuery({
+  const { data: staffs = [], isLoading, error } = useQuery({
     queryKey: ["/users/shop/getstaff"],
     queryFn: () => staffApi.getAllStaffs(),
   });
+
+  console.log("Staff data:", staffs);
+  console.log("Loading:", isLoading);
+  console.log("Error:", error);
 
   // Fetch countries for form
   const { data: countries = [] } = useQuery({
@@ -207,6 +211,17 @@ export default function StaffManagement() {
 
   if (isLoading) {
     return <div className="flex justify-center p-8">Loading staffs...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center p-8">
+        <div className="text-center">
+          <h2 className="text-lg font-bold text-red-600 mb-2">Error Loading Staff</h2>
+          <p className="text-gray-600">Failed to load staff data: {error?.message || 'Unknown error'}</p>
+        </div>
+      </div>
+    );
   }
 
   return (
