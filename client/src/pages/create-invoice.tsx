@@ -267,15 +267,18 @@ export default function CreateInvoice() {
     const totalTax = items.reduce((sum, item) => sum + (item?.taxAmount || 0), 0);
     
     let totalDiscount = 0;
+    let overallDiscountAmount = 0;
     if (formData.discountType === 'PERCENTAGE') {
       totalDiscount = (subtotal * formData.discount) / 100;
+      overallDiscountAmount = totalDiscount;
     } else {
       totalDiscount = formData.discount;
+      overallDiscountAmount = totalDiscount;
     }
     
     const grandTotal = subtotal - totalDiscount; // Exclude tax from grand total
 
-    return { subtotal, totalTax, totalDiscount, grandTotal, items };
+    return { subtotal, totalTax, totalDiscount, overallDiscountAmount, grandTotal, items };
   };
 
   const totals = calculateTotals();
@@ -1938,7 +1941,7 @@ export default function CreateInvoice() {
                       </div>
                       <div className="flex justify-between text-gray-600">
                         <span>Overall Discount:</span>
-                        <span>-₹{totals.overallDiscountAmount.toFixed(2)}</span>
+                        <span>-₹{(totals.overallDiscountAmount || 0).toFixed(2)}</span>
                       </div>
                     </div>
 
