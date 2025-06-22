@@ -514,29 +514,6 @@ export default function CustomersManagement() {
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={editForm.control}
-                    name="customerType"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Customer Type</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select customer type" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="CUSTOMER">Customer</SelectItem>
-                            <SelectItem value="DEALER">Dealer</SelectItem>
-                            <SelectItem value="CREDIT">Credit</SelectItem>
-                            <SelectItem value="SUBSCRIPTION">Subscription</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
 
                   <div className="flex justify-end space-x-2 pt-4">
                     <Button 
