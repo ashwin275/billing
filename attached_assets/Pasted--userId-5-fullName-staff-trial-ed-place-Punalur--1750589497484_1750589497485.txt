@@ -1,0 +1,86 @@
+[
+    {
+        "userId": 5,
+        "fullName": "staff trial ed",
+        "place": "Punalur",
+        "countryId": null,
+        "country": null,
+        "phone": "12345645688",
+        "email": "trials@gmail.com",
+        "password": null,
+        "referredBy": null,
+        "referredUsers": null,
+        "shop": null,
+        "roles": [
+            {
+                "roleId": 5,
+                "roleName": "ROLE_STAFF",
+                "description": "Shop Staffs",
+                "createdAt": "2025-06-18T20:11:07.182+00:00",
+                "updatedAt": "2025-06-18T20:11:07.182+00:00"
+            }
+        ],
+        "shops": null,
+        "shopIds": null,
+        "shopId": null,
+        "roleId": null,
+        "status": null,
+        "referredByUserId": null
+    },
+    {
+        "userId": 6,
+        "fullName": "staff trial ed",
+        "place": "Punalur",
+        "countryId": null,
+        "country": null,
+        "phone": "12345645688",
+        "email": "trial1@gmail.com",
+        "password": null,
+        "referredBy": null,
+        "referredUsers": null,
+        "shop": null,
+        "roles": [
+            {
+                "roleId": 5,
+                "roleName": "ROLE_STAFF",
+                "description": "Shop Staffs",
+                "createdAt": "2025-06-18T20:11:07.182+00:00",
+                "updatedAt": "2025-06-18T20:11:07.182+00:00"
+            }
+        ],
+        "shops": null,
+        "shopIds": null,
+        "shopId": null,
+        "roleId": null,
+        "status": null,
+        "referredByUserId": null
+    },
+    {
+        "userId": 3,
+        "fullName": "staff trial ed",
+        "place": "Punalur",
+        "countryId": null,
+        "country": null,
+        "phone": "12345645688",
+        "email": "trial@gmail.com",
+        "password": null,
+        "referredBy": null,
+        "referredUsers": null,
+        "shop": null,
+        "roles": [
+            {
+                "roleId": 5,
+                "roleName": "ROLE_STAFF",
+                "description": "Shop Staffs",
+                "createdAt": "2025-06-18T20:11:07.182+00:00",
+                "updatedAt": "2025-06-18T20:11:07.182+00:00"
+            }
+        ],
+        "shops": null,
+        "shopIds": null,
+        "shopId": null,
+        "roleId": null,
+        "status": null,
+        "referredByUserId": null
+    }
+]

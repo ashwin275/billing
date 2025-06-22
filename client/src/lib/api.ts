@@ -396,6 +396,38 @@ export const dashboardApi = {
 };
 
 /**
+ * Staff management API endpoints
+ */
+export const staffApi = {
+  /**
+   * Get all staff members
+   */
+  async getAllStaffs(): Promise<any[]> {
+    return apiRequest("/users/shop/getstaff");
+  },
+  
+  /**
+   * Add new staff member
+   */
+  async addStaff(staffData: any): Promise<void> {
+    return apiRequest("/users/shop/staff", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(staffData)
+    });
+  },
+  
+  /**
+   * Delete staff member by ID
+   */
+  async deleteStaff(userId: number): Promise<void> {
+    return apiRequest(`/users/${userId}`, {
+      method: "DELETE"
+    });
+  }
+};
+
+/**
  * Reports API endpoints
  */
 export const reportsApi = {

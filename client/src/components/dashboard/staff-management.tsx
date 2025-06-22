@@ -16,6 +16,7 @@ import { Search, Plus, Trash2, Users, MapPin, Phone, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { getAuthToken, decodeToken } from "@/lib/auth";
+import { authApi } from "@/lib/api";
 
 // Staff schema for form validation
 const staffSchema = z.object({
@@ -69,7 +70,7 @@ const staffApi = {
   },
   
   async deleteStaff(userId: number): Promise<void> {
-    return apiRequest(`/users/shop/staff/${userId}`, {
+    return apiRequest(`/users/${userId}`, {
       method: "DELETE"
     });
   }
@@ -116,9 +117,7 @@ export default function StaffManagement() {
   // Fetch countries for form
   const { data: countries = [] } = useQuery({
     queryKey: ["/api/countries"],
-    queryFn: async (): Promise<Country[]> => {
-      return apiRequest("/api/countries");
-    },
+    queryFn: () => authApi.getCountries(),
   });
 
   // Fetch shops for form

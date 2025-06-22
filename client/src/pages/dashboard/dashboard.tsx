@@ -30,6 +30,7 @@ import ShopsManagement from "@/components/dashboard/shops-management";
 import CustomersManagement from "@/components/dashboard/customers-management";
 import InvoiceManagement from "@/components/dashboard/invoice-management-clean";
 import ProfileManagement from "@/components/dashboard/profile-management";
+import StaffManagement from "@/components/dashboard/staff-management";
 import Reports from "@/pages/reports";
 
 
