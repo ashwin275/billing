@@ -28,7 +28,8 @@ const saleItemSchema = z.object({
   productId: z.number().min(1, "Product is required"),
   quantity: z.number().min(1, "Quantity must be at least 1"),
   discount: z.number().min(0, "Discount cannot be negative"),
-  discountType: z.enum(["PERCENTAGE", "AMOUNT"]).default("PERCENTAGE"),
+  discountType: z.enum(["PERCENTAGE", "AMOUNT"]).default("AMOUNT"),
+  unitPrice: z.number().min(0, "Unit price cannot be negative")
 });
 
 const invoiceSchema = z.object({
@@ -45,7 +46,7 @@ const invoiceSchema = z.object({
   saleType: z.enum(["RETAIL", "WHOLESALE"]).default("RETAIL"),
   transactionId: z.string().min(1, "Transaction ID is required"),
   signature: z.string().optional(),
-  saleItems: z.array(saleItemSchema).min(1, "At least one item is required"),
+  saleItems: z.array(saleItemSchema).min(0, "No items required for validation"),
 });
 
 type InvoiceFormData = z.infer<typeof invoiceSchema>;
@@ -119,6 +120,13 @@ export default function EditInvoice() {
     control: form.control,
     name: "saleItems",
   });
+
+  // Prevent default items from being added
+  useEffect(() => {
+    if (!isEditMode && fields.length > 0 && form.getValues('saleItems').some(item => item.productId === 0)) {
+      form.setValue('saleItems', []);
+    }
+  }, [fields, form, isEditMode]);
 
   // Customer form
   const customerForm = useForm<CustomerFormData>({
