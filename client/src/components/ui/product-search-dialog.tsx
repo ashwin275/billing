@@ -99,7 +99,12 @@ export function ProductSearchDialog({
 
   const handleDiscountChange = (productId: number, discountAmount: number | string) => {
     setSelectedProducts(selectedProducts.map(p => 
-      p.productId === productId ? { ...p, discountAmount: typeof discountAmount === 'string' ? parseFloat(discountAmount) || 0 : Math.max(0, discountAmount) } : p
+      p.productId === productId ? { 
+        ...p, 
+        discountAmount: typeof discountAmount === 'string' ? 
+          (discountAmount === '' ? 0 : parseFloat(discountAmount) || 0) : 
+          Math.max(0, discountAmount) 
+      } : p
     ));
   };
 
@@ -143,7 +148,7 @@ export function ProductSearchDialog({
           <DialogTitle>Add Items</DialogTitle>
         </DialogHeader>
         
-        <div className="flex gap-4 flex-1 overflow-hidden mt-4">
+        <div className="flex gap-4 flex-1 overflow-hidden mt-6">
           {/* Product Selection Side */}
           <div className="flex-1 flex flex-col space-y-4">
             <div className="flex gap-2">
@@ -314,7 +319,7 @@ export function ProductSearchDialog({
                         <Input
                           type="text"
                           className="w-12 h-6 text-center text-xs"
-                          value={product.quantity}
+                          value={product.quantity === 1 ? '' : product.quantity.toString()}
                           onChange={(e) => {
                             const value = e.target.value;
                             // Allow empty string or valid numbers
@@ -332,6 +337,7 @@ export function ProductSearchDialog({
                               handleQuantityChange(product.productId, 1);
                             }
                           }}
+                          placeholder="1"
                         />
                         <Button
                           size="sm"
@@ -354,7 +360,7 @@ export function ProductSearchDialog({
                             type="text"
                             placeholder="Discount"
                             className="h-6 text-xs"
-                            value={product.discountAmount === 0 ? '' : product.discountAmount || ''}
+                            value={!product.discountAmount || product.discountAmount === 0 ? '' : product.discountAmount.toString()}
                             onChange={(e) => {
                               const value = e.target.value;
                               // Allow empty string or valid decimal numbers
