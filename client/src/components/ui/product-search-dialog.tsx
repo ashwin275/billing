@@ -7,15 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Search, Package, Filter, Plus, Minus, X } from "lucide-react";
 
-interface Product {
-  productId: number;
-  name: string;
-  hsn: string;
-  stock: number;
-  retailRate: number;
-  wholesaleRate: number;
-  category?: string;
-}
+type Product = import("@/types/api").Product;
 
 interface SelectedProduct extends Product {
   quantity: number;
@@ -211,11 +203,11 @@ export function ProductSearchDialog({
                         <TableCell>₹{product.retailRate}</TableCell>
                         <TableCell>
                           <span className={`px-2 py-1 rounded text-xs ${
-                            (product.quantity || 0) <= 5 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+                            (product.stock || 0) <= 5 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
                           }`}>
-                            {product.quantity || 0} PCS
+                            {product.stock || 0} PCS
                           </span>
-                          {(product.quantity || 0) <= 5 && (
+                          {(product.stock || 0) <= 5 && (
                             <div className="text-xs text-red-500 mt-1">Low Stock</div>
                           )}
                         </TableCell>
