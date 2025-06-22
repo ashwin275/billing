@@ -43,7 +43,8 @@ interface Staff {
 
 interface Country {
   countryId: number;
-  name: string;
+  countryCode: string;
+  country: string;
 }
 
 interface Shop {
@@ -360,7 +361,7 @@ export default function StaffManagement() {
                         <SelectContent>
                           {countries.map((country) => (
                             <SelectItem key={country.countryId} value={country.countryId.toString()}>
-                              {country.name}
+                              {country.country}
                             </SelectItem>
                           ))}
                         </SelectContent>
