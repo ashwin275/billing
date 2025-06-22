@@ -1,0 +1,471 @@
+import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Search, Plus, Trash2, Users, MapPin, Phone, Mail } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+
+// Staff schema for form validation
+const staffSchema = z.object({
+  fullName: z.string().min(1, "Full name is required"),
+  place: z.string().min(1, "Place is required"),
+  age: z.number().min(18, "Age must be at least 18").max(65, "Age must be under 65"),
+  countryId: z.number().min(1, "Country is required"),
+  phone: z.string().min(10, "Phone number must be at least 10 digits"),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  shopsIds: z.array(z.number()).min(1, "At least one shop must be selected")
+});
+
+type StaffFormData = z.infer<typeof staffSchema>;
+
+interface Staff {
+  userId: number;
+  fullName: string;
+  place: string;
+  phone: string;
+  email: string;
+  roles: Array<{
+    roleId: number;
+    roleName: string;
+    description: string;
+  }>;
+}
+
+interface Country {
+  countryId: number;
+  name: string;
+}
+
+interface Shop {
+  shopId: number;
+  name: string;
+}
+
+// Staff API functions
+const staffApi = {
+  async getAllStaffs(): Promise<Staff[]> {
+    return apiRequest("/users/shop/getstaff");
+  },
+  
+  async addStaff(staffData: StaffFormData): Promise<void> {
+    return apiRequest("/users/shop/staff", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(staffData)
+    });
+  },
+  
+  async deleteStaff(userId: number): Promise<void> {
+    return apiRequest(`/users/shop/staff/${userId}`, {
+      method: "DELETE"
+    });
+  }
+};
+
+export default function StaffManagement() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedPlace, setSelectedPlace] = useState<string>("all");
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Fetch staffs
+  const { data: staffs = [], isLoading } = useQuery({
+    queryKey: ["/users/shop/getstaff"],
+    queryFn: () => staffApi.getAllStaffs(),
+  });
+
+  // Fetch countries for form
+  const { data: countries = [] } = useQuery({
+    queryKey: ["/api/countries"],
+    queryFn: async (): Promise<Country[]> => {
+      return apiRequest("/api/countries");
+    },
+  });
+
+  // Fetch shops for form
+  const { data: shops = [] } = useQuery({
+    queryKey: ["/shop/all"],
+    queryFn: async (): Promise<Shop[]> => {
+      return apiRequest("/shop/all");
+    },
+  });
+
+  // Add staff form
+  const form = useForm<StaffFormData>({
+    resolver: zodResolver(staffSchema),
+    defaultValues: {
+      fullName: "",
+      place: "",
+      age: 18,
+      countryId: 0,
+      phone: "",
+      email: "",
+      password: "",
+      shopsIds: []
+    },
+  });
+
+  // Add staff mutation
+  const addStaffMutation = useMutation({
+    mutationFn: staffApi.addStaff,
+    onSuccess: () => {
+      toast({
+        title: "Staff added successfully",
+        description: "The staff member has been added to your team.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/users/shop/getstaff"] });
+      setIsAddDialogOpen(false);
+      form.reset();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to add staff",
+        description: error?.detail || error?.message || "Failed to add staff member.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete staff mutation
+  const deleteStaffMutation = useMutation({
+    mutationFn: staffApi.deleteStaff,
+    onSuccess: () => {
+      toast({
+        title: "Staff deleted successfully",
+        description: "The staff member has been removed from your team.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/users/shop/getstaff"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to delete staff",
+        description: error?.detail || error?.message || "Failed to delete staff member.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Filter staffs based on search and place
+  const filteredStaffs = staffs.filter((staff) => {
+    const matchesSearch = staff.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         staff.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         staff.phone.includes(searchTerm);
+    const matchesPlace = selectedPlace === "all" || staff.place === selectedPlace;
+    return matchesSearch && matchesPlace;
+  });
+
+  // Get unique places for filter
+  const uniquePlaces = Array.from(new Set(staffs.map(staff => staff.place))).filter(Boolean);
+
+  const onSubmit = (data: StaffFormData) => {
+    addStaffMutation.mutate(data);
+  };
+
+  const handleDeleteStaff = (userId: number) => {
+    if (confirm("Are you sure you want to delete this staff member?")) {
+      deleteStaffMutation.mutate(userId);
+    }
+  };
+
+  if (isLoading) {
+    return <div className="flex justify-center p-8">Loading staffs...</div>;
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Staff Management</h2>
+          <p className="text-muted-foreground">Manage your team members and their access</p>
+        </div>
+        
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Staff
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Add New Staff Member</DialogTitle>
+              <DialogDescription>
+                Create a new staff account with access to your shop
+              </DialogDescription>
+            </DialogHeader>
+            
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="fullName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Full Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter full name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input type="email" placeholder="Enter email address" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Password</FormLabel>
+                      <FormControl>
+                        <Input type="password" placeholder="Enter password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="place"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Place</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter place" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="age"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Age</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            placeholder="Enter age" 
+                            {...field}
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter phone number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="countryId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Country</FormLabel>
+                      <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select country" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {countries.map((country) => (
+                            <SelectItem key={country.countryId} value={country.countryId.toString()}>
+                              {country.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="shopsIds"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Assigned Shops</FormLabel>
+                      <Select onValueChange={(value) => field.onChange([parseInt(value)])} value={field.value?.[0]?.toString()}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select shop" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {shops.map((shop) => (
+                            <SelectItem key={shop.shopId} value={shop.shopId.toString()}>
+                              {shop.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={addStaffMutation.isPending}>
+                    {addStaffMutation.isPending ? "Adding..." : "Add Staff"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Search and Filters */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Team Members ({filteredStaffs.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-4 mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by name, email, or phone..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8"
+              />
+            </div>
+            <Select value={selectedPlace} onValueChange={setSelectedPlace}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filter by place" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Places</SelectItem>
+                {uniquePlaces.map((place) => (
+                  <SelectItem key={place} value={place}>
+                    {place}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Staff Table */}
+          <div className="border rounded-lg">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Contact</TableHead>
+                  <TableHead>Location</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredStaffs.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      {searchTerm || selectedPlace !== "all" ? "No staff members found matching your filters" : "No staff members found"}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredStaffs.map((staff) => (
+                    <TableRow key={staff.userId}>
+                      <TableCell>
+                        <div className="font-medium">{staff.fullName}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1 text-sm">
+                            <Mail className="h-3 w-3" />
+                            {staff.email}
+                          </div>
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <Phone className="h-3 w-3" />
+                            {staff.phone}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {staff.place}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {staff.roles.map((role) => (
+                          <Badge key={role.roleId} variant="secondary">
+                            {role.roleName.replace('ROLE_', '')}
+                          </Badge>
+                        ))}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteStaff(staff.userId)}
+                          disabled={deleteStaffMutation.isPending}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
