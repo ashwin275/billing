@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Search, Plus, Trash2, Users, MapPin, Phone, Mail, ChevronUp, ChevronDown } from "lucide-react";
+import { Search, Plus, Trash2, Users, MapPin, Phone, Mail, ChevronUp, ChevronDown, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { getAuthToken, decodeToken } from "@/lib/auth";
@@ -123,6 +123,8 @@ export default function StaffManagement() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [sortColumn, setSortColumn] = useState<keyof Staff | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -177,7 +179,8 @@ export default function StaffManagement() {
       countryId: 0,
       phone: "",
       email: "",
-      password: ""
+      password: "",
+      confirmPassword: ""
     },
   });
 
@@ -236,7 +239,9 @@ export default function StaffManagement() {
   };
 
   const onSubmit = (data: StaffFormData) => {
-    addStaffMutation.mutate(data);
+    // Remove confirmPassword from the data before sending
+    const { confirmPassword, ...staffData } = data;
+    addStaffMutation.mutate(staffData);
   };
 
 
