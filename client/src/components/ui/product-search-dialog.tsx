@@ -97,9 +97,9 @@ export function ProductSearchDialog({
     }
   };
 
-  const handleDiscountChange = (productId: number, discountAmount: number) => {
+  const handleDiscountChange = (productId: number, discountAmount: number | string) => {
     setSelectedProducts(selectedProducts.map(p => 
-      p.productId === productId ? { ...p, discountAmount: Math.max(0, discountAmount) } : p
+      p.productId === productId ? { ...p, discountAmount: typeof discountAmount === 'string' ? parseFloat(discountAmount) || 0 : Math.max(0, discountAmount) } : p
     ));
   };
 
@@ -143,7 +143,7 @@ export function ProductSearchDialog({
           <DialogTitle>Add Items</DialogTitle>
         </DialogHeader>
         
-        <div className="flex gap-4 flex-1 overflow-hidden">
+        <div className="flex gap-4 flex-1 overflow-hidden mt-4">
           {/* Product Selection Side */}
           <div className="flex-1 flex flex-col space-y-4">
             <div className="flex gap-2">
