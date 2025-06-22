@@ -127,7 +127,7 @@ export function ProductSearchDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-7xl max-h-[95vh] flex flex-col">
+      <DialogContent className="w-[90vw] h-[90vh] max-w-[1200px] flex flex-col">
         <DialogHeader>
           <DialogTitle>Add Items</DialogTitle>
         </DialogHeader>

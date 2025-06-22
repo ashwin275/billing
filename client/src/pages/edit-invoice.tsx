@@ -1746,7 +1746,7 @@ export default function EditInvoice() {
                                         <div className="flex flex-col">
                                           <span className="font-medium">{product.name}</span>
                                           <span className="text-xs text-gray-500">
-                                            {product.productNumber} | HSN: {product.hsn} | Stock: {product.quantity} | 
+                                            {product.productNumber} | HSN: {product.hsn} | Current Stock: {product.quantity} PCS | 
                                             W: ₹{product.wholesaleRate} | R: ₹{product.retailRate}
                                           </span>
                                         </div>
