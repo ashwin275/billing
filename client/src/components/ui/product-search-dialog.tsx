@@ -196,34 +196,43 @@ export function ProductSearchDialog({
                         <TableCell>₹{rate}</TableCell>
                         <TableCell>₹{product.retailRate}</TableCell>
                         <TableCell>
-                          <div className={`text-sm ${product.stock <= 5 ? 'text-red-600' : ''}`}>
-                            {product.stock} PCS
-                            {product.stock <= 5 && (
-                              <div className="text-xs text-red-500">Insufficient Stock</div>
-                            )}
-                          </div>
+                          <span className={`px-2 py-1 rounded text-xs ${
+                            (product.quantity || 0) <= 5 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+                          }`}>
+                            {product.quantity || 0} PCS
+                          </span>
+                          {(product.quantity || 0) <= 5 && (
+                            <div className="text-xs text-red-500 mt-1">Low Stock</div>
+                          )}
                         </TableCell>
                         <TableCell>
                           {selectedProduct ? (
                             <div className="flex items-center gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-8 w-8 p-0"
-                                onClick={() => handleQuantityChange(product.productId, selectedProduct.quantity - 1)}
+                              <Select 
+                                value={selectedProduct.quantity.toString()} 
+                                onValueChange={(value) => handleQuantityChange(product.productId, parseInt(value))}
                               >
-                                <Minus className="h-3 w-3" />
-                              </Button>
-                              <span className="w-8 text-center">{selectedProduct.quantity}</span>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-8 w-8 p-0"
-                                onClick={() => handleQuantityChange(product.productId, selectedProduct.quantity + 1)}
-                              >
-                                <Plus className="h-3 w-3" />
-                              </Button>
-                              <span className="text-sm text-muted-foreground ml-2">PCS</span>
+                                <SelectTrigger className="w-20 h-8">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {Array.from({ length: Math.min(product.quantity || 0, 50) }, (_, i) => i + 1).map(num => (
+                                    <SelectItem key={num} value={num.toString()}>
+                                      {num}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <span className="text-xs text-gray-500">PCS</span>
+                              <Input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={selectedProduct.discountAmount || 0}
+                                onChange={(e) => handleDiscountChange(product.productId, parseFloat(e.target.value) || 0)}
+                                className="w-20 h-8"
+                                placeholder="Discount"
+                              />
                               <Button
                                 size="sm"
                                 variant="ghost"
