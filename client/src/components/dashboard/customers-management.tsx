@@ -563,7 +563,8 @@ export default function CustomersManagement() {
                     </Button>
                   </TableHead>
                   <TableHead>Shop</TableHead>
-                  <TableHead className="hidden lg:table-cell">Total Spend</TableHead>
+                  <TableHead className="hidden lg:table-cell">Customer Type</TableHead>
+                  <TableHead className="hidden lg:table-cell">Loyalty Points</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -636,7 +637,7 @@ export default function CustomersManagement() {
                   </TableRow>
                 )) : (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-12">
+                    <TableCell colSpan={6} className="text-center py-12">
                       <div className="flex flex-col items-center space-y-3 text-slate-500">
                         <Users className="h-12 w-12" />
                         <div className="space-y-1">
