@@ -58,22 +58,31 @@ interface Shop {
 // Staff API functions
 const staffApi = {
   async getAllStaffs(): Promise<Staff[]> {
-    const response = await fetch("/users/shop/getstaff", {
+    const token = getAuthToken();
+    const response = await fetch("/api/users/shop/getstaff", {
+      method: "GET",
       headers: {
-        "Authorization": `Bearer ${getAuthToken()}`,
+        "Authorization": `Bearer ${token}`,
         "Content-Type": "application/json"
       }
     });
     
+    console.log("API Response status:", response.status);
+    console.log("API Response headers:", response.headers);
+    
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const text = await response.text();
+      console.log("API Error response:", text);
+      throw new Error(`HTTP error! status: ${response.status} - ${text}`);
     }
     
-    return response.json();
+    const data = await response.json();
+    console.log("API Response data:", data);
+    return data;
   },
   
   async addStaff(staffData: StaffFormData): Promise<void> {
-    const response = await fetch("/users/shop/staff", {
+    const response = await fetch("/api/users/shop/staff", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${getAuthToken()}`,
@@ -88,7 +97,7 @@ const staffApi = {
   },
   
   async deleteStaff(userId: number): Promise<void> {
-    const response = await fetch(`/users/${userId}`, {
+    const response = await fetch(`/api/users/${userId}`, {
       method: "DELETE",
       headers: {
         "Authorization": `Bearer ${getAuthToken()}`,
@@ -136,7 +145,7 @@ export default function StaffManagement() {
 
   // Fetch staffs
   const { data: staffs = [], isLoading, error } = useQuery({
-    queryKey: ["/users/shop/getstaff"],
+    queryKey: ["/api/users/shop/getstaff"],
     queryFn: () => staffApi.getAllStaffs(),
   });
 
