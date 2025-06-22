@@ -418,7 +418,7 @@ export default function StaffManagement() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Team Members ({filteredStaffs.length})
+            Team Members ({filteredAndSortedStaffs.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
