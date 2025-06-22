@@ -1688,7 +1688,7 @@ export default function CreateInvoice() {
                           quantity: form.watch(`saleItems.${index}.quantity`) || 1,
                           discountAmount: form.watch(`saleItems.${index}.discount`) || 0
                         };
-                      }).filter(Boolean)}
+                      }).filter((item): item is NonNullable<typeof item> => item !== null)}
                       onSelect={(selectedProducts) => {
                         // Replace all items with new selection
                         form.setValue('saleItems', []);
