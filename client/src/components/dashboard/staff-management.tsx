@@ -184,7 +184,6 @@ export default function StaffManagement() {
       phone: "",
       email: "",
       password: "",
-      confirmPassword: "",
       confirmPassword: ""
     },
   });
@@ -501,60 +500,65 @@ export default function StaffManagement() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead 
-                    className="cursor-pointer hover:bg-gray-50 select-none"
-                    onClick={() => handleSort("fullName")}
-                  >
-                    <div className="flex items-center gap-2">
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort("fullName")}
+                      className="h-auto p-0 font-semibold hover:bg-transparent"
+                    >
                       Name
                       {sortColumn === "fullName" && (
-                        sortDirection === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+                        sortDirection === "asc" ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />
                       )}
-                    </div>
+                    </Button>
                   </TableHead>
-                  <TableHead 
-                    className="cursor-pointer hover:bg-gray-50 select-none"
-                    onClick={() => handleSort("email")}
-                  >
-                    <div className="flex items-center gap-2">
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort("email")}
+                      className="h-auto p-0 font-semibold hover:bg-transparent"
+                    >
                       Email
                       {sortColumn === "email" && (
-                        sortDirection === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+                        sortDirection === "asc" ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />
                       )}
-                    </div>
+                    </Button>
                   </TableHead>
-                  <TableHead 
-                    className="cursor-pointer hover:bg-gray-50 select-none"
-                    onClick={() => handleSort("phone")}
-                  >
-                    <div className="flex items-center gap-2">
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort("phone")}
+                      className="h-auto p-0 font-semibold hover:bg-transparent"
+                    >
                       Phone
                       {sortColumn === "phone" && (
-                        sortDirection === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+                        sortDirection === "asc" ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />
                       )}
-                    </div>
+                    </Button>
                   </TableHead>
-                  <TableHead 
-                    className="cursor-pointer hover:bg-gray-50 select-none"
-                    onClick={() => handleSort("place")}
-                  >
-                    <div className="flex items-center gap-2">
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort("place")}
+                      className="h-auto p-0 font-semibold hover:bg-transparent"
+                    >
                       Place
                       {sortColumn === "place" && (
-                        sortDirection === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+                        sortDirection === "asc" ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />
                       )}
-                    </div>
+                    </Button>
                   </TableHead>
-                  <TableHead 
-                    className="cursor-pointer hover:bg-gray-50 select-none"
-                    onClick={() => handleSort("country")}
-                  >
-                    <div className="flex items-center gap-2">
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort("country")}
+                      className="h-auto p-0 font-semibold hover:bg-transparent"
+                    >
                       Country
                       {sortColumn === "country" && (
-                        sortDirection === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+                        sortDirection === "asc" ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />
                       )}
-                    </div>
+                    </Button>
                   </TableHead>
                 </TableRow>
               </TableHeader>
