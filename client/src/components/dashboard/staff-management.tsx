@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Search, Plus, Trash2, Users, MapPin, Phone, Mail } from "lucide-react";
+import { Search, Plus, Trash2, Users, MapPin, Phone, Mail, ChevronUp, ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { getAuthToken, decodeToken } from "@/lib/auth";
@@ -121,6 +121,8 @@ const staffApi = {
 export default function StaffManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [sortColumn, setSortColumn] = useState<keyof Staff | null>(null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -414,22 +416,72 @@ export default function StaffManagement() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Place</TableHead>
-                  <TableHead>Country</TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-gray-50 select-none"
+                    onClick={() => handleSort("fullName")}
+                  >
+                    <div className="flex items-center gap-2">
+                      Name
+                      {sortColumn === "fullName" && (
+                        sortDirection === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-gray-50 select-none"
+                    onClick={() => handleSort("email")}
+                  >
+                    <div className="flex items-center gap-2">
+                      Email
+                      {sortColumn === "email" && (
+                        sortDirection === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-gray-50 select-none"
+                    onClick={() => handleSort("phone")}
+                  >
+                    <div className="flex items-center gap-2">
+                      Phone
+                      {sortColumn === "phone" && (
+                        sortDirection === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-gray-50 select-none"
+                    onClick={() => handleSort("place")}
+                  >
+                    <div className="flex items-center gap-2">
+                      Place
+                      {sortColumn === "place" && (
+                        sortDirection === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-gray-50 select-none"
+                    onClick={() => handleSort("country")}
+                  >
+                    <div className="flex items-center gap-2">
+                      Country
+                      {sortColumn === "country" && (
+                        sortDirection === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredStaffs.length === 0 ? (
+                {filteredAndSortedStaffs.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                       {searchTerm ? "No staff members found matching your search" : "No staff members found"}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredStaffs.map((staff) => (
+                  filteredAndSortedStaffs.map((staff) => (
                     <TableRow key={staff.userId}>
                       <TableCell className="font-medium">{staff.fullName}</TableCell>
                       <TableCell>{staff.email}</TableCell>
