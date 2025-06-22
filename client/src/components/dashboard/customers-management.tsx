@@ -607,11 +607,18 @@ export default function CustomersManagement() {
                       </div>
                     </TableCell>
 
-                    {/* Total Spend - Hidden on smaller screens */}
+                    {/* Customer Type - Hidden on smaller screens */}
                     <TableCell className="hidden lg:table-cell">
-                      <Badge variant="outline">
-                        {customer.totalSpend ? `$${customer.totalSpend}` : 'No purchases'}
-                      </Badge>
+                      <div className="text-slate-700">
+                        {customer.customerType || 'N/A'}
+                      </div>
+                    </TableCell>
+
+                    {/* Loyalty Points - Hidden on smaller screens */}
+                    <TableCell className="hidden lg:table-cell">
+                      <div className="text-slate-700 font-medium">
+                        {customer.loyaltyPoints ? `${customer.loyaltyPoints} pts` : 'N/A'}
+                      </div>
                     </TableCell>
 
                     {/* Actions */}
