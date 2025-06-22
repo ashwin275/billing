@@ -1699,6 +1699,7 @@ export default function EditInvoice() {
                       <div className="col-span-1">CGST</div>
                       <div className="col-span-1">SGST</div>
                       <div className="col-span-1">Total</div>
+                      <div className="col-span-1">Action</div>
                     </div>
 
                     {fields.length === 0 ? (
@@ -1749,9 +1750,19 @@ export default function EditInvoice() {
                           </div>
                           
                           <div className="col-span-1">
-                            <div className="text-sm text-center">
-                              {quantity}
-                            </div>
+                            <FormField
+                              control={form.control}
+                              name={`saleItems.${index}.quantity`}
+                              render={({ field }) => (
+                                <Input
+                                  {...field}
+                                  type="number"
+                                  min="1"
+                                  onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                                  className="text-center h-8"
+                                />
+                              )}
+                            />
                           </div>
                           
                           <div className="col-span-1">
@@ -1804,6 +1815,18 @@ export default function EditInvoice() {
                           
                           <div className="col-span-1 font-semibold">
                             ₹{itemTotal.toFixed(2)}
+                          </div>
+                          
+                          <div className="col-span-1">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => remove(index)}
+                              className="text-red-600 hover:text-red-700 h-8 w-8 p-0"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                           
                           <div className="col-span-1">
