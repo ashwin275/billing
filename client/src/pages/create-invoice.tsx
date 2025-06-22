@@ -1777,7 +1777,15 @@ export default function CreateInvoice() {
                                   {...field}
                                   type="number"
                                   min="1"
-                                  onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                                  value={field.value || ''}
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    if (value === '') {
+                                      field.onChange(1);
+                                    } else {
+                                      field.onChange(parseInt(value) || 1);
+                                    }
+                                  }}
                                   className="text-center h-8"
                                 />
                               )}

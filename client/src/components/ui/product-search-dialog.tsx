@@ -311,7 +311,21 @@ export function ProductSearchDialog({
                         >
                           <Minus className="h-3 w-3" />
                         </Button>
-                        <span className="w-8 text-center text-sm">{product.quantity}</span>
+                        <Input
+                          type="number"
+                          className="w-12 h-6 text-center text-xs"
+                          min="1"
+                          value={product.quantity}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === '') {
+                              handleQuantityChange(product.productId, 1);
+                            } else {
+                              const qty = parseInt(value) || 1;
+                              handleQuantityChange(product.productId, Math.max(1, qty));
+                            }
+                          }}
+                        />
                         <Button
                           size="sm"
                           variant="outline"
@@ -320,7 +334,7 @@ export function ProductSearchDialog({
                         >
                           <Plus className="h-3 w-3" />
                         </Button>
-                        <span className="text-xs text-muted-foreground">PCS</span>
+                        <span className="text-xs text-muted-foreground">QTY</span>
                       </div>
                       
                       <div className="space-y-1">
