@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -138,9 +138,12 @@ export function ProductSearchDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="w-[90vw] h-[90vh] max-w-[1200px] flex flex-col">
+      <DialogContent className="w-[90vw] h-[90vh] max-w-[1200px] flex flex-col" aria-describedby="dialog-description">
         <DialogHeader>
           <DialogTitle>Add Items</DialogTitle>
+          <DialogDescription id="dialog-description">
+            Search and select products to add to your invoice
+          </DialogDescription>
         </DialogHeader>
         
         <div className="flex gap-4 flex-1 overflow-hidden mt-6">

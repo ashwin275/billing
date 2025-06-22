@@ -2079,7 +2079,7 @@ export default function CreateInvoice() {
                             <td className="border-b border-black p-2 text-black">{item?.product?.name || 'Product'}</td>
                             <td className="border-b border-black p-2 text-right text-black">{item?.quantity}</td>
                             <td className="border-b border-black p-2 text-right text-black">₹{item?.unitPrice?.toFixed(2)}</td>
-                            <td className="border-b border-black p-2 text-right text-black">₹{item?.discountAmount?.toFixed(2)}</td>
+                            <td className="border-b border-black p-2 text-right text-black">₹{(item?.discountAmount || 0).toFixed(2)}</td>
                             <td className="border-b border-black p-2 text-right text-black">₹{item?.totalPrice?.toFixed(2)}</td>
                           </tr>
                         ))}
