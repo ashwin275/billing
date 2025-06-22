@@ -1835,18 +1835,6 @@ export default function CreateInvoice() {
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
-                          
-                          <div className="col-span-1">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => remove(index)}
-                              disabled={fields.length === 1}
-                            >
-                              <Trash2 className="h-4 w-4 text-red-500" />
-                            </Button>
-                          </div>
                         </div>
                       );
                     })}

@@ -107,6 +107,18 @@ export function ProductSearchDialog({
     setSelectedProducts(selectedProducts.filter(p => p.productId !== productId));
   };
 
+  // Reset dialog state when closed, but persist selected products when opened
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen);
+    if (!newOpen) {
+      setSearchTerm("");
+      setSelectedCategory("all");
+    } else {
+      // Load existing items when dialog opens
+      setSelectedProducts(existingItems);
+    }
+  };
+
   const handleDone = () => {
     onSelect(selectedProducts);
     setOpen(false);
@@ -120,7 +132,7 @@ export function ProductSearchDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {trigger || (
           <Button variant="outline" className="w-full justify-start border-dashed">
