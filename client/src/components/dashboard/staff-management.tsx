@@ -204,13 +204,36 @@ export default function StaffManagement() {
 
 
 
-  // Filter staffs based on search only
-  const filteredStaffs = staffs.filter((staff) => {
-    const matchesSearch = staff.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         staff.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         staff.phone.includes(searchTerm);
-    return matchesSearch;
-  });
+  // Filter and sort staff members
+  const filteredAndSortedStaffs = staffs
+    .filter((staff) => {
+      const matchesSearch = staff.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           staff.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           staff.phone.includes(searchTerm);
+      return matchesSearch;
+    })
+    .sort((a, b) => {
+      if (!sortColumn) return 0;
+      
+      const aValue = a[sortColumn];
+      const bValue = b[sortColumn];
+      
+      if (aValue === null || aValue === undefined) return 1;
+      if (bValue === null || bValue === undefined) return -1;
+      
+      const comparison = aValue.toString().localeCompare(bValue.toString());
+      return sortDirection === "asc" ? comparison : -comparison;
+    });
+
+  // Handle column sorting
+  const handleSort = (column: keyof Staff) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(column);
+      setSortDirection("asc");
+    }
+  };
 
   const onSubmit = (data: StaffFormData) => {
     addStaffMutation.mutate(data);
