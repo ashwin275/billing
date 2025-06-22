@@ -115,7 +115,6 @@ export default function CustomersManagement() {
       phone: "",
       shopId: 0,
       customerType: "",
-      customerType: "",
     },
   });
 
@@ -273,6 +272,7 @@ export default function CustomersManagement() {
       name: data.name,
       place: data.place,
       phone: data.phone,
+      customerType: data.customerType,
     };
 
     updateCustomerMutation.mutate({ 
@@ -299,6 +299,7 @@ export default function CustomersManagement() {
       name: customer.name,
       place: customer.place,
       phone: typeof customer.phone === 'string' ? parseInt(customer.phone) : customer.phone,
+      customerType: customer.customerType || "",
     });
     setIsEditDialogOpen(true);
   };
@@ -840,6 +841,29 @@ export default function CustomersManagement() {
                         onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                       />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name="customerType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Customer Type</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select customer type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="CUSTOMER">Customer</SelectItem>
+                        <SelectItem value="DEALER">Dealer</SelectItem>
+                        <SelectItem value="CREDIT">Credit</SelectItem>
+                        <SelectItem value="SUBSCRIPTION">Subscription</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
