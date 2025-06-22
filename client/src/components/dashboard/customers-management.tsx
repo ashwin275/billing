@@ -82,6 +82,7 @@ const customerUpdateSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   place: z.string().min(2, "Place must be at least 2 characters"),
   phone: z.number().min(1000000000, "Phone number must be at least 10 digits"),
+  customerType: z.string().min(1, "Please select a customer type"),
 });
 
 type CustomerFormData = z.infer<typeof customerSchema>;
@@ -126,6 +127,7 @@ export default function CustomersManagement() {
       name: "",
       place: "",
       phone: 0,
+      customerType: "",
     },
   });
 
@@ -255,7 +257,6 @@ export default function CustomersManagement() {
       place: data.place,
       phone: data.phone,
       shopId: data.shopId,
-      customerType: data.customerType,
       customerType: data.customerType,
     };
     addCustomerMutation.mutate(customerInput);
@@ -512,6 +513,29 @@ export default function CustomersManagement() {
                       </FormItem>
                     )}
                   />
+                  <FormField
+                    control={editForm.control}
+                    name="customerType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Customer Type</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select customer type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="CUSTOMER">Customer</SelectItem>
+                            <SelectItem value="DEALER">Dealer</SelectItem>
+                            <SelectItem value="CREDIT">Credit</SelectItem>
+                            <SelectItem value="SUBSCRIPTION">Subscription</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   <div className="flex justify-end space-x-2 pt-4">
                     <Button 
@@ -590,9 +614,36 @@ export default function CustomersManagement() {
                       {getSortIcon("place")}
                     </Button>
                   </TableHead>
-                  <TableHead>Shop</TableHead>
-                  <TableHead className="hidden lg:table-cell">Customer Type</TableHead>
-                  <TableHead className="hidden lg:table-cell">Loyalty Points</TableHead>
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort("shop")}
+                      className="h-auto p-0 font-semibold hover:bg-transparent"
+                    >
+                      Shop
+                      {getSortIcon("shop")}
+                    </Button>
+                  </TableHead>
+                  <TableHead className="hidden lg:table-cell">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort("customerType")}
+                      className="h-auto p-0 font-semibold hover:bg-transparent"
+                    >
+                      Customer Type
+                      {getSortIcon("customerType")}
+                    </Button>
+                  </TableHead>
+                  <TableHead className="hidden lg:table-cell">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort("loyaltyPoints")}
+                      className="h-auto p-0 font-semibold hover:bg-transparent"
+                    >
+                      Loyalty Points
+                      {getSortIcon("loyaltyPoints")}
+                    </Button>
+                  </TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
