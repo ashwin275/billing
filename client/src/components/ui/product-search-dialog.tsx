@@ -19,7 +19,7 @@ interface Product {
 
 interface SelectedProduct extends Product {
   quantity: number;
-  discountAmount?: number;
+  discountAmount?: number | string;
 }
 
 interface ProductSearchDialogProps {
@@ -354,7 +354,7 @@ export function ProductSearchDialog({
                             type="text"
                             placeholder="Discount"
                             className="h-6 text-xs"
-                            value={product.discountAmount || ''}
+                            value={product.discountAmount === 0 ? '' : product.discountAmount || ''}
                             onChange={(e) => {
                               const value = e.target.value;
                               // Allow empty string or valid decimal numbers
