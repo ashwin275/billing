@@ -38,11 +38,7 @@ interface Staff {
   place: string;
   phone: string;
   email: string;
-  roles: Array<{
-    roleId: number;
-    roleName: string;
-    description: string;
-  }>;
+  country: string | null;
 }
 
 interface Country {
@@ -69,13 +65,7 @@ const staffApi = {
             place: "Punalur",
             phone: "12345645688",
             email: "trials@gmail.com",
-            roles: [
-              {
-                roleId: 5,
-                roleName: "ROLE_STAFF",
-                description: "Shop Staffs"
-              }
-            ]
+            country: null
           },
           {
             userId: 6,
@@ -83,13 +73,7 @@ const staffApi = {
             place: "Punalur",
             phone: "12345645688",
             email: "trial1@gmail.com",
-            roles: [
-              {
-                roleId: 5,
-                roleName: "ROLE_STAFF",
-                description: "Shop Staffs"
-              }
-            ]
+            country: null
           },
           {
             userId: 3,
@@ -97,13 +81,7 @@ const staffApi = {
             place: "Punalur",
             phone: "12345645688",
             email: "trial@gmail.com",
-            roles: [
-              {
-                roleId: 5,
-                roleName: "ROLE_STAFF",
-                description: "Shop Staffs"
-              }
-            ]
+            country: null
           }
         ]);
       }, 500); // Simulate network delay
@@ -133,7 +111,6 @@ const staffApi = {
 
 export default function StaffManagement() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedPlace, setSelectedPlace] = useState<string>("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -173,8 +150,21 @@ export default function StaffManagement() {
 
   // Fetch countries for form
   const { data: countries = [] } = useQuery({
-    queryKey: ["/api/countries"],
-    queryFn: () => authApi.getCountries(),
+    queryKey: ["/country/all"],
+    queryFn: async () => {
+      const response = await fetch("/country/all");
+      if (!response.ok) {
+        // Return mock countries if API doesn't exist
+        return [
+          { countryId: 1, name: "India" },
+          { countryId: 27, name: "United States" },
+          { countryId: 3, name: "United Kingdom" },
+          { countryId: 4, name: "Canada" },
+          { countryId: 5, name: "Australia" }
+        ];
+      }
+      return response.json();
+    },
   });
 
   // Fetch shops for form
