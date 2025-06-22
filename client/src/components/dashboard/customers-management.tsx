@@ -74,6 +74,7 @@ const customerSchema = z.object({
   place: z.string().min(2, "Place must be at least 2 characters"),
   phone: z.string().min(10, "Phone number must be at least 10 digits"),
   shopId: z.number().min(1, "Please select a shop"),
+  customerType: z.string().min(1, "Please select a customer type"),
 });
 
 const customerUpdateSchema = z.object({
@@ -112,6 +113,7 @@ export default function CustomersManagement() {
       place: "",
       phone: "",
       shopId: 0,
+      customerType: "",
       customerType: "",
     },
   });
@@ -253,6 +255,7 @@ export default function CustomersManagement() {
       place: data.place,
       phone: data.phone,
       shopId: data.shopId,
+      customerType: data.customerType,
       customerType: data.customerType,
     };
     addCustomerMutation.mutate(customerInput);
@@ -480,6 +483,29 @@ export default function CustomersManagement() {
                                 {shop.name} - {shop.place}
                               </SelectItem>
                             )) : null}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={addForm.control}
+                    name="customerType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Customer Type</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select customer type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="CUSTOMER">Customer</SelectItem>
+                            <SelectItem value="DEALER">Dealer</SelectItem>
+                            <SelectItem value="CREDIT">Credit</SelectItem>
+                            <SelectItem value="SUBSCRIPTION">Subscription</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
