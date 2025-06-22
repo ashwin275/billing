@@ -122,6 +122,8 @@ export default function ShopsManagement() {
     defaultValues: {
       name: "",
       place: "",
+      phone: "",
+      gstNo: "",
       status: "CREATED",
       map: "",
       userId: null,
@@ -484,6 +486,34 @@ export default function ShopsManagement() {
                   {addForm.formState.errors.map && (
                     <p className="text-sm text-destructive">
                       {addForm.formState.errors.map.message}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="add-phone">Phone</Label>
+                  <Input
+                    id="add-phone"
+                    {...addForm.register("phone")}
+                    placeholder="Enter phone number"
+                  />
+                  {addForm.formState.errors.phone && (
+                    <p className="text-sm text-destructive">
+                      {addForm.formState.errors.phone.message}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="add-gstNo">GST Number</Label>
+                  <Input
+                    id="add-gstNo"
+                    {...addForm.register("gstNo")}
+                    placeholder="Enter GST number"
+                  />
+                  {addForm.formState.errors.gstNo && (
+                    <p className="text-sm text-destructive">
+                      {addForm.formState.errors.gstNo.message}
                     </p>
                   )}
                 </div>
