@@ -58,21 +58,47 @@ interface Shop {
 // Staff API functions
 const staffApi = {
   async getAllStaffs(): Promise<Staff[]> {
-    return apiRequest("/users/shop/getstaff");
+    const response = await fetch("/users/shop/getstaff", {
+      headers: {
+        "Authorization": `Bearer ${getAuthToken()}`,
+        "Content-Type": "application/json"
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return response.json();
   },
   
   async addStaff(staffData: StaffFormData): Promise<void> {
-    return apiRequest("/users/shop/staff", {
+    const response = await fetch("/users/shop/staff", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Authorization": `Bearer ${getAuthToken()}`,
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify(staffData)
     });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
   },
   
   async deleteStaff(userId: number): Promise<void> {
-    return apiRequest(`/users/${userId}`, {
-      method: "DELETE"
+    const response = await fetch(`/users/${userId}`, {
+      method: "DELETE",
+      headers: {
+        "Authorization": `Bearer ${getAuthToken()}`,
+        "Content-Type": "application/json"
+      }
     });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
   }
 };
 
