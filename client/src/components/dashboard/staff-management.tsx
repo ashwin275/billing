@@ -54,38 +54,20 @@ interface Shop {
 // Staff API functions
 const staffApi = {
   async getAllStaffs(): Promise<Staff[]> {
-    // Since the backend API doesn't exist yet, return mock data based on user's example
-    // This simulates the response from /users/shop/getstaff
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve([
-          {
-            userId: 5,
-            fullName: "staff trial ed",
-            place: "Punalur",
-            phone: "12345645688",
-            email: "trials@gmail.com",
-            country: null
-          },
-          {
-            userId: 6,
-            fullName: "staff trial ed",
-            place: "Punalur",
-            phone: "12345645688",
-            email: "trial1@gmail.com",
-            country: null
-          },
-          {
-            userId: 3,
-            fullName: "staff trial ed",
-            place: "Punalur",
-            phone: "12345645688",
-            email: "trial@gmail.com",
-            country: null
-          }
-        ]);
-      }, 500); // Simulate network delay
+    const token = getAuthToken();
+    const response = await fetch("https://billing-backend.serins.in/api/users/shop/getstaff", {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      }
     });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return response.json();
   },
   
   async addStaff(staffData: StaffFormData): Promise<void> {
@@ -110,7 +92,7 @@ const staffApi = {
       shopsIds: [shopId]
     };
     
-    const response = await fetch("/users/shop/staff", {
+    const response = await fetch("https://billing-backend.serins.in/api/users/shop/staff", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${token}`,
