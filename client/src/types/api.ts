@@ -64,7 +64,6 @@ export interface Product {
   name: string;
   description: string;
   quantity: number;
-  stock: number;
   ourPrice: number;
   purchasePrice: number;
   wholesaleRate: number;

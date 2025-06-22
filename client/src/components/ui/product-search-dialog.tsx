@@ -203,11 +203,11 @@ export function ProductSearchDialog({
                         <TableCell>₹{product.retailRate}</TableCell>
                         <TableCell>
                           <span className={`px-2 py-1 rounded text-xs ${
-                            (product.stock || 0) <= 5 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+                            (product.quantity || 0) <= 5 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
                           }`}>
-                            {product.stock || 0} PCS
+                            {product.quantity || 0} PCS
                           </span>
-                          {(product.stock || 0) <= 5 && (
+                          {(product.quantity || 0) <= 5 && (
                             <div className="text-xs text-red-500 mt-1">Low Stock</div>
                           )}
                         </TableCell>
