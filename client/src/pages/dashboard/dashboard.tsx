@@ -404,6 +404,9 @@ function Dashboard() {
       case "products":
         return <ProductsManagement />;
       
+      case "staff":
+        return <StaffManagement />;
+      
       case "add-users":
         return <UsersManagement />;
       
