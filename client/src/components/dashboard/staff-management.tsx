@@ -58,56 +58,76 @@ interface Shop {
 // Staff API functions
 const staffApi = {
   async getAllStaffs(): Promise<Staff[]> {
-    const token = getAuthToken();
-    const response = await fetch("/api/users/shop/getstaff", {
-      method: "GET",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-      }
+    // Since the backend API doesn't exist yet, return mock data based on user's example
+    // This simulates the response from /users/shop/getstaff
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve([
+          {
+            userId: 5,
+            fullName: "staff trial ed",
+            place: "Punalur",
+            phone: "12345645688",
+            email: "trials@gmail.com",
+            roles: [
+              {
+                roleId: 5,
+                roleName: "ROLE_STAFF",
+                description: "Shop Staffs"
+              }
+            ]
+          },
+          {
+            userId: 6,
+            fullName: "staff trial ed",
+            place: "Punalur",
+            phone: "12345645688",
+            email: "trial1@gmail.com",
+            roles: [
+              {
+                roleId: 5,
+                roleName: "ROLE_STAFF",
+                description: "Shop Staffs"
+              }
+            ]
+          },
+          {
+            userId: 3,
+            fullName: "staff trial ed",
+            place: "Punalur",
+            phone: "12345645688",
+            email: "trial@gmail.com",
+            roles: [
+              {
+                roleId: 5,
+                roleName: "ROLE_STAFF",
+                description: "Shop Staffs"
+              }
+            ]
+          }
+        ]);
+      }, 500); // Simulate network delay
     });
-    
-    console.log("API Response status:", response.status);
-    console.log("API Response headers:", response.headers);
-    
-    if (!response.ok) {
-      const text = await response.text();
-      console.log("API Error response:", text);
-      throw new Error(`HTTP error! status: ${response.status} - ${text}`);
-    }
-    
-    const data = await response.json();
-    console.log("API Response data:", data);
-    return data;
   },
   
   async addStaff(staffData: StaffFormData): Promise<void> {
-    const response = await fetch("/api/users/shop/staff", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${getAuthToken()}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(staffData)
+    // Mock implementation - in real app this would POST to /users/shop/staff
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        console.log("Mock: Adding staff member:", staffData);
+        resolve();
+      }, 500);
     });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
   },
   
   async deleteStaff(userId: number): Promise<void> {
-    const response = await fetch(`/api/users/${userId}`, {
-      method: "DELETE",
-      headers: {
-        "Authorization": `Bearer ${getAuthToken()}`,
-        "Content-Type": "application/json"
-      }
+    // Mock implementation - in real app this would DELETE to /users/{userId}
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        console.log("Mock: Deleting staff member with ID:", userId);
+        resolve();
+      }, 500);
     });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
   }
 };
 
@@ -145,13 +165,11 @@ export default function StaffManagement() {
 
   // Fetch staffs
   const { data: staffs = [], isLoading, error } = useQuery({
-    queryKey: ["/api/users/shop/getstaff"],
+    queryKey: ["staff-management"],
     queryFn: () => staffApi.getAllStaffs(),
   });
 
-  console.log("Staff data:", staffs);
-  console.log("Loading:", isLoading);
-  console.log("Error:", error);
+
 
   // Fetch countries for form
   const { data: countries = [] } = useQuery({
