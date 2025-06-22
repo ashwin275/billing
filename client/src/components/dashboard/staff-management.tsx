@@ -15,6 +15,7 @@ import { z } from "zod";
 import { Search, Plus, Trash2, Users, MapPin, Phone, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { getAuthToken, decodeToken } from "@/lib/auth";
 
 // Staff schema for form validation
 const staffSchema = z.object({
@@ -80,6 +81,31 @@ export default function StaffManagement() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Check if user is owner
+  const isOwner = () => {
+    const token = getAuthToken();
+    if (!token) return false;
+    
+    try {
+      const decoded = decodeToken(token);
+      return decoded.roleName === "ROLE_OWNER";
+    } catch (error) {
+      return false;
+    }
+  };
+
+  // Redirect if not owner
+  if (!isOwner()) {
+    return (
+      <div className="flex justify-center items-center min-h-96">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
+          <p className="text-gray-600">Only shop owners can access staff management.</p>
+        </div>
+      </div>
+    );
+  }
 
   // Fetch staffs
   const { data: staffs = [], isLoading } = useQuery({

@@ -58,6 +58,19 @@ export default function Sidebar({ activeSection, onSectionChange, isMobileOpen, 
     }
   };
 
+  // Check if user is owner
+  const isOwner = () => {
+    const token = getAuthToken();
+    if (!token) return false;
+    
+    try {
+      const decoded = decodeToken(token);
+      return decoded.roleName === "ROLE_OWNER";
+    } catch (error) {
+      return false;
+    }
+  };
+
   // Fetch users count
   const { data: users } = useQuery({
     queryKey: ["/api/users/all"],
@@ -104,6 +117,12 @@ export default function Sidebar({ activeSection, onSectionChange, isMobileOpen, 
       icon: UserCircle,
       category: "Billing"
     },
+    ...(isOwner() ? [{
+      id: "staff",
+      label: "Staff",
+      icon: UserPlus,
+      category: "Management"
+    }] : []),
     {
       id: "report",
       label: "Reports",
