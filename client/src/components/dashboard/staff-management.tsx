@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Search, Plus, Trash2, Users, MapPin, Phone, Mail, ChevronUp, ChevronDown, Eye, EyeOff } from "lucide-react";
+import { Search, Plus, Trash2, Users, MapPin, Phone, Mail, ChevronUp, ChevronDown, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { getAuthToken, decodeToken } from "@/lib/auth";
@@ -250,8 +250,25 @@ export default function StaffManagement() {
 
 
 
+  // Helper function to get sort icon
+  const getSortIcon = (column: keyof Staff) => {
+    if (sortColumn !== column) {
+      return <ChevronUp className="h-4 w-4 ml-1 opacity-50" />;
+    }
+    return sortDirection === "asc" 
+      ? <ChevronUp className="h-4 w-4 ml-1" /> 
+      : <ChevronDown className="h-4 w-4 ml-1" />;
+  };
+
   if (isLoading) {
-    return <div className="flex justify-center p-8">Loading staffs...</div>;
+    return (
+      <div className="flex items-center justify-center p-12">
+        <div className="flex flex-col items-center space-y-3">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Loading staff members...</p>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
@@ -507,9 +524,7 @@ export default function StaffManagement() {
                       className="h-auto p-0 font-semibold hover:bg-transparent"
                     >
                       Name
-                      {sortColumn === "fullName" && (
-                        sortDirection === "asc" ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />
-                      )}
+                      {getSortIcon("fullName")}
                     </Button>
                   </TableHead>
                   <TableHead>
@@ -519,9 +534,7 @@ export default function StaffManagement() {
                       className="h-auto p-0 font-semibold hover:bg-transparent"
                     >
                       Email
-                      {sortColumn === "email" && (
-                        sortDirection === "asc" ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />
-                      )}
+                      {getSortIcon("email")}
                     </Button>
                   </TableHead>
                   <TableHead>
@@ -531,9 +544,7 @@ export default function StaffManagement() {
                       className="h-auto p-0 font-semibold hover:bg-transparent"
                     >
                       Phone
-                      {sortColumn === "phone" && (
-                        sortDirection === "asc" ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />
-                      )}
+                      {getSortIcon("phone")}
                     </Button>
                   </TableHead>
                   <TableHead>
@@ -543,9 +554,7 @@ export default function StaffManagement() {
                       className="h-auto p-0 font-semibold hover:bg-transparent"
                     >
                       Place
-                      {sortColumn === "place" && (
-                        sortDirection === "asc" ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />
-                      )}
+                      {getSortIcon("place")}
                     </Button>
                   </TableHead>
                   <TableHead>
@@ -555,9 +564,7 @@ export default function StaffManagement() {
                       className="h-auto p-0 font-semibold hover:bg-transparent"
                     >
                       Country
-                      {sortColumn === "country" && (
-                        sortDirection === "asc" ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />
-                      )}
+                      {getSortIcon("country")}
                     </Button>
                   </TableHead>
                 </TableRow>
