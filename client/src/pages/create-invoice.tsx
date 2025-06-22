@@ -1938,7 +1938,7 @@ export default function CreateInvoice() {
                       </div>
                       <div className="flex justify-between text-gray-600">
                         <span>Overall Discount:</span>
-                        <span>-₹{totals.totalDiscount.toFixed(2)}</span>
+                        <span>-₹{totals.overallDiscountAmount.toFixed(2)}</span>
                       </div>
                     </div>
 
