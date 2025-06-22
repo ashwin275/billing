@@ -1699,7 +1699,12 @@ export default function CreateInvoice() {
                       <div className="col-span-1">Total</div>
                     </div>
 
-                    {fields.map((field, index) => {
+                    {fields.length === 0 ? (
+                      <div className="p-8 text-center text-gray-500">
+                        <Package className="mx-auto h-12 w-12 mb-4 text-gray-400" />
+                        <p>No items added yet. Click "Add Items" to get started.</p>
+                      </div>
+                    ) : fields.map((field, index) => {
                       const selectedProduct = Array.isArray(products) ? products.find(p => p.productId === form.watch(`saleItems.${index}.productId`)) : null;
                       const quantity = form.watch(`saleItems.${index}.quantity`) || 0;
                       const discount = form.watch(`saleItems.${index}.discount`) || 0;
