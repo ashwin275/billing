@@ -189,7 +189,7 @@ export default function StaffManagement() {
         title: "Staff added successfully",
         description: "The staff member has been added to your team.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/users/shop/getstaff"] });
+      queryClient.invalidateQueries({ queryKey: ["staff-management"] });
       setIsAddDialogOpen(false);
       form.reset();
     },
