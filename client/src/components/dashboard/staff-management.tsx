@@ -151,20 +151,7 @@ export default function StaffManagement() {
   // Fetch countries for form
   const { data: countries = [] } = useQuery({
     queryKey: ["/country/all"],
-    queryFn: async () => {
-      const response = await fetch("/country/all");
-      if (!response.ok) {
-        // Return mock countries if API doesn't exist
-        return [
-          { countryId: 1, name: "India" },
-          { countryId: 27, name: "United States" },
-          { countryId: 3, name: "United Kingdom" },
-          { countryId: 4, name: "Canada" },
-          { countryId: 5, name: "Australia" }
-        ];
-      }
-      return response.json();
-    },
+    queryFn: () => authApi.getCountries(),
   });
 
   // Fetch shops for form
