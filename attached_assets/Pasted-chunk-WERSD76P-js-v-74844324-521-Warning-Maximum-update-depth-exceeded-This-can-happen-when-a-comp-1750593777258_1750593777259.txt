@@ -1,0 +1,31 @@
+chunk-WERSD76P.js?v=74844324:521 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render.
+    at Redirect (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.…/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=74844324:399:11)
+    at Route (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.…/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=74844324:323:16)
+    at Switch (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.…/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=74844324:379:17)
+    at Router
+    at Provider (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.…unner/workspace/node_modules/.vite/deps/chunk-JCDXHMNF.js?v=74844324:38:15)
+    at TooltipProvider (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.…rkspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=74844324:60:5)
+    at QueryClientProvider (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.…rkspace/node_modules/.vite/deps/@tanstack_react-query.js?v=74844324:2805:3)
+    at App
+chunk-WERSD76P.js?v=74844324:521 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render.
+    at ProtectedRoute (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.dev/src/components/auth/protected-route.tsx:21:42)
+    at Route (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.…/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=74844324:323:16)
+    at Switch (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.…/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=74844324:379:17)
+    at Router
+    at Provider (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.…unner/workspace/node_modules/.vite/deps/chunk-JCDXHMNF.js?v=74844324:38:15)
+    at TooltipProvider (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.…rkspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=74844324:60:5)
+    at QueryClientProvider (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.…rkspace/node_modules/.vite/deps/@tanstack_react-query.js?v=74844324:2805:3)
+    at App
+chunk-WERSD76P.js?v=74844324:521 Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render.
+    at Redirect (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.…/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=74844324:399:11)
+    at ProtectedRoute (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.dev/src/components/auth/protected-route.tsx:21:42)
+    at Route (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.…/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=74844324:323:16)
+    at Switch (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.…/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=74844324:379:17)
+    at Router
+    at Provider (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.…unner/workspace/node_modules/.vite/deps/chunk-JCDXHMNF.js?v=74844324:38:15)
+    at TooltipProvider (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.…rkspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=74844324:60:5)
+    at QueryClientProvider (https://6ec0c451-3482-4bbe-98c4-c785051bee1d-00-2nxsaic9dholv.spock.replit.…rkspace/node_modules/.vite/deps/@tanstack_react-query.js?v=74844324:2805:3)
+    at App
+wouter.js?v=74844324:221 Throttling navigation to prevent the browser from hanging. See https://crbug.com/1038223. Command line switch --disable-ipc-flooding-protection can be used to bypass the protection
+﻿
+

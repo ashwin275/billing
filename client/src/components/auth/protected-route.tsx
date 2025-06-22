@@ -1,6 +1,6 @@
 // Protected route component that requires authentication
-import { ReactNode, useEffect, useState } from "react";
-import { Redirect, useLocation } from "wouter";
+import { ReactNode } from "react";
+import { Redirect } from "wouter";
 import { isAuthenticated } from "@/lib/auth";
 
 interface ProtectedRouteProps {
@@ -12,27 +12,10 @@ interface ProtectedRouteProps {
  * Redirects to sign-in page if user is not authenticated
  */
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const [location] = useLocation();
-  const [isAuthChecked, setIsAuthChecked] = useState(false);
-  const [isUserAuthenticated, setIsUserAuthenticated] = useState(false);
-
-  useEffect(() => {
-    const checkAuth = () => {
-      const authenticated = isAuthenticated();
-      setIsUserAuthenticated(authenticated);
-      setIsAuthChecked(true);
-    };
-
-    checkAuth();
-  }, [location]);
-
-  // Don't render anything until auth check is complete
-  if (!isAuthChecked) {
-    return null;
-  }
-
-  // Redirect to signin if not authenticated
-  if (!isUserAuthenticated) {
+  // Simple synchronous auth check to prevent infinite loops
+  const authenticated = isAuthenticated();
+  
+  if (!authenticated) {
     return <Redirect to="/signin" />;
   }
 
