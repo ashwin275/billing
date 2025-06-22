@@ -1,4 +1,5 @@
 // Main App component with routing and authentication
+import { useState, useEffect } from "react";
 import { Switch, Route, Redirect } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
@@ -24,22 +25,59 @@ import { isAuthenticated } from "@/lib/auth";
  * Includes public auth routes and protected dashboard routes
  */
 function Router() {
+  const [authState, setAuthState] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const checkAuth = () => {
+      const authenticated = isAuthenticated();
+      setAuthState(authenticated);
+    };
+    
+    checkAuth();
+    
+    // Listen for storage changes (logout events)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'authToken' || e.key === null) {
+        checkAuth();
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also listen for custom auth events
+    const handleAuthChange = () => {
+      checkAuth();
+    };
+    
+    window.addEventListener('authStateChange', handleAuthChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('authStateChange', handleAuthChange);
+    };
+  }, []);
+
+  // Don't render anything until auth state is determined
+  if (authState === null) {
+    return null;
+  }
+
   return (
     <Switch>
       {/* Redirect root to appropriate page based on auth status */}
       <Route path="/">
-        {isAuthenticated() ? <Redirect to="/dashboard" /> : <Redirect to="/signin" />}
+        {authState ? <Redirect to="/dashboard" /> : <Redirect to="/signin" />}
       </Route>
 
       {/* Public authentication routes - redirect to dashboard if already authenticated */}
       <Route path="/signin">
-        {isAuthenticated() ? <Redirect to="/dashboard" /> : <SignIn />}
+        {authState ? <Redirect to="/dashboard" /> : <SignIn />}
       </Route>
       <Route path="/signup">
-        {isAuthenticated() ? <Redirect to="/dashboard" /> : <SignUp />}
+        {authState ? <Redirect to="/dashboard" /> : <SignUp />}
       </Route>
       <Route path="/forgot-password">
-        {isAuthenticated() ? <Redirect to="/dashboard" /> : <ForgotPassword />}
+        {authState ? <Redirect to="/dashboard" /> : <ForgotPassword />}
       </Route>
 
       {/* Protected dashboard routes */}

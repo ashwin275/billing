@@ -32,11 +32,22 @@ export default function Header() {
    */
   const handleLogout = () => {
     clearAuthData();
+    
+    // Trigger storage event to notify other components
+    window.dispatchEvent(new StorageEvent('storage', {
+      key: 'authToken',
+      oldValue: 'token',
+      newValue: null,
+      storageArea: localStorage
+    }));
+    
     toast({
       title: "Signed out",
       description: "You have been logged out successfully.",
     });
-    setLocation("/signin");
+    
+    // Force page reload to ensure clean state
+    window.location.href = "/signin";
   };
 
   /**

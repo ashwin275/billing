@@ -1,0 +1,68 @@
+
+added 568 packages, and audited 569 packages in 6s
+
+67 packages are looking for funding
+  run `npm fund` for details
+
+8 vulnerabilities (1 low, 7 moderate)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+ashwinrajck@Ashwin-MacBook-Pro BillingDashboard  % npm run type-check
+
+> rest-express@1.0.0 type-check
+> tsc --noEmit
+
+client/src/components/dashboard/staff-management.tsx:248:29 - error TS2345: Argument of type '{ email: string; password: string; fullName: string; place: string; age: number; countryId: number; phone: string; }' is not assignable to parameter of type '{ email: string; password: string; fullName: string; place: string; age: number; countryId: number; phone: string; confirmPassword: string; }'.
+  Property 'confirmPassword' is missing in type '{ email: string; password: string; fullName: string; place: string; age: number; countryId: number; phone: string; }' but required in type '{ email: string; password: string; fullName: string; place: string; age: number; countryId: number; phone: string; confirmPassword: string; }'.
+
+248     addStaffMutation.mutate(staffData);
+                                ~~~~~~~~~
+
+  client/src/components/dashboard/staff-management.tsx:30:3
+    30   confirmPassword: z.string().min(6, "Please confirm your password"),
+         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    'confirmPassword' is declared here.
+
+client/src/pages/create-invoice.tsx:1682:23 - error TS2322: Type '({ quantity: number; discountAmount: number; productId: number; productNumber: string; hsn: string | number; name: string; description: string; ourPrice: number; purchasePrice: number; wholesaleRate: number; ... 11 more ...; sgst: number; } | null)[]' is not assignable to type 'SelectedProduct[]'.
+  Type '{ quantity: number; discountAmount: number; productId: number; productNumber: string; hsn: string | number; name: string; description: string; ourPrice: number; purchasePrice: number; wholesaleRate: number; ... 11 more ...; sgst: number; } | null' is not assignable to type 'SelectedProduct'.
+    Type 'null' is not assignable to type 'SelectedProduct'.
+
+1682                       existingItems={fields.map((field, index) => {
+                           ~~~~~~~~~~~~~
+
+  client/src/components/ui/product-search-dialog.tsx:23:3
+    23   existingItems?: SelectedProduct[];
+         ~~~~~~~~~~~~~
+    The expected type comes from property 'existingItems' which is declared here on type 'IntrinsicAttributes & ProductSearchDialogProps'
+
+client/src/pages/edit-invoice.tsx:1669:23 - error TS2322: Type '({ quantity: number; discountAmount: number; productId: number; productNumber: string; hsn: string | number; name: string; description: string; ourPrice: number; purchasePrice: number; wholesaleRate: number; ... 11 more ...; sgst: number; } | null)[]' is not assignable to type 'SelectedProduct[]'.
+  Type '{ quantity: number; discountAmount: number; productId: number; productNumber: string; hsn: string | number; name: string; description: string; ourPrice: number; purchasePrice: number; wholesaleRate: number; ... 11 more ...; sgst: number; } | null' is not assignable to type 'SelectedProduct'.
+    Type 'null' is not assignable to type 'SelectedProduct'.
+
+1669                       existingItems={fields.map((field, index) => {
+                           ~~~~~~~~~~~~~
+
+  client/src/components/ui/product-search-dialog.tsx:23:3
+    23   existingItems?: SelectedProduct[];
+         ~~~~~~~~~~~~~
+    The expected type comes from property 'existingItems' which is declared here on type 'IntrinsicAttributes & ProductSearchDialogProps'
+
+client/src/pages/edit-invoice.tsx:1719:26 - error TS2304: Cannot find name 'Package'.
+
+1719                         <Package className="mx-auto h-12 w-12 mb-4 text-gray-400" />
+                              ~~~~~~~
+
+
+Found 4 errors in 3 files.
+
+Errors  Files
+     1  client/src/components/dashboard/staff-management.tsx:248
+     1  client/src/pages/create-invoice.tsx:1682
+     2  client/src/pages/edit-invoice.tsx:1669
+ashwinrajck@Ashwin-MacBook-Pro BillingDashboard  % 
