@@ -1731,36 +1731,9 @@ export default function EditInvoice() {
                       return (
                         <div key={field.id} className="grid grid-cols-12 gap-4 p-4 border-b items-center">
                           <div className="col-span-3">
-                            <FormField
-                              control={form.control}
-                              name={`saleItems.${index}.productId`}
-                              render={({ field }) => (
-                                <Select onValueChange={(value) => {
-                                  const productId = parseInt(value);
-                                  const product = Array.isArray(products) ? products.find(p => p.productId === productId) : null;
-                                  const rate = form.watch("saleType") === 'RETAIL' ? product?.retailRate : product?.wholesaleRate;
-                                  field.onChange(productId);
-                                  form.setValue(`saleItems.${index}.unitPrice`, rate || 0);
-                                }} value={field.value?.toString()}>
-                                  <SelectTrigger className="border-dashed">
-                                    <SelectValue placeholder="Select product" />
-                                  </SelectTrigger>
-                                  <SelectContent className="max-h-60 overflow-y-auto">
-                                    {Array.isArray(products) ? products.map((product) => (
-                                      <SelectItem key={product.productId} value={product.productId.toString()}>
-                                        <div className="flex flex-col">
-                                          <span className="font-medium">{product.name}</span>
-                                          <span className="text-xs text-gray-500">
-                                            {product.productNumber} | HSN: {product.hsn} | Current Stock: {product.quantity} PCS | 
-                                            W: ₹{product.wholesaleRate} | R: ₹{product.retailRate}
-                                          </span>
-                                        </div>
-                                      </SelectItem>
-                                    )) : null}
-                                  </SelectContent>
-                                </Select>
-                              )}
-                            />
+                            <div className="text-sm font-medium">
+                              {selectedProduct ? selectedProduct.name : 'Unknown Product'}
+                            </div>
                           </div>
                           
                           <div className="col-span-1 text-sm text-gray-600">
@@ -1768,37 +1741,15 @@ export default function EditInvoice() {
                           </div>
                           
                           <div className="col-span-1">
-                            <FormField
-                              control={form.control}
-                              name={`saleItems.${index}.quantity`}
-                              render={({ field }) => (
-                                <Input
-                                  {...field}
-                                  type="number"
-                                  min="1"
-                                  onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                                  className="text-center"
-                                />
-                              )}
-                            />
+                            <div className="text-sm text-center">
+                              {quantity}
+                            </div>
                           </div>
                           
                           <div className="col-span-1">
-                            <FormField
-                              control={form.control}
-                              name={`saleItems.${index}.unitPrice`}
-                              render={({ field }) => (
-                                <Input
-                                  {...field}
-                                  type="number"
-                                  step="0.01"
-                                  min="0"
-                                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                                  className="text-center"
-                                  placeholder={selectedProduct ? `₹${(form.watch("saleType") === 'RETAIL' ? selectedProduct.retailRate : selectedProduct.wholesaleRate).toFixed(2)}` : 'Rate'}
-                                />
-                              )}
-                            />
+                            <div className="text-sm text-center">
+                              ₹{selectedProduct ? (form.watch("saleType") === 'RETAIL' ? selectedProduct.retailRate : selectedProduct.wholesaleRate).toFixed(2) : '0.00'}
+                            </div>
                           </div>
                           
                           <div className="col-span-2">
