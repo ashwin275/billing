@@ -18,8 +18,8 @@ interface Product {
 }
 
 interface SelectedProduct extends Product {
-  quantity: number | string;
-  discountAmount?: number | string;
+  quantity: number;
+  discountAmount?: number;
 }
 
 interface ProductSearchDialogProps {
@@ -97,14 +97,9 @@ export function ProductSearchDialog({
     }
   };
 
-  const handleDiscountChange = (productId: number, discountAmount: number | string) => {
+  const handleDiscountChange = (productId: number, discountAmount: number) => {
     setSelectedProducts(selectedProducts.map(p => 
-      p.productId === productId ? { 
-        ...p, 
-        discountAmount: typeof discountAmount === 'string' ? 
-          (discountAmount === '' ? 0 : parseFloat(discountAmount) || 0) : 
-          Math.max(0, discountAmount) 
-      } : p
+      p.productId === productId ? { ...p, discountAmount: Math.max(0, discountAmount) } : p
     ));
   };
 
@@ -319,13 +314,15 @@ export function ProductSearchDialog({
                         <Input
                           type="text"
                           className="w-12 h-6 text-center text-xs"
-                          value={product.quantity || ''}
+                          value={product.quantity.toString()}
                           onChange={(e) => {
                             const value = e.target.value;
                             // Allow empty string or valid numbers
                             if (value === '' || /^\d+$/.test(value)) {
-                              const qty = value === '' ? '' : parseInt(value);
-                              handleQuantityChange(product.productId, qty);
+                              const qty = value === '' ? 1 : parseInt(value);
+                              if (qty > 0) {
+                                handleQuantityChange(product.productId, qty);
+                              }
                             }
                           }}
                           onBlur={(e) => {
@@ -357,12 +354,12 @@ export function ProductSearchDialog({
                             type="text"
                             placeholder="Discount"
                             className="h-6 text-xs"
-                            value={product.discountAmount || ''}
+                            value={product.discountAmount ? product.discountAmount.toString() : ''}
                             onChange={(e) => {
                               const value = e.target.value;
                               // Allow empty string or valid decimal numbers
                               if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                                const discount = value === '' ? '' : parseFloat(value) || 0;
+                                const discount = value === '' ? 0 : parseFloat(value) || 0;
                                 handleDiscountChange(product.productId, discount);
                               }
                             }}
