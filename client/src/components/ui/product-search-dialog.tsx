@@ -312,17 +312,24 @@ export function ProductSearchDialog({
                           <Minus className="h-3 w-3" />
                         </Button>
                         <Input
-                          type="number"
+                          type="text"
                           className="w-12 h-6 text-center text-xs"
-                          min="1"
                           value={product.quantity}
                           onChange={(e) => {
                             const value = e.target.value;
-                            if (value === '') {
+                            // Allow empty string or valid numbers
+                            if (value === '' || /^\d+$/.test(value)) {
+                              const qty = value === '' ? 1 : parseInt(value);
+                              if (qty > 0) {
+                                handleQuantityChange(product.productId, qty);
+                              }
+                            }
+                          }}
+                          onBlur={(e) => {
+                            // Ensure minimum value on blur
+                            const value = e.target.value;
+                            if (value === '' || parseInt(value) < 1) {
                               handleQuantityChange(product.productId, 1);
-                            } else {
-                              const qty = parseInt(value) || 1;
-                              handleQuantityChange(product.productId, Math.max(1, qty));
                             }
                           }}
                         />
@@ -344,11 +351,18 @@ export function ProductSearchDialog({
                         </div>
                         <div className="flex items-center gap-2">
                           <Input
-                            type="number"
+                            type="text"
                             placeholder="Discount"
                             className="h-6 text-xs"
                             value={product.discountAmount || ''}
-                            onChange={(e) => handleDiscountChange(product.productId, parseFloat(e.target.value) || 0)}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              // Allow empty string or valid decimal numbers
+                              if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                                const discount = value === '' ? 0 : parseFloat(value) || 0;
+                                handleDiscountChange(product.productId, Math.max(0, discount));
+                              }
+                            }}
                           />
                           <span className="text-xs">₹</span>
                         </div>

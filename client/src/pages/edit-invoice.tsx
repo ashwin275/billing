@@ -1767,16 +1767,21 @@ export default function EditInvoice() {
                               name={`saleItems.${index}.quantity`}
                               render={({ field }) => (
                                 <Input
-                                  {...field}
-                                  type="number"
-                                  min="1"
+                                  type="text"
                                   value={field.value || ''}
                                   onChange={(e) => {
                                     const value = e.target.value;
-                                    if (value === '') {
+                                    // Allow empty string or valid numbers
+                                    if (value === '' || /^\d+$/.test(value)) {
+                                      const qty = value === '' ? '' : parseInt(value);
+                                      field.onChange(qty);
+                                    }
+                                  }}
+                                  onBlur={(e) => {
+                                    // Ensure minimum value on blur
+                                    const value = e.target.value;
+                                    if (value === '' || parseInt(value) < 1) {
                                       field.onChange(1);
-                                    } else {
-                                      field.onChange(parseInt(value) || 1);
                                     }
                                   }}
                                   className="text-center h-8"
