@@ -304,44 +304,15 @@ export default function EditInvoice() {
       return;
     }
 
-    // Recalculate totals at submit time to ensure fresh values
-    const freshTotals = calculateTotals();
+    // Use the totals that are displayed in the UI (these are working correctly)
+    const displayedTotals = totals;
     
-    // Calculate subtotal from sale items directly if totals are zero
-    let calculatedTotal = freshTotals.grandTotal;
-    let calculatedTax = freshTotals.totalTax;
+    // Use the displayed values directly since the calculateTotals at submit time might return 0
+    let calculatedTotal = displayedTotals.grandTotal;
+    let calculatedTax = displayedTotals.totalTax;
     
-    if (calculatedTotal === 0 && data.saleItems && data.saleItems.length > 0) {
-      // Fallback calculation using current form data
-      let subtotal = 0;
-      let totalTax = 0;
-      
-      data.saleItems.forEach(item => {
-        const product = Array.isArray(products) ? products.find(p => p.productId === item.productId) : null;
-        if (product) {
-          const unitPrice = data.saleType === 'RETAIL' ? product.retailRate : product.wholesaleRate;
-          const lineTotal = unitPrice * item.quantity;
-          subtotal += lineTotal;
-          
-          if (data.billType === 'GST') {
-            const cgstAmount = (lineTotal * (product.cgst || 0)) / 100;
-            const sgstAmount = (lineTotal * (product.sgst || 0)) / 100;
-            totalTax += cgstAmount + sgstAmount;
-          }
-        }
-      });
-      
-      // Apply overall discount
-      let totalDiscount = 0;
-      if (data.discountType === 'PERCENTAGE') {
-        totalDiscount = (subtotal * data.discount) / 100;
-      } else {
-        totalDiscount = data.discount || 0;
-      }
-      
-      calculatedTotal = subtotal - totalDiscount;
-      calculatedTax = totalTax;
-    }
+    console.log('Displayed totals:', displayedTotals);
+    console.log('Using values:', { calculatedTotal, calculatedTax });
     
     const invoiceInput: InvoiceInput = {
       customerId: data.customerId,
