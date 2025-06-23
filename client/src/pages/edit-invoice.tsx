@@ -270,26 +270,32 @@ export default function EditInvoice() {
 
   const totals = calculateTotals();
 
-  // Handle form submission
+  // Handle form submission - THIS IS THE MAIN UPDATE FUNCTION
   const onSubmit = async (data: InvoiceFormData) => {
+    console.log('🔥 UPDATE BUTTON CLICKED - STARTING FORM SUBMISSION');
+    console.log('Invoice ID:', invoiceId);
+    console.log('Invoice data:', invoice);
+    console.log('Form data:', data);
+    
     if (!invoiceId || !invoice) {
+      console.error('❌ Missing required data');
       toast({
         title: "Error",
-        description: "Invalid invoice ID",
+        description: "Invalid invoice ID or missing invoice data",
         variant: "destructive",
       });
       return;
     }
 
     const totals = calculateTotals();
+    console.log('📊 Calculated totals:', totals);
     setIsUpdating(true);
     
     try {
-      console.log('=== STARTING INVOICE UPDATE PROCESS ===');
-      console.log('Invoice ID:', invoiceId);
-      console.log('Invoice data structure:', invoice);
-      console.log('Form submission data:', data);
-      console.log('Calculated totals:', totals);
+      console.log('🚀 STARTING DUAL API UPDATE PROCESS');
+      console.log('📋 Invoice ID:', invoiceId);
+      console.log('📋 Sales ID:', invoice.salesId);
+      console.log('📋 Staff ID:', invoice.staffId);
 
       // First, update each sale item with correct mandatory fields
       if (invoice.saleItems && invoice.saleItems.length > 0) {
@@ -359,15 +365,16 @@ export default function EditInvoice() {
         }
       }
       
-      console.log('=== ALL SALE ITEMS UPDATED, NOW UPDATING INVOICE ===');
+      console.log('✅ ALL SALE ITEMS UPDATED SUCCESSFULLY');
+      console.log('📞 NOW CALLING INVOICE UPDATE API');
       
-      // Then update the invoice with all mandatory fields - using exact structure from provided data
+      // Prepare invoice update with all mandatory fields from provided data structure
       const invoiceUpdate = {
         invoiceId: parseInt(invoiceId.toString()),
         customerId: data.customerId || invoice.customerId || 2,
         shopId: data.shopId || invoice.shopId || 1,
-        salesId: invoice.salesId || 23, // From the provided data: "salesId": 23
-        userId: invoice.staffId || 2, // From the provided data: "staffId": 2
+        salesId: invoice.salesId || 23, // From provided data structure
+        userId: invoice.staffId || 2, // From provided data structure  
         totalAmount: parseFloat(totals.grandTotal.toString()),
         tax: parseFloat(totals.totalTax.toString()),
         dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : 
@@ -377,9 +384,9 @@ export default function EditInvoice() {
         remark: data.remark || invoice.remark || "",
       };
 
-      console.log('=== CALLING INVOICE UPDATE API ===');
-      console.log(`URL: https://billing-backend.serins.in/api/invoice/update/${invoiceId}`);
-      console.log('Payload:', JSON.stringify(invoiceUpdate, null, 2));
+      console.log('🔥 CALLING INVOICE UPDATE API NOW');
+      console.log('🌐 URL:', `https://billing-backend.serins.in/api/invoice/update/${invoiceId}`);
+      console.log('📦 PAYLOAD:', JSON.stringify(invoiceUpdate, null, 2));
       
       // Call invoice/update/{id} API
       const invoiceResponse = await fetch(`https://billing-backend.serins.in/api/invoice/update/${invoiceId}`, {
@@ -408,11 +415,18 @@ export default function EditInvoice() {
         description: "Invoice has been successfully updated.",
       });
       
+      console.log('🎉 INVOICE UPDATE COMPLETED SUCCESSFULLY');
+      
+      toast({
+        title: "Invoice updated",
+        description: "Invoice has been successfully updated.",
+      });
+      
       // Redirect to invoice management
       window.location.href = "/dashboard/invoice";
       
     } catch (error) {
-      console.error('Error updating invoice:', error);
+      console.error('❌ ERROR DURING UPDATE:', error);
       toast({
         title: "Update failed",
         description: "Failed to update invoice. Please try again.",
@@ -420,6 +434,7 @@ export default function EditInvoice() {
       });
     } finally {
       setIsUpdating(false);
+      console.log('🏁 UPDATE PROCESS FINISHED');
     }
   };
 
@@ -1455,7 +1470,10 @@ export default function EditInvoice() {
               Download PDF
             </Button>
             <Button 
-              onClick={() => form.handleSubmit(onSubmit)()}
+              onClick={() => {
+                console.log('🎯 UPDATE BUTTON CLICKED - TRIGGERING FORM SUBMIT');
+                form.handleSubmit(onSubmit)();
+              }}
               disabled={isUpdating}
             >
               <Save className="h-4 w-4 mr-2" />
