@@ -323,15 +323,14 @@ export function ProductSearchDialog({
                         <Input
                           type="text"
                           className="w-12 h-6 text-center text-xs"
-                          value={product.quantity === 1 ? '' : product.quantity.toString()}
-                          placeholder="1"
+                          value={product.quantity.toString()}
                           onChange={(e) => {
                             const value = e.target.value;
                             // Allow empty string or valid numbers
                             if (value === '' || /^\d+$/.test(value)) {
-                              const qty = value === '' ? 1 : parseInt(value);
-                              if (qty > 0) {
-                                handleQuantityChange(product.productId, qty);
+                              const qty = value === '' ? 0 : parseInt(value);
+                              if (qty >= 0) {
+                                handleQuantityChange(product.productId, qty === 0 ? 1 : qty);
                               }
                             }
                           }}

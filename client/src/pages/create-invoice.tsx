@@ -2008,11 +2008,22 @@ export default function CreateInvoice() {
                         name="amountPaid"
                         render={({ field }) => (
                           <Input
-                            {...field}
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                            type="text"
+                            value={field.value === 0 ? '' : field.value.toString()}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              // Allow empty string or valid decimal numbers
+                              if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                                const amount = value === '' ? 0 : parseFloat(value) || 0;
+                                field.onChange(amount);
+                              }
+                            }}
+                            onBlur={(e) => {
+                              const value = e.target.value;
+                              if (value === '') {
+                                field.onChange(0);
+                              }
+                            }}
                             className="w-32 text-right"
                           />
                         )}
