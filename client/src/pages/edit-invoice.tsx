@@ -287,8 +287,8 @@ export default function EditInvoice() {
   const totals = calculateTotals();
 
   // Handle form submission
-  const onSubmit = (data: InvoiceFormData) => {
-    if (!invoiceId) {
+  const onSubmit = async (data: InvoiceFormData) => {
+    if (!invoiceId || !invoice) {
       toast({
         title: "Error",
         description: "Invalid invoice ID",
@@ -299,26 +299,75 @@ export default function EditInvoice() {
 
     const totals = calculateTotals();
     
-    const invoiceInput: InvoiceInput = {
-      customerId: data.customerId,
-      shopId: data.shopId,
-      discount: data.discount,
-      amountPaid: data.amountPaid,
-      paymentMode: data.paymentMode,
-      paymentStatus: data.paymentStatus,
-      remark: data.remark,
-      dueDate: data.dueDate,
-      billType: data.billType,
-      saleType: data.saleType,
-      transactionId: data.transactionId,
-      saleItems: data.saleItems.map(item => ({
-        productId: item.productId,
-        quantity: item.quantity,
-        discount: item.discount,
-      })),
-    };
+    try {
+      // First, update sale items if they exist
+      if (invoice.saleItems && invoice.saleItems.length > 0) {
+        for (let i = 0; i < data.saleItems.length && i < invoice.saleItems.length; i++) {
+          const formItem = data.saleItems[i];
+          const existingItem = invoice.saleItems[i];
+          
+          if (existingItem.saleItemId) {
+            const product = Array.isArray(products) ? products.find(p => p.productId === formItem.productId) : null;
+            if (product) {
+              const unitPrice = data.saleType === 'RETAIL' ? product.retailRate : product.wholesaleRate;
+              let discountAmount = 0;
+              if (formItem.discountType === 'PERCENTAGE') {
+                discountAmount = (unitPrice * formItem.discount) / 100;
+              } else {
+                discountAmount = formItem.discount;
+              }
+              
+              const itemTotal = (unitPrice - discountAmount) * formItem.quantity;
+              
+              const saleItemUpdate = {
+                saleItemId: existingItem.saleItemId,
+                saleId: invoice.salesId,
+                productId: formItem.productId,
+                quantity: formItem.quantity,
+                price: unitPrice,
+                tax: product.cgst + product.sgst,
+                total: itemTotal
+              };
+              
+              await saleItemsApi.updateSaleItem(existingItem.saleItemId, saleItemUpdate);
+            }
+          }
+        }
+      }
+      
+      // Then update the invoice with calculated totals
+      const invoiceUpdate = {
+        invoiceId: invoiceId,
+        customerId: data.customerId,
+        shopId: data.shopId,
+        salesId: invoice.salesId,
+        userId: invoice.userId,
+        totalAmount: totals.grandTotal,
+        tax: totals.totalTax,
+        dueDate: data.dueDate,
+        paymentStatus: data.paymentStatus,
+        paymentMode: data.paymentMode,
+        remark: data.remark || "",
+      };
 
-    updateInvoiceMutation.mutate(invoiceInput);
+      await invoicesApi.updateInvoice(invoiceId, invoiceUpdate);
+      
+      toast({
+        title: "Invoice updated",
+        description: "Invoice has been successfully updated.",
+      });
+      
+      // Redirect to invoice management
+      window.location.href = "/dashboard/invoice";
+      
+    } catch (error) {
+      console.error('Error updating invoice:', error);
+      toast({
+        title: "Update failed",
+        description: "Failed to update invoice. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Handle add customer
