@@ -109,7 +109,7 @@ export default function CreateInvoice() {
       customerId: 0,
       shopId: 0,
       discount: 0,
-      discountType: "PERCENTAGE",
+      discountType: "AMOUNT",
       amountPaid: 0,
       paymentMode: "CASH",
       paymentStatus: "PENDING",
@@ -353,7 +353,7 @@ export default function CreateInvoice() {
         customerId: editInvoice.customerId,
         shopId: editInvoice.shopId,
         discount: editInvoice.discount || 0,
-        discountType: "PERCENTAGE",
+        discountType: "AMOUNT",
         amountPaid: editInvoice.amountPaid || 0,
         paymentMode: editInvoice.paymentMode,
         paymentStatus: editInvoice.paymentStatus,
@@ -374,6 +374,17 @@ export default function CreateInvoice() {
       });
     }
   }, [isEditMode, editInvoice, form]);
+
+  // Auto-update amount paid to match grand total for new invoices
+  useEffect(() => {
+    if (!isEditMode && totals.grandTotal > 0) {
+      const currentAmountPaid = form.getValues('amountPaid');
+      // Only update if amount paid is 0 or if it was previously set to the old grand total
+      if (currentAmountPaid === 0 || Math.abs(currentAmountPaid - totals.grandTotal) < 0.01) {
+        form.setValue('amountPaid', totals.grandTotal);
+      }
+    }
+  }, [totals.grandTotal, isEditMode, form]);
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
