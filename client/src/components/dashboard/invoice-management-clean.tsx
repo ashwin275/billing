@@ -589,15 +589,23 @@ export default function InvoiceManagementClean() {
               <div className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search invoices..."
+                  placeholder="Search by invoice # or customer name..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-8 w-[300px]"
                 />
               </div>
-              <Button variant="outline" size="sm">
-                <Filter className="h-4 w-4" />
-              </Button>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="PAID">Paid</SelectItem>
+                  <SelectItem value="PENDING">Pending</SelectItem>
+                  <SelectItem value="OVERDUE">Overdue</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardHeader>
@@ -624,7 +632,7 @@ export default function InvoiceManagementClean() {
                       <ArrowUpDown className="ml-2 h-3 w-3" />
                     </div>
                   </TableHead>
-                  <TableHead>Shop</TableHead>
+                  <TableHead>Customer</TableHead>
                   <TableHead 
                     className="cursor-pointer select-none"
                     onClick={() => handleSort("totalAmount")}
@@ -652,8 +660,8 @@ export default function InvoiceManagementClean() {
                     </TableCell>
                     <TableCell>
                       <div>
-                        <div className="font-medium">{invoice.shop?.name || 'Unknown Shop'}</div>
-                        <div className="text-sm text-muted-foreground">{invoice.shop?.place || 'Unknown Location'}</div>
+                        <div className="font-medium">{invoice.customerName || 'Unknown Customer'}</div>
+                        <div className="text-sm text-muted-foreground">Invoice ID: {invoice.invoiceId}</div>
                       </div>
                     </TableCell>
                     <TableCell>
