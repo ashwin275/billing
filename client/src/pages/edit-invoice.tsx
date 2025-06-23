@@ -62,16 +62,19 @@ type CustomerFormData = z.infer<typeof customerSchema>;
 
 export default function EditInvoice() {
   const [match, params] = useRoute("/invoices/edit/:id");
+  const [match2, params2] = useRoute("/dashboard/edit-invoice/:invoiceId");
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Get invoice ID from either route pattern and convert to number
+  const invoiceIdParam = params?.id || params2?.invoiceId;
+  const invoiceId = invoiceIdParam ? parseInt(invoiceIdParam) : null;
   
   const [isAddCustomerDialogOpen, setIsAddCustomerDialogOpen] = useState(false);
   const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [selectedShop, setSelectedShop] = useState<Shop | null>(null);
-
-  const invoiceId = params?.id ? parseInt(params.id) : null;
 
   // Fetch invoice data
   const { data: invoice, isLoading: isLoadingInvoice } = useQuery({

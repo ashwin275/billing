@@ -100,6 +100,13 @@ function Router() {
           <EditInvoice />
         </ProtectedRoute>
       </Route>
+      
+      {/* Alternative dashboard edit invoice route */}
+      <Route path="/dashboard/edit-invoice/:invoiceId">
+        <ProtectedRoute>
+          <EditInvoice />
+        </ProtectedRoute>
+      </Route>
 
       <Route path="/reports">
         <ProtectedRoute>

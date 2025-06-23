@@ -329,7 +329,7 @@ export default function CreateInvoice() {
     if (isEditMode) {
       // Redirect to proper edit page instead of using broken old API
       console.log('Edit mode detected, redirecting to edit page');
-      setLocation(`/dashboard/edit-invoice/${editInvoiceId}`);
+      setLocation(`/invoices/edit/${editInvoiceId}`);
       return;
     } else {
       createInvoiceMutation.mutate(invoiceInput);
@@ -412,7 +412,7 @@ export default function CreateInvoice() {
     if (isEditMode) {
       // Redirect to edit page instead of using old API
       console.log('Edit mode in customer form, redirecting to edit page');
-      setLocation(`/dashboard/edit-invoice/${editInvoiceId}`);
+      setLocation(`/invoices/edit/${editInvoiceId}`);
     } else {
       createInvoiceMutation.mutate(data);
     }
