@@ -138,6 +138,15 @@ export default function CreateInvoice() {
     }
   }, [fields, form, isEditMode]);
 
+  // Auto-select shop if only one is available
+  useEffect(() => {
+    if (Array.isArray(shops) && shops.length === 1 && !form.getValues('shopId')) {
+      const singleShop = shops[0];
+      form.setValue('shopId', singleShop.shopId);
+      setSelectedShop(singleShop);
+    }
+  }, [shops, form]);
+
   // Customer form
   const customerForm = useForm<CustomerFormData>({
     resolver: zodResolver(customerSchema),
@@ -1333,30 +1342,41 @@ export default function CreateInvoice() {
                   <div className="flex justify-between items-start">
                     {/* Shop Info */}
                     <div className="flex-1">
-                      <FormField
-                        control={form.control}
-                        name="shopId"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-sm text-gray-600">Shop</FormLabel>
-                            <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
-                              <FormControl>
-                                <SelectTrigger className="border border-gray-300 text-2xl font-bold text-gray-900 p-3 h-auto rounded-md">
-                                  <SelectValue placeholder="Select Shop" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {Array.isArray(shops) ? shops.map((shop) => (
-                                  <SelectItem key={shop.shopId} value={shop.shopId.toString()}>
-                                    {shop.name}
-                                  </SelectItem>
-                                )) : null}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+{Array.isArray(shops) && shops.length === 1 ? (
+                        // Show shop info directly when only one shop exists
+                        <div>
+                          <FormLabel className="text-sm text-gray-600">Shop</FormLabel>
+                          <div className="border border-gray-300 text-2xl font-bold text-gray-900 p-3 rounded-md bg-gray-50">
+                            {shops[0].name}
+                          </div>
+                        </div>
+                      ) : (
+                        // Show dropdown when multiple shops exist
+                        <FormField
+                          control={form.control}
+                          name="shopId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm text-gray-600">Shop</FormLabel>
+                              <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                                <FormControl>
+                                  <SelectTrigger className="border border-gray-300 text-2xl font-bold text-gray-900 p-3 h-auto rounded-md">
+                                    <SelectValue placeholder="Select Shop" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {Array.isArray(shops) ? shops.map((shop) => (
+                                    <SelectItem key={shop.shopId} value={shop.shopId.toString()}>
+                                      {shop.name}
+                                    </SelectItem>
+                                  )) : null}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
                       {selectedShop && (
                         <div className="mt-2">
                           <FormField
