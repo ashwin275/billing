@@ -115,6 +115,8 @@ export default function ShopsManagement() {
     if (token) {
       try {
         const decoded = decodeToken(token);
+        console.log('Decoded token:', decoded);
+        console.log('User role:', decoded.role);
         return decoded.role;
       } catch (error) {
         console.warn('Failed to decode token:', error);
@@ -126,6 +128,10 @@ export default function ShopsManagement() {
   const userRole = getUserRole();
   const isAdmin = userRole === 'ROLE_ADMIN';
   const canEditDelete = isAdmin; // Only admins can edit/delete
+  
+  console.log('Current user role:', userRole);
+  console.log('Is admin:', isAdmin);
+  console.log('Can edit/delete:', canEditDelete);
 
   // Fetch all shops
   const {
