@@ -417,6 +417,8 @@ export default function EditInvoice() {
                   shop: {
                     name: selectedShop.name,
                     place: selectedShop.place,
+                    gstNo: selectedShop.gstNo || "",
+                    phone: selectedShop.phone || "",
                     tagline: "Quality Products & Services"
                   },
                   customer: {
@@ -759,6 +761,8 @@ export default function EditInvoice() {
                               <div class="company-info">
                                 <h1>${previewData.shop.name}</h1>
                                 <div class="company-tagline">${previewData.shop.tagline}</div>
+                                ${previewData.shop.gstNo ? `<div class="company-tagline">GST: ${previewData.shop.gstNo}</div>` : ''}
+                                ${previewData.shop.phone ? `<div class="company-tagline">Phone: ${previewData.shop.phone}</div>` : ''}
                               </div>
                             </div>
                             <div class="invoice-title">
@@ -885,6 +889,8 @@ export default function EditInvoice() {
                   shop: {
                     name: selectedShop?.name || "Shop Name",
                     place: selectedShop?.place || "Shop Address",
+                    gstNo: selectedShop?.gstNo || "",
+                    phone: selectedShop?.phone || "",
                     tagline: "Quality Products & Services"
                   },
                   customer: {
@@ -2030,6 +2036,8 @@ export default function EditInvoice() {
                   <div>
                     <h2 className="text-2xl font-bold text-black">{selectedShop.name}</h2>
                     <p className="text-gray-600">{selectedShop.place}</p>
+                    {selectedShop.gstNo && <p className="text-gray-600">GST: {selectedShop.gstNo}</p>}
+                    {selectedShop.phone && <p className="text-gray-600">Phone: {selectedShop.phone}</p>}
                   </div>
                   <div className="text-right">
                     <h3 className="text-xl font-bold text-black">INVOICE</h3>
