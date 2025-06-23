@@ -331,7 +331,20 @@ export default function EditInvoice() {
               };
               
               console.log('Sale item update payload:', saleItemUpdate);
-              await saleItemsApi.updateSaleItem(existingItem.saleItemId, saleItemUpdate);
+              
+              // Call the sale item update API directly
+              const saleItemResponse = await fetch(`https://billing-backend.serins.in/api/sales-items/update/${existingItem.saleItemId}`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                },
+                body: JSON.stringify(saleItemUpdate),
+              });
+              
+              if (!saleItemResponse.ok) {
+                throw new Error(`Sale item update failed: ${saleItemResponse.statusText}`);
+              }
             }
           }
         }
@@ -353,7 +366,20 @@ export default function EditInvoice() {
       };
 
       console.log('Invoice update payload:', invoiceUpdate);
-      await invoicesApi.updateInvoice(invoiceId, invoiceUpdate);
+      
+      // Call the invoice update API directly
+      const response = await fetch(`https://billing-backend.serins.in/api/invoice/update/${invoiceId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+        },
+        body: JSON.stringify(invoiceUpdate),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Invoice update failed: ${response.statusText}`);
+      }
       
       toast({
         title: "Invoice updated",
