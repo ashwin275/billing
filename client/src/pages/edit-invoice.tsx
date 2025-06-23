@@ -304,7 +304,44 @@ export default function EditInvoice() {
       return;
     }
 
-    const totals = calculateTotals();
+    // Recalculate totals at submit time to ensure fresh values
+    const freshTotals = calculateTotals();
+    
+    // Calculate subtotal from sale items directly if totals are zero
+    let calculatedTotal = freshTotals.grandTotal;
+    let calculatedTax = freshTotals.totalTax;
+    
+    if (calculatedTotal === 0 && data.saleItems && data.saleItems.length > 0) {
+      // Fallback calculation using current form data
+      let subtotal = 0;
+      let totalTax = 0;
+      
+      data.saleItems.forEach(item => {
+        const product = Array.isArray(products) ? products.find(p => p.productId === item.productId) : null;
+        if (product) {
+          const unitPrice = data.saleType === 'RETAIL' ? product.retailRate : product.wholesaleRate;
+          const lineTotal = unitPrice * item.quantity;
+          subtotal += lineTotal;
+          
+          if (data.billType === 'GST') {
+            const cgstAmount = (lineTotal * (product.cgst || 0)) / 100;
+            const sgstAmount = (lineTotal * (product.sgst || 0)) / 100;
+            totalTax += cgstAmount + sgstAmount;
+          }
+        }
+      });
+      
+      // Apply overall discount
+      let totalDiscount = 0;
+      if (data.discountType === 'PERCENTAGE') {
+        totalDiscount = (subtotal * data.discount) / 100;
+      } else {
+        totalDiscount = data.discount || 0;
+      }
+      
+      calculatedTotal = subtotal - totalDiscount;
+      calculatedTax = totalTax;
+    }
     
     const invoiceInput: InvoiceInput = {
       customerId: data.customerId,
@@ -318,8 +355,8 @@ export default function EditInvoice() {
       billType: data.billType,
       saleType: data.saleType,
       transactionId: data.transactionId,
-      totalAmount: totals.grandTotal, // Pass calculated grand total
-      tax: totals.totalTax, // Pass calculated total tax
+      totalAmount: calculatedTotal,
+      tax: calculatedTax,
       saleItems: data.saleItems.map(item => ({
         productId: item.productId,
         quantity: item.quantity,
@@ -328,7 +365,7 @@ export default function EditInvoice() {
     };
 
     console.log('Invoice input before update:', invoiceInput);
-    console.log('Totals before update:', totals);
+    console.log('Calculated totals:', { calculatedTotal, calculatedTax });
 
     updateInvoiceMutation.mutate(invoiceInput);
   };
