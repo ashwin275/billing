@@ -62,8 +62,7 @@ export function ProductSearchDialog({
     return selectedProducts.reduce((total, product) => {
       const rate = saleType === 'RETAIL' ? product.retailRate : product.wholesaleRate;
       const subtotal = rate * product.quantity;
-      const discountedSubtotal = subtotal - (product.discountAmount || 0);
-      return total + discountedSubtotal;
+      return total + subtotal;
     }, 0);
   }, [selectedProducts, saleType]);
 
@@ -120,11 +119,7 @@ export function ProductSearchDialog({
     }
   };
 
-  const handleDiscountChange = (productId: number, discountAmount: number) => {
-    setSelectedProducts(selectedProducts.map(p => 
-      p.productId === productId ? { ...p, discountAmount: Math.max(0, discountAmount) } : p
-    ));
-  };
+
 
   const handleRemoveProduct = (productId: number) => {
     setSelectedProducts(selectedProducts.filter(p => p.productId !== productId));
@@ -246,17 +241,16 @@ export function ProductSearchDialog({
                           {selectedProduct ? (
                             <div className="flex items-center gap-1">
                               <Input
-                                type="number"
-                                min="1"
-                                value={selectedProduct.quantity}
+                                type="text"
+                                value={quantityInputs[product.productId] ?? selectedProduct.quantity.toString()}
                                 onChange={(e) => {
-                                  const value = parseInt(e.target.value) || 1;
-                                  if (value >= 1) {
-                                    handleQuantityChange(product.productId, value);
-                                  }
+                                  handleQuantityInputChange(product.productId, e.target.value);
+                                }}
+                                onBlur={(e) => {
+                                  handleQuantityInputBlur(product.productId, e.target.value);
                                 }}
                                 className="w-16 h-8 text-center"
-                                placeholder="Qty"
+                                placeholder="0"
                               />
                               <span className="text-xs text-gray-500">pcs</span>
                             </div>
@@ -264,24 +258,7 @@ export function ProductSearchDialog({
                             <span className="text-xs text-gray-500">-</span>
                           )}
                         </TableCell>
-                        <TableCell>
-                          {selectedProduct ? (
-                            <div className="flex items-center gap-1">
-                              <Input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={selectedProduct.discountAmount || 0}
-                                onChange={(e) => handleDiscountChange(product.productId, parseFloat(e.target.value) || 0)}
-                                className="w-20 h-8"
-                                placeholder="0.00"
-                              />
-                              <span className="text-xs text-gray-500">₹</span>
-                            </div>
-                          ) : (
-                            <span className="text-xs text-gray-500">-</span>
-                          )}
-                        </TableCell>
+
                         <TableCell>
                           {selectedProduct ? (
                             <Button
