@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertTriangle } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -17,6 +18,7 @@ import InvoiceTemplate from "@/components/invoice/InvoiceTemplate";
 
 export default function InvoiceManagementClean() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [sortField, setSortField] = useState<keyof Invoice>("invoiceDate");
@@ -55,10 +57,16 @@ export default function InvoiceManagementClean() {
   });
 
   // Filter and sort invoices
-  const filteredInvoices = Array.isArray(invoices) ? invoices.filter(invoice =>
-    invoice.invoiceNo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    invoice.shop?.name?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) : [];
+  const filteredInvoices = Array.isArray(invoices) ? invoices.filter(invoice => {
+    const matchesSearch = 
+      invoice.invoiceNo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      invoice.customerName?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === "all" || 
+      invoice.paymentStatus?.toLowerCase() === statusFilter.toLowerCase();
+    
+    return matchesSearch && matchesStatus;
+  }) : [];
 
   const sortedInvoices = [...filteredInvoices].sort((a, b) => {
     const aValue = a[sortField];
