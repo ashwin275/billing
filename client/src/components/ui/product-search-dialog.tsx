@@ -36,6 +36,7 @@ export function ProductSearchDialog({
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>([]);
   const [quantityInputs, setQuantityInputs] = useState<Record<number, string>>({});
+  const [discountInputs, setDiscountInputs] = useState<Record<number, string>>({});
 
   // Get unique categories
   const categories = useMemo(() => {
@@ -62,7 +63,8 @@ export function ProductSearchDialog({
     return selectedProducts.reduce((total, product) => {
       const rate = saleType === 'RETAIL' ? product.retailRate : product.wholesaleRate;
       const subtotal = rate * product.quantity;
-      return total + subtotal;
+      const discountAmount = product.discountAmount || 0;
+      return total + (subtotal - discountAmount);
     }, 0);
   }, [selectedProducts, saleType]);
 
@@ -76,8 +78,9 @@ export function ProductSearchDialog({
       setQuantityInputs(prev => ({ ...prev, [product.productId]: updated[existingIndex].quantity.toString() }));
     } else {
       // Add new product
-      setSelectedProducts([...selectedProducts, { ...product, quantity: 1 }]);
+      setSelectedProducts([...selectedProducts, { ...product, quantity: 1, discountAmount: 0 }]);
       setQuantityInputs(prev => ({ ...prev, [product.productId]: '1' }));
+      setDiscountInputs(prev => ({ ...prev, [product.productId]: '0' }));
     }
   };
 
@@ -85,6 +88,11 @@ export function ProductSearchDialog({
     if (quantity <= 0) {
       setSelectedProducts(selectedProducts.filter(p => p.productId !== productId));
       setQuantityInputs(prev => {
+        const updated = { ...prev };
+        delete updated[productId];
+        return updated;
+      });
+      setDiscountInputs(prev => {
         const updated = { ...prev };
         delete updated[productId];
         return updated;
@@ -115,6 +123,26 @@ export function ProductSearchDialog({
       setQuantityInputs(prev => ({ ...prev, [productId]: '1' }));
       setSelectedProducts(selectedProducts.map(p => 
         p.productId === productId ? { ...p, quantity: 1 } : p
+      ));
+    }
+  };
+
+  const handleDiscountInputChange = (productId: number, value: string) => {
+    setDiscountInputs(prev => ({ ...prev, [productId]: value }));
+    
+    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+      const discountAmount = value === '' ? 0 : parseFloat(value) || 0;
+      setSelectedProducts(selectedProducts.map(p => 
+        p.productId === productId ? { ...p, discountAmount } : p
+      ));
+    }
+  };
+
+  const handleDiscountInputBlur = (productId: number, value: string) => {
+    if (value === '') {
+      setDiscountInputs(prev => ({ ...prev, [productId]: '0' }));
+      setSelectedProducts(selectedProducts.map(p => 
+        p.productId === productId ? { ...p, discountAmount: 0 } : p
       ));
     }
   };
@@ -299,6 +327,8 @@ export function ProductSearchDialog({
                 {selectedProducts.map((product) => {
                   const rate = saleType === 'RETAIL' ? product.retailRate : product.wholesaleRate;
                   const subtotal = rate * product.quantity;
+                  const discountAmount = product.discountAmount || 0;
+                  const finalTotal = subtotal - discountAmount;
                   
                   return (
                     <div key={product.productId} className="p-3 border rounded-lg space-y-2">
@@ -351,10 +381,26 @@ export function ProductSearchDialog({
                         <span className="text-xs text-muted-foreground">QTY</span>
                       </div>
                       
-                      <div className="space-y-1">
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-xs">
+                          <span>Subtotal:</span>
+                          <span>₹{subtotal.toFixed(2)}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">Discount:</span>
+                          <Input
+                            type="text"
+                            placeholder="0"
+                            className="h-6 text-xs flex-1"
+                            value={discountInputs[product.productId] ?? (product.discountAmount || 0).toString()}
+                            onChange={(e) => handleDiscountInputChange(product.productId, e.target.value)}
+                            onBlur={(e) => handleDiscountInputBlur(product.productId, e.target.value)}
+                          />
+                          <span className="text-xs">₹</span>
+                        </div>
                         <div className="flex justify-between text-sm font-medium">
                           <span>Total:</span>
-                          <span>₹{subtotal.toFixed(2)}</span>
+                          <span>₹{finalTotal.toFixed(2)}</span>
                         </div>
                       </div>
                     </div>
