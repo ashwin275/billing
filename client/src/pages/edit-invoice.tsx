@@ -282,39 +282,52 @@ export default function EditInvoice() {
     setIsUpdating(true);
     
     try {
-      // First, update sale items if they exist
+      console.log('Starting invoice update process...');
+      console.log('Invoice data:', invoice);
+      console.log('Form data:', data);
+      console.log('Calculated totals:', totals);
+
+      // First, update each sale item with correct mandatory fields
       if (invoice.saleItems && invoice.saleItems.length > 0) {
-        for (let i = 0; i < data.saleItems.length && i < invoice.saleItems.length; i++) {
-          const formItem = data.saleItems[i];
+        console.log('Updating sale items...');
+        
+        for (let i = 0; i < invoice.saleItems.length; i++) {
           const existingItem = invoice.saleItems[i];
+          const formItem = data.saleItems[i];
           
-          if (existingItem.saleItemId) {
-            const product = Array.isArray(products) ? products.find(p => p.productId === formItem.productId) : null;
+          if (existingItem.saleItemId && formItem) {
+            const product = Array.isArray(products) ? 
+              products.find(p => p.productId === formItem.productId) : null;
+            
             if (product) {
-              const unitPrice = data.saleType === 'RETAIL' ? product.retailRate : product.wholesaleRate;
+              const unitPrice = data.saleType === 'RETAIL' ? 
+                (product.retailRate || 0) : (product.wholesaleRate || 0);
+              
               let discountAmount = 0;
               if (formItem.discountType === 'PERCENTAGE') {
-                discountAmount = (unitPrice * formItem.discount) / 100;
+                discountAmount = (unitPrice * (formItem.discount || 0)) / 100;
               } else {
-                discountAmount = formItem.discount;
+                discountAmount = formItem.discount || 0;
               }
               
-              const itemTotal = (unitPrice - discountAmount) * formItem.quantity;
+              const finalPrice = unitPrice - discountAmount;
+              const itemTotal = finalPrice * (formItem.quantity || 1);
               const itemTax = (product.cgst || 0) + (product.sgst || 0);
               
+              // Use exact payload format as specified
               const saleItemUpdate = {
                 saleItemId: existingItem.saleItemId,
-                saleId: invoice.salesId,
+                saleId: invoice.salesId || invoice.sales?.saleId, // From the provided data structure
                 productId: formItem.productId,
-                quantity: parseFloat(formItem.quantity.toString()),
+                quantity: parseFloat((formItem.quantity || 1).toString()),
                 price: parseFloat(unitPrice.toString()),
                 tax: parseFloat(itemTax.toString()),
                 total: parseFloat(itemTotal.toString())
               };
               
-              console.log('Sale item update payload:', saleItemUpdate);
+              console.log(`Sale item ${i + 1} update payload:`, saleItemUpdate);
               
-              // Call the sale item update API directly
+              // Call sales-items/update/{id} API
               const saleItemResponse = await fetch(`https://billing-backend.serins.in/api/sales-items/update/${existingItem.saleItemId}`, {
                 method: 'POST',
                 headers: {
@@ -324,7 +337,11 @@ export default function EditInvoice() {
                 body: JSON.stringify(saleItemUpdate),
               });
               
+              console.log(`Sale item ${i + 1} response status:`, saleItemResponse.status);
+              
               if (!saleItemResponse.ok) {
+                const errorText = await saleItemResponse.text();
+                console.error(`Sale item update error:`, errorText);
                 throw new Error(`Sale item update failed: ${saleItemResponse.statusText}`);
               }
             }
@@ -332,25 +349,26 @@ export default function EditInvoice() {
         }
       }
       
-      // Then update the invoice with calculated totals
+      // Then update the invoice with all mandatory fields
       const invoiceUpdate = {
         invoiceId: parseInt(invoiceId.toString()),
-        customerId: data.customerId,
-        shopId: data.shopId,
-        salesId: invoice.salesId,
-        userId: invoice.userId || 1, // Default fallback
+        customerId: data.customerId || invoice.customerId,
+        shopId: data.shopId || invoice.shopId,
+        salesId: invoice.salesId || invoice.sales?.saleId,
+        userId: invoice.staffId || invoice.shop?.owner?.userId || 1,
         totalAmount: parseFloat(totals.grandTotal.toString()),
         tax: parseFloat(totals.totalTax.toString()),
-        dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : new Date().toISOString(),
-        paymentStatus: data.paymentStatus,
-        paymentMode: data.paymentMode,
-        remark: data.remark || "",
+        dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : 
+                 (invoice.dueDate || new Date().toISOString()),
+        paymentStatus: data.paymentStatus || invoice.paymentStatus || "PENDING",
+        paymentMode: data.paymentMode || invoice.paymentMode || "CASH",
+        remark: data.remark || invoice.remark || "",
       };
 
       console.log('Invoice update payload:', invoiceUpdate);
       
-      // Call the invoice update API directly
-      const response = await fetch(`https://billing-backend.serins.in/api/invoice/update/${invoiceId}`, {
+      // Call invoice/update/{id} API
+      const invoiceResponse = await fetch(`https://billing-backend.serins.in/api/invoice/update/${invoiceId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -359,8 +377,12 @@ export default function EditInvoice() {
         body: JSON.stringify(invoiceUpdate),
       });
       
-      if (!response.ok) {
-        throw new Error(`Invoice update failed: ${response.statusText}`);
+      console.log('Invoice response status:', invoiceResponse.status);
+      
+      if (!invoiceResponse.ok) {
+        const errorText = await invoiceResponse.text();
+        console.error('Invoice update error:', errorText);
+        throw new Error(`Invoice update failed: ${invoiceResponse.statusText}`);
       }
       
       toast({
