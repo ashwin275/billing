@@ -195,6 +195,8 @@ export interface InvoiceInput {
   billType: 'GST' | 'NON_GST';
   saleType: 'RETAIL' | 'WHOLESALE';
   transactionId: string;
+  totalAmount: number;
+  tax: number;
   signature?: string;
   saleItems: SaleItemInput[];
 }
