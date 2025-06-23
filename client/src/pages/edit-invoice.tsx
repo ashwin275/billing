@@ -1456,7 +1456,7 @@ export default function EditInvoice() {
             </Button>
             <Button 
               onClick={() => form.handleSubmit(onSubmit)()}
-              disabled={isUpdating || !form.formState.isDirty}
+              disabled={isUpdating}
             >
               <Save className="h-4 w-4 mr-2" />
               {isUpdating ? "Updating..." : "Update Invoice"}
