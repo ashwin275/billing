@@ -226,11 +226,17 @@ export default function EditInvoice() {
   const calculateTotals = () => {
     const formData = form.getValues();
     
-    if (!selectedCustomer || !selectedShop) return { subtotal: 0, totalTax: 0, totalDiscount: 0, grandTotal: 0, items: [] };
+    if (!selectedCustomer || !selectedShop) {
+      console.log('Missing selectedCustomer or selectedShop');
+      return { subtotal: 0, totalTax: 0, totalDiscount: 0, grandTotal: 0, items: [] };
+    }
 
     const items = formData.saleItems.map(item => {
       const product = Array.isArray(products) ? products.find(p => p.productId === item.productId) : null;
-      if (!product) return null;
+      if (!product) {
+        console.log('Product not found for item:', item);
+        return null;
+      }
 
       const unitPrice = formData.saleType === 'RETAIL' ? product.retailRate : product.wholesaleRate;
       
@@ -281,6 +287,7 @@ export default function EditInvoice() {
     
     const grandTotal = subtotal - totalDiscount; // Exclude tax from grand total
 
+    console.log('Calculation results:', { subtotal, totalTax, totalDiscount, grandTotal, itemsCount: items.length });
     return { subtotal, totalTax, totalDiscount, grandTotal, items };
   };
 
@@ -319,6 +326,9 @@ export default function EditInvoice() {
         discount: item.discount,
       })),
     };
+
+    console.log('Invoice input before update:', invoiceInput);
+    console.log('Totals before update:', totals);
 
     updateInvoiceMutation.mutate(invoiceInput);
   };
