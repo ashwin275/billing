@@ -310,9 +310,14 @@ export const invoicesApi = {
    * Update invoice by ID
    */
   async updateInvoice(invoiceId: number, invoiceData: import("@/types/api").InvoiceInput): Promise<void> {
+    const updatePayload = {
+      ...invoiceData,
+      invoiceId: invoiceId,
+    };
+    
     return apiRequest(`/invoice/update/${invoiceId}`, {
       method: 'POST',
-      body: JSON.stringify(invoiceData),
+      body: JSON.stringify(updatePayload),
     });
   },
 
