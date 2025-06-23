@@ -307,9 +307,18 @@ export default function EditInvoice() {
     // Use the same totals variable that displays correctly in the UI
     const uiTotals = totals; // This is the same variable used to show Grand Total in UI
     
+    console.log('=== SUBMIT DEBUGGING ===');
     console.log('UI Totals being used:', uiTotals);
     console.log('Grand Total from UI:', uiTotals.grandTotal);
     console.log('Total Tax from UI:', uiTotals.totalTax);
+    console.log('Form data:', data);
+    console.log('Current products:', products);
+    console.log('Current customers:', customers);
+    console.log('Current shops:', shops);
+    console.log('Selected customer ID:', data.customerId);
+    console.log('Selected shop ID:', data.shopId);
+    console.log('Sale items:', data.saleItems);
+    console.log('=== END DEBUGGING ===');
     
     const invoiceInput: InvoiceInput = {
       customerId: data.customerId,
