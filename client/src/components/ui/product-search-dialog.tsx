@@ -299,7 +299,7 @@ export function ProductSearchDialog({
                         <div className="flex-1">
                           <div className="font-medium text-sm">{product.name}</div>
                           <div className="text-xs text-muted-foreground">
-                            {product.hsn} • ₹{rate} × {product.quantity} pcs
+                            {product.hsn} • ₹{rate} × {product.quantity}
                           </div>
                         </div>
                         <Button
@@ -356,37 +356,9 @@ export function ProductSearchDialog({
                       </div>
                       
                       <div className="space-y-1">
-                        <div className="flex justify-between text-sm">
-                          <span>Subtotal:</span>
-                          <span>₹{subtotal.toFixed(2)}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Input
-                            type="text"
-                            placeholder="0"
-                            className="h-6 text-xs"
-                            value={!product.discountAmount || product.discountAmount === 0 ? '' : product.discountAmount.toString()}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              // Allow empty string or valid decimal numbers
-                              if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                                const discount = value === '' ? 0 : parseFloat(value) || 0;
-                                handleDiscountChange(product.productId, discount);
-                              }
-                            }}
-                            onBlur={(e) => {
-                              // Ensure minimum value on blur
-                              const value = e.target.value;
-                              if (value === '') {
-                                handleDiscountChange(product.productId, 0);
-                              }
-                            }}
-                          />
-                          <span className="text-xs">₹</span>
-                        </div>
                         <div className="flex justify-between text-sm font-medium">
                           <span>Total:</span>
-                          <span>₹{discountedSubtotal.toFixed(2)}</span>
+                          <span>₹{subtotal.toFixed(2)}</span>
                         </div>
                       </div>
                     </div>
