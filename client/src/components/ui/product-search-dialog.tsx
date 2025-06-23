@@ -35,6 +35,7 @@ export function ProductSearchDialog({
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>([]);
+  const [quantityInputs, setQuantityInputs] = useState<Record<number, string>>({});
 
   // Get unique categories
   const categories = useMemo(() => {
@@ -73,18 +74,48 @@ export function ProductSearchDialog({
       const updated = [...selectedProducts];
       updated[existingIndex].quantity += 1;
       setSelectedProducts(updated);
+      setQuantityInputs(prev => ({ ...prev, [product.productId]: updated[existingIndex].quantity.toString() }));
     } else {
       // Add new product
-      setSelectedProducts([...selectedProducts, { ...product, quantity: 1, discountAmount: 0 }]);
+      setSelectedProducts([...selectedProducts, { ...product, quantity: 1 }]);
+      setQuantityInputs(prev => ({ ...prev, [product.productId]: '1' }));
     }
   };
 
   const handleQuantityChange = (productId: number, quantity: number) => {
     if (quantity <= 0) {
       setSelectedProducts(selectedProducts.filter(p => p.productId !== productId));
+      setQuantityInputs(prev => {
+        const updated = { ...prev };
+        delete updated[productId];
+        return updated;
+      });
     } else {
       setSelectedProducts(selectedProducts.map(p => 
         p.productId === productId ? { ...p, quantity } : p
+      ));
+      setQuantityInputs(prev => ({ ...prev, [productId]: quantity.toString() }));
+    }
+  };
+
+  const handleQuantityInputChange = (productId: number, value: string) => {
+    setQuantityInputs(prev => ({ ...prev, [productId]: value }));
+    
+    if (value === '' || /^\d*$/.test(value)) {
+      if (value !== '' && parseInt(value) > 0) {
+        const qty = parseInt(value);
+        setSelectedProducts(selectedProducts.map(p => 
+          p.productId === productId ? { ...p, quantity: qty } : p
+        ));
+      }
+    }
+  };
+
+  const handleQuantityInputBlur = (productId: number, value: string) => {
+    if (value === '' || parseInt(value) < 1) {
+      setQuantityInputs(prev => ({ ...prev, [productId]: '1' }));
+      setSelectedProducts(selectedProducts.map(p => 
+        p.productId === productId ? { ...p, quantity: 1 } : p
       ));
     }
   };
@@ -323,23 +354,13 @@ export function ProductSearchDialog({
                         <Input
                           type="text"
                           className="w-12 h-6 text-center text-xs"
-                          value={product.quantity.toString()}
+                          value={quantityInputs[product.productId] ?? product.quantity.toString()}
+                          placeholder="1"
                           onChange={(e) => {
-                            const value = e.target.value;
-                            // Allow empty string or valid numbers
-                            if (value === '' || /^\d+$/.test(value)) {
-                              const qty = value === '' ? 0 : parseInt(value);
-                              if (qty >= 0) {
-                                handleQuantityChange(product.productId, qty === 0 ? 1 : qty);
-                              }
-                            }
+                            handleQuantityInputChange(product.productId, e.target.value);
                           }}
                           onBlur={(e) => {
-                            // Ensure minimum value on blur
-                            const value = e.target.value;
-                            if (value === '' || parseInt(value) < 1) {
-                              handleQuantityChange(product.productId, 1);
-                            }
+                            handleQuantityInputBlur(product.productId, e.target.value);
                           }}
                         />
                         <Button
