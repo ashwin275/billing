@@ -574,7 +574,7 @@ export default function InvoiceManagementClean() {
           <p className="text-muted-foreground">Manage and track all your invoices</p>
         </div>
         <Link href="/invoices/create">
-          <Button>
+          <Button className="bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white border-0">
             <Plus className="h-4 w-4 mr-2" />
             Create Invoice
           </Button>
