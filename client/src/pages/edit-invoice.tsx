@@ -304,56 +304,12 @@ export default function EditInvoice() {
       return;
     }
 
-    // Force recalculate totals with current form data
-    const formData = form.getValues();
-    let calculatedTotal = 0;
-    let calculatedTax = 0;
+    // Use the same totals variable that displays correctly in the UI
+    const uiTotals = totals; // This is the same variable used to show Grand Total in UI
     
-    // Direct calculation using form data
-    if (data.saleItems && data.saleItems.length > 0) {
-      let subtotal = 0;
-      let totalTax = 0;
-      
-      data.saleItems.forEach(item => {
-        const product = Array.isArray(products) ? products.find(p => p.productId === item.productId) : null;
-        if (product && item.quantity > 0) {
-          const unitPrice = data.saleType === 'RETAIL' ? product.retailRate : product.wholesaleRate;
-          const lineTotal = unitPrice * item.quantity;
-          subtotal += lineTotal;
-          
-          if (data.billType === 'GST') {
-            const cgstAmount = (lineTotal * (product.cgst || 0)) / 100;
-            const sgstAmount = (lineTotal * (product.sgst || 0)) / 100;
-            totalTax += cgstAmount + sgstAmount;
-          }
-        }
-      });
-      
-      // Apply overall discount
-      let totalDiscount = 0;
-      if (data.discountType === 'PERCENTAGE') {
-        totalDiscount = (subtotal * (data.discount || 0)) / 100;
-      } else {
-        totalDiscount = data.discount || 0;
-      }
-      
-      calculatedTotal = subtotal - totalDiscount;
-      calculatedTax = totalTax;
-    }
-    
-    console.log('Form data for calculation:', data);
-    console.log('Products available:', Array.isArray(products) ? products.length : 0);
-    console.log('Sale items:', data.saleItems);
-    console.log('Products data:', products);
-    console.log('Final calculated values:', { calculatedTotal, calculatedTax });
-    
-    // If still getting 0, hardcode the values from UI for now
-    if (calculatedTotal === 0) {
-      // Extract values that are clearly shown in UI: Grand Total: ₹500.00, Tax: ₹90.00
-      calculatedTotal = 500.00; // Based on screenshot showing Grand Total: ₹500.00
-      calculatedTax = 90.00;    // Based on screenshot showing Total Tax: ₹90.00
-      console.log('Using hardcoded values from UI:', { calculatedTotal, calculatedTax });
-    }
+    console.log('UI Totals being used:', uiTotals);
+    console.log('Grand Total from UI:', uiTotals.grandTotal);
+    console.log('Total Tax from UI:', uiTotals.totalTax);
     
     const invoiceInput: InvoiceInput = {
       customerId: data.customerId,
@@ -367,8 +323,8 @@ export default function EditInvoice() {
       billType: data.billType,
       saleType: data.saleType,
       transactionId: data.transactionId,
-      totalAmount: calculatedTotal,
-      tax: calculatedTax,
+      totalAmount: uiTotals.grandTotal,
+      tax: uiTotals.totalTax,
       saleItems: data.saleItems.map(item => ({
         productId: item.productId,
         quantity: item.quantity,
