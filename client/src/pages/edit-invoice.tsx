@@ -330,6 +330,7 @@ export default function EditInvoice() {
                 total: parseFloat(itemTotal.toString())
               };
               
+              console.log('Sale item update payload:', saleItemUpdate);
               await saleItemsApi.updateSaleItem(existingItem.saleItemId, saleItemUpdate);
             }
           }
@@ -351,6 +352,7 @@ export default function EditInvoice() {
         remark: data.remark || "",
       };
 
+      console.log('Invoice update payload:', invoiceUpdate);
       await invoicesApi.updateInvoice(invoiceId, invoiceUpdate);
       
       toast({

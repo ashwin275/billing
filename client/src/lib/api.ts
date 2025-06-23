@@ -325,6 +325,7 @@ export const invoicesApi = {
       remark: invoiceData.remark,
     };
     
+    console.log('API updatePayload being sent:', updatePayload);
     return apiRequest(`/invoice/update/${invoiceId}`, {
       method: 'POST',
       body: JSON.stringify(updatePayload),
