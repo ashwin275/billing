@@ -148,27 +148,8 @@ export default function EditInvoice() {
     },
   });
 
-  // Update invoice mutation
-  const updateInvoiceMutation = useMutation({
-    mutationFn: async (invoiceData: InvoiceInput) => {
-      await invoicesApi.updateInvoice(invoiceId!, invoiceData);
-    },
-    onSuccess: () => {
-      toast({
-        title: "Invoice updated successfully",
-        description: "The invoice has been updated and saved.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/invoices/all"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/invoices", invoiceId] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Failed to update invoice",
-        description: error?.detail || error?.message || "An error occurred while updating the invoice.",
-        variant: "destructive",
-      });
-    },
-  });
+  // State to track if update is in progress
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Add customer mutation
   const addCustomerMutation = useMutation({
@@ -298,6 +279,7 @@ export default function EditInvoice() {
     }
 
     const totals = calculateTotals();
+    setIsUpdating(true);
     
     try {
       // First, update sale items if they exist
@@ -396,6 +378,8 @@ export default function EditInvoice() {
         description: "Failed to update invoice. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -1432,7 +1416,7 @@ export default function EditInvoice() {
             </Button>
             <Button 
               onClick={() => form.handleSubmit(onSubmit)()}
-              disabled={updateInvoiceMutation.isPending || !form.formState.isDirty}
+              disabled={isUpdating || !form.formState.isDirty}
             >
               <Save className="h-4 w-4 mr-2" />
               {updateInvoiceMutation.isPending ? "Updating..." : "Update Invoice"}
@@ -2121,8 +2105,8 @@ export default function EditInvoice() {
                   />
 
                   {/* Submit Button */}
-                  <Button type="submit" className="w-full" disabled={updateInvoiceMutation.isPending}>
-                    {updateInvoiceMutation.isPending ? "Updating..." : "Update Invoice"}
+                  <Button type="submit" className="w-full" disabled={isUpdating}>
+                    {isUpdating ? "Updating..." : "Update Invoice"}
                   </Button>
                 </div>
               </CardContent>
