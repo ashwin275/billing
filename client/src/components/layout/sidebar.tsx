@@ -122,6 +122,11 @@ export default function Sidebar({ activeSection, onSectionChange, isMobileOpen, 
       label: "Staff",
       icon: UserPlus,
       category: "Management"
+    }, {
+      id: "shops",
+      label: "Shops",
+      icon: Store,
+      category: "Management"
     }] : []),
     {
       id: "report",
@@ -146,12 +151,12 @@ export default function Sidebar({ activeSection, onSectionChange, isMobileOpen, 
       badge: activeUsersCount > 0 ? activeUsersCount : undefined,
       category: "Admin"
     },
-    {
+    ...(isOwner() ? [] : [{
       id: "shops",
       label: "Shops",
       icon: Store,
       category: "Admin"
-    }
+    }])
   ];
 
   // Group navigation items by category including admin items if user is admin
