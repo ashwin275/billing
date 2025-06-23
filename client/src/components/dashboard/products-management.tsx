@@ -300,13 +300,23 @@ export default function ProductsManagement() {
     }
     
     const productUpdate = {
-      ...productToEdit,
-      ...data,
-      productNumber: productToEdit.productNumber, // Keep existing product number
-      purchasePrice: data.ourPrice, // Map ourPrice to purchasePrice for API
+      productId: productToEdit.productId,
+      productNumber: productToEdit.productNumber,
       hsn: typeof data.hsn === 'string' ? parseInt(data.hsn) : data.hsn,
-      taxRate: data.cgst + data.sgst, // Calculate tax rate from CGST + SGST
-      shopId: shopId, // Use shopId from token
+      name: data.name,
+      description: data.description,
+      quantity: data.quantity,
+      purchasePrice: data.ourPrice,
+      wholesaleRate: data.wholesaleRate,
+      retailRate: data.retailRate,
+      taxRate: data.cgst + data.sgst,
+      category: data.category,
+      imageUrl: data.imageUrl,
+      expiry: data.expiry,
+      barcode: data.barcode,
+      shopId: shopId,
+      CGST: data.cgst,
+      SGST: data.sgst
     };
     
     updateProductMutation.mutate({
