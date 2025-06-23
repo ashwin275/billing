@@ -19,8 +19,24 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
     }, 0) || 0;
   };
 
+  const calculateTotalCGST = () => {
+    return invoice.saleItems?.reduce((sum, item) => {
+      const cgstAmount = (item.price * item.quantity * (item.product?.cgst || 0)) / 100;
+      return sum + cgstAmount;
+    }, 0) || 0;
+  };
+
+  const calculateTotalSGST = () => {
+    return invoice.saleItems?.reduce((sum, item) => {
+      const sgstAmount = (item.price * item.quantity * (item.product?.sgst || 0)) / 100;
+      return sum + sgstAmount;
+    }, 0) || 0;
+  };
+
   const subtotal = calculateSubtotal();
   const totalTax = calculateTotalTax();
+  const totalCGST = calculateTotalCGST();
+  const totalSGST = calculateTotalSGST();
   const grandTotal = invoice.totalAmount || 0;
   const balance = grandTotal - (invoice.amountPaid || 0);
 
@@ -406,16 +422,20 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
         <div className="totals-section">
           <div className="totals-table">
             <div className="total-row">
-              <span>Subtotal:</span>
+              <span>Sub Total:</span>
               <span>₹{subtotal.toFixed(2)}</span>
             </div>
             <div className="total-row">
-              <span>Tax:</span>
-              <span>₹{(invoice.tax || totalTax).toFixed(2)}</span>
+              <span>Discount:</span>
+              <span>- ₹{(invoice.discount || 0).toFixed(2)}</span>
             </div>
             <div className="total-row">
-              <span>Discount:</span>
-              <span>₹{(invoice.discount || 0).toFixed(2)}</span>
+              <span>CGST:</span>
+              <span>₹{totalCGST.toFixed(2)}</span>
+            </div>
+            <div className="total-row">
+              <span>SGST:</span>
+              <span>₹{totalSGST.toFixed(2)}</span>
             </div>
             <div className="total-row grand-total">
               <span>Total Amount:</span>
