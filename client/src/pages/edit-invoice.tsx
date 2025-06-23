@@ -317,7 +317,7 @@ export default function EditInvoice() {
               // Use exact payload format as specified
               const saleItemUpdate = {
                 saleItemId: existingItem.saleItemId,
-                saleId: invoice.salesId || invoice.sales?.saleId, // From the provided data structure
+                saleId: invoice.salesId || invoice.sales?.saleId,
                 productId: formItem.productId,
                 quantity: parseFloat((formItem.quantity || 1).toString()),
                 price: parseFloat(unitPrice.toString()),
@@ -325,7 +325,9 @@ export default function EditInvoice() {
                 total: parseFloat(itemTotal.toString())
               };
               
-              console.log(`Sale item ${i + 1} update payload:`, saleItemUpdate);
+              console.log(`=== CALLING SALE ITEM UPDATE API ${i + 1} ===`);
+              console.log(`URL: https://billing-backend.serins.in/api/sales-items/update/${existingItem.saleItemId}`);
+              console.log('Payload:', JSON.stringify(saleItemUpdate, null, 2));
               
               // Call sales-items/update/{id} API
               const saleItemResponse = await fetch(`https://billing-backend.serins.in/api/sales-items/update/${existingItem.saleItemId}`, {
@@ -337,17 +339,23 @@ export default function EditInvoice() {
                 body: JSON.stringify(saleItemUpdate),
               });
               
-              console.log(`Sale item ${i + 1} response status:`, saleItemResponse.status);
+              console.log(`=== SALE ITEM ${i + 1} RESPONSE ===`);
+              console.log('Status:', saleItemResponse.status);
+              console.log('StatusText:', saleItemResponse.statusText);
               
               if (!saleItemResponse.ok) {
                 const errorText = await saleItemResponse.text();
                 console.error(`Sale item update error:`, errorText);
                 throw new Error(`Sale item update failed: ${saleItemResponse.statusText}`);
+              } else {
+                console.log(`✅ Sale item ${i + 1} updated successfully`);
               }
             }
           }
         }
       }
+      
+      console.log('=== ALL SALE ITEMS UPDATED, NOW UPDATING INVOICE ===');
       
       // Then update the invoice with all mandatory fields
       const invoiceUpdate = {
@@ -365,7 +373,9 @@ export default function EditInvoice() {
         remark: data.remark || invoice.remark || "",
       };
 
-      console.log('Invoice update payload:', invoiceUpdate);
+      console.log('=== CALLING INVOICE UPDATE API ===');
+      console.log(`URL: https://billing-backend.serins.in/api/invoice/update/${invoiceId}`);
+      console.log('Payload:', JSON.stringify(invoiceUpdate, null, 2));
       
       // Call invoice/update/{id} API
       const invoiceResponse = await fetch(`https://billing-backend.serins.in/api/invoice/update/${invoiceId}`, {
@@ -377,12 +387,16 @@ export default function EditInvoice() {
         body: JSON.stringify(invoiceUpdate),
       });
       
-      console.log('Invoice response status:', invoiceResponse.status);
+      console.log('=== INVOICE UPDATE RESPONSE ===');
+      console.log('Status:', invoiceResponse.status);
+      console.log('StatusText:', invoiceResponse.statusText);
       
       if (!invoiceResponse.ok) {
         const errorText = await invoiceResponse.text();
         console.error('Invoice update error:', errorText);
         throw new Error(`Invoice update failed: ${invoiceResponse.statusText}`);
+      } else {
+        console.log('✅ Invoice updated successfully');
       }
       
       toast({
