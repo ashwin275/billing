@@ -824,8 +824,12 @@ export default function CreateInvoice() {
                                 <span>- ₹${previewData.totals.totalDiscount.toFixed(2)}</span>
                               </div>
                               <div class="total-line">
-                                <span>Tax - GST:</span>
-                                <span>₹${previewData.totals.totalTax.toFixed(2)}</span>
+                                <span>CGST:</span>
+                                <span>₹${(previewData.totals.totalTax / 2).toFixed(2)}</span>
+                              </div>
+                              <div class="total-line">
+                                <span>SGST:</span>
+                                <span>₹${(previewData.totals.totalTax / 2).toFixed(2)}</span>
                               </div>
                               <div class="total-line grand-total">
                                 <span>Total:</span>
@@ -1273,8 +1277,12 @@ export default function CreateInvoice() {
                                 <span>- ₹${invoiceData.totals.totalDiscount.toFixed(2)}</span>
                               </div>
                               <div class="total-line">
-                                <span>Tax - GST:</span>
-                                <span>₹${invoiceData.totals.totalTax.toFixed(2)}</span>
+                                <span>CGST:</span>
+                                <span>₹${(invoiceData.totals.totalTax / 2).toFixed(2)}</span>
+                              </div>
+                              <div class="total-line">
+                                <span>SGST:</span>
+                                <span>₹${(invoiceData.totals.totalTax / 2).toFixed(2)}</span>
                               </div>
                               <div class="total-line grand-total">
                                 <span>Total:</span>
@@ -2157,16 +2165,20 @@ export default function CreateInvoice() {
                 <div className="flex justify-end">
                   <div className="w-64 space-y-2">
                     <div className="flex justify-between text-black">
-                      <span>Subtotal:</span>
+                      <span>Sub Total:</span>
                       <span>₹{totals.subtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-gray-600">
-                      <span>Tax (Not included):</span>
-                      <span>₹{totals.totalTax.toFixed(2)}</span>
+                      <span>Discount:</span>
+                      <span>- ₹{totals.totalDiscount.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-gray-600">
-                      <span>Discount:</span>
-                      <span>-₹{totals.totalDiscount.toFixed(2)}</span>
+                      <span>CGST:</span>
+                      <span>₹{(totals.totalTax / 2).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-gray-600">
+                      <span>SGST:</span>
+                      <span>₹{(totals.totalTax / 2).toFixed(2)}</span>
                     </div>
                     <Separator className="border-black" />
                     <div className="flex justify-between font-bold text-lg text-black">

@@ -839,8 +839,12 @@ export default function EditInvoice() {
                                 <span>- ₹${previewData.totals.totalDiscount.toFixed(2)}</span>
                               </div>
                               <div class="total-line">
-                                <span>Tax - GST:</span>
-                                <span>₹${previewData.totals.totalTax.toFixed(2)}</span>
+                                <span>CGST:</span>
+                                <span>₹${(previewData.totals.totalTax / 2).toFixed(2)}</span>
+                              </div>
+                              <div class="total-line">
+                                <span>SGST:</span>
+                                <span>₹${(previewData.totals.totalTax / 2).toFixed(2)}</span>
                               </div>
                               <div class="total-line grand-total">
                                 <span>Total:</span>
@@ -1287,8 +1291,12 @@ export default function EditInvoice() {
                                 <span>- ₹${invoiceData.totals.totalDiscount.toFixed(2)}</span>
                               </div>
                               <div class="total-line">
-                                <span>Tax - GST:</span>
-                                <span>₹${invoiceData.totals.totalTax.toFixed(2)}</span>
+                                <span>CGST:</span>
+                                <span>₹${(invoiceData.totals.totalTax / 2).toFixed(2)}</span>
+                              </div>
+                              <div class="total-line">
+                                <span>SGST:</span>
+                                <span>₹${(invoiceData.totals.totalTax / 2).toFixed(2)}</span>
                               </div>
                               <div class="total-line grand-total">
                                 <span>Total:</span>
