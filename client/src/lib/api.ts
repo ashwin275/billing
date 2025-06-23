@@ -325,7 +325,8 @@ export const invoicesApi = {
       remark: invoiceData.remark,
     };
     
-    console.log('API updatePayload being sent:', updatePayload);
+    console.log('OLD API updatePayload being sent (THIS SHOULD NOT BE CALLED):', updatePayload);
+    throw new Error('OLD updateInvoice API called - should use direct fetch instead');
     return apiRequest(`/invoice/update/${invoiceId}`, {
       method: 'POST',
       body: JSON.stringify(updatePayload),
