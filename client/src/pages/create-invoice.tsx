@@ -186,18 +186,21 @@ export default function CreateInvoice() {
     },
   });
 
-  // Update invoice mutation
+  // Update invoice - redirect to edit page instead
   const updateInvoiceMutation = useMutation({
     mutationFn: async (invoiceData: InvoiceInput) => {
-      await invoicesApi.updateInvoice(parseInt(editInvoiceId!), invoiceData);
+      // Redirect to proper edit page instead of using old API
+      console.log('Redirecting to edit invoice page for ID:', editInvoiceId);
+      setLocation(`/dashboard/edit-invoice/${editInvoiceId}`);
+      return Promise.resolve();
     },
     onSuccess: () => {
       toast({
-        title: "Invoice updated successfully",
-        description: "The invoice has been updated.",
+        title: "Redirecting to edit page",
+        description: "Use the edit invoice page for updates.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/invoices/all"] });
-      setLocation("/dashboard?tab=invoices");
+      setLocation(`/dashboard/edit-invoice/${editInvoiceId}`);
     },
     onError: (error: any) => {
       toast({
@@ -324,7 +327,10 @@ export default function CreateInvoice() {
     };
 
     if (isEditMode) {
-      updateInvoiceMutation.mutate(invoiceInput);
+      // Redirect to proper edit page instead of using broken old API
+      console.log('Edit mode detected, redirecting to edit page');
+      setLocation(`/dashboard/edit-invoice/${editInvoiceId}`);
+      return;
     } else {
       createInvoiceMutation.mutate(invoiceInput);
     }
@@ -404,7 +410,9 @@ export default function CreateInvoice() {
   const handleFormSubmit = (data: InvoiceFormData) => {
     setHasUnsavedChanges(false);
     if (isEditMode) {
-      updateInvoiceMutation.mutate(data);
+      // Redirect to edit page instead of using old API
+      console.log('Edit mode in customer form, redirecting to edit page');
+      setLocation(`/dashboard/edit-invoice/${editInvoiceId}`);
     } else {
       createInvoiceMutation.mutate(data);
     }
