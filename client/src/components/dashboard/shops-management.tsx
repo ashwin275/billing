@@ -51,6 +51,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 
 import { shopsApi, handleApiError } from "@/lib/api";
+import { getAuthToken, decodeToken } from "@/lib/auth";
 
 // Form validation schema for shops
 const shopSchema = z.object({
@@ -107,6 +108,24 @@ export default function ShopsManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState<keyof Shop>("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
+  // Get user role for access control
+  const getUserRole = () => {
+    const token = getAuthToken();
+    if (token) {
+      try {
+        const decoded = decodeToken(token);
+        return decoded.role;
+      } catch (error) {
+        console.warn('Failed to decode token:', error);
+      }
+    }
+    return null;
+  };
+
+  const userRole = getUserRole();
+  const isAdmin = userRole === 'ROLE_ADMIN';
+  const canEditDelete = isAdmin; // Only admins can edit/delete
 
   // Fetch all shops
   const {
@@ -414,13 +433,14 @@ export default function ShopsManagement() {
             <h1 className="text-xl sm:text-2xl font-bold text-slate-900 truncate">Shops Management</h1>
             <p className="text-sm sm:text-base text-slate-600 mt-1">Manage shops and their information</p>
           </div>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="w-full sm:w-auto">
-                <Plus className="h-4 w-4 mr-2 flex-shrink-0" />
-                <span>Add Shop</span>
-              </Button>
-            </DialogTrigger>
+          {canEditDelete && (
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="w-full sm:w-auto">
+                  <Plus className="h-4 w-4 mr-2 flex-shrink-0" />
+                  <span>Add Shop</span>
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-md">
               <DialogHeader>
                 <DialogTitle className="flex items-center space-x-2">
@@ -536,6 +556,7 @@ export default function ShopsManagement() {
               </form>
             </DialogContent>
           </Dialog>
+          )}
         </div>
       </div>
 
@@ -598,7 +619,7 @@ export default function ShopsManagement() {
                   </TableHead>
                   <TableHead className="hidden lg:table-cell">Owner</TableHead>
                   <TableHead className="hidden xl:table-cell">Subscription</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  {canEditDelete && <TableHead className="text-right">Actions</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -656,41 +677,45 @@ export default function ShopsManagement() {
                       )}
                     </TableCell>
 
-                    {/* Actions */}
-                    <TableCell className="text-right">
-                      <div className="flex justify-end space-x-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditShop(shop)}
-                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setShopToDelete(shop)}
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+                    {/* Actions - Only for Admin */}
+                    {canEditDelete && (
+                      <TableCell className="text-right">
+                        <div className="flex justify-end space-x-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditShop(shop)}
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setShopToDelete(shop)}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    )}
                   </TableRow>
                 )) : (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-12">
+                    <TableCell colSpan={canEditDelete ? 5 : 4} className="text-center py-12">
                       <div className="flex flex-col items-center space-y-3 text-slate-500">
                         <Store className="h-12 w-12" />
                         <div className="space-y-1">
                           <h3 className="font-medium">No shops found</h3>
                           <p className="text-sm">Add your first shop to get started</p>
                         </div>
-                        <Button onClick={() => setIsAddDialogOpen(true)} size="sm">
-                          <Plus className="h-4 w-4 mr-2" />
-                          Add Shop
-                        </Button>
+                        {canEditDelete && (
+                          <Button onClick={() => setIsAddDialogOpen(true)} size="sm">
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Shop
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
