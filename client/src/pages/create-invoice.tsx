@@ -2254,6 +2254,26 @@ export default function CreateInvoice() {
             )}
           </DialogContent>
         </Dialog>
+
+        {/* Back Warning Dialog */}
+        <AlertDialog open={showBackWarning} onOpenChange={setShowBackWarning}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+              <AlertDialogDescription>
+                You have unsaved changes that will be lost if you leave this page. Are you sure you want to continue?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setShowBackWarning(false)}>
+                Stay on Page
+              </AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirmNavigation} className="bg-red-600 hover:bg-red-700">
+                Leave Page
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
