@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { ProductSearchDialog } from "@/components/ui/product-search-dialog";
+import { CustomerSearchDialog } from "@/components/ui/customer-search-dialog";
 
 import { useToast } from "@/hooks/use-toast";
 
@@ -76,6 +77,7 @@ export default function CreateInvoice() {
   const isEditMode = !!editInvoiceId;
   
   const [isAddCustomerDialogOpen, setIsAddCustomerDialogOpen] = useState(false);
+  const [isCustomerSearchDialogOpen, setIsCustomerSearchDialogOpen] = useState(false);
   const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
   const [showBackWarning, setShowBackWarning] = useState(false);
@@ -422,6 +424,12 @@ export default function CreateInvoice() {
     setShowBackWarning(false);
     setHasUnsavedChanges(false);
     setLocation("/dashboard");
+  };
+
+  // Handle customer selection
+  const handleSelectCustomer = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    form.setValue('customerId', customer.customerId);
   };
 
   return (
@@ -2274,6 +2282,15 @@ export default function CreateInvoice() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Customer Search Dialog */}
+        <CustomerSearchDialog
+          open={isCustomerSearchDialogOpen}
+          onOpenChange={setIsCustomerSearchDialogOpen}
+          customers={Array.isArray(customers) ? customers : []}
+          selectedCustomer={selectedCustomer}
+          onSelectCustomer={handleSelectCustomer}
+        />
       </div>
     </div>
   );
