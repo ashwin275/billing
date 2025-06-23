@@ -304,15 +304,46 @@ export default function EditInvoice() {
       return;
     }
 
-    // Use the totals that are displayed in the UI (these are working correctly)
-    const displayedTotals = totals;
+    // Force recalculate totals with current form data
+    const formData = form.getValues();
+    let calculatedTotal = 0;
+    let calculatedTax = 0;
     
-    // Use the displayed values directly since the calculateTotals at submit time might return 0
-    let calculatedTotal = displayedTotals.grandTotal;
-    let calculatedTax = displayedTotals.totalTax;
+    // Direct calculation using form data
+    if (data.saleItems && data.saleItems.length > 0) {
+      let subtotal = 0;
+      let totalTax = 0;
+      
+      data.saleItems.forEach(item => {
+        const product = Array.isArray(products) ? products.find(p => p.productId === item.productId) : null;
+        if (product && item.quantity > 0) {
+          const unitPrice = data.saleType === 'RETAIL' ? product.retailRate : product.wholesaleRate;
+          const lineTotal = unitPrice * item.quantity;
+          subtotal += lineTotal;
+          
+          if (data.billType === 'GST') {
+            const cgstAmount = (lineTotal * (product.cgst || 0)) / 100;
+            const sgstAmount = (lineTotal * (product.sgst || 0)) / 100;
+            totalTax += cgstAmount + sgstAmount;
+          }
+        }
+      });
+      
+      // Apply overall discount
+      let totalDiscount = 0;
+      if (data.discountType === 'PERCENTAGE') {
+        totalDiscount = (subtotal * (data.discount || 0)) / 100;
+      } else {
+        totalDiscount = data.discount || 0;
+      }
+      
+      calculatedTotal = subtotal - totalDiscount;
+      calculatedTax = totalTax;
+    }
     
-    console.log('Displayed totals:', displayedTotals);
-    console.log('Using values:', { calculatedTotal, calculatedTax });
+    console.log('Form data for calculation:', data);
+    console.log('Products available:', Array.isArray(products) ? products.length : 0);
+    console.log('Final calculated values:', { calculatedTotal, calculatedTax });
     
     const invoiceInput: InvoiceInput = {
       customerId: data.customerId,
