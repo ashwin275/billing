@@ -291,7 +291,6 @@ export function ProductSearchDialog({
                 {selectedProducts.map((product) => {
                   const rate = saleType === 'RETAIL' ? product.retailRate : product.wholesaleRate;
                   const subtotal = rate * product.quantity;
-                  const discountedSubtotal = subtotal - (product.discountAmount || 0);
                   
                   return (
                     <div key={product.productId} className="p-3 border rounded-lg space-y-2">
