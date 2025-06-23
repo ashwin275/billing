@@ -225,9 +225,9 @@ export default function CreateInvoice() {
     },
   });
 
-  // Calculate totals
+  // Calculate totals with reactivity
   const calculateTotals = () => {
-    const formData = form.getValues();
+    const formData = form.watch();
     
     if (!selectedCustomer || !selectedShop) return { subtotal: 0, totalTax: 0, totalDiscount: 0, grandTotal: 0, items: [] };
 
@@ -378,7 +378,7 @@ export default function CreateInvoice() {
   // Auto-update amount paid to match grand total for new invoices
   useEffect(() => {
     if (!isEditMode && totals.grandTotal > 0) {
-      const currentAmountPaid = form.getValues('amountPaid');
+      const currentAmountPaid = form.watch('amountPaid');
       // Only update if amount paid is 0 or if it was previously set to the old grand total
       if (currentAmountPaid === 0 || Math.abs(currentAmountPaid - totals.grandTotal) < 0.01) {
         form.setValue('amountPaid', totals.grandTotal);
