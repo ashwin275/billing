@@ -479,11 +479,11 @@ export default function InvoiceManagementClean() {
                         </td>
                         <td>${item.product?.hsn || 'N/A'}</td>
                         <td class="text-right">${item.quantity}</td>
-                        <td class="text-right">₹${item.unitPrice?.toFixed(2) || '0.00'}</td>
+                        <td class="text-right">₹${item.price?.toFixed(2) || '0.00'}</td>
                         <td class="text-right">₹${item.discount?.toFixed(2) || '0.00'}</td>
-                        <td class="text-right">₹${item.cgst?.toFixed(2) || '0.00'}</td>
-                        <td class="text-right">₹${item.sgst?.toFixed(2) || '0.00'}</td>
-                        <td class="text-right">₹${item.totalPrice?.toFixed(2) || '0.00'}</td>
+                        <td class="text-right">₹${((item.price * item.quantity * (item.product?.cgst || 0)) / 100).toFixed(2)}</td>
+                        <td class="text-right">₹${((item.price * item.quantity * (item.product?.sgst || 0)) / 100).toFixed(2)}</td>
+                        <td class="text-right">₹${item.total?.toFixed(2) || '0.00'}</td>
                       </tr>
                     `).join('')
                   ) : '<tr><td colspan="8" style="text-align: center; padding: 20px; color: #9ca3af;">No items found</td></tr>'}

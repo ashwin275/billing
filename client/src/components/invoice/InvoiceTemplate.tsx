@@ -8,11 +8,15 @@ interface InvoiceTemplateProps {
 
 export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPreview = false }) => {
   const calculateSubtotal = () => {
-    return invoice.saleItems?.reduce((sum, item) => sum + (item.totalPrice || 0), 0) || 0;
+    return invoice.saleItems?.reduce((sum, item) => sum + (item.total || 0), 0) || 0;
   };
 
   const calculateTotalTax = () => {
-    return invoice.saleItems?.reduce((sum, item) => sum + (item.taxAmount || 0), 0) || 0;
+    return invoice.saleItems?.reduce((sum, item) => {
+      const cgstAmount = (item.price * item.quantity * (item.product?.cgst || 0)) / 100;
+      const sgstAmount = (item.price * item.quantity * (item.product?.sgst || 0)) / 100;
+      return sum + cgstAmount + sgstAmount;
+    }, 0) || 0;
   };
 
   const subtotal = calculateSubtotal();
@@ -381,11 +385,11 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
                   </td>
                   <td>{item.product?.hsn || 'N/A'}</td>
                   <td className="text-right">{item.quantity}</td>
-                  <td className="text-right">₹{item.unitPrice?.toFixed(2) || '0.00'}</td>
+                  <td className="text-right">₹{item.price?.toFixed(2) || '0.00'}</td>
                   <td className="text-right">₹{item.discount?.toFixed(2) || '0.00'}</td>
-                  <td className="text-right">₹{item.cgst?.toFixed(2) || '0.00'}</td>
-                  <td className="text-right">₹{item.sgst?.toFixed(2) || '0.00'}</td>
-                  <td className="text-right">₹{item.totalPrice?.toFixed(2) || '0.00'}</td>
+                  <td className="text-right">₹{((item.price * item.quantity * (item.product?.cgst || 0)) / 100).toFixed(2)}</td>
+                  <td className="text-right">₹{((item.price * item.quantity * (item.product?.sgst || 0)) / 100).toFixed(2)}</td>
+                  <td className="text-right">₹{item.total?.toFixed(2) || '0.00'}</td>
                 </tr>
               ))
             ) : (
