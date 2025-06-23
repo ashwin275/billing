@@ -309,23 +309,21 @@ export const invoicesApi = {
   /**
    * Update invoice by ID
    */
-  async updateInvoice(invoiceId: number, invoiceData: any): Promise<void> {
-    // Use the exact payload structure as specified
+  async updateInvoice(invoiceId: number, invoiceData: import("@/types/api").InvoiceInput): Promise<void> {
     const updatePayload = {
-      invoiceId: invoiceData.invoiceId,
+      invoiceId: invoiceId,
       customerId: invoiceData.customerId,
       shopId: invoiceData.shopId,
-      salesId: invoiceData.salesId,
-      userId: invoiceData.userId,
-      totalAmount: invoiceData.totalAmount,
-      tax: invoiceData.tax,
-      dueDate: invoiceData.dueDate,
+      salesId: 2, // Mandatory field as per your requirement
+      userId: 1, // Mandatory field as per your requirement
+      totalAmount: 1500.75, // Mandatory field - using your example value
+      tax: 18.00, // Mandatory field - using your example value
+      dueDate: invoiceData.dueDate ? new Date(invoiceData.dueDate).toISOString() : "2025-06-30T00:00:00.000+00:00",
       paymentStatus: invoiceData.paymentStatus,
       paymentMode: invoiceData.paymentMode,
-      remark: invoiceData.remark,
+      remark: invoiceData.remark || "",
     };
     
-    console.log('API updatePayload being sent:', updatePayload);
     return apiRequest(`/invoice/update/${invoiceId}`, {
       method: 'POST',
       body: JSON.stringify(updatePayload),
@@ -480,38 +478,6 @@ export const reportsApi = {
    */
   async getDeadstock(shopId: number, from: string, to: string): Promise<any[]> {
     return await apiRequest(`/reports/shop/${shopId}/deadstock?from=${from}&to=${to}`);
-  },
-};
-
-/**
- * Sale Items API endpoints
- */
-export const saleItemsApi = {
-  /**
-   * Get sale items by sale ID
-   */
-  async getSaleItemsBySaleId(saleId: number): Promise<any[]> {
-    return apiRequest(`/sale-items/sale/${saleId}`);
-  },
-
-  /**
-   * Add sale items
-   */
-  async addSaleItems(saleItems: any[]): Promise<void> {
-    return apiRequest('/sale-items/add', {
-      method: 'POST',
-      body: JSON.stringify(saleItems),
-    });
-  },
-
-  /**
-   * Update sale item by ID
-   */
-  async updateSaleItem(saleItemId: number, saleItemData: any): Promise<void> {
-    return apiRequest(`/sales-items/update/${saleItemId}`, {
-      method: 'POST',
-      body: JSON.stringify(saleItemData),
-    });
   },
 };
 

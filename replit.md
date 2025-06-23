@@ -98,7 +98,6 @@ This is a React-based billing dashboard application built for managing invoices,
 ## Changelog
 
 - June 23, 2025. Initial setup
-- June 24, 2025. Removed invoice update functionality from edit page per user request
 
 ## User Preferences
 

@@ -62,19 +62,16 @@ type CustomerFormData = z.infer<typeof customerSchema>;
 
 export default function EditInvoice() {
   const [match, params] = useRoute("/invoices/edit/:id");
-  const [match2, params2] = useRoute("/dashboard/edit-invoice/:invoiceId");
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
-  // Get invoice ID from either route pattern and convert to number
-  const invoiceIdParam = params?.id || params2?.invoiceId;
-  const invoiceId = invoiceIdParam ? parseInt(invoiceIdParam) : null;
   
   const [isAddCustomerDialogOpen, setIsAddCustomerDialogOpen] = useState(false);
   const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [selectedShop, setSelectedShop] = useState<Shop | null>(null);
+
+  const invoiceId = params?.id ? parseInt(params.id) : null;
 
   // Fetch invoice data
   const { data: invoice, isLoading: isLoadingInvoice } = useQuery({
@@ -151,7 +148,27 @@ export default function EditInvoice() {
     },
   });
 
-  // Update functionality removed as requested
+  // Update invoice mutation
+  const updateInvoiceMutation = useMutation({
+    mutationFn: async (invoiceData: InvoiceInput) => {
+      await invoicesApi.updateInvoice(invoiceId!, invoiceData);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Invoice updated successfully",
+        description: "The invoice has been updated and saved.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices/all"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices", invoiceId] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to update invoice",
+        description: error?.detail || error?.message || "An error occurred while updating the invoice.",
+        variant: "destructive",
+      });
+    },
+  });
 
   // Add customer mutation
   const addCustomerMutation = useMutation({
@@ -269,172 +286,39 @@ export default function EditInvoice() {
 
   const totals = calculateTotals();
 
-  // Handle form submission - THIS IS THE MAIN UPDATE FUNCTION
-  const onSubmit = async (data: InvoiceFormData) => {
-    console.log('🔥 UPDATE BUTTON CLICKED - STARTING FORM SUBMISSION');
-    console.log('Invoice ID:', invoiceId);
-    console.log('Invoice data:', invoice);
-    console.log('Form data:', data);
-    
-    if (!invoiceId || !invoice) {
-      console.error('❌ Missing required data');
+  // Handle form submission
+  const onSubmit = (data: InvoiceFormData) => {
+    if (!invoiceId) {
       toast({
         title: "Error",
-        description: "Invalid invoice ID or missing invoice data",
+        description: "Invalid invoice ID",
         variant: "destructive",
       });
       return;
     }
 
     const totals = calculateTotals();
-    console.log('📊 Calculated totals:', totals);
-    setIsUpdating(true);
     
-    try {
-      console.log('🚀 STARTING DUAL API UPDATE PROCESS');
-      console.log('📋 Invoice ID:', invoiceId);
-      console.log('📋 Sales ID:', invoice.salesId);
-      console.log('📋 Staff ID:', invoice.staffId);
+    const invoiceInput: InvoiceInput = {
+      customerId: data.customerId,
+      shopId: data.shopId,
+      discount: data.discount,
+      amountPaid: data.amountPaid,
+      paymentMode: data.paymentMode,
+      paymentStatus: data.paymentStatus,
+      remark: data.remark,
+      dueDate: data.dueDate,
+      billType: data.billType,
+      saleType: data.saleType,
+      transactionId: data.transactionId,
+      saleItems: data.saleItems.map(item => ({
+        productId: item.productId,
+        quantity: item.quantity,
+        discount: item.discount,
+      })),
+    };
 
-      // First, update each sale item with correct mandatory fields
-      if (invoice.saleItems && invoice.saleItems.length > 0) {
-        console.log('Updating sale items...');
-        
-        for (let i = 0; i < invoice.saleItems.length; i++) {
-          const existingItem = invoice.saleItems[i];
-          const formItem = data.saleItems[i];
-          
-          if (existingItem.saleItemId && formItem) {
-            const product = Array.isArray(products) ? 
-              products.find(p => p.productId === formItem.productId) : null;
-            
-            if (product) {
-              const unitPrice = data.saleType === 'RETAIL' ? 
-                (product.retailRate || 0) : (product.wholesaleRate || 0);
-              
-              let discountAmount = 0;
-              if (formItem.discountType === 'PERCENTAGE') {
-                discountAmount = (unitPrice * (formItem.discount || 0)) / 100;
-              } else {
-                discountAmount = formItem.discount || 0;
-              }
-              
-              const finalPrice = unitPrice - discountAmount;
-              const itemTotal = finalPrice * (formItem.quantity || 1);
-              const itemTax = (product.cgst || 0) + (product.sgst || 0);
-              
-              // Use exact payload format as specified
-              const saleItemUpdate = {
-                saleItemId: existingItem.saleItemId,
-                saleId: invoice.salesId || 23, // From provided data: "salesId": 23
-                productId: formItem.productId,
-                quantity: parseFloat((formItem.quantity || 1).toString()),
-                price: parseFloat(unitPrice.toString()),
-                tax: parseFloat(itemTax.toString()),
-                total: parseFloat(itemTotal.toString())
-              };
-              
-              console.log(`=== CALLING SALE ITEM UPDATE API ${i + 1} ===`);
-              console.log(`URL: https://billing-backend.serins.in/api/sales-items/update/${existingItem.saleItemId}`);
-              console.log('Payload:', JSON.stringify(saleItemUpdate, null, 2));
-              
-              // Call sales-items/update/{id} API
-              const saleItemResponse = await fetch(`https://billing-backend.serins.in/api/sales-items/update/${existingItem.saleItemId}`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-                },
-                body: JSON.stringify(saleItemUpdate),
-              });
-              
-              console.log(`=== SALE ITEM ${i + 1} RESPONSE ===`);
-              console.log('Status:', saleItemResponse.status);
-              console.log('StatusText:', saleItemResponse.statusText);
-              
-              if (!saleItemResponse.ok) {
-                const errorText = await saleItemResponse.text();
-                console.error(`Sale item update error:`, errorText);
-                throw new Error(`Sale item update failed: ${saleItemResponse.statusText}`);
-              } else {
-                console.log(`✅ Sale item ${i + 1} updated successfully`);
-              }
-            }
-          }
-        }
-      }
-      
-      console.log('✅ ALL SALE ITEMS UPDATED SUCCESSFULLY');
-      console.log('📞 NOW CALLING INVOICE UPDATE API');
-      
-      // Prepare invoice update with all mandatory fields from provided data structure
-      const invoiceUpdate = {
-        invoiceId: parseInt(invoiceId.toString()),
-        customerId: data.customerId || invoice.customerId || 2,
-        shopId: data.shopId || invoice.shopId || 1,
-        salesId: invoice.salesId || 23, // From provided data structure
-        userId: invoice.staffId || 2, // From provided data structure  
-        totalAmount: parseFloat(totals.grandTotal.toString()),
-        tax: parseFloat(totals.totalTax.toString()),
-        dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : 
-                 (invoice.dueDate || "2025-06-30T00:00:00.000+00:00"),
-        paymentStatus: data.paymentStatus || invoice.paymentStatus || "PENDING",
-        paymentMode: data.paymentMode || invoice.paymentMode || "CASH",
-        remark: data.remark || invoice.remark || "",
-      };
-
-      console.log('🔥 CALLING INVOICE UPDATE API NOW');
-      console.log('🌐 URL:', `https://billing-backend.serins.in/api/invoice/update/${invoiceId}`);
-      console.log('📦 PAYLOAD:', JSON.stringify(invoiceUpdate, null, 2));
-      
-      // Call invoice/update/{id} API
-      const invoiceResponse = await fetch(`https://billing-backend.serins.in/api/invoice/update/${invoiceId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-        },
-        body: JSON.stringify(invoiceUpdate),
-      });
-      
-      console.log('=== INVOICE UPDATE RESPONSE ===');
-      console.log('Status:', invoiceResponse.status);
-      console.log('StatusText:', invoiceResponse.statusText);
-      
-      if (!invoiceResponse.ok) {
-        const errorText = await invoiceResponse.text();
-        console.error('Invoice update error:', errorText);
-        throw new Error(`Invoice update failed: ${invoiceResponse.statusText}`);
-      } else {
-        console.log('✅ Invoice updated successfully');
-      }
-      
-      toast({
-        title: "Invoice updated",
-        description: "Invoice has been successfully updated.",
-      });
-      
-      console.log('🎉 INVOICE UPDATE COMPLETED SUCCESSFULLY');
-      
-      toast({
-        title: "Invoice updated",
-        description: "Invoice has been successfully updated.",
-      });
-      
-      // Redirect to invoice management
-      window.location.href = "/dashboard/invoice";
-      
-    } catch (error) {
-      console.error('❌ ERROR DURING UPDATE:', error);
-      toast({
-        title: "Update failed",
-        description: "Failed to update invoice. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsUpdating(false);
-      console.log('🏁 UPDATE PROCESS FINISHED');
-    }
+    updateInvoiceMutation.mutate(invoiceInput);
   };
 
   // Handle add customer
@@ -1468,12 +1352,18 @@ export default function EditInvoice() {
               <Download className="h-4 w-4 mr-2" />
               Download PDF
             </Button>
-
+            <Button 
+              onClick={() => form.handleSubmit(onSubmit)()}
+              disabled={updateInvoiceMutation.isPending || !form.formState.isDirty}
+            >
+              <Save className="h-4 w-4 mr-2" />
+              {updateInvoiceMutation.isPending ? "Updating..." : "Update Invoice"}
+            </Button>
           </div>
         </div>
 
         <Form {...form}>
-          <div className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Invoice Layout - Same as create page but with pre-filled data */}
             <Card className="bg-white">
               <CardContent className="p-8">
@@ -2153,13 +2043,13 @@ export default function EditInvoice() {
                   />
 
                   {/* Submit Button */}
-                  <div className="text-sm text-gray-500 text-center">
-                    View-only mode - Invoice cannot be edited
-                  </div>
+                  <Button type="submit" className="w-full" disabled={updateInvoiceMutation.isPending}>
+                    {updateInvoiceMutation.isPending ? "Updating..." : "Update Invoice"}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
-          </div>
+          </form>
         </Form>
 
         {/* Preview Dialog */}
