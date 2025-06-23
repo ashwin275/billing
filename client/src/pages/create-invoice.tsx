@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { ProductSearchDialog } from "@/components/ui/product-search-dialog";
 
@@ -76,6 +77,9 @@ export default function CreateInvoice() {
   
   const [isAddCustomerDialogOpen, setIsAddCustomerDialogOpen] = useState(false);
   const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
+  const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
+  const [showBackWarning, setShowBackWarning] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [selectedShop, setSelectedShop] = useState<Shop | null>(null);
 
@@ -386,18 +390,50 @@ export default function CreateInvoice() {
     }
   }, [totals.grandTotal, isEditMode, form]);
 
+  // Track form changes to detect unsaved data
+  useEffect(() => {
+    const subscription = form.watch(() => {
+      setHasUnsavedChanges(true);
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
+
+  // Reset unsaved changes flag when form is submitted
+  const handleFormSubmit = (data: InvoiceFormData) => {
+    setHasUnsavedChanges(false);
+    if (isEditMode) {
+      updateInvoiceMutation.mutate(data);
+    } else {
+      createInvoiceMutation.mutate(data);
+    }
+  };
+
+  // Handle back button with warning
+  const handleBackClick = () => {
+    if (hasUnsavedChanges) {
+      setShowBackWarning(true);
+    } else {
+      setLocation("/dashboard");
+    }
+  };
+
+  // Confirm navigation away
+  const handleConfirmNavigation = () => {
+    setShowBackWarning(false);
+    setHasUnsavedChanges(false);
+    setLocation("/dashboard");
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-4">
-            <Link href="/dashboard">
-              <Button variant="outline" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Dashboard
-              </Button>
-            </Link>
+            <Button variant="outline" size="sm" onClick={handleBackClick}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Dashboard
+            </Button>
             <h1 className="text-2xl font-bold text-gray-900">
               {isEditMode ? "Edit Invoice" : "Create Invoice"}
             </h1>
@@ -1352,7 +1388,7 @@ export default function CreateInvoice() {
         </div>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
             {/* Invoice Layout */}
             <Card className="bg-white">
               <CardContent className="p-8">
