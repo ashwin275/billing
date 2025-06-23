@@ -1601,29 +1601,24 @@ export default function CreateInvoice() {
                       </Dialog>
                     </div>
                     
-                    <FormField
-                      control={form.control}
-                      name="customerId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
-                            <FormControl>
-                              <SelectTrigger className="border-dashed border-2">
-                                <SelectValue placeholder="Select Customer" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {Array.isArray(customers) ? customers.map((customer) => (
-                                <SelectItem key={customer.customerId} value={customer.customerId.toString()}>
-                                  {customer.name} - {customer.place}
-                                </SelectItem>
-                              )) : null}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <div className="space-y-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full justify-start text-left h-12 border-dashed border-2"
+                        onClick={() => setIsCustomerSearchDialogOpen(true)}
+                      >
+                        <User className="h-4 w-4 mr-2" />
+                        {selectedCustomer ? (
+                          <div className="flex flex-col items-start">
+                            <span className="font-medium">{selectedCustomer.name} - {selectedCustomer.place}</span>
+                            <span className="text-xs text-gray-500">{selectedCustomer.phone}</span>
+                          </div>
+                        ) : (
+                          <span className="text-gray-500">Select Customer</span>
+                        )}
+                      </Button>
+                    </div>
                     
                     {selectedCustomer && (
                       <div className="mt-4 p-4 bg-gray-50 rounded border">
