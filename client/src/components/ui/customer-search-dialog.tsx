@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, User, MapPin, Phone, Check } from 'lucide-react';
+import { Search, User, MapPin, Phone, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,8 @@ export const CustomerSearchDialog: React.FC<CustomerSearchDialogProps> = ({
   onSelectCustomer,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   // Filter customers based on search query
   const filteredCustomers = useMemo(() => {
@@ -35,6 +37,18 @@ export const CustomerSearchDialog: React.FC<CustomerSearchDialogProps> = ({
     );
   }, [customers, searchQuery]);
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
+  const paginatedCustomers = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredCustomers.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredCustomers, currentPage, itemsPerPage]);
+
+  // Reset pagination when search changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
   const handleSelectCustomer = (customer: Customer) => {
     onSelectCustomer(customer);
     onOpenChange(false);
@@ -44,11 +58,12 @@ export const CustomerSearchDialog: React.FC<CustomerSearchDialogProps> = ({
   const handleClose = () => {
     onOpenChange(false);
     setSearchQuery('');
+    setCurrentPage(1);
   };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+      <DialogContent className="max-w-2xl h-[70vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
@@ -69,13 +84,13 @@ export const CustomerSearchDialog: React.FC<CustomerSearchDialogProps> = ({
         </div>
 
         {/* Customer List */}
-        <div className="flex-1 overflow-y-auto space-y-2 max-h-96">
-          {filteredCustomers.length === 0 ? (
+        <div className="flex-1 overflow-y-auto space-y-2">
+          {paginatedCustomers.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               {searchQuery ? 'No customers found matching your search.' : 'No customers available.'}
             </div>
           ) : (
-            filteredCustomers.map((customer) => (
+            paginatedCustomers.map((customer) => (
               <div
                 key={customer.customerId}
                 className={`p-4 border rounded-lg cursor-pointer transition-all hover:bg-gray-50 ${
@@ -123,10 +138,40 @@ export const CustomerSearchDialog: React.FC<CustomerSearchDialogProps> = ({
           )}
         </div>
 
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center gap-2 py-4 border-t">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </Button>
+            
+            <span className="text-sm text-gray-600">
+              Page {currentPage} of {totalPages}
+            </span>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+
         {/* Footer */}
         <div className="flex justify-between items-center pt-4 border-t">
           <div className="text-sm text-gray-500">
             {filteredCustomers.length} customer{filteredCustomers.length !== 1 ? 's' : ''} found
+            {totalPages > 1 && ` • Showing ${paginatedCustomers.length} of ${filteredCustomers.length}`}
           </div>
           <Button variant="outline" onClick={handleClose}>
             Cancel
