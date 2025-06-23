@@ -310,23 +310,9 @@ export const invoicesApi = {
    * Update invoice by ID
    */
   async updateInvoice(invoiceId: number, invoiceData: import("@/types/api").InvoiceInput): Promise<void> {
-    const updatePayload = {
-      invoiceId: invoiceId,
-      customerId: invoiceData.customerId,
-      shopId: invoiceData.shopId,
-      salesId: 2, // Mandatory field as per your requirement
-      userId: 1, // Mandatory field as per your requirement
-      totalAmount: 1500.75, // Mandatory field - using your example value
-      tax: 18.00, // Mandatory field - using your example value
-      dueDate: invoiceData.dueDate ? new Date(invoiceData.dueDate).toISOString() : "2025-06-30T00:00:00.000+00:00",
-      paymentStatus: invoiceData.paymentStatus,
-      paymentMode: invoiceData.paymentMode,
-      remark: invoiceData.remark || "",
-    };
-    
     return apiRequest(`/invoice/update/${invoiceId}`, {
       method: 'POST',
-      body: JSON.stringify(updatePayload),
+      body: JSON.stringify(invoiceData),
     });
   },
 
