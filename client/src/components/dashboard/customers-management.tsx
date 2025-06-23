@@ -94,6 +94,7 @@ type CustomerUpdateFormData = z.infer<typeof customerUpdateSchema>;
  */
 export default function CustomersManagement() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [customerTypeFilter, setCustomerTypeFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -329,14 +330,17 @@ export default function CustomersManagement() {
       <ArrowDown className="h-4 w-4" />;
   };
 
-  // Filter customers based on search term
-  const filteredCustomers = Array.isArray(customers) ? customers.filter(customer =>
-    customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.place.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.phone.toString().includes(searchTerm) ||
-    customer.shop?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.shop?.place?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) : [];
+  // Filter customers based on search term and customer type
+  const filteredCustomers = Array.isArray(customers) ? customers.filter(customer => {
+    const matchesSearch = customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customer.place.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customer.phone.toString().includes(searchTerm);
+    
+    const matchesType = customerTypeFilter === "all" || 
+      customer.customerType === customerTypeFilter;
+    
+    return matchesSearch && matchesType;
+  }) : [];
 
   const sortedCustomers = filteredCustomers.sort((a, b) => {
     let aValue = a[sortField];
@@ -553,17 +557,31 @@ export default function CustomersManagement() {
               <Users className="h-4 w-4 sm:h-5 sm:w-5" />
               <span>All Customers</span>
             </CardTitle>
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search customers..."
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setCurrentPage(1); // Reset to first page when searching
-                }}
-                className="pl-10 w-full"
-              />
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name, place, or phone..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="pl-10 w-full"
+                />
+              </div>
+              <Select value={customerTypeFilter} onValueChange={setCustomerTypeFilter}>
+                <SelectTrigger className="w-full sm:w-48">
+                  <SelectValue placeholder="Filter by type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="CUSTOMER">Customer</SelectItem>
+                  <SelectItem value="DEALER">Dealer</SelectItem>
+                  <SelectItem value="CREDIT">Credit</SelectItem>
+                  <SelectItem value="SUBSCRIPTION">Subscription</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardHeader>
@@ -595,11 +613,11 @@ export default function CustomersManagement() {
                   <TableHead>
                     <Button
                       variant="ghost"
-                      onClick={() => handleSort("shop")}
+                      onClick={() => handleSort("phone")}
                       className="h-auto p-0 font-semibold hover:bg-transparent"
                     >
-                      Shop
-                      {getSortIcon("shop")}
+                      Phone Number
+                      {getSortIcon("phone")}
                     </Button>
                   </TableHead>
                   <TableHead className="hidden lg:table-cell">
@@ -653,14 +671,11 @@ export default function CustomersManagement() {
                       </div>
                     </TableCell>
 
-                    {/* Shop */}
+                    {/* Phone Number */}
                     <TableCell>
-                      <div className="space-y-1">
-                        <div className="flex items-center space-x-1">
-                          <Store className="h-3 w-3 text-slate-500" />
-                          <span className="font-medium text-slate-900">{customer.shop?.name || 'N/A'}</span>
-                        </div>
-                        <div className="text-xs text-slate-600">{customer.shop?.place || 'N/A'}</div>
+                      <div className="flex items-center space-x-1">
+                        <Phone className="h-3 w-3 text-slate-500" />
+                        <span className="font-medium text-slate-900">{customer.phone}</span>
                       </div>
                     </TableCell>
 
