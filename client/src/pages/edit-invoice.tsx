@@ -318,15 +318,16 @@ export default function EditInvoice() {
               }
               
               const itemTotal = (unitPrice - discountAmount) * formItem.quantity;
+              const itemTax = (product.cgst || 0) + (product.sgst || 0);
               
               const saleItemUpdate = {
                 saleItemId: existingItem.saleItemId,
                 saleId: invoice.salesId,
                 productId: formItem.productId,
-                quantity: formItem.quantity,
-                price: unitPrice,
-                tax: product.cgst + product.sgst,
-                total: itemTotal
+                quantity: parseFloat(formItem.quantity.toString()),
+                price: parseFloat(unitPrice.toString()),
+                tax: parseFloat(itemTax.toString()),
+                total: parseFloat(itemTotal.toString())
               };
               
               await saleItemsApi.updateSaleItem(existingItem.saleItemId, saleItemUpdate);
@@ -337,14 +338,14 @@ export default function EditInvoice() {
       
       // Then update the invoice with calculated totals
       const invoiceUpdate = {
-        invoiceId: invoiceId,
+        invoiceId: parseInt(invoiceId.toString()),
         customerId: data.customerId,
         shopId: data.shopId,
         salesId: invoice.salesId,
-        userId: invoice.userId,
-        totalAmount: totals.grandTotal,
-        tax: totals.totalTax,
-        dueDate: data.dueDate,
+        userId: invoice.userId || 1, // Default fallback
+        totalAmount: parseFloat(totals.grandTotal.toString()),
+        tax: parseFloat(totals.totalTax.toString()),
+        dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : new Date().toISOString(),
         paymentStatus: data.paymentStatus,
         paymentMode: data.paymentMode,
         remark: data.remark || "",

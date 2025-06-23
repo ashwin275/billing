@@ -310,18 +310,19 @@ export const invoicesApi = {
    * Update invoice by ID
    */
   async updateInvoice(invoiceId: number, invoiceData: any): Promise<void> {
+    // Use the exact payload structure as specified
     const updatePayload = {
-      invoiceId: invoiceId,
+      invoiceId: invoiceData.invoiceId,
       customerId: invoiceData.customerId,
       shopId: invoiceData.shopId,
       salesId: invoiceData.salesId,
       userId: invoiceData.userId,
       totalAmount: invoiceData.totalAmount,
       tax: invoiceData.tax,
-      dueDate: invoiceData.dueDate ? new Date(invoiceData.dueDate).toISOString() : new Date().toISOString(),
+      dueDate: invoiceData.dueDate,
       paymentStatus: invoiceData.paymentStatus,
       paymentMode: invoiceData.paymentMode,
-      remark: invoiceData.remark || "",
+      remark: invoiceData.remark,
     };
     
     return apiRequest(`/invoice/update/${invoiceId}`, {
