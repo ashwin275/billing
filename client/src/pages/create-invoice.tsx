@@ -191,7 +191,7 @@ export default function CreateInvoice() {
     mutationFn: async (invoiceData: InvoiceInput) => {
       // Redirect to proper edit page instead of using old API
       console.log('Redirecting to edit invoice page for ID:', editInvoiceId);
-      setLocation(`/dashboard/edit-invoice/${editInvoiceId}`);
+      setLocation(`/invoices/edit/${editInvoiceId}`);
       return Promise.resolve();
     },
     onSuccess: () => {
@@ -200,7 +200,7 @@ export default function CreateInvoice() {
         description: "Use the edit invoice page for updates.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/invoices/all"] });
-      setLocation(`/dashboard/edit-invoice/${editInvoiceId}`);
+      setLocation(`/invoices/edit/${editInvoiceId}`);
     },
     onError: (error: any) => {
       toast({
