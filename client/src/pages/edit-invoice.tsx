@@ -151,8 +151,7 @@ export default function EditInvoice() {
     },
   });
 
-  // State to track if update is in progress
-  const [isUpdating, setIsUpdating] = useState(false);
+  // Update functionality removed as requested
 
   // Add customer mutation
   const addCustomerMutation = useMutation({
@@ -1469,21 +1468,12 @@ export default function EditInvoice() {
               <Download className="h-4 w-4 mr-2" />
               Download PDF
             </Button>
-            <Button 
-              onClick={() => {
-                console.log('🎯 UPDATE BUTTON CLICKED - TRIGGERING FORM SUBMIT');
-                form.handleSubmit(onSubmit)();
-              }}
-              disabled={isUpdating}
-            >
-              <Save className="h-4 w-4 mr-2" />
-              {isUpdating ? "Updating..." : "Update Invoice"}
-            </Button>
+
           </div>
         </div>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <div className="space-y-6">
             {/* Invoice Layout - Same as create page but with pre-filled data */}
             <Card className="bg-white">
               <CardContent className="p-8">
@@ -2163,13 +2153,13 @@ export default function EditInvoice() {
                   />
 
                   {/* Submit Button */}
-                  <Button type="submit" className="w-full" disabled={isUpdating}>
-                    {isUpdating ? "Updating..." : "Update Invoice"}
-                  </Button>
+                  <div className="text-sm text-gray-500 text-center">
+                    View-only mode - Invoice cannot be edited
+                  </div>
                 </div>
               </CardContent>
             </Card>
-          </form>
+          </div>
         </Form>
 
         {/* Preview Dialog */}
