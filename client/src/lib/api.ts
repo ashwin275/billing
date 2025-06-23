@@ -325,17 +325,9 @@ export const invoicesApi = {
       }
     }
 
-    // Calculate totalAmount from saleItems if provided
+    // Use the calculated totalAmount (Grand Total) from invoice data
     let totalAmount = invoiceData.totalAmount || 0;
     let tax = invoiceData.tax || 0;
-    
-    if (invoiceData.saleItems && invoiceData.saleItems.length > 0) {
-      // This is a simplified calculation - in real scenario you'd need product prices
-      totalAmount = invoiceData.saleItems.reduce((sum, item) => {
-        return sum + (item.quantity * 100); // Placeholder calculation
-      }, 0);
-      tax = totalAmount * 0.18; // 18% tax rate
-    }
 
     const updatePayload = {
       invoiceId: invoiceId,

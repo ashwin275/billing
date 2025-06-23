@@ -311,6 +311,8 @@ export default function EditInvoice() {
       billType: data.billType,
       saleType: data.saleType,
       transactionId: data.transactionId,
+      totalAmount: totals.grandTotal, // Pass calculated grand total
+      tax: totals.totalTax, // Pass calculated total tax
       saleItems: data.saleItems.map(item => ({
         productId: item.productId,
         quantity: item.quantity,
