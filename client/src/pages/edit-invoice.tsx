@@ -1209,6 +1209,8 @@ export default function EditInvoice() {
                               <div class="company-info">
                                 <h1>${invoiceData.shop.name}</h1>
                                 <div class="company-tagline">${invoiceData.shop.tagline}</div>
+                                ${invoiceData.shop.gstNo ? `<div class="company-tagline">GST: ${invoiceData.shop.gstNo}</div>` : ''}
+                                ${invoiceData.shop.phone ? `<div class="company-tagline">Phone: ${invoiceData.shop.phone}</div>` : ''}
                               </div>
                             </div>
                             <div class="invoice-title">
