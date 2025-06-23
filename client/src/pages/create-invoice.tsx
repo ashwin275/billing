@@ -229,7 +229,7 @@ export default function CreateInvoice() {
   const calculateTotals = () => {
     const formData = form.watch();
     
-    if (!selectedCustomer || !selectedShop) return { subtotal: 0, totalTax: 0, totalDiscount: 0, grandTotal: 0, items: [] };
+    if (!selectedCustomer || !selectedShop) return { subtotal: 0, totalTax: 0, totalDiscount: 0, overallDiscountAmount: 0, grandTotal: 0, items: [] };
 
     const items = formData.saleItems.map(item => {
       const product = Array.isArray(products) ? products.find(p => p.productId === item.productId) : null;
@@ -276,17 +276,20 @@ export default function CreateInvoice() {
     const subtotal = items.reduce((sum, item) => sum + (item?.lineTotal || 0), 0);
     const totalTax = items.reduce((sum, item) => sum + (item?.taxAmount || 0), 0);
     
+    // Ensure discount values are numbers
+    const discountValue = Number(formData.discount) || 0;
     let totalDiscount = 0;
     let overallDiscountAmount = 0;
+    
     if (formData.discountType === 'PERCENTAGE') {
-      totalDiscount = (subtotal * formData.discount) / 100;
+      totalDiscount = (subtotal * discountValue) / 100;
       overallDiscountAmount = totalDiscount;
     } else {
-      totalDiscount = formData.discount;
+      totalDiscount = discountValue;
       overallDiscountAmount = totalDiscount;
     }
     
-    const grandTotal = subtotal - totalDiscount; // Exclude tax from grand total
+    const grandTotal = Math.max(0, subtotal - totalDiscount); // Ensure non-negative, exclude tax from grand total
 
     return { subtotal, totalTax, totalDiscount, overallDiscountAmount, grandTotal, items };
   };
