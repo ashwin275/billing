@@ -226,19 +226,30 @@ export default function EditInvoice() {
   const calculateTotals = () => {
     const formData = form.getValues();
     
-    if (!selectedCustomer || !selectedShop) {
-      console.log('Missing selectedCustomer or selectedShop');
-      return { subtotal: 0, totalTax: 0, totalDiscount: 0, grandTotal: 0, items: [] };
-    }
+    console.log('=== DEBUGGING CALCULATE TOTALS ===');
+    console.log('selectedCustomer:', selectedCustomer);
+    console.log('selectedShop:', selectedShop);
+    console.log('formData:', formData);
+    console.log('products array length:', Array.isArray(products) ? products.length : 0);
+    
+    // Remove the selectedCustomer/selectedShop requirement that's causing the issue
+    // if (!selectedCustomer || !selectedShop) {
+    //   console.log('Missing selectedCustomer or selectedShop');
+    //   return { subtotal: 0, totalTax: 0, totalDiscount: 0, grandTotal: 0, items: [] };
+    // }
 
     const items = formData.saleItems.map(item => {
+      console.log('Processing sale item:', item);
       const product = Array.isArray(products) ? products.find(p => p.productId === item.productId) : null;
+      console.log('Found product:', product);
+      
       if (!product) {
         console.log('Product not found for item:', item);
         return null;
       }
 
       const unitPrice = formData.saleType === 'RETAIL' ? product.retailRate : product.wholesaleRate;
+      console.log('Unit price calculation:', { saleType: formData.saleType, retailRate: product.retailRate, wholesaleRate: product.wholesaleRate, unitPrice });
       
       let discountAmount = 0;
       if (item.discountType === 'PERCENTAGE') {
@@ -250,6 +261,8 @@ export default function EditInvoice() {
       const discountedPrice = unitPrice - discountAmount;
       const lineTotal = discountedPrice * item.quantity;
       
+      console.log('Line calculation:', { unitPrice, discountAmount, discountedPrice, quantity: item.quantity, lineTotal });
+      
       const cgstRate = formData.billType === 'GST' ? product.cgst : 0;
       const sgstRate = formData.billType === 'GST' ? product.sgst : 0;
       
@@ -257,6 +270,8 @@ export default function EditInvoice() {
       const sgstAmount = (lineTotal * sgstRate) / 100;
       const taxAmount = cgstAmount + sgstAmount;
       const totalPrice = lineTotal; // Tax not included in total
+
+      console.log('Tax calculation:', { billType: formData.billType, cgstRate, sgstRate, cgstAmount, sgstAmount, taxAmount });
 
       return {
         product,
@@ -287,7 +302,14 @@ export default function EditInvoice() {
     
     const grandTotal = subtotal - totalDiscount; // Exclude tax from grand total
 
-    console.log('Calculation results:', { subtotal, totalTax, totalDiscount, grandTotal, itemsCount: items.length });
+    console.log('=== FINAL TOTALS ===');
+    console.log('Items processed:', items.length);
+    console.log('Subtotal:', subtotal);
+    console.log('Total tax:', totalTax);
+    console.log('Total discount:', totalDiscount);
+    console.log('Grand total:', grandTotal);
+    console.log('=== END DEBUGGING ===');
+    
     return { subtotal, totalTax, totalDiscount, grandTotal, items };
   };
 
@@ -311,6 +333,14 @@ export default function EditInvoice() {
     console.log('UI Totals being used:', uiTotals);
     console.log('Grand Total from UI:', uiTotals.grandTotal);
     console.log('Total Tax from UI:', uiTotals.totalTax);
+    
+    // Force recalculate if totals are 0
+    if (uiTotals.grandTotal === 0 || uiTotals.totalTax === 0) {
+      console.log('Totals are 0, forcing recalculation...');
+      const freshTotals = calculateTotals();
+      console.log('Fresh calculation results:', freshTotals);
+    }
+    
     console.log('Form data:', data);
     console.log('Current products:', products);
     console.log('Current customers:', customers);
