@@ -325,12 +325,12 @@ export const invoicesApi = {
       }
     }
 
-    // TEMPORARY FIX: Use hardcoded values since calculation is returning 0
-    let totalAmount = invoiceData.totalAmount || 500.00; // From UI: Grand Total: ₹500.00
-    let tax = invoiceData.tax || 90.00; // From UI: Total Tax: ₹90.00
+    // Use the calculated values from the invoice data
+    let totalAmount = invoiceData.totalAmount || 0;
+    let tax = invoiceData.tax || 0;
     
     console.log('API updateInvoice - received data:', invoiceData);
-    console.log('API updateInvoice - using values (hardcoded fallback):', { totalAmount, tax });
+    console.log('API updateInvoice - using values:', { totalAmount, tax });
 
     const updatePayload = {
       invoiceId: invoiceId,
