@@ -321,7 +321,7 @@ export default function ProductsManagement() {
     
     updateProductMutation.mutate({
       productId: productToEdit.productId,
-      product: productUpdate as Product,
+      product: productUpdate as unknown as Product,
     });
   };
 
