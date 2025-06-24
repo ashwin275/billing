@@ -1,0 +1,163 @@
+
+client/src/components/dashboard/invoice-management-clean.tsx:63:15 - error TS2339: Property 'customerName' does not exist on type 'Invoice'.
+
+63       invoice.customerName?.toLowerCase().includes(searchTerm.toLowerCase());
+                 ~~~~~~~~~~~~
+
+client/src/components/dashboard/invoice-management-clean.tsx:482:56 - error TS2339: Property 'price' does not exist on type 'SaleItem'.
+
+482                         <td class="text-right">₹${item.price?.toFixed(2) || '0.00'}</td>
+                                                           ~~~~~
+
+client/src/components/dashboard/invoice-management-clean.tsx:484:58 - error TS2339: Property 'price' does not exist on type 'SaleItem'.
+
+484                         <td class="text-right">₹${((item.price * item.quantity * (item.product?.cgst || 0)) / 100).toFixed(2)}</td>
+                                                             ~~~~~
+
+client/src/components/dashboard/invoice-management-clean.tsx:485:58 - error TS2339: Property 'price' does not exist on type 'SaleItem'.
+
+485                         <td class="text-right">₹${((item.price * item.quantity * (item.product?.sgst || 0)) / 100).toFixed(2)}</td>
+                                                             ~~~~~
+
+client/src/components/dashboard/invoice-management-clean.tsx:486:56 - error TS2339: Property 'total' does not exist on type 'SaleItem'.
+
+486                         <td class="text-right">₹${item.total?.toFixed(2) || '0.00'}</td>
+                                                           ~~~~~
+
+client/src/components/dashboard/invoice-management-clean.tsx:663:63 - error TS2339: Property 'customerName' does not exist on type 'Invoice'.
+
+663                         <div className="font-medium">{invoice.customerName || 'Unknown Customer'}</div>
+                                                                  ~~~~~~~~~~~~
+
+client/src/components/dashboard/invoice-management.tsx:63:15 - error TS2339: Property 'customerName' does not exist on type 'Invoice'.
+
+63       invoice.customerName?.toLowerCase().includes(searchTerm.toLowerCase());
+                 ~~~~~~~~~~~~
+
+client/src/components/dashboard/invoice-management.tsx:482:56 - error TS2339: Property 'price' does not exist on type 'SaleItem'.
+
+482                         <td class="text-right">₹${item.price?.toFixed(2) || '0.00'}</td>
+                                                           ~~~~~
+
+client/src/components/dashboard/invoice-management.tsx:484:58 - error TS2339: Property 'price' does not exist on type 'SaleItem'.
+
+484                         <td class="text-right">₹${((item.price * item.quantity * (item.product?.cgst || 0)) / 100).toFixed(2)}</td>
+                                                             ~~~~~
+
+client/src/components/dashboard/invoice-management.tsx:485:58 - error TS2339: Property 'price' does not exist on type 'SaleItem'.
+
+485                         <td class="text-right">₹${((item.price * item.quantity * (item.product?.sgst || 0)) / 100).toFixed(2)}</td>
+                                                             ~~~~~
+
+client/src/components/dashboard/invoice-management.tsx:486:56 - error TS2339: Property 'total' does not exist on type 'SaleItem'.
+
+486                         <td class="text-right">₹${item.total?.toFixed(2) || '0.00'}</td>
+                                                           ~~~~~
+
+client/src/components/dashboard/invoice-management.tsx:660:63 - error TS2339: Property 'customerName' does not exist on type 'Invoice'.
+
+660                         <div className="font-medium">{invoice.customerName || 'Unknown Customer'}</div>
+                                                                  ~~~~~~~~~~~~
+
+client/src/components/dashboard/products-management.tsx:324:7 - error TS2740: Type '{ productId: number; productNumber: string; hsn: number; name: string; description: string; quantity: number; purchasePrice: number; wholesaleRate: number; retailRate: number; taxRate: number; ... 6 more ...; SGST: number; }' is missing the following properties from type 'Product': ourPrice, shop, createdAt, updatedAt, and 2 more.
+
+324       product: productUpdate,
+          ~~~~~~~
+
+  client/src/components/dashboard/products-management.tsx:188:63
+    188     mutationFn: ({ productId, product }: { productId: number; product: Product }) =>
+                                                                      ~~~~~~~
+    The expected type comes from property 'product' which is declared here on type '{ productId: number; product: Product; }'
+
+client/src/components/invoice/InvoiceTemplate.tsx:11:65 - error TS2339: Property 'total' does not exist on type 'SaleItem'.
+
+11     return invoice.saleItems?.reduce((sum, item) => sum + (item.total || 0), 0) || 0;
+                                                                   ~~~~~
+
+client/src/components/invoice/InvoiceTemplate.tsx:16:32 - error TS2339: Property 'price' does not exist on type 'SaleItem'.
+
+16       const cgstAmount = (item.price * item.quantity * (item.product?.cgst || 0)) / 100;
+                                  ~~~~~
+
+client/src/components/invoice/InvoiceTemplate.tsx:17:32 - error TS2339: Property 'price' does not exist on type 'SaleItem'.
+
+17       const sgstAmount = (item.price * item.quantity * (item.product?.sgst || 0)) / 100;
+                                  ~~~~~
+
+client/src/components/invoice/InvoiceTemplate.tsx:24:32 - error TS2339: Property 'price' does not exist on type 'SaleItem'.
+
+24       const cgstAmount = (item.price * item.quantity * (item.product?.cgst || 0)) / 100;
+                                  ~~~~~
+
+client/src/components/invoice/InvoiceTemplate.tsx:31:32 - error TS2339: Property 'price' does not exist on type 'SaleItem'.
+
+31       const sgstAmount = (item.price * item.quantity * (item.product?.sgst || 0)) / 100;
+                                  ~~~~~
+
+client/src/components/invoice/InvoiceTemplate.tsx:404:53 - error TS2339: Property 'price' does not exist on type 'SaleItem'.
+
+404                   <td className="text-right">₹{item.price?.toFixed(2) || '0.00'}</td>
+                                                        ~~~~~
+
+client/src/components/invoice/InvoiceTemplate.tsx:406:55 - error TS2339: Property 'price' does not exist on type 'SaleItem'.
+
+406                   <td className="text-right">₹{((item.price * item.quantity * (item.product?.cgst || 0)) / 100).toFixed(2)}</td>
+                                                          ~~~~~
+
+client/src/components/invoice/InvoiceTemplate.tsx:407:55 - error TS2339: Property 'price' does not exist on type 'SaleItem'.
+
+407                   <td className="text-right">₹{((item.price * item.quantity * (item.product?.sgst || 0)) / 100).toFixed(2)}</td>
+                                                          ~~~~~
+
+client/src/components/invoice/InvoiceTemplate.tsx:408:53 - error TS2339: Property 'total' does not exist on type 'SaleItem'.
+
+408                   <td className="text-right">₹{item.total?.toFixed(2) || '0.00'}</td>
+                                                        ~~~~~
+
+client/src/pages/create-invoice.tsx:307:11 - error TS2739: Type '{ customerId: number; shopId: number; discount: number; amountPaid: number; paymentMode: "CASH" | "CARD" | "UPI" | "CHEQUE" | "BANK_TRANSFER"; paymentStatus: "PAID" | "PENDING" | "OVERDUE"; ... 5 more ...; saleItems: { ...; }[]; }' is missing the following properties from type 'InvoiceInput': totalAmount, tax
+
+307     const invoiceInput: InvoiceInput = {
+              ~~~~~~~~~~~~
+
+client/src/pages/create-invoice.tsx:407:36 - error TS2345: Argument of type '{ shopId: number; customerId: number; discount: number; amountPaid: number; dueDate: string | null; paymentStatus: "PAID" | "PENDING" | "OVERDUE"; paymentMode: "CASH" | "CARD" | "UPI" | "CHEQUE" | "BANK_TRANSFER"; ... 9 more ...; customBillingAddress?: string | undefined; }' is not assignable to parameter of type 'InvoiceInput'.
+  Type '{ shopId: number; customerId: number; discount: number; amountPaid: number; dueDate: string | null; paymentStatus: "PAID" | "PENDING" | "OVERDUE"; paymentMode: "CASH" | "CARD" | "UPI" | "CHEQUE" | "BANK_TRANSFER"; ... 9 more ...; customBillingAddress?: string | undefined; }' is missing the following properties from type 'InvoiceInput': totalAmount, tax
+
+407       updateInvoiceMutation.mutate(data);
+                                       ~~~~
+
+client/src/pages/create-invoice.tsx:409:36 - error TS2345: Argument of type '{ shopId: number; customerId: number; discount: number; amountPaid: number; dueDate: string | null; paymentStatus: "PAID" | "PENDING" | "OVERDUE"; paymentMode: "CASH" | "CARD" | "UPI" | "CHEQUE" | "BANK_TRANSFER"; ... 9 more ...; customBillingAddress?: string | undefined; }' is not assignable to parameter of type 'InvoiceInput'.
+  Type '{ shopId: number; customerId: number; discount: number; amountPaid: number; dueDate: string | null; paymentStatus: "PAID" | "PENDING" | "OVERDUE"; paymentMode: "CASH" | "CARD" | "UPI" | "CHEQUE" | "BANK_TRANSFER"; ... 9 more ...; customBillingAddress?: string | undefined; }' is missing the following properties from type 'InvoiceInput': totalAmount, tax
+
+409       createInvoiceMutation.mutate(data);
+                                       ~~~~
+
+client/src/pages/edit-invoice.tsx:23:60 - error TS2305: Module '"@/lib/api"' has no exported member 'saleItemsApi'.
+
+23 import { productsApi, customersApi, shopsApi, invoicesApi, saleItemsApi } from "@/lib/api";
+                                                              ~~~~~~~~~~~~
+
+client/src/pages/edit-invoice.tsx:339:41 - error TS2552: Cannot find name 'calculatedTotal'. Did you mean 'calculateTotals'?
+
+339     console.log('Calculated totals:', { calculatedTotal, calculatedTax });
+                                            ~~~~~~~~~~~~~~~
+
+  client/src/pages/edit-invoice.tsx:226:9
+    226   const calculateTotals = () => {
+                ~~~~~~~~~~~~~~~
+    'calculateTotals' is declared here.
+
+client/src/pages/edit-invoice.tsx:339:58 - error TS18004: No value exists in scope for the shorthand property 'calculatedTax'. Either declare one or provide an initializer.
+
+339     console.log('Calculated totals:', { calculatedTotal, calculatedTax });
+                                                             ~~~~~~~~~~~~~
+
+
+Found 28 errors in 6 files.
+
+Errors  Files
+     6  client/src/components/dashboard/invoice-management-clean.tsx:63
+     6  client/src/components/dashboard/invoice-management.tsx:63
+     1  client/src/components/dashboard/products-management.tsx:324
+     9  client/src/components/invoice/InvoiceTemplate.tsx:11
+     3  client/src/pages/create-invoice.tsx:307
+     3  client/src/pages/edit-invoice.tsx:23

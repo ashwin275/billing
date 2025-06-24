@@ -20,7 +20,7 @@ import { ProductSearchDialog } from "@/components/ui/product-search-dialog";
 
 import { useToast } from "@/hooks/use-toast";
 
-import { productsApi, customersApi, shopsApi, invoicesApi, saleItemsApi } from "@/lib/api";
+import { productsApi, customersApi, shopsApi, invoicesApi } from "@/lib/api";
 import { Product, Customer, Shop, InvoiceInput } from "@/types/api";
 
 // Validation schemas
@@ -336,7 +336,7 @@ export default function EditInvoice() {
     };
 
     console.log('Invoice input before update:', invoiceInput);
-    console.log('Calculated totals:', { calculatedTotal, calculatedTax });
+    console.log('Using UI totals:', { grandTotal: uiTotals.grandTotal, totalTax: uiTotals.totalTax });
 
     updateInvoiceMutation.mutate(invoiceInput);
   };

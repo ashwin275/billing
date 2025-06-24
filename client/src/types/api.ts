@@ -147,6 +147,7 @@ export interface Invoice {
   paymentMode: 'CASH' | 'CARD' | 'UPI' | 'CHEQUE' | 'BANK_TRANSFER';
   remark: string;
   signature?: string;
+  customerName?: string; // Added for compatibility
   shop: Shop;
   sales: {
     saleId: number | null;
@@ -178,6 +179,8 @@ export interface SaleItem {
   discount: number;
   unitPrice: number;
   totalPrice: number;
+  price: number; // Added for compatibility
+  total: number; // Added for compatibility
   cgst: number;
   sgst: number;
   taxAmount: number;

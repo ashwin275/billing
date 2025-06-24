@@ -304,6 +304,8 @@ export default function CreateInvoice() {
 
   // Handle form submission
   const onSubmit = (data: InvoiceFormData) => {
+    const totals = calculateTotals();
+    
     const invoiceInput: InvoiceInput = {
       customerId: data.customerId,
       shopId: data.shopId,
@@ -316,6 +318,8 @@ export default function CreateInvoice() {
       billType: data.billType,
       saleType: data.saleType,
       transactionId: data.transactionId,
+      totalAmount: totals.grandTotal,
+      tax: totals.totalTax,
       saleItems: data.saleItems.map(item => ({
         productId: item.productId,
         quantity: item.quantity,
@@ -404,9 +408,19 @@ export default function CreateInvoice() {
   const handleFormSubmit = (data: InvoiceFormData) => {
     setHasUnsavedChanges(false);
     if (isEditMode) {
-      updateInvoiceMutation.mutate(data);
+      const totals = calculateTotals();
+      updateInvoiceMutation.mutate({
+        ...data,
+        totalAmount: totals.grandTotal,
+        tax: totals.totalTax,
+      });
     } else {
-      createInvoiceMutation.mutate(data);
+      const totals = calculateTotals();
+      createInvoiceMutation.mutate({
+        ...data,
+        totalAmount: totals.grandTotal,
+        tax: totals.totalTax,
+      });
     }
   };
 
