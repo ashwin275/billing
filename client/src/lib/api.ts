@@ -328,6 +328,9 @@ export const invoicesApi = {
     // Use the calculated totalAmount (Grand Total) from invoice data
     let totalAmount = invoiceData.totalAmount || 0;
     let tax = invoiceData.tax || 0;
+    
+    console.log('API updateInvoice - received data:', invoiceData);
+    console.log('API updateInvoice - using values:', { totalAmount, tax });
 
     const updatePayload = {
       invoiceId: invoiceId,
@@ -342,6 +345,8 @@ export const invoicesApi = {
       paymentMode: invoiceData.paymentMode || "CASH",
       remark: invoiceData.remark || "",
     };
+    
+    console.log('API updateInvoice - final payload:', updatePayload);
     
     return apiRequest(`/invoice/update/${invoiceId}`, {
       method: 'POST',
