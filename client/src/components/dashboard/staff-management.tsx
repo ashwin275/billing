@@ -129,6 +129,8 @@ export default function StaffManagement() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -231,6 +233,13 @@ export default function StaffManagement() {
       const comparison = aValue.toString().localeCompare(bValue.toString());
       return sortDirection === "asc" ? comparison : -comparison;
     });
+
+  // Pagination calculations
+  const totalStaffs = filteredAndSortedStaffs.length;
+  const totalPages = Math.ceil(totalStaffs / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedStaffs = filteredAndSortedStaffs.slice(startIndex, endIndex);
 
   // Handle column sorting
   const handleSort = (column: keyof Staff) => {
@@ -495,7 +504,7 @@ export default function StaffManagement() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Team Members ({filteredAndSortedStaffs.length})
+            Team Members ({totalStaffs})
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -569,14 +578,14 @@ export default function StaffManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredAndSortedStaffs.length === 0 ? (
+                {paginatedStaffs.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                       {searchTerm ? "No staff members found matching your search" : "No staff members found"}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredAndSortedStaffs.map((staff) => (
+                  paginatedStaffs.map((staff) => (
                     <TableRow key={staff.userId}>
                       <TableCell className="font-medium">{staff.fullName}</TableCell>
                       <TableCell>{staff.email}</TableCell>
@@ -596,6 +605,46 @@ export default function StaffManagement() {
               </TableBody>
             </Table>
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between space-x-2 py-4">
+              <div className="text-sm text-muted-foreground">
+                Showing {startIndex + 1} to {Math.min(endIndex, totalStaffs)} of {totalStaffs} staff members
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                <div className="flex items-center space-x-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <Button
+                      key={page}
+                      variant={page === currentPage ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(page)}
+                      className="w-8 h-8 p-0"
+                    >
+                      {page}
+                    </Button>
+                  ))}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
