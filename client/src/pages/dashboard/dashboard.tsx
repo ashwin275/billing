@@ -222,7 +222,7 @@ function DashboardOverview({ onNavigate }: { onNavigate: (section: string) => vo
                 variant="ghost" 
                 size="sm" 
                 className="w-full xs:w-auto"
-                onClick={() => onNavigate('invoices')}
+                onClick={() => onNavigate('invoice')}
               >
                 View all
               </Button>
