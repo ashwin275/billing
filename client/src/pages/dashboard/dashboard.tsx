@@ -218,12 +218,26 @@ function DashboardOverview({ onNavigate }: { onNavigate: (section: string) => vo
           <CardHeader className="p-4 sm:p-6">
             <div className="flex flex-col xs:flex-row xs:justify-between xs:items-center gap-3">
               <CardTitle className="text-base sm:text-lg">Recent Invoices</CardTitle>
-              <Button variant="ghost" size="sm" className="w-full xs:w-auto">View all</Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="w-full xs:w-auto"
+                onClick={() => onNavigate('invoices')}
+              >
+                View all
+              </Button>
             </div>
           </CardHeader>
           <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6">
             {recentInvoices.map((invoice) => (
-              <div key={invoice.id} className="flex items-center justify-between p-2 sm:p-3 bg-slate-50 rounded-lg">
+              <div 
+                key={invoice.id} 
+                className={`flex items-center justify-between p-2 sm:p-3 rounded-lg ${
+                  invoice.status === 'pending' 
+                    ? 'bg-orange-50 border-l-4 border-l-orange-400' 
+                    : 'bg-slate-50'
+                }`}
+              >
                 <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
                   <div className="h-6 w-6 sm:h-8 sm:w-8 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
                     <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-primary-600" />
