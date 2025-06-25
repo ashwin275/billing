@@ -97,6 +97,7 @@ This is a React-based billing dashboard application built for managing invoices,
 
 ## Changelog
 
+- June 25, 2025: Removed Invoice ID display from customer section in Invoice Management components for cleaner presentation
 - June 25, 2025: Added golden gradient background and crown badge for LIFETIME subscription shops in shop management for premium visual distinction
 - June 25, 2025: Removed invoice number field from create invoice page header for cleaner presentation - now only shows Date and Transaction ID
 - June 25, 2025: Updated all delete buttons with consistent red styling across entire application for better visual recognition

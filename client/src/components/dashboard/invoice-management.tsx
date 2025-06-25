@@ -658,7 +658,6 @@ export default function InvoiceManagementClean() {
                     <TableCell>
                       <div>
                         <div className="font-medium">{invoice.customerName || 'Unknown Customer'}</div>
-                        <div className="text-sm text-muted-foreground">Invoice ID: {invoice.invoiceId}</div>
                       </div>
                     </TableCell>
                     <TableCell>
