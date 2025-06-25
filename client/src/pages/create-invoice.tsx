@@ -2176,19 +2176,34 @@ export default function CreateInvoice() {
                       <thead className="bg-gray-100">
                         <tr>
                           <th className="border-b border-black p-2 text-left text-black">Product</th>
+                          <th className="border-b border-black p-2 text-right text-black">HSN</th>
                           <th className="border-b border-black p-2 text-right text-black">Qty</th>
                           <th className="border-b border-black p-2 text-right text-black">Rate</th>
                           <th className="border-b border-black p-2 text-right text-black">Discount</th>
+                          <th className="border-b border-black p-2 text-right text-black">CGST</th>
+                          <th className="border-b border-black p-2 text-right text-black">SGST</th>
                           <th className="border-b border-black p-2 text-right text-black">Total</th>
                         </tr>
                       </thead>
                       <tbody>
                         {totals.items.map((item, index) => (
                           <tr key={index}>
-                            <td className="border-b border-black p-2 text-black">{item?.product?.name || 'Product'}</td>
+                            <td className="border-b border-black p-2 text-black">
+                              <div className="font-semibold">{item?.product?.name || 'Product'}</div>
+                              <div className="text-xs text-gray-600">{item?.product?.description || ''}</div>
+                            </td>
+                            <td className="border-b border-black p-2 text-right text-black">{item?.product?.hsn || 'N/A'}</td>
                             <td className="border-b border-black p-2 text-right text-black">{item?.quantity}</td>
                             <td className="border-b border-black p-2 text-right text-black">₹{item?.unitPrice?.toFixed(2)}</td>
                             <td className="border-b border-black p-2 text-right text-black">₹{(item?.discountAmount || 0).toFixed(2)}</td>
+                            <td className="border-b border-black p-2 text-right text-black">
+                              <div>{item?.product?.cgst || 0}%</div>
+                              <div className="text-xs">₹{(item?.cgstAmount || 0).toFixed(2)}</div>
+                            </td>
+                            <td className="border-b border-black p-2 text-right text-black">
+                              <div>{item?.product?.sgst || 0}%</div>
+                              <div className="text-xs">₹{(item?.sgstAmount || 0).toFixed(2)}</div>
+                            </td>
                             <td className="border-b border-black p-2 text-right text-black">₹{item?.totalPrice?.toFixed(2)}</td>
                           </tr>
                         ))}
