@@ -118,7 +118,7 @@ export default function CreateInvoice() {
       discountType: "AMOUNT",
       amountPaid: 0,
       paymentMode: "CASH",
-      paymentStatus: "PENDING",
+      paymentStatus: "PAID",
       remark: "",
       dueDate: null,
       billType: "GST",
@@ -2014,11 +2014,11 @@ export default function CreateInvoice() {
                         <span className="font-semibold">₹{totals.subtotal.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between text-gray-600">
-                        <span>Total CGST:</span>
+                        <span>Total CGST (9%):</span>
                         <span>₹{totals.items.reduce((sum, item) => sum + (item?.cgstAmount || 0), 0).toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between text-gray-600">
-                        <span>Total SGST:</span>
+                        <span>Total SGST (9%):</span>
                         <span>₹{totals.items.reduce((sum, item) => sum + (item?.sgstAmount || 0), 0).toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between text-gray-600">
@@ -2213,11 +2213,11 @@ export default function CreateInvoice() {
                       <span>₹{totals.subtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-gray-600">
-                      <span>Total CGST:</span>
+                      <span>Total CGST (9%):</span>
                       <span>₹{totals.items.reduce((sum, item) => sum + (item?.cgstAmount || 0), 0).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-gray-600">
-                      <span>Total SGST:</span>
+                      <span>Total SGST (9%):</span>
                       <span>₹{totals.items.reduce((sum, item) => sum + (item?.sgstAmount || 0), 0).toFixed(2)}</span>
                     </div>
                     <Separator className="border-black" />

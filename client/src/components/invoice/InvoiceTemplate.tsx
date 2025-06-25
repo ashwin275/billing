@@ -403,8 +403,14 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
                   <td className="text-right">{item.quantity}</td>
                   <td className="text-right">₹{item.price?.toFixed(2) || '0.00'}</td>
                   <td className="text-right">₹{item.discount?.toFixed(2) || '0.00'}</td>
-                  <td className="text-right">₹{((item.price * item.quantity * (item.product?.cgst || 0)) / 100).toFixed(2)}</td>
-                  <td className="text-right">₹{((item.price * item.quantity * (item.product?.sgst || 0)) / 100).toFixed(2)}</td>
+                  <td className="text-right">
+                    <div>{item.product?.cgst || 0}%</div>
+                    <div>₹{((item.price * item.quantity * (item.product?.cgst || 0)) / 100).toFixed(2)}</div>
+                  </td>
+                  <td className="text-right">
+                    <div>{item.product?.sgst || 0}%</div>
+                    <div>₹{((item.price * item.quantity * (item.product?.sgst || 0)) / 100).toFixed(2)}</div>
+                  </td>
                   <td className="text-right">₹{item.total?.toFixed(2) || '0.00'}</td>
                 </tr>
               ))
@@ -430,11 +436,11 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
               <span>- ₹{(invoice.discount || 0).toFixed(2)}</span>
             </div>
             <div className="total-row">
-              <span>CGST:</span>
+              <span>CGST (9%):</span>
               <span>₹{totalCGST.toFixed(2)}</span>
             </div>
             <div className="total-row">
-              <span>SGST:</span>
+              <span>SGST (9%):</span>
               <span>₹{totalSGST.toFixed(2)}</span>
             </div>
             <div className="total-row grand-total">
