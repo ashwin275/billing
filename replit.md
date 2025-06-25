@@ -97,6 +97,7 @@ This is a React-based billing dashboard application built for managing invoices,
 
 ## Changelog
 
+- January 25, 2025: Enhanced create invoice page with duplicate bottom buttons, CGST/SGST percentage display, and automatic overall discount calculation
 - June 24, 2025: Fixed invoice update functionality with proper total and tax calculations, resolved all TypeScript compilation errors
 - June 23, 2025: Initial setup
 
