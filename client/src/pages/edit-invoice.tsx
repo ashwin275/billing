@@ -2131,7 +2131,7 @@ export default function EditInvoice() {
         <Dialog open={isPreviewDialogOpen} onOpenChange={setIsPreviewDialogOpen}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Invoice Preview - #{invoice?.invoiceNo}</DialogTitle>
+              <DialogTitle>Invoice Preview</DialogTitle>
             </DialogHeader>
             
             {selectedCustomer && selectedShop && (
@@ -2146,7 +2146,6 @@ export default function EditInvoice() {
                   </div>
                   <div className="text-right">
                     <h3 className="text-xl font-bold text-black">INVOICE</h3>
-                    <p className="text-gray-600">{invoice?.invoiceNo}</p>
                     <p className="text-gray-600">{invoice?.invoiceDate ? new Date(invoice.invoiceDate).toLocaleDateString() : new Date().toLocaleDateString()}</p>
                   </div>
                 </div>

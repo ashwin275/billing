@@ -829,7 +829,6 @@ export default function CreateInvoice() {
                             <div class="invoice-title">
                               <h2>INVOICE</h2>
                               <div class="invoice-meta">
-                                <div>#${previewData.invoiceNo}</div>
                                 <div>${new Date(previewData.invoiceDate).toLocaleDateString('en-GB')}</div>
                               </div>
                             </div>
@@ -1327,8 +1326,8 @@ export default function CreateInvoice() {
                               </div>
                             </div>
                             <div class="invoice-title">
+                              <h2>INVOICE</h2>
                               <div class="invoice-meta">
-                                <div><strong>Invoice #:</strong> ${previewData.invoiceNo}</div>
                                 <div><strong>Date:</strong> ${new Date(previewData.invoiceDate).toLocaleDateString()}</div>
                               </div>
                             </div>
@@ -2659,7 +2658,6 @@ export default function CreateInvoice() {
                   </div>
                   <div className="text-right">
                     <h3 className="text-xl font-bold text-black">INVOICE</h3>
-                    <p className="text-gray-600">INV-{Date.now().toString().slice(-6)}</p>
                     <p className="text-gray-600">{new Date().toLocaleDateString()}</p>
                   </div>
                 </div>
