@@ -97,6 +97,7 @@ This is a React-based billing dashboard application built for managing invoices,
 
 ## Changelog
 
+- June 25, 2025: Added totalSpend column to Customers Management with proper null handling and currency formatting
 - June 25, 2025: Added pagination to All Invoices and Staff Management sections with 10 items per page, navigation controls, and item count display
 - June 25, 2025: Added role-based access control to hide "Add User" functionality from non-admin users in Dashboard Overview
 - June 25, 2025: Fixed Dashboard Recent Invoices "View All" button to navigate to Invoice Management and added orange background styling for pending invoices
