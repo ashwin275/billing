@@ -699,9 +699,9 @@ export default function ShopsManagement() {
                             variant="ghost"
                             size="sm"
                             onClick={() => setShopToDelete(shop)}
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4 text-red-600" />
                           </Button>
                         </div>
                       </TableCell>

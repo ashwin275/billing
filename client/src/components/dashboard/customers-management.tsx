@@ -707,9 +707,9 @@ export default function CustomersManagement() {
                           variant="outline"
                           size="sm"
                           onClick={() => setCustomerToDelete(customer)}
-                          className="text-destructive hover:text-destructive-foreground hover:bg-destructive"
+                          className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 hover:text-red-700"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-4 w-4 text-red-600" />
                         </Button>
                       </div>
                     </TableCell>
