@@ -2009,10 +2009,6 @@ export default function CreateInvoice() {
                       <h2 className="text-3xl font-bold text-gray-900 mb-4">INVOICE</h2>
                       <div className="space-y-2">
                         <div>
-                          <Label className="text-sm text-gray-600">Invoice #</Label>
-                          <p className="font-semibold">INV-{Date.now().toString().slice(-6)}</p>
-                        </div>
-                        <div>
                           <Label className="text-sm text-gray-600">Date</Label>
                           <p className="font-semibold">{new Date().toLocaleDateString()}</p>
                         </div>

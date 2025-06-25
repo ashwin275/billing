@@ -97,6 +97,8 @@ This is a React-based billing dashboard application built for managing invoices,
 
 ## Changelog
 
+- June 25, 2025: Removed invoice number field from create invoice page header for cleaner presentation - now only shows Date and Transaction ID
+- June 25, 2025: Updated all delete buttons with consistent red styling across entire application for better visual recognition
 - June 25, 2025: Removed invoice ID display from all areas - PDFs, previews, dialogs, and templates now show only date without invoice numbers for cleaner presentation
 - June 25, 2025: Added post-creation success dialog with PDF download and dashboard navigation options; replaced automatic navigation with user choice popup; implemented complete PDF generation functionality with professional styling and print capability
 - June 25, 2025: Enhanced invoice success notifications with custom toast design featuring invoice details, status indicators, action buttons, and automatic navigation; improved error handling with retry functionality; updated both create and edit invoice flows for consistent user experience
