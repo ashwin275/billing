@@ -118,7 +118,7 @@ export default function CreateInvoice() {
       discountType: "AMOUNT",
       amountPaid: 0,
       paymentMode: "CASH",
-      paymentStatus: "PAID",
+      paymentStatus: "PENDING",
       remark: "",
       dueDate: null,
       billType: "GST",
@@ -468,58 +468,56 @@ export default function CreateInvoice() {
                 if (!selectedCustomer || !selectedShop) return;
                 
                 const formData = form.getValues();
-                setIsPreviewDialogOpen(true);
+                const previewData = {
+                  invoiceNo: `INV-${Date.now().toString().slice(-6)}`,
+                  invoiceDate: new Date().toISOString(),
+                  shop: {
+                    name: selectedShop.name,
+                    place: selectedShop.place,
+                    tagline: "Quality Products & Services"
+                  },
+                  customer: {
+                    name: selectedCustomer.name,
+                    place: selectedCustomer.place,
+                    phone: selectedCustomer.phone
+                  },
+                  paymentDetails: {
+                    paymentStatus: formData.paymentStatus,
+                    paymentMode: formData.paymentMode,
+                    billType: formData.billType,
+                    saleType: formData.saleType
+                  },
+                  items: totals.items.filter(item => item),
+                  totals,
+                  amountPaid: formData.amountPaid || 0,
+                  remark: formData.remark
+                };
+                
+                // Create preview window with modern compact design
+                const previewWindow = window.open('', '_blank', 'width=900,height=700,scrollbars=yes');
+                if (!previewWindow) return;
 
-              }}
-              disabled={!selectedCustomer || !selectedShop}
-            >
-              <Eye className="h-4 w-4 mr-2" />
-              Preview
-            </Button>
-            <Button 
-              variant="outline"
-              onClick={() => {
-                if (!selectedCustomer || !selectedShop) return;
-                setIsPreviewDialogOpen(true);
-              }}
-              disabled={!selectedCustomer || !selectedShop}
-            >
-              <Eye className="h-4 w-4 mr-2" />
-              Preview
-            </Button>
-          </div>
-        </div>
-
-        {/* Invoice Preview Dialog */}
-        <Dialog open={isPreviewDialogOpen} onOpenChange={setIsPreviewDialogOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Invoice Preview</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              {/* Preview content will be rendered here */}
-              <p>Invoice preview content goes here</p>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Customer Search Dialog */}
-        <CustomerSearchDialog
-          open={isCustomerDialogOpen}
-          onOpenChange={setIsCustomerDialogOpen}
-          onSelectCustomer={handleSelectCustomer}
-        />
-
-        {/* Product Search Dialog */}
-        <ProductSearchDialog
-          open={isProductDialogOpen}
-          onOpenChange={setIsProductDialogOpen}
-          onSelectProduct={handleSelectProduct}
-        />
-      </div>
-    </div>
-  );
-}
+                previewWindow.document.write(`
+                  <!DOCTYPE html>
+                  <html>
+                    <head>
+                      <title>Invoice Preview - ${previewData.invoiceNo}</title>
+                      <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+                        
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+                        
+                        body { 
+                          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+                          background: #f8fafc;
+                          padding: 20px;
+                          line-height: 1.4;
+                        }
+                        
+                        .invoice-container {
+                          max-width: 800px;
+                          margin: 0 auto;
+                          background: white;
                           border-radius: 12px;
                           overflow: hidden;
                           box-shadow: 0 10px 25px rgba(0,0,0,0.1);
@@ -2120,13 +2118,11 @@ export default function CreateInvoice() {
                       
                       const formData = form.getValues();
                       const previewData = {
-                        invoiceNo: isEditMode ? editInvoice?.invoiceNo : `INV-${Date.now().toString().slice(-6)}`,
-                        invoiceDate: isEditMode ? editInvoice?.invoiceDate : new Date().toISOString(),
+                        invoiceNo: `INV-${Date.now().toString().slice(-6)}`,
+                        invoiceDate: new Date().toISOString(),
                         shop: {
                           name: selectedShop.name,
                           place: selectedShop.place,
-                          gstNo: selectedShop.gstNo || "",
-                          phone: selectedShop.phone || "",
                           tagline: "Quality Products & Services"
                         },
                         customer: {
