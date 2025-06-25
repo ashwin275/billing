@@ -97,6 +97,7 @@ This is a React-based billing dashboard application built for managing invoices,
 
 ## Changelog
 
+- June 25, 2025: Updated payment system defaults and invoice display format - changed default payment status from "PENDING" to "PAID"; added CGST/SGST percentage display (9%) in preview and PDF tables; removed "Type" field from invoice preview and PDF sections
 - June 25, 2025: Updated create invoice totals display to show real-world invoice scenario - displays total before discounts, item discounts, and subtotal after discounts; removed preview button from bottom action area; fixed mutation reference errors
 - January 25, 2025: Enhanced create invoice page with duplicate bottom buttons, CGST/SGST percentage display, and automatic overall discount calculation
 - June 24, 2025: Fixed invoice update functionality with proper total and tax calculations, resolved all TypeScript compilation errors
