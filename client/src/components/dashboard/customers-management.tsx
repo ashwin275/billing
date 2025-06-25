@@ -640,6 +640,16 @@ export default function CustomersManagement() {
                       {getSortIcon("loyaltyPoints")}
                     </Button>
                   </TableHead>
+                  <TableHead className="hidden xl:table-cell">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort("totalSpend")}
+                      className="h-auto p-0 font-semibold hover:bg-transparent"
+                    >
+                      Total Spend
+                      {getSortIcon("totalSpend")}
+                    </Button>
+                  </TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -693,6 +703,13 @@ export default function CustomersManagement() {
                       </div>
                     </TableCell>
 
+                    {/* Total Spend - Hidden on extra small screens */}
+                    <TableCell className="hidden xl:table-cell">
+                      <div className="text-slate-700 font-medium">
+                        {customer.totalSpend !== null ? `₹${customer.totalSpend.toFixed(2)}` : 'N/A'}
+                      </div>
+                    </TableCell>
+
                     {/* Actions */}
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end space-x-2">
@@ -707,16 +724,16 @@ export default function CustomersManagement() {
                           variant="outline"
                           size="sm"
                           onClick={() => setCustomerToDelete(customer)}
-                          className="text-destructive hover:text-destructive-foreground hover:bg-destructive"
+                          className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 hover:text-red-700"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-4 w-4 text-red-600" />
                         </Button>
                       </div>
                     </TableCell>
                   </TableRow>
                 )) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-12">
+                    <TableCell colSpan={7} className="text-center py-12">
                       <div className="flex flex-col items-center space-y-3 text-slate-500">
                         <Users className="h-12 w-12" />
                         <div className="space-y-1">

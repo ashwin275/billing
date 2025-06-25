@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { shopsApi, usersApi, invoicesApi, customersApi, productsApi } from "@/lib/api";
+import { getAuthToken, decodeToken } from "@/lib/auth";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,19 @@ import Reports from "@/pages/reports";
  * Dashboard overview component showing stats and recent activity
  */
 function DashboardOverview({ onNavigate }: { onNavigate: (section: string) => void }) {
+  // Check if current user is admin
+  const isAdmin = () => {
+    const token = getAuthToken();
+    if (!token) return false;
+    
+    try {
+      const decoded = decodeToken(token);
+      return decoded.roleName === "ROLE_ADMIN";
+    } catch (error) {
+      return false;
+    }
+  };
+
   // Fetch real data for dashboard
   const { data: invoices = [] } = useQuery({
     queryKey: ["/api/invoices/all"],
@@ -218,12 +232,26 @@ function DashboardOverview({ onNavigate }: { onNavigate: (section: string) => vo
           <CardHeader className="p-4 sm:p-6">
             <div className="flex flex-col xs:flex-row xs:justify-between xs:items-center gap-3">
               <CardTitle className="text-base sm:text-lg">Recent Invoices</CardTitle>
-              <Button variant="ghost" size="sm" className="w-full xs:w-auto">View all</Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="w-full xs:w-auto"
+                onClick={() => onNavigate('invoice')}
+              >
+                View all
+              </Button>
             </div>
           </CardHeader>
           <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6">
             {recentInvoices.map((invoice) => (
-              <div key={invoice.id} className="flex items-center justify-between p-2 sm:p-3 bg-slate-50 rounded-lg">
+              <div 
+                key={invoice.id} 
+                className={`flex items-center justify-between p-2 sm:p-3 rounded-lg ${
+                  invoice.status === 'pending' 
+                    ? 'bg-orange-50 border-l-4 border-l-orange-400' 
+                    : 'bg-slate-50'
+                }`}
+              >
                 <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
                   <div className="h-6 w-6 sm:h-8 sm:w-8 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
                     <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-primary-600" />
@@ -282,21 +310,23 @@ function DashboardOverview({ onNavigate }: { onNavigate: (section: string) => vo
               </div>
             </Button>
 
-            <Button 
-              variant="outline" 
-              className="h-auto p-4 justify-start"
-              onClick={() => onNavigate("add-users")}
-            >
-              <div className="flex items-center space-x-3">
-                <div className="h-10 w-10 bg-violet-100 rounded-lg flex items-center justify-center">
-                  <UserPlus className="h-5 w-5 text-violet-600" />
+            {isAdmin() && (
+              <Button 
+                variant="outline" 
+                className="h-auto p-4 justify-start"
+                onClick={() => onNavigate("add-users")}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="h-10 w-10 bg-violet-100 rounded-lg flex items-center justify-center">
+                    <UserPlus className="h-5 w-5 text-violet-600" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-medium text-slate-900">Add User</p>
+                    <p className="text-sm text-slate-500">Invite team member</p>
+                  </div>
                 </div>
-                <div className="text-left">
-                  <p className="font-medium text-slate-900">Add User</p>
-                  <p className="text-sm text-slate-500">Invite team member</p>
-                </div>
-              </div>
-            </Button>
+              </Button>
+            )}
 
             <Button 
               variant="outline" 

@@ -39,7 +39,7 @@ const invoiceSchema = z.object({
   discountType: z.enum(["PERCENTAGE", "AMOUNT"]).default("PERCENTAGE"),
   amountPaid: z.number().min(0, "Amount paid cannot be negative").default(0),
   paymentMode: z.enum(["CASH", "CARD", "UPI", "CHEQUE", "BANK_TRANSFER"]).default("CASH"),
-  paymentStatus: z.enum(["PAID", "PENDING", "OVERDUE"]).default("PENDING"),
+  paymentStatus: z.enum(["PAID", "PENDING", "OVERDUE"]).default("PAID"),
   remark: z.string().default(""),
   dueDate: z.string().nullable().default(null),
   billType: z.enum(["GST", "NON_GST"]).default("GST"),
@@ -106,7 +106,7 @@ export default function EditInvoice() {
       discountType: "PERCENTAGE",
       amountPaid: 0,
       paymentMode: "CASH",
-      paymentStatus: "PENDING",
+      paymentStatus: "PAID",
       remark: "",
       dueDate: null,
       billType: "GST",
@@ -151,21 +151,69 @@ export default function EditInvoice() {
   // Update invoice mutation
   const updateInvoiceMutation = useMutation({
     mutationFn: async (invoiceData: InvoiceInput) => {
-      await invoicesApi.updateInvoice(invoiceId!, invoiceData);
+      const response = await invoicesApi.updateInvoice(invoiceId!, invoiceData);
+      return response;
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
+      const invoiceNumber = variables.transactionId;
+      const customerName = selectedCustomer?.name || "Customer";
+      const currentTotals = calculateTotals();
+      
       toast({
-        title: "Invoice updated successfully",
-        description: "The invoice has been updated and saved.",
+        title: "Invoice Updated Successfully!",
+        description: (
+          <div className="space-y-2">
+            <p className="text-sm text-green-100">Customer: {customerName}</p>
+            <div className="flex items-center gap-3 text-sm">
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-white rounded-full"></div>
+                <span className="text-white font-medium">UPDATED</span>
+              </div>
+              <span className="text-green-200">•</span>
+              <span className="font-medium text-white">₹{currentTotals.grandTotal.toFixed(2)}</span>
+            </div>
+          </div>
+        ),
+        className: "bg-green-600 border-green-600 text-white [&>div]:text-white",
+        duration: 4000,
       });
+      
       queryClient.invalidateQueries({ queryKey: ["/api/invoices/all"] });
       queryClient.invalidateQueries({ queryKey: ["/api/invoices", invoiceId] });
+      
+      setTimeout(() => {
+        setLocation("/dashboard?tab=invoices");
+      }, 2000);
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to update invoice",
-        description: error?.detail || error?.message || "An error occurred while updating the invoice.",
+        title: "Failed to Update Invoice",
+        description: (
+          <div className="space-y-2">
+            <p className="text-sm text-red-600">{error?.detail || error?.message || "An error occurred while updating the invoice."}</p>
+            <div className="flex gap-2 pt-2">
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => {
+                  const formData = form.getValues();
+                  const totals = calculateTotals();
+                  const invoiceInput = {
+                    ...formData,
+                    totalAmount: totals.grandTotal,
+                    tax: totals.totalTax,
+                  };
+                  updateInvoiceMutation.mutate(invoiceInput);
+                }}
+                className="h-8 px-3 text-xs"
+              >
+                Try Again
+              </Button>
+            </div>
+          </div>
+        ),
         variant: "destructive",
+        duration: 8000,
       });
     },
   });
@@ -250,13 +298,13 @@ export default function EditInvoice() {
       const discountedPrice = unitPrice - discountAmount;
       const lineTotal = discountedPrice * item.quantity;
       
-      const cgstRate = formData.billType === 'GST' ? product.cgst : 0;
-      const sgstRate = formData.billType === 'GST' ? product.sgst : 0;
+      const cgstRate = formData.billType === 'GST' ? (product.cgst || 9) : 0;
+      const sgstRate = formData.billType === 'GST' ? (product.sgst || 9) : 0;
       
       const cgstAmount = (lineTotal * cgstRate) / 100;
       const sgstAmount = (lineTotal * sgstRate) / 100;
       const taxAmount = cgstAmount + sgstAmount;
-      const totalPrice = lineTotal; // Tax not included in total
+      const totalPrice = lineTotal; // Tax shown separately, not added to total
 
       return {
         product,
@@ -285,7 +333,8 @@ export default function EditInvoice() {
       totalDiscount = formData.discount;
     }
     
-    const grandTotal = subtotal - totalDiscount; // Exclude tax from grand total
+    // Grand total is subtotal minus overall discount (tax shown for info only)
+    const grandTotal = subtotal - totalDiscount;
 
     console.log('Calculation results:', { subtotal, totalTax, totalDiscount, grandTotal, itemsCount: items.length });
     
@@ -817,7 +866,6 @@ export default function EditInvoice() {
                               <h3>Payment Info:</h3>
                               <p><strong>Status:</strong> ${previewData.paymentDetails.paymentStatus}</p>
                               <p><strong>Mode:</strong> ${previewData.paymentDetails.paymentMode}</p>
-                              <p><strong>Type:</strong> ${previewData.paymentDetails.billType} ${previewData.paymentDetails.saleType}</p>
                             </div>
                           </div>
 
@@ -829,6 +877,8 @@ export default function EditInvoice() {
                                 <th class="text-center">Qty.</th>
                                 <th class="text-right">Price</th>
                                 <th class="text-right">Discount</th>
+                                <th class="text-right">CGST (9%)</th>
+                                <th class="text-right">SGST (9%)</th>
                                 <th class="text-right">Total</th>
                               </tr>
                             </thead>
@@ -841,6 +891,8 @@ export default function EditInvoice() {
                                   <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
                                   <td class="text-right">₹${item?.unitPrice?.toFixed(2) || '0.00'}</td>
                                   <td class="text-right">₹${item?.discountAmount?.toFixed(2) || '0.00'}</td>
+                                  <td class="text-right">₹${(item?.cgstAmount || 0).toFixed(2)}</td>
+                                  <td class="text-right">₹${(item?.sgstAmount || 0).toFixed(2)}</td>
                                   <td class="text-right" style="font-weight: 600; color: #2d3748;">₹${item?.totalPrice?.toFixed(2) || '0.00'}</td>
                                 </tr>
                               `).join('')}
@@ -855,19 +907,19 @@ export default function EditInvoice() {
                                 <span>₹${previewData.totals.subtotal.toFixed(2)}</span>
                               </div>
                               <div class="total-line">
-                                <span>Discount:</span>
+                                <span>Item Discounts:</span>
                                 <span>- ₹${previewData.totals.totalDiscount.toFixed(2)}</span>
                               </div>
                               <div class="total-line">
-                                <span>CGST:</span>
-                                <span>₹${(previewData.totals.totalTax / 2).toFixed(2)}</span>
+                                <span>Total CGST (9%):</span>
+                                <span>₹${((previewData.totals.totalTax || 0) / 2).toFixed(2)}</span>
                               </div>
                               <div class="total-line">
-                                <span>SGST:</span>
-                                <span>₹${(previewData.totals.totalTax / 2).toFixed(2)}</span>
+                                <span>Total SGST (9%):</span>
+                                <span>₹${((previewData.totals.totalTax || 0) / 2).toFixed(2)}</span>
                               </div>
                               <div class="total-line grand-total">
-                                <span>Total:</span>
+                                <span>Grand Total:</span>
                                 <span>₹${previewData.totals.grandTotal.toFixed(2)}</span>
                               </div>
                               <div class="total-line">
@@ -1269,7 +1321,6 @@ export default function EditInvoice() {
                               <h3>Payment Info:</h3>
                               <p><strong>Status:</strong> ${invoiceData.paymentDetails.paymentStatus}</p>
                               <p><strong>Mode:</strong> ${invoiceData.paymentDetails.paymentMode}</p>
-                              <p><strong>Type:</strong> ${invoiceData.paymentDetails.billType} ${invoiceData.paymentDetails.saleType}</p>
                             </div>
                           </div>
 
@@ -1281,6 +1332,8 @@ export default function EditInvoice() {
                                 <th class="text-center">Qty.</th>
                                 <th class="text-right">Price</th>
                                 <th class="text-right">Discount</th>
+                                <th class="text-right">CGST (9%)</th>
+                                <th class="text-right">SGST (9%)</th>
                                 <th class="text-right">Total</th>
                               </tr>
                             </thead>
@@ -1293,6 +1346,8 @@ export default function EditInvoice() {
                                   <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
                                   <td class="text-right">₹${item?.unitPrice?.toFixed(2) || '0.00'}</td>
                                   <td class="text-right">₹${item?.discountAmount?.toFixed(2) || '0.00'}</td>
+                                  <td class="text-right">₹${(item?.cgstAmount || 0).toFixed(2)}</td>
+                                  <td class="text-right">₹${(item?.sgstAmount || 0).toFixed(2)}</td>
                                   <td class="text-right" style="font-weight: 600; color: #2d3748;">₹${item?.totalPrice?.toFixed(2) || '0.00'}</td>
                                 </tr>
                               `).join('')}
@@ -1307,19 +1362,19 @@ export default function EditInvoice() {
                                 <span>₹${invoiceData.totals.subtotal.toFixed(2)}</span>
                               </div>
                               <div class="total-line">
-                                <span>Discount:</span>
+                                <span>Item Discounts:</span>
                                 <span>- ₹${invoiceData.totals.totalDiscount.toFixed(2)}</span>
                               </div>
                               <div class="total-line">
-                                <span>CGST:</span>
-                                <span>₹${(invoiceData.totals.totalTax / 2).toFixed(2)}</span>
+                                <span>Total CGST (9%):</span>
+                                <span>₹${((invoiceData.totals.totalTax || 0) / 2).toFixed(2)}</span>
                               </div>
                               <div class="total-line">
-                                <span>SGST:</span>
-                                <span>₹${(invoiceData.totals.totalTax / 2).toFixed(2)}</span>
+                                <span>Total SGST (9%):</span>
+                                <span>₹${((invoiceData.totals.totalTax || 0) / 2).toFixed(2)}</span>
                               </div>
                               <div class="total-line grand-total">
-                                <span>Total:</span>
+                                <span>Grand Total:</span>
                                 <span>₹${invoiceData.totals.grandTotal.toFixed(2)}</span>
                               </div>
                               <div class="total-line">
@@ -1920,9 +1975,9 @@ export default function EditInvoice() {
                               variant="ghost"
                               size="sm"
                               onClick={() => remove(index)}
-                              className="text-red-600 hover:text-red-700 h-8 w-8 p-0"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-4 w-4 text-red-600" />
                             </Button>
                           </div>
                         </div>
@@ -2076,7 +2131,7 @@ export default function EditInvoice() {
         <Dialog open={isPreviewDialogOpen} onOpenChange={setIsPreviewDialogOpen}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Invoice Preview - #{invoice?.invoiceNo}</DialogTitle>
+              <DialogTitle>Invoice Preview</DialogTitle>
             </DialogHeader>
             
             {selectedCustomer && selectedShop && (
@@ -2091,7 +2146,6 @@ export default function EditInvoice() {
                   </div>
                   <div className="text-right">
                     <h3 className="text-xl font-bold text-black">INVOICE</h3>
-                    <p className="text-gray-600">{invoice?.invoiceNo}</p>
                     <p className="text-gray-600">{invoice?.invoiceDate ? new Date(invoice.invoiceDate).toLocaleDateString() : new Date().toLocaleDateString()}</p>
                   </div>
                 </div>

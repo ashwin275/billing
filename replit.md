@@ -97,7 +97,19 @@ This is a React-based billing dashboard application built for managing invoices,
 
 ## Changelog
 
-- June 25, 2025: Updated create invoice totals display to show real-world invoice scenario - displays total before discounts, item discounts, and subtotal after discounts; removed preview button from bottom action area; fixed mutation reference errors; set default payment status to PAID; added CGST/SGST percentages to both preview and PDF templates with consistent table structure
+- June 25, 2025: Added totalSpend column to Customers Management with proper null handling and currency formatting
+- June 25, 2025: Added pagination to All Invoices and Staff Management sections with 10 items per page, navigation controls, and item count display
+- June 25, 2025: Added role-based access control to hide "Add User" functionality from non-admin users in Dashboard Overview
+- June 25, 2025: Fixed Dashboard Recent Invoices "View All" button to navigate to Invoice Management and added orange background styling for pending invoices
+- June 25, 2025: Removed Invoice ID display from customer section in Invoice Management components for cleaner presentation
+- June 25, 2025: Added golden gradient background and crown badge for LIFETIME subscription shops in shop management for premium visual distinction
+- June 25, 2025: Removed invoice number field from create invoice page header for cleaner presentation - now only shows Date and Transaction ID
+- June 25, 2025: Updated all delete buttons with consistent red styling across entire application for better visual recognition
+- June 25, 2025: Removed invoice ID display from all areas - PDFs, previews, dialogs, and templates now show only date without invoice numbers for cleaner presentation
+- June 25, 2025: Added post-creation success dialog with PDF download and dashboard navigation options; replaced automatic navigation with user choice popup; implemented complete PDF generation functionality with professional styling and print capability
+- June 25, 2025: Enhanced invoice success notifications with custom toast design featuring invoice details, status indicators, action buttons, and automatic navigation; improved error handling with retry functionality; updated both create and edit invoice flows for consistent user experience
+- June 25, 2025: Finalized invoice tax display system - added CGST/SGST columns per item with clean labeling; tax amounts calculated and displayed but not added to grand total; corrected "Sub Total" label to reflect actual product prices; default payment status set to "PAID"; removed "Type" field from invoice sections
+- June 25, 2025: Updated create invoice totals display to show real-world invoice scenario - displays total before discounts, item discounts, and subtotal after discounts; removed preview button from bottom action area; fixed mutation reference errors
 - January 25, 2025: Enhanced create invoice page with duplicate bottom buttons, CGST/SGST percentage display, and automatic overall discount calculation
 - June 24, 2025: Fixed invoice update functionality with proper total and tax calculations, resolved all TypeScript compilation errors
 - June 23, 2025: Initial setup
