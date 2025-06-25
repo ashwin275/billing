@@ -630,7 +630,10 @@ export default function ShopsManagement() {
               </TableHeader>
               <TableBody>
                 {Array.isArray(currentShops) && currentShops.length > 0 ? currentShops.map((shop) => (
-                  <TableRow key={shop.shopId}>
+                  <TableRow 
+                    key={shop.shopId}
+                    className={shop.subscriptionPlan?.planName === 'LIFETIME' ? 'bg-gradient-to-r from-yellow-50 via-amber-50 to-yellow-50 border-yellow-200' : ''}
+                  >
                     {/* Shop Info */}
                     <TableCell>
                       <div className="flex flex-col">
@@ -675,8 +678,14 @@ export default function ShopsManagement() {
                     {/* Subscription - Hidden on mobile/tablet/small desktop */}
                     <TableCell className="hidden xl:table-cell">
                       {shop.subscriptionPlan ? (
-                        <Badge variant="outline">
+                        <Badge 
+                          variant={shop.subscriptionPlan.planName === 'LIFETIME' ? 'default' : 'outline'}
+                          className={shop.subscriptionPlan.planName === 'LIFETIME' ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-white font-semibold shadow-md' : ''}
+                        >
                           {shop.subscriptionPlan.planName}
+                          {shop.subscriptionPlan.planName === 'LIFETIME' && (
+                            <span className="ml-1">👑</span>
+                          )}
                         </Badge>
                       ) : (
                         <span className="text-slate-400">No plan</span>
