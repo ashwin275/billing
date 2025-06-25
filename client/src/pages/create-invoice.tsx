@@ -235,7 +235,7 @@ export default function CreateInvoice() {
   const calculateTotals = () => {
     const formData = form.watch();
     
-    if (!selectedCustomer || !selectedShop) return { subtotal: 0, totalTax: 0, totalDiscount: 0, overallDiscountAmount: 0, grandTotal: 0, items: [] };
+    if (!selectedCustomer || !selectedShop) return { subtotal: 0, totalTax: 0, totalDiscount: 0, overallDiscountAmount: 0, grandTotal: 0, items: [], itemDiscounts: 0 };
 
     const items = formData.saleItems.map(item => {
       const product = Array.isArray(products) ? products.find(p => p.productId === item.productId) : null;
@@ -282,6 +282,9 @@ export default function CreateInvoice() {
     const subtotal = items.reduce((sum, item) => sum + (item?.lineTotal || 0), 0);
     const totalTax = items.reduce((sum, item) => sum + (item?.taxAmount || 0), 0);
     
+    // Calculate overall discount as sum of individual item discounts
+    const itemDiscounts = items.reduce((sum, item) => sum + (item?.discountAmount || 0), 0);
+    
     // Ensure discount values are numbers
     const discountValue = Number(formData.discount) || 0;
     let totalDiscount = 0;
@@ -297,7 +300,7 @@ export default function CreateInvoice() {
     
     const grandTotal = Math.max(0, subtotal - totalDiscount); // Ensure non-negative, exclude tax from grand total
 
-    return { subtotal, totalTax, totalDiscount, overallDiscountAmount, grandTotal, items };
+    return { subtotal, totalTax, totalDiscount, overallDiscountAmount, grandTotal, items, itemDiscounts };
   };
 
   const totals = calculateTotals();
@@ -1950,11 +1953,21 @@ export default function CreateInvoice() {
                           </div>
                           
                           <div className="col-span-1 text-sm text-gray-600">
-                            {form.watch("billType") === 'GST' && selectedProduct ? `₹${cgstAmount.toFixed(2)}` : '-'}
+                            {form.watch("billType") === 'GST' && selectedProduct ? (
+                              <div>
+                                <div>{selectedProduct.cgst || 0}%</div>
+                                <div className="text-xs">₹{cgstAmount.toFixed(2)}</div>
+                              </div>
+                            ) : '-'}
                           </div>
                           
                           <div className="col-span-1 text-sm text-gray-600">
-                            {form.watch("billType") === 'GST' && selectedProduct ? `₹${sgstAmount.toFixed(2)}` : '-'}
+                            {form.watch("billType") === 'GST' && selectedProduct ? (
+                              <div>
+                                <div>{selectedProduct.sgst || 0}%</div>
+                                <div className="text-xs">₹{sgstAmount.toFixed(2)}</div>
+                              </div>
+                            ) : '-'}
                           </div>
                           
                           <div className="col-span-1 font-semibold">
@@ -1983,53 +1996,10 @@ export default function CreateInvoice() {
                 {/* Totals Section */}
                 <div className="flex justify-end">
                   <div className="w-96 space-y-4">
-                    {/* Overall Discount */}
+                    {/* Overall Discount - Display Only */}
                     <div className="flex items-center justify-between">
                       <span className="text-gray-600">Overall Discount:</span>
-                      <div className="flex items-center space-x-2">
-                        <FormField
-                          control={form.control}
-                          name="discount"
-                          render={({ field }) => (
-                            <Input
-                              type="text"
-                              value={field.value || ''}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                // Allow empty string or valid decimal numbers
-                                if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                                  const discount = value === '' ? '' : parseFloat(value) || 0;
-                                  field.onChange(discount);
-                                }
-                              }}
-                              onBlur={(e) => {
-                                // Ensure minimum value on blur
-                                const value = e.target.value;
-                                if (value === '') {
-                                  field.onChange(0);
-                                }
-                              }}
-                              placeholder="0"
-                              className="w-24 text-right"
-                            />
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="discountType"
-                          render={({ field }) => (
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <SelectTrigger className="w-16">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="PERCENTAGE">%</SelectItem>
-                                <SelectItem value="AMOUNT">₹</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          )}
-                        />
-                      </div>
+                      <span className="font-semibold text-gray-900">₹{totals.itemDiscounts.toFixed(2)}</span>
                     </div>
 
                     <div className="space-y-2 text-sm">
@@ -2051,7 +2021,7 @@ export default function CreateInvoice() {
                       </div>
                       <div className="flex justify-between text-gray-600">
                         <span>Overall Discount:</span>
-                        <span>-₹{(totals.overallDiscountAmount || 0).toFixed(2)}</span>
+                        <span>-₹{totals.itemDiscounts.toFixed(2)}</span>
                       </div>
                     </div>
 
@@ -2059,7 +2029,7 @@ export default function CreateInvoice() {
                     
                     <div className="flex justify-between text-xl font-bold">
                       <span>Grand Total:</span>
-                      <span>₹{totals.grandTotal.toFixed(2)}</span>
+                      <span>₹{(totals.subtotal - totals.itemDiscounts).toFixed(2)}</span>
                     </div>
 
                     <div className="flex items-center justify-between">
@@ -2093,8 +2063,8 @@ export default function CreateInvoice() {
                     
                     <div className="flex justify-between text-lg font-semibold">
                       <span>Balance:</span>
-                      <span className={totals.grandTotal - (form.watch("amountPaid") || 0) > 0 ? "text-red-600" : "text-green-600"}>
-                        ₹{(totals.grandTotal - (form.watch("amountPaid") || 0)).toFixed(2)}
+                      <span className={(totals.subtotal - totals.itemDiscounts) - (form.watch("amountPaid") || 0) > 0 ? "text-red-600" : "text-green-600"}>
+                        ₹{((totals.subtotal - totals.itemDiscounts) - (form.watch("amountPaid") || 0)).toFixed(2)}
                       </span>
                     </div>
                   </div>
@@ -2137,6 +2107,73 @@ export default function CreateInvoice() {
                   </div>
                 </div>
 
+                {/* Bottom Action Buttons */}
+                <div className="flex justify-end space-x-4 pt-8 border-t">
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      if (!selectedCustomer || !selectedShop) return;
+                      
+                      const formData = form.getValues();
+                      const previewData = {
+                        invoiceNo: `INV-${Date.now().toString().slice(-6)}`,
+                        invoiceDate: new Date().toISOString(),
+                        shop: {
+                          name: selectedShop.name,
+                          place: selectedShop.place,
+                          tagline: "Quality Products & Services"
+                        },
+                        customer: {
+                          name: selectedCustomer.name,
+                          place: selectedCustomer.place,
+                          phone: selectedCustomer.phone
+                        },
+                        paymentDetails: {
+                          paymentStatus: formData.paymentStatus,
+                          paymentMode: formData.paymentMode,
+                          billType: formData.billType,
+                          saleType: formData.saleType
+                        },
+                        items: totals.items.map(item => ({
+                          name: item?.product?.name || 'Product',
+                          quantity: item?.quantity || 0,
+                          rate: item?.unitPrice || 0,
+                          discount: item?.discountAmount || 0,
+                          total: item?.totalPrice || 0,
+                          cgst: item?.cgst || 0,
+                          sgst: item?.sgst || 0,
+                          cgstAmount: item?.cgstAmount || 0,
+                          sgstAmount: item?.sgstAmount || 0,
+                        })),
+                        totals: {
+                          subtotal: totals.subtotal,
+                          totalDiscount: totals.itemDiscounts,
+                          totalTax: totals.totalTax,
+                          grandTotal: totals.subtotal - totals.itemDiscounts,
+                          amountPaid: formData.amountPaid || 0,
+                          balance: (totals.subtotal - totals.itemDiscounts) - (formData.amountPaid || 0),
+                        },
+                        remarks: formData.remark,
+                        termsAndConditions: formData.termsAndConditions
+                      };
+                      
+                      setIsPreviewDialogOpen(true);
+                    }}
+                    className="flex items-center space-x-2"
+                  >
+                    <Eye className="h-4 w-4" />
+                    <span>Preview</span>
+                  </Button>
+                  
+                  <Button 
+                    type="submit"
+                    disabled={!selectedCustomer || !selectedShop || fields.length === 0 || createMutation.isPending || updateMutation.isPending}
+                    className="bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white border-0"
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    {isEditMode ? (updateMutation.isPending ? "Updating..." : "Update Invoice") : (createMutation.isPending ? "Creating..." : "Create Invoice")}
+                  </Button>
+                </div>
 
               </CardContent>
             </Card>
@@ -2223,20 +2260,20 @@ export default function CreateInvoice() {
                     </div>
                     <div className="flex justify-between text-gray-600">
                       <span>Discount:</span>
-                      <span>- ₹{totals.totalDiscount.toFixed(2)}</span>
+                      <span>- ₹{totals.itemDiscounts.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-gray-600">
-                      <span>CGST:</span>
-                      <span>₹{(totals.totalTax / 2).toFixed(2)}</span>
+                      <span>Total CGST:</span>
+                      <span>₹{totals.items.reduce((sum, item) => sum + (item?.cgstAmount || 0), 0).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-gray-600">
-                      <span>SGST:</span>
-                      <span>₹{(totals.totalTax / 2).toFixed(2)}</span>
+                      <span>Total SGST:</span>
+                      <span>₹{totals.items.reduce((sum, item) => sum + (item?.sgstAmount || 0), 0).toFixed(2)}</span>
                     </div>
                     <Separator className="border-black" />
                     <div className="flex justify-between font-bold text-lg text-black">
                       <span>Grand Total:</span>
-                      <span>₹{totals.grandTotal.toFixed(2)}</span>
+                      <span>₹{(totals.subtotal - totals.itemDiscounts).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-black">
                       <span>Amount Paid:</span>
@@ -2244,7 +2281,7 @@ export default function CreateInvoice() {
                     </div>
                     <div className="flex justify-between font-semibold text-black">
                       <span>Balance:</span>
-                      <span>₹{(totals.grandTotal - (form.watch("amountPaid") || 0)).toFixed(2)}</span>
+                      <span>₹{((totals.subtotal - totals.itemDiscounts) - (form.watch("amountPaid") || 0)).toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
