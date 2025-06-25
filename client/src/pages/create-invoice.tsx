@@ -235,7 +235,7 @@ export default function CreateInvoice() {
   const calculateTotals = () => {
     const formData = form.watch();
     
-    if (!selectedCustomer || !selectedShop) return { subtotal: 0, totalTax: 0, totalDiscount: 0, overallDiscountAmount: 0, grandTotal: 0, items: [], itemDiscounts: 0 };
+    if (!selectedCustomer || !selectedShop) return { subtotal: 0, totalTax: 0, totalDiscount: 0, overallDiscountAmount: 0, grandTotal: 0, items: [], itemDiscounts: 0, itemsBeforeDiscount: 0 };
 
     const items = formData.saleItems.map(item => {
       const product = Array.isArray(products) ? products.find(p => p.productId === item.productId) : null;
@@ -282,25 +282,23 @@ export default function CreateInvoice() {
     const subtotal = items.reduce((sum, item) => sum + (item?.lineTotal || 0), 0);
     const totalTax = items.reduce((sum, item) => sum + (item?.taxAmount || 0), 0);
     
-    // Calculate overall discount as sum of individual item discounts
+    // Calculate totals before and after discounts
+    const itemsBeforeDiscount = items.reduce((sum, item) => sum + (item?.itemSubtotal || 0), 0);
     const itemDiscounts = items.reduce((sum, item) => sum + (item?.discountAmount || 0), 0);
     
-    // Ensure discount values are numbers
-    const discountValue = Number(formData.discount) || 0;
-    let totalDiscount = 0;
-    let overallDiscountAmount = 0;
-    
-    if (formData.discountType === 'PERCENTAGE') {
-      totalDiscount = (subtotal * discountValue) / 100;
-      overallDiscountAmount = totalDiscount;
-    } else {
-      totalDiscount = discountValue;
-      overallDiscountAmount = totalDiscount;
-    }
-    
-    const grandTotal = Math.max(0, subtotal - totalDiscount); // Ensure non-negative, exclude tax from grand total
+    // Subtotal is the total after individual item discounts are applied
+    const grandTotal = subtotal; // No additional overall discount subtraction
 
-    return { subtotal, totalTax, totalDiscount, overallDiscountAmount, grandTotal, items, itemDiscounts };
+    return { 
+      subtotal, 
+      totalTax, 
+      totalDiscount: itemDiscounts, 
+      overallDiscountAmount: itemDiscounts, 
+      grandTotal, 
+      items, 
+      itemDiscounts,
+      itemsBeforeDiscount 
+    };
   };
 
   const totals = calculateTotals();
@@ -2004,7 +2002,15 @@ export default function CreateInvoice() {
 
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
-                        <span>Subtotal:</span>
+                        <span>Total (Before Discount):</span>
+                        <span className="font-semibold">₹{totals.itemsBeforeDiscount.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-gray-600">
+                        <span>Item Discounts:</span>
+                        <span>-₹{totals.itemDiscounts.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Subtotal (After Discount):</span>
                         <span className="font-semibold">₹{totals.subtotal.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between text-gray-600">
@@ -2019,17 +2025,13 @@ export default function CreateInvoice() {
                         <span>Total Tax (Not included):</span>
                         <span>₹{totals.totalTax.toFixed(2)}</span>
                       </div>
-                      <div className="flex justify-between text-gray-600">
-                        <span>Overall Discount:</span>
-                        <span>-₹{totals.itemDiscounts.toFixed(2)}</span>
-                      </div>
                     </div>
 
                     <Separator />
                     
                     <div className="flex justify-between text-xl font-bold">
                       <span>Grand Total:</span>
-                      <span>₹{(totals.subtotal - totals.itemDiscounts).toFixed(2)}</span>
+                      <span>₹{totals.grandTotal.toFixed(2)}</span>
                     </div>
 
                     <div className="flex items-center justify-between">
@@ -2063,8 +2065,8 @@ export default function CreateInvoice() {
                     
                     <div className="flex justify-between text-lg font-semibold">
                       <span>Balance:</span>
-                      <span className={(totals.subtotal - totals.itemDiscounts) - (form.watch("amountPaid") || 0) > 0 ? "text-red-600" : "text-green-600"}>
-                        ₹{((totals.subtotal - totals.itemDiscounts) - (form.watch("amountPaid") || 0)).toFixed(2)}
+                      <span className={totals.grandTotal - (form.watch("amountPaid") || 0) > 0 ? "text-red-600" : "text-green-600"}>
+                        ₹{(totals.grandTotal - (form.watch("amountPaid") || 0)).toFixed(2)}
                       </span>
                     </div>
                   </div>
@@ -2146,12 +2148,13 @@ export default function CreateInvoice() {
                           sgstAmount: item?.sgstAmount || 0,
                         })),
                         totals: {
+                          itemsBeforeDiscount: totals.itemsBeforeDiscount,
                           subtotal: totals.subtotal,
                           totalDiscount: totals.itemDiscounts,
                           totalTax: totals.totalTax,
-                          grandTotal: totals.subtotal - totals.itemDiscounts,
+                          grandTotal: totals.grandTotal,
                           amountPaid: formData.amountPaid || 0,
-                          balance: (totals.subtotal - totals.itemDiscounts) - (formData.amountPaid || 0),
+                          balance: totals.grandTotal - (formData.amountPaid || 0),
                         },
                         remarks: formData.remark,
                         termsAndConditions: formData.termsAndConditions
@@ -2255,12 +2258,16 @@ export default function CreateInvoice() {
                 <div className="flex justify-end">
                   <div className="w-64 space-y-2">
                     <div className="flex justify-between text-black">
-                      <span>Sub Total:</span>
-                      <span>₹{totals.subtotal.toFixed(2)}</span>
+                      <span>Total (Before Discount):</span>
+                      <span>₹{totals.itemsBeforeDiscount.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-gray-600">
-                      <span>Discount:</span>
+                      <span>Item Discounts:</span>
                       <span>- ₹{totals.itemDiscounts.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-black">
+                      <span>Subtotal (After Discount):</span>
+                      <span>₹{totals.subtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-gray-600">
                       <span>Total CGST:</span>
@@ -2273,7 +2280,7 @@ export default function CreateInvoice() {
                     <Separator className="border-black" />
                     <div className="flex justify-between font-bold text-lg text-black">
                       <span>Grand Total:</span>
-                      <span>₹{(totals.subtotal - totals.itemDiscounts).toFixed(2)}</span>
+                      <span>₹{totals.grandTotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-black">
                       <span>Amount Paid:</span>
@@ -2281,7 +2288,7 @@ export default function CreateInvoice() {
                     </div>
                     <div className="flex justify-between font-semibold text-black">
                       <span>Balance:</span>
-                      <span>₹{((totals.subtotal - totals.itemDiscounts) - (form.watch("amountPaid") || 0)).toFixed(2)}</span>
+                      <span>₹{(totals.grandTotal - (form.watch("amountPaid") || 0)).toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
