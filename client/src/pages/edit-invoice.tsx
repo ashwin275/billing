@@ -256,7 +256,7 @@ export default function EditInvoice() {
       const cgstAmount = (lineTotal * cgstRate) / 100;
       const sgstAmount = (lineTotal * sgstRate) / 100;
       const taxAmount = cgstAmount + sgstAmount;
-      const totalPrice = lineTotal; // Tax not included in total
+      const totalPrice = lineTotal + taxAmount; // Tax included in total
 
       return {
         product,
@@ -285,7 +285,8 @@ export default function EditInvoice() {
       totalDiscount = formData.discount;
     }
     
-    const grandTotal = subtotal + totalTax - totalDiscount; // Include tax in grand total
+    // Grand total is sum of all item totals (which already include tax) minus overall discount
+    const grandTotal = items.reduce((sum, item) => sum + (item?.totalPrice || 0), 0) - totalDiscount;
 
     console.log('Calculation results:', { subtotal, totalTax, totalDiscount, grandTotal, itemsCount: items.length });
     
