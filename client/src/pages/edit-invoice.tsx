@@ -250,8 +250,8 @@ export default function EditInvoice() {
       const discountedPrice = unitPrice - discountAmount;
       const lineTotal = discountedPrice * item.quantity;
       
-      const cgstRate = formData.billType === 'GST' ? product.cgst : 0;
-      const sgstRate = formData.billType === 'GST' ? product.sgst : 0;
+      const cgstRate = formData.billType === 'GST' ? (product.cgst || 9) : 0;
+      const sgstRate = formData.billType === 'GST' ? (product.sgst || 9) : 0;
       
       const cgstAmount = (lineTotal * cgstRate) / 100;
       const sgstAmount = (lineTotal * sgstRate) / 100;
@@ -285,7 +285,7 @@ export default function EditInvoice() {
       totalDiscount = formData.discount;
     }
     
-    const grandTotal = subtotal - totalDiscount; // Exclude tax from grand total
+    const grandTotal = subtotal + totalTax - totalDiscount; // Include tax in grand total
 
     console.log('Calculation results:', { subtotal, totalTax, totalDiscount, grandTotal, itemsCount: items.length });
     
@@ -859,11 +859,11 @@ export default function EditInvoice() {
                               </div>
                               <div class="total-line">
                                 <span>CGST (9%):</span>
-                                <span>₹${(previewData.totals.totalTax / 2).toFixed(2)}</span>
+                                <span>₹${((previewData.totals.totalTax || 0) / 2).toFixed(2)}</span>
                               </div>
                               <div class="total-line">
                                 <span>SGST (9%):</span>
-                                <span>₹${(previewData.totals.totalTax / 2).toFixed(2)}</span>
+                                <span>₹${((previewData.totals.totalTax || 0) / 2).toFixed(2)}</span>
                               </div>
                               <div class="total-line grand-total">
                                 <span>Total:</span>
@@ -1310,11 +1310,11 @@ export default function EditInvoice() {
                               </div>
                               <div class="total-line">
                                 <span>CGST (9%):</span>
-                                <span>₹${(invoiceData.totals.totalTax / 2).toFixed(2)}</span>
+                                <span>₹${((invoiceData.totals.totalTax || 0) / 2).toFixed(2)}</span>
                               </div>
                               <div class="total-line">
                                 <span>SGST (9%):</span>
-                                <span>₹${(invoiceData.totals.totalTax / 2).toFixed(2)}</span>
+                                <span>₹${((invoiceData.totals.totalTax || 0) / 2).toFixed(2)}</span>
                               </div>
                               <div class="total-line grand-total">
                                 <span>Total:</span>
