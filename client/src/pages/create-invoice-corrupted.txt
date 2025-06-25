@@ -476,50 +476,22 @@ export default function CreateInvoice() {
               <Eye className="h-4 w-4 mr-2" />
               Preview
             </Button>
-            <Button 
-              variant="outline"
-              onClick={() => {
-                if (!selectedCustomer || !selectedShop) return;
-                setIsPreviewDialogOpen(true);
-              }}
-              disabled={!selectedCustomer || !selectedShop}
-            >
-              <Eye className="h-4 w-4 mr-2" />
-              Preview
-            </Button>
-          </div>
-        </div>
-
-        {/* Invoice Preview Dialog */}
-        <Dialog open={isPreviewDialogOpen} onOpenChange={setIsPreviewDialogOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Invoice Preview</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              {/* Preview content will be rendered here */}
-              <p>Invoice preview content goes here</p>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Customer Search Dialog */}
-        <CustomerSearchDialog
-          open={isCustomerDialogOpen}
-          onOpenChange={setIsCustomerDialogOpen}
-          onSelectCustomer={handleSelectCustomer}
-        />
-
-        {/* Product Search Dialog */}
-        <ProductSearchDialog
-          open={isProductDialogOpen}
-          onOpenChange={setIsProductDialogOpen}
-          onSelectProduct={handleSelectProduct}
-        />
-      </div>
-    </div>
-  );
-}
+                      <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+                        
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+                        
+                        body { 
+                          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+                          background: #f8fafc;
+                          padding: 20px;
+                          line-height: 1.4;
+                        }
+                        
+                        .invoice-container {
+                          max-width: 800px;
+                          margin: 0 auto;
+                          background: white;
                           border-radius: 12px;
                           overflow: hidden;
                           box-shadow: 0 10px 25px rgba(0,0,0,0.1);
