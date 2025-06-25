@@ -118,7 +118,7 @@ export default function CreateInvoice() {
       discountType: "AMOUNT",
       amountPaid: 0,
       paymentMode: "CASH",
-      paymentStatus: "PENDING",
+      paymentStatus: "PAID",
       remark: "",
       dueDate: null,
       billType: "GST",
