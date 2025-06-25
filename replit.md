@@ -97,6 +97,7 @@ This is a React-based billing dashboard application built for managing invoices,
 
 ## Changelog
 
+- June 25, 2025: Added role-based access control to hide "Add User" functionality from non-admin users in Dashboard Overview
 - June 25, 2025: Fixed Dashboard Recent Invoices "View All" button to navigate to Invoice Management and added orange background styling for pending invoices
 - June 25, 2025: Removed Invoice ID display from customer section in Invoice Management components for cleaner presentation
 - June 25, 2025: Added golden gradient background and crown badge for LIFETIME subscription shops in shop management for premium visual distinction
