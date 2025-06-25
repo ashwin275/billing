@@ -48,23 +48,16 @@ const invoiceSchema = z.object({
   billType: z.enum(["GST", "NON_GST"]).default("GST"),
   saleType: z.enum(["RETAIL", "WHOLESALE"]).default("RETAIL"),
   transactionId: z.string().min(1, "Transaction ID is required"),
-  signature: z.string().optional(),
-  saleItems: z.array(saleItemSchema).min(0, "No items required for validation"),
-  termsAndConditions: z.string().optional(),
-  useCustomBillingAddress: z.boolean().default(false),
-  customBillingAddress: z.string().optional(),
+  saleItems: z.array(saleItemSchema).min(1, "At least one item is required")
+});
+
+const customerSchema = z.object({
+  name: z.string().min(1, "Customer name is required"),
+  place: z.string().min(1, "Place is required"),
+  phone: z.string().min(1, "Phone number is required")
 });
 
 type InvoiceFormData = z.infer<typeof invoiceSchema>;
-
-const customerSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  place: z.string().min(1, "Place is required"),
-  phone: z.string().min(10, "Phone number must be at least 10 digits"),
-  shopId: z.number().min(1, "Shop is required"),
-  customerType: z.string().default("INDIVIDUAL"),
-});
-
 type CustomerFormData = z.infer<typeof customerSchema>;
 
 export default function CreateInvoice() {
@@ -72,44 +65,18 @@ export default function CreateInvoice() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // Check if we're in edit mode
-  const searchParams = new URLSearchParams(window.location.search);
-  const editInvoiceId = searchParams.get('edit');
-  const isEditMode = !!editInvoiceId;
-  
-  const [isAddCustomerDialogOpen, setIsAddCustomerDialogOpen] = useState(false);
-  const [isCustomerSearchDialogOpen, setIsCustomerSearchDialogOpen] = useState(false);
-  const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
-  const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
-  const [showBackWarning, setShowBackWarning] = useState(false);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  // State management
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [selectedShop, setSelectedShop] = useState<Shop | null>(null);
-
-  // Fetch data
-  const { data: products = [] } = useQuery({
-    queryKey: ["/api/products/all"],
-    queryFn: () => productsApi.getAllProducts(),
+  const [totals, setTotals] = useState({
+    subtotal: 0,
+    totalDiscount: 0,
+    totalTax: 0,
+    grandTotal: 0,
+    items: [] as any[]
   });
-
-  const { data: customers = [] } = useQuery({
-    queryKey: ["/api/customers/all"],
-    queryFn: () => customersApi.getAllCustomers(),
-  });
-
-  const { data: shops = [] } = useQuery({
-    queryKey: ["/shop/all"],
-    queryFn: () => shopsApi.getAllShops(),
-  });
-
-  // Fetch invoice data for edit mode
-  const { data: invoice, isLoading: isLoadingInvoice } = useQuery({
-    queryKey: ["/api/invoices", editInvoiceId],
-    queryFn: () => invoicesApi.getInvoiceById(parseInt(editInvoiceId!)),
-    enabled: isEditMode,
-  });
-
-  // Main invoice form
+  
+  // Form setup
   const form = useForm<InvoiceFormData>({
     resolver: zodResolver(invoiceSchema),
     defaultValues: {
@@ -125,11 +92,7 @@ export default function CreateInvoice() {
       billType: "GST",
       saleType: "RETAIL",
       transactionId: `TXN-${Date.now()}`,
-      signature: "",
-      saleItems: [{ productId: 0, quantity: 1, discount: 0, discountType: "AMOUNT", unitPrice: 0 }],
-      termsAndConditions: "",
-      useCustomBillingAddress: false,
-      customBillingAddress: "",
+      saleItems: [{ productId: 0, quantity: 1, discount: 0, discountType: "AMOUNT", unitPrice: 0 }]
     }
   });
 
@@ -138,22 +101,26 @@ export default function CreateInvoice() {
     name: "saleItems"
   });
 
-  // Customer form for adding new customers
-  const customerForm = useForm<CustomerFormData>({
-    resolver: zodResolver(customerSchema),
-    defaultValues: {
-      name: "",
-      place: "",
-      phone: "",
-      shopId: 0,
-      customerType: "INDIVIDUAL",
-    },
+  // Data fetching
+  const { data: products = [], isLoading: productsLoading } = useQuery({
+    queryKey: ["/api/products"],
+    enabled: true
+  });
+
+  const { data: customers = [], isLoading: customersLoading } = useQuery({
+    queryKey: ["/api/customers"],
+    enabled: true
+  });
+
+  const { data: shops = [], isLoading: shopsLoading } = useQuery({
+    queryKey: ["/api/shops"],
+    enabled: true
   });
 
   // Mutations
   const createInvoiceMutation = useMutation({
     mutationFn: async (invoiceData: InvoiceInput) => {
-      const response = await invoicesApi.addInvoice(invoiceData);
+      const response = await invoicesApi.createInvoice(invoiceData);
       return response;
     },
     onSuccess: () => {
@@ -162,7 +129,7 @@ export default function CreateInvoice() {
         description: "Invoice created successfully"
       });
       queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
-      // Redirect to invoice management tab after creating invoice
+      // Redirect to invoice management tab
       setLocation("/dashboard?tab=invoices");
     },
     onError: (error: any) => {
@@ -172,60 +139,6 @@ export default function CreateInvoice() {
         variant: "destructive"
       });
     }
-  });
-
-  const updateInvoiceMutation = useMutation({
-    mutationFn: async (invoiceData: InvoiceInput) => {
-      const response = await invoicesApi.updateInvoice(parseInt(editInvoiceId!), invoiceData);
-      return response;
-    },
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Invoice updated successfully"
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
-      setLocation("/dashboard?tab=invoices");
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update invoice",
-        variant: "destructive"
-      });
-    }
-  });
-
-  const createCustomerMutation = useMutation({
-    mutationFn: async (customerData: CustomerFormData) => {
-      const response = await customersApi.addCustomer(customerData);
-      return response;
-    },
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Customer added successfully"
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/customers/all"] });
-      setIsAddCustomerDialogOpen(false);
-      customerForm.reset();
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to add customer",
-        variant: "destructive"
-      });
-    }
-  });
-
-  // Calculate totals
-  const [totals, setTotals] = useState({
-    subtotal: 0,
-    totalDiscount: 0,
-    totalTax: 0,
-    grandTotal: 0,
-    items: [] as any[]
   });
 
   // Calculate totals whenever form data changes
@@ -250,7 +163,7 @@ export default function CreateInvoice() {
         return null;
       }
 
-      const unitPrice = item.unitPrice || (formData.saleType === "RETAIL" ? product.retailRate : product.wholesaleRate);
+      const unitPrice = item.unitPrice || (formData.saleType === "RETAIL" ? product.retailPrice : product.wholesalePrice);
       const lineSubtotal = unitPrice * item.quantity;
       
       // Calculate item discount
@@ -266,11 +179,13 @@ export default function CreateInvoice() {
       // Calculate tax
       const cgstRate = product.cgst || 0;
       const sgstRate = product.sgst || 0;
+      const igstRate = product.igst || 0;
       
       const cgstAmount = (lineTotal * cgstRate) / 100;
       const sgstAmount = (lineTotal * sgstRate) / 100;
+      const igstAmount = (lineTotal * igstRate) / 100;
       
-      const itemTotalTax = cgstAmount + sgstAmount;
+      const itemTotalTax = cgstAmount + sgstAmount + igstAmount;
       const totalPrice = lineTotal + itemTotalTax;
       
       subtotal += lineSubtotal;
@@ -285,6 +200,7 @@ export default function CreateInvoice() {
         discountAmount: itemDiscount,
         cgstAmount,
         sgstAmount,
+        igstAmount,
         totalPrice
       };
     }).filter(Boolean);
@@ -309,38 +225,12 @@ export default function CreateInvoice() {
     });
   };
 
-  // Load invoice data for edit mode
-  useEffect(() => {
-    if (invoice && isEditMode) {
-      const customer = customers.find(c => c.customerId === invoice.customerId);
-      const shop = shops.find(s => s.shopId === invoice.shopId);
-      
-      if (customer) setSelectedCustomer(customer);
-      if (shop) setSelectedShop(shop);
-
-      form.reset({
-        customerId: invoice.customerId,
-        shopId: invoice.shopId,
-        discount: invoice.discount || 0,
-        discountType: "PERCENTAGE",
-        amountPaid: invoice.amountPaid || 0,
-        paymentMode: invoice.paymentMode || "CASH",
-        paymentStatus: invoice.paymentStatus || "PENDING",
-        remark: invoice.remark || "",
-        dueDate: invoice.dueDate || null,
-        billType: invoice.billType || "GST",
-        saleType: invoice.saleType || "RETAIL",
-        transactionId: invoice.transactionId || "",
-        saleItems: invoice.saleItems || []
-      });
-    }
-  }, [invoice, customers, shops, form, isEditMode]);
-
   const onSubmit = (data: InvoiceFormData) => {
     const invoiceInput: InvoiceInput = {
       customerId: data.customerId,
       shopId: data.shopId,
       discount: data.discount,
+      discountType: data.discountType,
       amountPaid: data.amountPaid,
       paymentMode: data.paymentMode,
       paymentStatus: data.paymentStatus,
@@ -349,50 +239,25 @@ export default function CreateInvoice() {
       billType: data.billType,
       saleType: data.saleType,
       transactionId: data.transactionId,
-      saleItems: data.saleItems,
-      totalAmount: totals.grandTotal,
-      tax: totals.totalTax
+      saleItems: data.saleItems
     };
 
-    if (isEditMode) {
-      updateInvoiceMutation.mutate(invoiceInput);
-    } else {
-      createInvoiceMutation.mutate(invoiceInput);
-    }
-  };
-
-  const onAddCustomer = (data: CustomerFormData) => {
-    createCustomerMutation.mutate(data);
-  };
-
-  const handleFormSubmit = (data: InvoiceFormData) => {
-    onSubmit(data);
+    createInvoiceMutation.mutate(invoiceInput);
   };
 
   const handleBackClick = () => {
-    if (hasUnsavedChanges) {
-      setShowBackWarning(true);
-    } else {
-      setLocation("/dashboard");
-    }
+    setLocation("/dashboard");
   };
 
   const handleSelectCustomer = (customer: Customer) => {
     setSelectedCustomer(customer);
     form.setValue("customerId", customer.customerId);
-    setIsCustomerSearchDialogOpen(false);
   };
 
-  if (isEditMode && isLoadingInvoice) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading invoice...</p>
-        </div>
-      </div>
-    );
-  }
+  const handleSelectShop = (shop: Shop) => {
+    setSelectedShop(shop);
+    form.setValue("shopId", shop.shopId);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
@@ -404,9 +269,7 @@ export default function CreateInvoice() {
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Dashboard
             </Button>
-            <h1 className="text-2xl font-bold text-gray-900">
-              {isEditMode ? "Edit Invoice" : "Create Invoice"}
-            </h1>
+            <h1 className="text-2xl font-bold text-gray-900">Create Invoice</h1>
           </div>
           <div className="flex items-center space-x-2">
             <Button 
@@ -535,6 +398,14 @@ export default function CreateInvoice() {
                         
                         .invoice-title {
                           text-align: right;
+                        }
+                        
+                        .invoice-title h2 {
+                          font-size: 32px;
+                          font-weight: 300;
+                          letter-spacing: 2px;
+                          margin-bottom: 5px;
+                          text-shadow: 0 2px 10px rgba(0,0,0,0.1);
                         }
                         
                         .invoice-meta {
@@ -673,6 +544,41 @@ export default function CreateInvoice() {
                           font-size: 11px;
                           line-height: 1.4;
                           margin-bottom: 4px;
+                        }
+                        
+                        .signature-section {
+                          text-align: center;
+                          padding: 15px;
+                        }
+                        
+                        .signature-line {
+                          border-top: 2px solid #2d3748;
+                          width: 120px;
+                          margin: 25px auto 8px;
+                        }
+                        
+                        .signature-text {
+                          color: #4a5568;
+                          font-size: 12px;
+                          font-weight: 500;
+                        }
+                        
+                        .footer-wave {
+                          background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+                          height: 60px;
+                          position: relative;
+                          margin-top: 30px;
+                        }
+                        
+                        .footer-wave::before {
+                          content: '';
+                          position: absolute;
+                          top: -30px;
+                          left: 0;
+                          width: 100%;
+                          height: 60px;
+                          background: white;
+                          border-radius: 0 0 50% 50% / 0 0 100% 100%;
                         }
                         
                         @media print {
@@ -820,6 +726,9 @@ export default function CreateInvoice() {
                             </div>
                           </div>
                         </div>
+
+                        <!-- Footer Wave -->
+                        <div class="footer-wave"></div>
                       </div>
                       
                       <script>
@@ -841,13 +750,10 @@ export default function CreateInvoice() {
             </Button>
             <Button 
               onClick={() => form.handleSubmit(onSubmit)()}
-              disabled={isEditMode ? updateInvoiceMutation.isPending : createInvoiceMutation.isPending}
+              disabled={createInvoiceMutation.isPending}
             >
               <Save className="h-4 w-4 mr-2" />
-              {isEditMode 
-                ? (updateInvoiceMutation.isPending ? "Updating..." : "Update Invoice")
-                : (createInvoiceMutation.isPending ? "Creating..." : "Create Invoice")
-              }
+              {createInvoiceMutation.isPending ? "Creating..." : "Create Invoice"}
             </Button>
           </div>
         </div>
@@ -864,8 +770,6 @@ export default function CreateInvoice() {
                     customers={customers}
                     onSelectCustomer={handleSelectCustomer}
                     selectedCustomer={selectedCustomer}
-                    open={isCustomerSearchDialogOpen}
-                    onOpenChange={setIsCustomerSearchDialogOpen}
                   />
                   
                   <Card>
@@ -886,7 +790,7 @@ export default function CreateInvoice() {
                                 const shopId = parseInt(value);
                                 const shop = shops.find(s => s.shopId === shopId);
                                 if (shop) {
-                                  setSelectedShop(shop);
+                                  handleSelectShop(shop);
                                 }
                                 field.onChange(shopId);
                               }}
@@ -970,7 +874,7 @@ export default function CreateInvoice() {
                                     const product = products.find(p => p.productId === productId);
                                     if (product) {
                                       const saleType = form.getValues("saleType");
-                                      const price = saleType === "RETAIL" ? product.retailRate : product.wholesaleRate;
+                                      const price = saleType === "RETAIL" ? product.retailPrice : product.wholesalePrice;
                                       form.setValue(`saleItems.${index}.unitPrice`, price);
                                     }
                                     field.onChange(productId);
@@ -985,7 +889,7 @@ export default function CreateInvoice() {
                                   <SelectContent>
                                     {products.map((product) => (
                                       <SelectItem key={product.productId} value={product.productId.toString()}>
-                                        {product.name} - ₹{form.getValues("saleType") === "RETAIL" ? product.retailRate : product.wholesaleRate}
+                                        {product.name} - ₹{form.getValues("saleType") === "RETAIL" ? product.retailPrice : product.wholesalePrice}
                                       </SelectItem>
                                     ))}
                                   </SelectContent>
@@ -1406,137 +1310,6 @@ export default function CreateInvoice() {
           </form>
         </Form>
       </div>
-
-      {/* Add Customer Dialog */}
-      <Dialog open={isAddCustomerDialogOpen} onOpenChange={setIsAddCustomerDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center">
-              <User className="h-5 w-5 mr-2" />
-              Add New Customer
-            </DialogTitle>
-          </DialogHeader>
-          <Form {...customerForm}>
-            <form onSubmit={customerForm.handleSubmit(onAddCustomer)} className="space-y-4">
-              <FormField
-                control={customerForm.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Customer Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter customer name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={customerForm.control}
-                name="place"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Place</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter place" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={customerForm.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter phone number" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={customerForm.control}
-                name="shopId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Shop</FormLabel>
-                    <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select Shop" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {shops.map((shop) => (
-                          <SelectItem key={shop.shopId} value={shop.shopId.toString()}>
-                            {shop.name} - {shop.place}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={customerForm.control}
-                name="customerType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Customer Type</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="INDIVIDUAL">Individual</SelectItem>
-                        <SelectItem value="BUSINESS">Business</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <div className="flex justify-end space-x-2">
-                <Button type="button" variant="outline" onClick={() => setIsAddCustomerDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={createCustomerMutation.isPending}>
-                  {createCustomerMutation.isPending ? "Adding..." : "Add Customer"}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Back Warning Dialog */}
-      <AlertDialog open={showBackWarning} onOpenChange={setShowBackWarning}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
-            <AlertDialogDescription>
-              You have unsaved changes. Are you sure you want to leave? Your changes will be lost.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Stay</AlertDialogCancel>
-            <AlertDialogAction onClick={() => setLocation("/dashboard")}>
-              Leave Anyway
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
