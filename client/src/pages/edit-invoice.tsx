@@ -106,7 +106,7 @@ export default function EditInvoice() {
       discountType: "PERCENTAGE",
       amountPaid: 0,
       paymentMode: "CASH",
-      paymentStatus: "PENDING",
+      paymentStatus: "PAID",
       remark: "",
       dueDate: null,
       billType: "GST",
