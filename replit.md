@@ -97,6 +97,7 @@ This is a React-based billing dashboard application built for managing invoices,
 
 ## Changelog
 
+- June 25, 2025: Enhanced invoice success notifications with custom toast design featuring invoice details, status indicators, action buttons, and automatic navigation; improved error handling with retry functionality; updated both create and edit invoice flows for consistent user experience
 - June 25, 2025: Finalized invoice tax display system - added CGST/SGST columns per item with clean labeling; tax amounts calculated and displayed but not added to grand total; corrected "Sub Total" label to reflect actual product prices; default payment status set to "PAID"; removed "Type" field from invoice sections
 - June 25, 2025: Updated create invoice totals display to show real-world invoice scenario - displays total before discounts, item discounts, and subtotal after discounts; removed preview button from bottom action area; fixed mutation reference errors
 - January 25, 2025: Enhanced create invoice page with duplicate bottom buttons, CGST/SGST percentage display, and automatic overall discount calculation

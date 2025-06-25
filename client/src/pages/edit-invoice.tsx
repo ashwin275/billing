@@ -151,21 +151,90 @@ export default function EditInvoice() {
   // Update invoice mutation
   const updateInvoiceMutation = useMutation({
     mutationFn: async (invoiceData: InvoiceInput) => {
-      await invoicesApi.updateInvoice(invoiceId!, invoiceData);
+      const response = await invoicesApi.updateInvoice(invoiceId!, invoiceData);
+      return response;
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
+      const invoiceNumber = variables.transactionId;
+      const customerName = selectedCustomer?.name || "Customer";
+      const currentTotals = calculateTotals();
+      
       toast({
-        title: "Invoice updated successfully",
-        description: "The invoice has been updated and saved.",
+        title: "Invoice Updated Successfully!",
+        description: (
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <p className="font-semibold text-blue-700">Invoice #{invoiceNumber}</p>
+              <p className="text-sm text-gray-600">Customer: {customerName}</p>
+            </div>
+            
+            <div className="flex items-center gap-3 text-sm">
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-green-700 font-medium">UPDATED</span>
+              </div>
+              <span className="text-gray-400">•</span>
+              <span className="font-medium">₹{currentTotals.grandTotal.toFixed(2)}</span>
+            </div>
+            
+            <div className="flex gap-2 pt-2">
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => setLocation("/dashboard?tab=invoices")}
+                className="h-8 px-3 text-xs hover:bg-gray-50"
+              >
+                View Invoices
+              </Button>
+              <Button 
+                size="sm" 
+                onClick={() => setLocation("/create-invoice")}
+                className="h-8 px-3 text-xs bg-blue-600 hover:bg-blue-700"
+              >
+                Create New
+              </Button>
+            </div>
+          </div>
+        ),
+        duration: 6000,
       });
+      
       queryClient.invalidateQueries({ queryKey: ["/api/invoices/all"] });
       queryClient.invalidateQueries({ queryKey: ["/api/invoices", invoiceId] });
+      
+      setTimeout(() => {
+        setLocation("/dashboard?tab=invoices");
+      }, 2000);
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to update invoice",
-        description: error?.detail || error?.message || "An error occurred while updating the invoice.",
+        title: "Failed to Update Invoice",
+        description: (
+          <div className="space-y-2">
+            <p className="text-sm text-red-600">{error?.detail || error?.message || "An error occurred while updating the invoice."}</p>
+            <div className="flex gap-2 pt-2">
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => {
+                  const formData = form.getValues();
+                  const totals = calculateTotals();
+                  const invoiceInput = {
+                    ...formData,
+                    totalAmount: totals.grandTotal,
+                    tax: totals.totalTax,
+                  };
+                  updateInvoiceMutation.mutate(invoiceInput);
+                }}
+                className="h-8 px-3 text-xs"
+              >
+                Try Again
+              </Button>
+            </div>
+          </div>
+        ),
         variant: "destructive",
+        duration: 8000,
       });
     },
   });
