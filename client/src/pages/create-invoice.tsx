@@ -860,6 +860,8 @@ export default function CreateInvoice() {
                                 <th class="text-center">Qty.</th>
                                 <th class="text-right">Price</th>
                                 <th class="text-right">Discount</th>
+                                <th class="text-right">CGST (9%)</th>
+                                <th class="text-right">SGST (9%)</th>
                                 <th class="text-right">Total</th>
                               </tr>
                             </thead>
@@ -872,6 +874,8 @@ export default function CreateInvoice() {
                                   <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
                                   <td class="text-right">₹${item?.unitPrice?.toFixed(2) || '0.00'}</td>
                                   <td class="text-right">₹${item?.discountAmount?.toFixed(2) || '0.00'}</td>
+                                  <td class="text-right">₹${(item?.cgstAmount || 0).toFixed(2)}</td>
+                                  <td class="text-right">₹${(item?.sgstAmount || 0).toFixed(2)}</td>
                                   <td class="text-right" style="font-weight: 600; color: #2d3748;">₹${item?.totalPrice?.toFixed(2) || '0.00'}</td>
                                 </tr>
                               `).join('')}
@@ -1312,6 +1316,8 @@ export default function CreateInvoice() {
                                 <th class="text-center">Qty.</th>
                                 <th class="text-right">Price</th>
                                 <th class="text-right">Discount</th>
+                                <th class="text-right">CGST (9%)</th>
+                                <th class="text-right">SGST (9%)</th>
                                 <th class="text-right">Total</th>
                               </tr>
                             </thead>
@@ -1324,6 +1330,8 @@ export default function CreateInvoice() {
                                   <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
                                   <td class="text-right">₹${item?.unitPrice?.toFixed(2) || '0.00'}</td>
                                   <td class="text-right">₹${item?.discountAmount?.toFixed(2) || '0.00'}</td>
+                                  <td class="text-right">₹${(item?.cgstAmount || 0).toFixed(2)}</td>
+                                  <td class="text-right">₹${(item?.sgstAmount || 0).toFixed(2)}</td>
                                   <td class="text-right" style="font-weight: 600; color: #2d3748;">₹${item?.totalPrice?.toFixed(2) || '0.00'}</td>
                                 </tr>
                               `).join('')}
