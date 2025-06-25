@@ -513,13 +513,13 @@ export default function CreateInvoice() {
     form.setValue('customerId', customer.customerId);
   };
 
-  // Download PDF function
+  // Download PDF function - using exact same design as preview
   const downloadInvoicePDF = () => {
     if (!createdInvoiceData) return;
     
     const { customer, shop, totals, formData } = createdInvoiceData;
     
-    const invoiceData = {
+    const previewData = {
       invoiceNo: `INV-${Date.now().toString().slice(-6)}`,
       invoiceDate: new Date().toISOString(),
       shop: {
@@ -544,15 +544,15 @@ export default function CreateInvoice() {
       remark: formData.remark
     };
 
-    // Create PDF window
-    const pdfWindow = window.open('', '_blank', 'width=900,height=700');
+    // Create PDF window with EXACT same styling as preview
+    const pdfWindow = window.open('', '_blank', 'width=900,height=700,scrollbars=yes');
     if (!pdfWindow) return;
 
     pdfWindow.document.write(`
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Invoice - ${invoiceData.invoiceNo}</title>
+          <title>Invoice - ${previewData.invoiceNo}</title>
           <style>
             @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
             
@@ -560,245 +560,374 @@ export default function CreateInvoice() {
             
             body { 
               font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-              background: white;
+              background: #f8fafc;
               padding: 20px;
               line-height: 1.4;
               font-size: 14px;
-              color: #1f2937;
+              color: #2d3748;
             }
             
-            .invoice-container {
-              max-width: 800px;
+            .invoice-preview {
+              max-width: 850px;
               margin: 0 auto;
               background: white;
-              box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-              border-radius: 8px;
+              border-radius: 12px;
+              overflow: hidden;
+              box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            }
+            
+            .header-wave {
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              height: 120px;
+              position: relative;
               overflow: hidden;
             }
             
-            .header {
-              background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            .header-wave::after {
+              content: '';
+              position: absolute;
+              bottom: -30px;
+              left: 0;
+              width: 100%;
+              height: 60px;
+              background: white;
+              border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+            }
+            
+            .header-content {
+              position: relative;
+              z-index: 2;
               color: white;
-              padding: 24px;
-              text-align: center;
-            }
-            
-            .header h1 {
-              font-size: 28px;
-              font-weight: 700;
-              margin-bottom: 8px;
-            }
-            
-            .header p {
-              opacity: 0.9;
-              font-size: 16px;
-            }
-            
-            .content {
-              padding: 24px;
-            }
-            
-            .invoice-details {
-              display: grid;
-              grid-template-columns: 1fr 1fr;
-              gap: 24px;
-              margin-bottom: 32px;
-              padding: 20px;
-              background: #f8fafc;
-              border-radius: 8px;
-            }
-            
-            .detail-section h3 {
-              font-size: 16px;
-              font-weight: 600;
-              color: #374151;
-              margin-bottom: 12px;
-              padding-bottom: 8px;
-              border-bottom: 2px solid #e5e7eb;
-            }
-            
-            .detail-item {
+              padding: 25px 40px;
               display: flex;
               justify-content: space-between;
-              margin-bottom: 8px;
-              padding: 4px 0;
+              align-items: flex-start;
             }
             
-            .detail-label {
-              font-weight: 500;
-              color: #6b7280;
+            .logo-section {
+              display: flex;
+              align-items: center;
+              gap: 12px;
             }
             
-            .detail-value {
+            .logo-placeholder {
+              width: 45px;
+              height: 45px;
+              background: rgba(255,255,255,0.2);
+              border-radius: 8px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 18px;
+              font-weight: bold;
+              border: 2px solid rgba(255,255,255,0.3);
+            }
+            
+            .company-info h1 {
+              font-size: 24px;
+              font-weight: 700;
+              margin-bottom: 3px;
+              text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            }
+            
+            .company-tagline {
+              font-size: 12px;
+              opacity: 0.9;
+              font-weight: 300;
+            }
+            
+            .invoice-title {
+              text-align: right;
+            }
+            
+            .invoice-title h2 {
+              font-size: 32px;
+              font-weight: 300;
+              letter-spacing: 2px;
+              margin-bottom: 5px;
+              text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            }
+            
+            .invoice-meta {
+              font-size: 12px;
+              opacity: 0.9;
+            }
+            
+            .content-section {
+              padding: 40px 40px 30px;
+            }
+            
+            .bill-to-section {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 40px;
+              margin-bottom: 30px;
+            }
+            
+            .info-block h3 {
+              color: #2d3748;
+              font-size: 14px;
               font-weight: 600;
-              color: #1f2937;
+              margin-bottom: 10px;
+              padding-bottom: 5px;
+              border-bottom: 2px solid #e2e8f0;
+            }
+            
+            .info-block p {
+              color: #4a5568;
+              line-height: 1.5;
+              margin-bottom: 3px;
+              font-size: 13px;
+            }
+            
+            .customer-name {
+              font-weight: 600;
+              font-size: 15px;
+              color: #2d3748;
             }
             
             .items-table {
               width: 100%;
+              margin: 25px 0;
               border-collapse: collapse;
-              margin: 24px 0;
-              background: white;
               border-radius: 8px;
               overflow: hidden;
-              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+              box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            }
+            
+            .items-table thead {
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
             }
             
             .items-table th {
-              background: #f1f5f9;
-              padding: 12px 8px;
-              text-align: left;
+              padding: 15px 12px;
               font-weight: 600;
-              color: #475569;
-              border-bottom: 2px solid #e2e8f0;
               font-size: 13px;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
             }
             
             .items-table td {
-              padding: 12px 8px;
-              border-bottom: 1px solid #f1f5f9;
+              padding: 15px 12px;
+              border-bottom: 1px solid #f7fafc;
               font-size: 13px;
             }
             
-            .items-table tbody tr:hover {
-              background: #fafbfc;
+            .items-table tbody tr:nth-child(even) {
+              background: #f8fafc;
             }
             
+            .items-table tbody tr:hover {
+              background: #edf2f7;
+            }
+            
+            .text-left { text-align: left; }
+            .text-center { text-align: center; }
+            .text-right { text-align: right; }
+            
             .totals-section {
-              margin-top: 32px;
-              padding-top: 24px;
-              border-top: 2px solid #e5e7eb;
+              margin-top: 40px;
+              display: flex;
+              justify-content: flex-end;
             }
             
             .totals-box {
-              background: #f8fafc;
-              padding: 20px;
-              border-radius: 8px;
-              max-width: 400px;
-              margin-left: auto;
+              background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+              padding: 25px;
+              border-radius: 12px;
+              box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+              min-width: 350px;
             }
             
             .total-line {
               display: flex;
               justify-content: space-between;
-              margin-bottom: 8px;
-              padding: 4px 0;
+              padding: 8px 0;
+              font-size: 14px;
             }
             
-            .total-line:last-child {
-              border-top: 2px solid #3b82f6;
-              margin-top: 12px;
-              padding-top: 12px;
+            .total-line:not(:last-child) {
+              border-bottom: 1px solid #e2e8f0;
+            }
+            
+            .grand-total {
+              font-size: 18px;
               font-weight: 700;
-              font-size: 16px;
-              color: #1f2937;
+              color: #2d3748;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              background-clip: text;
+              -webkit-background-clip: text;
+              -webkit-text-fill-color: transparent;
+              margin-top: 10px;
+              padding-top: 15px;
+              border-top: 2px solid #667eea;
             }
             
-            .text-right { text-align: right; }
-            .text-center { text-align: center; }
-            .font-medium { font-weight: 500; }
-            .font-semibold { font-weight: 600; }
-            .text-blue-600 { color: #2563eb; }
-            .text-green-600 { color: #16a34a; }
+            .balance {
+              font-weight: 600;
+              padding: 10px 15px;
+              border-radius: 6px;
+              margin-top: 10px;
+            }
+            
+            .balance.positive {
+              background: #fed7d7;
+              color: #c53030;
+            }
+            
+            .balance.negative {
+              background: #c6f6d5;
+              color: #2f855a;
+            }
+            
+            .bottom-section {
+              margin-top: 40px;
+              padding-top: 30px;
+              border-top: 2px solid #e2e8f0;
+            }
+            
+            .terms-section h3 {
+              color: #2d3748;
+              font-size: 16px;
+              font-weight: 600;
+              margin-bottom: 15px;
+            }
+            
+            .terms-section p {
+              color: #4a5568;
+              margin-bottom: 8px;
+              font-size: 12px;
+              line-height: 1.5;
+            }
             
             @media print {
-              body { margin: 0; padding: 0; }
-              .invoice-container { box-shadow: none; }
+              body { padding: 0; background: white; }
+              .invoice-preview { box-shadow: none; }
             }
           </style>
         </head>
         <body>
-          <div class="invoice-container">
-            <div class="header">
-              <h1>INVOICE</h1>
-              <p>${invoiceData.shop.tagline}</p>
-            </div>
-            
-            <div class="content">
-              <div class="invoice-details">
-                <div class="detail-section">
-                  <h3>From</h3>
-                  <div class="detail-item">
-                    <span class="detail-label">Shop:</span>
-                    <span class="detail-value">${invoiceData.shop.name}</span>
+          <div class="invoice-preview">
+            <!-- Header Section -->
+            <div class="header-wave">
+              <div class="header-content">
+                <div class="logo-section">
+                  <div class="logo-placeholder">
+                    ${previewData.shop.name.charAt(0)}
                   </div>
-                  <div class="detail-item">
-                    <span class="detail-label">Location:</span>
-                    <span class="detail-value">${invoiceData.shop.place}</span>
-                  </div>
-                  <div class="detail-item">
-                    <span class="detail-label">Date:</span>
-                    <span class="detail-value">${new Date(invoiceData.invoiceDate).toLocaleDateString()}</span>
+                  <div class="company-info">
+                    <h1>${previewData.shop.name}</h1>
+                    <div class="company-tagline">${previewData.shop.tagline}</div>
                   </div>
                 </div>
-                
-                <div class="detail-section">
-                  <h3>To</h3>
-                  <div class="detail-item">
-                    <span class="detail-label">Customer:</span>
-                    <span class="detail-value">${invoiceData.customer.name}</span>
-                  </div>
-                  <div class="detail-item">
-                    <span class="detail-label">Location:</span>
-                    <span class="detail-value">${invoiceData.customer.place}</span>
-                  </div>
-                  <div class="detail-item">
-                    <span class="detail-label">Phone:</span>
-                    <span class="detail-value">${invoiceData.customer.phone}</span>
+                <div class="invoice-title">
+                  <h2>INVOICE</h2>
+                  <div class="invoice-meta">
+                    <div>#${previewData.invoiceNo}</div>
+                    <div>${new Date(previewData.invoiceDate).toLocaleDateString('en-GB')}</div>
                   </div>
                 </div>
               </div>
+            </div>
 
+            <!-- Content Section -->
+            <div class="content-section">
+              <!-- Bill To Section -->
+              <div class="bill-to-section">
+                <div class="info-block">
+                  <h3>Invoice To:</h3>
+                  <p class="customer-name">${previewData.customer.name}</p>
+                  <p>📍 ${previewData.customer.place}</p>
+                  <p>📞 ${previewData.customer.phone}</p>
+                </div>
+                <div class="info-block">
+                  <h3>Payment Info:</h3>
+                  <p><strong>Status:</strong> ${previewData.paymentDetails.paymentStatus}</p>
+                  <p><strong>Mode:</strong> ${previewData.paymentDetails.paymentMode}</p>
+                </div>
+              </div>
+
+              <!-- Items Table -->
               <table class="items-table">
                 <thead>
                   <tr>
-                    <th>Item</th>
-                    <th>Qty</th>
-                    <th>Rate</th>
-                    <th>Discount</th>
-                    <th>CGST (9%)</th>
-                    <th>SGST (9%)</th>
-                    <th class="text-right">Amount</th>
+                    <th class="text-left">Item Description</th>
+                    <th class="text-center">Qty.</th>
+                    <th class="text-right">Price</th>
+                    <th class="text-right">Discount</th>
+                    <th class="text-right">CGST (9%)</th>
+                    <th class="text-right">SGST (9%)</th>
+                    <th class="text-right">Total</th>
                   </tr>
                 </thead>
                 <tbody>
-                  ${invoiceData.items.map(item => `
+                  ${previewData.items.map((item, index) => `
                     <tr>
-                      <td class="font-medium">${item.product.name}</td>
-                      <td>${item.quantity}</td>
-                      <td>₹${item.unitPrice.toFixed(2)}</td>
-                      <td>₹${item.discountAmount.toFixed(2)}</td>
-                      <td>₹${item.cgstAmount.toFixed(2)}</td>
-                      <td>₹${item.sgstAmount.toFixed(2)}</td>
-                      <td class="text-right font-semibold">₹${item.lineTotal.toFixed(2)}</td>
+                      <td class="text-left">
+                        <div style="font-weight: 600; color: #2d3748;">${item?.product?.name || 'N/A'}</div>
+                      </td>
+                      <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
+                      <td class="text-right">₹${item?.unitPrice?.toFixed(2) || '0.00'}</td>
+                      <td class="text-right">₹${item?.discountAmount?.toFixed(2) || '0.00'}</td>
+                      <td class="text-right">₹${(item?.cgstAmount || 0).toFixed(2)}</td>
+                      <td class="text-right">₹${(item?.sgstAmount || 0).toFixed(2)}</td>
+                      <td class="text-right" style="font-weight: 600; color: #2d3748;">₹${item?.totalPrice?.toFixed(2) || '0.00'}</td>
                     </tr>
                   `).join('')}
                 </tbody>
               </table>
 
+              <!-- Totals Section -->
               <div class="totals-section">
                 <div class="totals-box">
                   <div class="total-line">
                     <span>Sub Total:</span>
-                    <span>₹${invoiceData.totals.subtotal.toFixed(2)}</span>
+                    <span>₹${previewData.totals.subtotal.toFixed(2)}</span>
                   </div>
                   <div class="total-line">
                     <span>Item Discounts:</span>
-                    <span>- ₹${invoiceData.totals.totalDiscount.toFixed(2)}</span>
+                    <span>- ₹${previewData.totals.totalDiscount.toFixed(2)}</span>
                   </div>
                   <div class="total-line">
                     <span>Total CGST (9%):</span>
-                    <span>₹${((invoiceData.totals.totalTax || 0) / 2).toFixed(2)}</span>
+                    <span>₹${((previewData.totals.totalTax || 0) / 2).toFixed(2)}</span>
                   </div>
                   <div class="total-line">
                     <span>Total SGST (9%):</span>
-                    <span>₹${((invoiceData.totals.totalTax || 0) / 2).toFixed(2)}</span>
+                    <span>₹${((previewData.totals.totalTax || 0) / 2).toFixed(2)}</span>
+                  </div>
+                  <div class="total-line grand-total">
+                    <span>Grand Total:</span>
+                    <span>₹${previewData.totals.grandTotal.toFixed(2)}</span>
                   </div>
                   <div class="total-line">
-                    <span>Grand Total:</span>
-                    <span>₹${invoiceData.totals.grandTotal.toFixed(2)}</span>
+                    <span>Amount Paid:</span>
+                    <span>₹${previewData.amountPaid.toFixed(2)}</span>
+                  </div>
+                  <div class="total-line balance ${(previewData.totals.grandTotal - previewData.amountPaid) > 0 ? 'positive' : 'negative'}">
+                    <span>Balance:</span>
+                    <span>₹${(previewData.totals.grandTotal - previewData.amountPaid).toFixed(2)}</span>
                   </div>
                 </div>
+              </div>
+
+              <!-- Bottom Section -->
+              <div class="bottom-section">
+                <div class="terms-section">
+                  <h3>Terms & Conditions</h3>
+                  <p>1. Payment is due within 30 days of invoice date.</p>
+                  <p>2. Late payments may incur additional charges.</p>
+                  <p>3. Goods once sold cannot be returned without prior approval.</p>
+                  <p>4. Any disputes must be resolved within 7 days of delivery.</p>
+                  ${previewData.remark ? `
+                    <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #e2e8f0;">
+                      <strong>Remarks:</strong><br>
+                      ${previewData.remark}
+                    </div>
+                  ` : ''}
+                </div>
+
               </div>
             </div>
           </div>
