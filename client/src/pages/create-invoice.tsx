@@ -81,6 +81,8 @@ export default function CreateInvoice() {
   const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
   const [showBackWarning, setShowBackWarning] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [createdInvoiceData, setCreatedInvoiceData] = useState<any>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [selectedShop, setSelectedShop] = useState<Shop | null>(null);
@@ -194,12 +196,19 @@ export default function CreateInvoice() {
         duration: 4000,
       });
       
+      // Store created invoice data for the popup
+      setCreatedInvoiceData({
+        invoiceNumber: variables.transactionId,
+        customer: selectedCustomer,
+        shop: selectedShop,
+        totals: currentTotals,
+        formData: variables
+      });
+      
       queryClient.invalidateQueries({ queryKey: ["/api/invoices/all"] });
       
-      // Navigate after delay to allow user interaction with toast
-      setTimeout(() => {
-        setLocation("/dashboard?tab=invoices");
-      }, 2500);
+      // Show success dialog instead of navigating
+      setShowSuccessDialog(true);
     },
     onError: (error: any) => {
       toast({
@@ -502,6 +511,310 @@ export default function CreateInvoice() {
   const handleSelectCustomer = (customer: Customer) => {
     setSelectedCustomer(customer);
     form.setValue('customerId', customer.customerId);
+  };
+
+  // Download PDF function
+  const downloadInvoicePDF = () => {
+    if (!createdInvoiceData) return;
+    
+    const { customer, shop, totals, formData } = createdInvoiceData;
+    
+    const invoiceData = {
+      invoiceNo: `INV-${Date.now().toString().slice(-6)}`,
+      invoiceDate: new Date().toISOString(),
+      shop: {
+        name: shop.name,
+        place: shop.place,
+        tagline: "Quality Products & Services"
+      },
+      customer: {
+        name: customer.name,
+        place: customer.place,
+        phone: customer.phone
+      },
+      paymentDetails: {
+        paymentStatus: formData.paymentStatus,
+        paymentMode: formData.paymentMode,
+        billType: formData.billType,
+        saleType: formData.saleType
+      },
+      items: totals.items.filter(item => item),
+      totals,
+      amountPaid: formData.amountPaid || 0,
+      remark: formData.remark
+    };
+
+    // Create PDF window
+    const pdfWindow = window.open('', '_blank', 'width=900,height=700');
+    if (!pdfWindow) return;
+
+    pdfWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Invoice - ${invoiceData.invoiceNo}</title>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+            
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            
+            body { 
+              font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+              background: white;
+              padding: 20px;
+              line-height: 1.4;
+              font-size: 14px;
+              color: #1f2937;
+            }
+            
+            .invoice-container {
+              max-width: 800px;
+              margin: 0 auto;
+              background: white;
+              box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+              border-radius: 8px;
+              overflow: hidden;
+            }
+            
+            .header {
+              background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+              color: white;
+              padding: 24px;
+              text-align: center;
+            }
+            
+            .header h1 {
+              font-size: 28px;
+              font-weight: 700;
+              margin-bottom: 8px;
+            }
+            
+            .header p {
+              opacity: 0.9;
+              font-size: 16px;
+            }
+            
+            .content {
+              padding: 24px;
+            }
+            
+            .invoice-details {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 24px;
+              margin-bottom: 32px;
+              padding: 20px;
+              background: #f8fafc;
+              border-radius: 8px;
+            }
+            
+            .detail-section h3 {
+              font-size: 16px;
+              font-weight: 600;
+              color: #374151;
+              margin-bottom: 12px;
+              padding-bottom: 8px;
+              border-bottom: 2px solid #e5e7eb;
+            }
+            
+            .detail-item {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 8px;
+              padding: 4px 0;
+            }
+            
+            .detail-label {
+              font-weight: 500;
+              color: #6b7280;
+            }
+            
+            .detail-value {
+              font-weight: 600;
+              color: #1f2937;
+            }
+            
+            .items-table {
+              width: 100%;
+              border-collapse: collapse;
+              margin: 24px 0;
+              background: white;
+              border-radius: 8px;
+              overflow: hidden;
+              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            }
+            
+            .items-table th {
+              background: #f1f5f9;
+              padding: 12px 8px;
+              text-align: left;
+              font-weight: 600;
+              color: #475569;
+              border-bottom: 2px solid #e2e8f0;
+              font-size: 13px;
+            }
+            
+            .items-table td {
+              padding: 12px 8px;
+              border-bottom: 1px solid #f1f5f9;
+              font-size: 13px;
+            }
+            
+            .items-table tbody tr:hover {
+              background: #fafbfc;
+            }
+            
+            .totals-section {
+              margin-top: 32px;
+              padding-top: 24px;
+              border-top: 2px solid #e5e7eb;
+            }
+            
+            .totals-box {
+              background: #f8fafc;
+              padding: 20px;
+              border-radius: 8px;
+              max-width: 400px;
+              margin-left: auto;
+            }
+            
+            .total-line {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 8px;
+              padding: 4px 0;
+            }
+            
+            .total-line:last-child {
+              border-top: 2px solid #3b82f6;
+              margin-top: 12px;
+              padding-top: 12px;
+              font-weight: 700;
+              font-size: 16px;
+              color: #1f2937;
+            }
+            
+            .text-right { text-align: right; }
+            .text-center { text-align: center; }
+            .font-medium { font-weight: 500; }
+            .font-semibold { font-weight: 600; }
+            .text-blue-600 { color: #2563eb; }
+            .text-green-600 { color: #16a34a; }
+            
+            @media print {
+              body { margin: 0; padding: 0; }
+              .invoice-container { box-shadow: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="invoice-container">
+            <div class="header">
+              <h1>INVOICE</h1>
+              <p>${invoiceData.shop.tagline}</p>
+            </div>
+            
+            <div class="content">
+              <div class="invoice-details">
+                <div class="detail-section">
+                  <h3>From</h3>
+                  <div class="detail-item">
+                    <span class="detail-label">Shop:</span>
+                    <span class="detail-value">${invoiceData.shop.name}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Location:</span>
+                    <span class="detail-value">${invoiceData.shop.place}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Date:</span>
+                    <span class="detail-value">${new Date(invoiceData.invoiceDate).toLocaleDateString()}</span>
+                  </div>
+                </div>
+                
+                <div class="detail-section">
+                  <h3>To</h3>
+                  <div class="detail-item">
+                    <span class="detail-label">Customer:</span>
+                    <span class="detail-value">${invoiceData.customer.name}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Location:</span>
+                    <span class="detail-value">${invoiceData.customer.place}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Phone:</span>
+                    <span class="detail-value">${invoiceData.customer.phone}</span>
+                  </div>
+                </div>
+              </div>
+
+              <table class="items-table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Qty</th>
+                    <th>Rate</th>
+                    <th>Discount</th>
+                    <th>CGST (9%)</th>
+                    <th>SGST (9%)</th>
+                    <th class="text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${invoiceData.items.map(item => `
+                    <tr>
+                      <td class="font-medium">${item.product.name}</td>
+                      <td>${item.quantity}</td>
+                      <td>₹${item.unitPrice.toFixed(2)}</td>
+                      <td>₹${item.discountAmount.toFixed(2)}</td>
+                      <td>₹${item.cgstAmount.toFixed(2)}</td>
+                      <td>₹${item.sgstAmount.toFixed(2)}</td>
+                      <td class="text-right font-semibold">₹${item.lineTotal.toFixed(2)}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+
+              <div class="totals-section">
+                <div class="totals-box">
+                  <div class="total-line">
+                    <span>Sub Total:</span>
+                    <span>₹${invoiceData.totals.subtotal.toFixed(2)}</span>
+                  </div>
+                  <div class="total-line">
+                    <span>Item Discounts:</span>
+                    <span>- ₹${invoiceData.totals.totalDiscount.toFixed(2)}</span>
+                  </div>
+                  <div class="total-line">
+                    <span>Total CGST (9%):</span>
+                    <span>₹${((invoiceData.totals.totalTax || 0) / 2).toFixed(2)}</span>
+                  </div>
+                  <div class="total-line">
+                    <span>Total SGST (9%):</span>
+                    <span>₹${((invoiceData.totals.totalTax || 0) / 2).toFixed(2)}</span>
+                  </div>
+                  <div class="total-line">
+                    <span>Grand Total:</span>
+                    <span>₹${invoiceData.totals.grandTotal.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <script>
+            window.onload = function() {
+              setTimeout(() => {
+                window.print();
+              }, 500);
+            }
+          </script>
+        </body>
+      </html>
+    `);
+    
+    pdfWindow.document.close();
   };
 
   return (
@@ -2350,6 +2663,54 @@ export default function CreateInvoice() {
           selectedCustomer={selectedCustomer}
           onSelectCustomer={handleSelectCustomer}
         />
+
+        {/* Success Dialog */}
+        <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-center text-green-600 text-xl font-semibold">
+                Invoice Created Successfully!
+              </DialogTitle>
+            </DialogHeader>
+            
+            {createdInvoiceData && (
+              <div className="space-y-6 py-4">
+                <div className="text-center space-y-2">
+                  <p className="text-gray-600">Customer: {createdInvoiceData.customer?.name}</p>
+                  <p className="text-lg font-semibold">₹{createdInvoiceData.totals?.grandTotal.toFixed(2)}</p>
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-green-600 font-medium">PAID</span>
+                  </div>
+                </div>
+                
+                <div className="flex flex-col gap-3">
+                  <Button 
+                    onClick={() => {
+                      downloadInvoicePDF();
+                      setShowSuccessDialog(false);
+                    }}
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download Invoice
+                  </Button>
+                  
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      setShowSuccessDialog(false);
+                      setLocation("/dashboard?tab=invoices");
+                    }}
+                    className="w-full"
+                  >
+                    Go to Dashboard
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
