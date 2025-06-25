@@ -178,64 +178,20 @@ export default function CreateInvoice() {
       toast({
         title: "Invoice Created Successfully!",
         description: (
-          <div className="space-y-3">
-            <div className="space-y-1">
-              <p className="font-semibold text-green-700">Invoice #{invoiceNumber}</p>
-              <p className="text-sm text-gray-600">Customer: {customerName}</p>
-            </div>
-            
+          <div className="space-y-2">
+            <p className="text-sm text-green-100">Customer: {customerName}</p>
             <div className="flex items-center gap-3 text-sm">
               <div className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span className="text-green-700 font-medium">PAID</span>
+                <div className="w-2 h-2 bg-white rounded-full"></div>
+                <span className="text-white font-medium">PAID</span>
               </div>
-              <span className="text-gray-400">•</span>
-              <span className="font-medium">₹{currentTotals.grandTotal.toFixed(2)}</span>
-            </div>
-            
-            <div className="flex gap-2 pt-2">
-              <Button 
-                size="sm" 
-                variant="outline"
-                onClick={() => setLocation("/dashboard?tab=invoices")}
-                className="h-8 px-3 text-xs hover:bg-gray-50"
-              >
-                View Invoices
-              </Button>
-              <Button 
-                size="sm" 
-                onClick={() => {
-                  // Reset form for new invoice
-                  form.reset({
-                    customerId: 0,
-                    shopId: selectedShop?.shopId || 0,
-                    discount: 0,
-                    discountType: "AMOUNT",
-                    amountPaid: 0,
-                    paymentMode: "CASH",
-                    paymentStatus: "PAID",
-                    remark: "",
-                    dueDate: null,
-                    billType: "GST",
-                    saleType: "RETAIL",
-                    transactionId: `TXN${Date.now()}`,
-                    saleItems: [],
-                    termsAndConditions: "",
-                    signature: "",
-                    useCustomBillingAddress: false,
-                    customBillingAddress: "",
-                  });
-                  setSelectedCustomer(null);
-                  setHasUnsavedChanges(false);
-                }}
-                className="h-8 px-3 text-xs bg-blue-600 hover:bg-blue-700"
-              >
-                Create Another
-              </Button>
+              <span className="text-green-200">•</span>
+              <span className="font-medium text-white">₹{currentTotals.grandTotal.toFixed(2)}</span>
             </div>
           </div>
         ),
-        duration: 8000,
+        className: "bg-green-600 border-green-600 text-white [&>div]:text-white",
+        duration: 4000,
       });
       
       queryClient.invalidateQueries({ queryKey: ["/api/invoices/all"] });
