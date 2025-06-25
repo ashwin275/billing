@@ -577,7 +577,7 @@ export default function CreateInvoice() {
             }
             
             .header-wave {
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
               height: 120px;
               position: relative;
               overflow: hidden;
@@ -696,7 +696,7 @@ export default function CreateInvoice() {
             }
             
             .items-table thead {
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
               color: white;
             }
             
@@ -755,13 +755,13 @@ export default function CreateInvoice() {
               font-size: 18px;
               font-weight: 700;
               color: #2d3748;
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
               background-clip: text;
               -webkit-background-clip: text;
               -webkit-text-fill-color: transparent;
               margin-top: 10px;
               padding-top: 15px;
-              border-top: 2px solid #667eea;
+              border-top: 2px solid #38bdf8;
             }
             
             .balance {
