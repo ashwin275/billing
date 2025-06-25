@@ -849,10 +849,13 @@ export default function CreateInvoice() {
                           <table class="items-table">
                             <thead>
                               <tr>
-                                <th class="text-left">Item Description</th>
-                                <th class="text-center">Qty.</th>
-                                <th class="text-right">Price</th>
+                                <th class="text-left">Product</th>
+                                <th class="text-center">HSN</th>
+                                <th class="text-center">Qty</th>
+                                <th class="text-right">Rate</th>
                                 <th class="text-right">Discount</th>
+                                <th class="text-right">CGST</th>
+                                <th class="text-right">SGST</th>
                                 <th class="text-right">Total</th>
                               </tr>
                             </thead>
@@ -861,10 +864,20 @@ export default function CreateInvoice() {
                                 <tr>
                                   <td class="text-left">
                                     <div style="font-weight: 600; color: #2d3748;">${item?.product?.name || 'N/A'}</div>
+                                    <div style="font-size: 10px; color: #718096;">${item?.product?.description || ''}</div>
                                   </td>
+                                  <td class="text-center">${item?.product?.hsn || 'N/A'}</td>
                                   <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
                                   <td class="text-right">₹${item?.unitPrice?.toFixed(2) || '0.00'}</td>
                                   <td class="text-right">₹${item?.discountAmount?.toFixed(2) || '0.00'}</td>
+                                  <td class="text-right">
+                                    <div>${item?.product?.cgst || 0}%</div>
+                                    <div style="font-size: 10px;">₹${item?.cgstAmount?.toFixed(2) || '0.00'}</div>
+                                  </td>
+                                  <td class="text-right">
+                                    <div>${item?.product?.sgst || 0}%</div>
+                                    <div style="font-size: 10px;">₹${item?.sgstAmount?.toFixed(2) || '0.00'}</div>
+                                  </td>
                                   <td class="text-right" style="font-weight: 600; color: #2d3748;">₹${item?.totalPrice?.toFixed(2) || '0.00'}</td>
                                 </tr>
                               `).join('')}
@@ -883,11 +896,11 @@ export default function CreateInvoice() {
                                 <span>- ₹${previewData.totals.totalDiscount.toFixed(2)}</span>
                               </div>
                               <div class="total-line">
-                                <span>CGST:</span>
+                                <span>CGST (9%):</span>
                                 <span>₹${(previewData.totals.totalTax / 2).toFixed(2)}</span>
                               </div>
                               <div class="total-line">
-                                <span>SGST:</span>
+                                <span>SGST (9%):</span>
                                 <span>₹${(previewData.totals.totalTax / 2).toFixed(2)}</span>
                               </div>
                               <div class="total-line grand-total">
@@ -1302,10 +1315,13 @@ export default function CreateInvoice() {
                           <table class="items-table">
                             <thead>
                               <tr>
-                                <th class="text-left">Item Description</th>
-                                <th class="text-center">Qty.</th>
-                                <th class="text-right">Price</th>
+                                <th class="text-left">Product</th>
+                                <th class="text-center">HSN</th>
+                                <th class="text-center">Qty</th>
+                                <th class="text-right">Rate</th>
                                 <th class="text-right">Discount</th>
+                                <th class="text-right">CGST</th>
+                                <th class="text-right">SGST</th>
                                 <th class="text-right">Total</th>
                               </tr>
                             </thead>
@@ -1314,10 +1330,20 @@ export default function CreateInvoice() {
                                 <tr>
                                   <td class="text-left">
                                     <div style="font-weight: 600; color: #2d3748;">${item?.product?.name || 'N/A'}</div>
+                                    <div style="font-size: 10px; color: #718096;">${item?.product?.description || ''}</div>
                                   </td>
+                                  <td class="text-center">${item?.product?.hsn || 'N/A'}</td>
                                   <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
                                   <td class="text-right">₹${item?.unitPrice?.toFixed(2) || '0.00'}</td>
                                   <td class="text-right">₹${item?.discountAmount?.toFixed(2) || '0.00'}</td>
+                                  <td class="text-right">
+                                    <div>${item?.product?.cgst || 0}%</div>
+                                    <div style="font-size: 10px;">₹${item?.cgstAmount?.toFixed(2) || '0.00'}</div>
+                                  </td>
+                                  <td class="text-right">
+                                    <div>${item?.product?.sgst || 0}%</div>
+                                    <div style="font-size: 10px;">₹${item?.sgstAmount?.toFixed(2) || '0.00'}</div>
+                                  </td>
                                   <td class="text-right" style="font-weight: 600; color: #2d3748;">₹${item?.totalPrice?.toFixed(2) || '0.00'}</td>
                                 </tr>
                               `).join('')}
@@ -1336,11 +1362,11 @@ export default function CreateInvoice() {
                                 <span>- ₹${invoiceData.totals.totalDiscount.toFixed(2)}</span>
                               </div>
                               <div class="total-line">
-                                <span>CGST:</span>
+                                <span>CGST (9%):</span>
                                 <span>₹${(invoiceData.totals.totalTax / 2).toFixed(2)}</span>
                               </div>
                               <div class="total-line">
-                                <span>SGST:</span>
+                                <span>SGST (9%):</span>
                                 <span>₹${(invoiceData.totals.totalTax / 2).toFixed(2)}</span>
                               </div>
                               <div class="total-line grand-total">
