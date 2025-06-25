@@ -256,7 +256,7 @@ export default function EditInvoice() {
       const cgstAmount = (lineTotal * cgstRate) / 100;
       const sgstAmount = (lineTotal * sgstRate) / 100;
       const taxAmount = cgstAmount + sgstAmount;
-      const totalPrice = lineTotal + taxAmount; // Tax included in total
+      const totalPrice = lineTotal; // Tax shown separately, not added to total
 
       return {
         product,
@@ -285,8 +285,8 @@ export default function EditInvoice() {
       totalDiscount = formData.discount;
     }
     
-    // Grand total is sum of all item totals (which already include tax) minus overall discount
-    const grandTotal = items.reduce((sum, item) => sum + (item?.totalPrice || 0), 0) - totalDiscount;
+    // Grand total is subtotal minus overall discount (tax shown for info only)
+    const grandTotal = subtotal - totalDiscount;
 
     console.log('Calculation results:', { subtotal, totalTax, totalDiscount, grandTotal, itemsCount: items.length });
     
@@ -863,15 +863,15 @@ export default function EditInvoice() {
                                 <span>- ₹${previewData.totals.totalDiscount.toFixed(2)}</span>
                               </div>
                               <div class="total-line">
-                                <span>Total CGST (9%):</span>
+                                <span>Total CGST (9%) - Info Only:</span>
                                 <span>₹${((previewData.totals.totalTax || 0) / 2).toFixed(2)}</span>
                               </div>
                               <div class="total-line">
-                                <span>Total SGST (9%):</span>
+                                <span>Total SGST (9%) - Info Only:</span>
                                 <span>₹${((previewData.totals.totalTax || 0) / 2).toFixed(2)}</span>
                               </div>
                               <div class="total-line grand-total">
-                                <span>Grand Total (Inc. Tax):</span>
+                                <span>Grand Total:</span>
                                 <span>₹${previewData.totals.grandTotal.toFixed(2)}</span>
                               </div>
                               <div class="total-line">
@@ -1310,23 +1310,23 @@ export default function EditInvoice() {
                           <div class="totals-section">
                             <div class="totals-box">
                               <div class="total-line">
-                                <span>Sub Total:</span>
+                                <span>Sub Total (Before Tax):</span>
                                 <span>₹${invoiceData.totals.subtotal.toFixed(2)}</span>
                               </div>
                               <div class="total-line">
-                                <span>Discount:</span>
+                                <span>Item Discounts:</span>
                                 <span>- ₹${invoiceData.totals.totalDiscount.toFixed(2)}</span>
                               </div>
                               <div class="total-line">
-                                <span>CGST (9%):</span>
+                                <span>Total CGST (9%) - Info Only:</span>
                                 <span>₹${((invoiceData.totals.totalTax || 0) / 2).toFixed(2)}</span>
                               </div>
                               <div class="total-line">
-                                <span>SGST (9%):</span>
+                                <span>Total SGST (9%) - Info Only:</span>
                                 <span>₹${((invoiceData.totals.totalTax || 0) / 2).toFixed(2)}</span>
                               </div>
                               <div class="total-line grand-total">
-                                <span>Total:</span>
+                                <span>Grand Total:</span>
                                 <span>₹${invoiceData.totals.grandTotal.toFixed(2)}</span>
                               </div>
                               <div class="total-line">
