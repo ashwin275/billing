@@ -855,23 +855,23 @@ export default function EditInvoice() {
                           <div class="totals-section">
                             <div class="totals-box">
                               <div class="total-line">
-                                <span>Sub Total:</span>
+                                <span>Sub Total (Before Tax):</span>
                                 <span>₹${previewData.totals.subtotal.toFixed(2)}</span>
                               </div>
                               <div class="total-line">
-                                <span>Discount:</span>
+                                <span>Item Discounts:</span>
                                 <span>- ₹${previewData.totals.totalDiscount.toFixed(2)}</span>
                               </div>
                               <div class="total-line">
-                                <span>CGST (9%):</span>
+                                <span>Total CGST (9%):</span>
                                 <span>₹${((previewData.totals.totalTax || 0) / 2).toFixed(2)}</span>
                               </div>
                               <div class="total-line">
-                                <span>SGST (9%):</span>
+                                <span>Total SGST (9%):</span>
                                 <span>₹${((previewData.totals.totalTax || 0) / 2).toFixed(2)}</span>
                               </div>
                               <div class="total-line grand-total">
-                                <span>Total:</span>
+                                <span>Grand Total (Inc. Tax):</span>
                                 <span>₹${previewData.totals.grandTotal.toFixed(2)}</span>
                               </div>
                               <div class="total-line">
