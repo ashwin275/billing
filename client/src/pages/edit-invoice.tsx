@@ -39,7 +39,7 @@ const invoiceSchema = z.object({
   discountType: z.enum(["PERCENTAGE", "AMOUNT"]).default("PERCENTAGE"),
   amountPaid: z.number().min(0, "Amount paid cannot be negative").default(0),
   paymentMode: z.enum(["CASH", "CARD", "UPI", "CHEQUE", "BANK_TRANSFER"]).default("CASH"),
-  paymentStatus: z.enum(["PAID", "PENDING", "OVERDUE"]).default("PENDING"),
+  paymentStatus: z.enum(["PAID", "PENDING", "OVERDUE"]).default("PAID"),
   remark: z.string().default(""),
   dueDate: z.string().nullable().default(null),
   billType: z.enum(["GST", "NON_GST"]).default("GST"),
@@ -817,7 +817,6 @@ export default function EditInvoice() {
                               <h3>Payment Info:</h3>
                               <p><strong>Status:</strong> ${previewData.paymentDetails.paymentStatus}</p>
                               <p><strong>Mode:</strong> ${previewData.paymentDetails.paymentMode}</p>
-                              <p><strong>Type:</strong> ${previewData.paymentDetails.billType} ${previewData.paymentDetails.saleType}</p>
                             </div>
                           </div>
 
@@ -859,11 +858,11 @@ export default function EditInvoice() {
                                 <span>- ₹${previewData.totals.totalDiscount.toFixed(2)}</span>
                               </div>
                               <div class="total-line">
-                                <span>CGST:</span>
+                                <span>CGST (9%):</span>
                                 <span>₹${(previewData.totals.totalTax / 2).toFixed(2)}</span>
                               </div>
                               <div class="total-line">
-                                <span>SGST:</span>
+                                <span>SGST (9%):</span>
                                 <span>₹${(previewData.totals.totalTax / 2).toFixed(2)}</span>
                               </div>
                               <div class="total-line grand-total">
@@ -1269,7 +1268,6 @@ export default function EditInvoice() {
                               <h3>Payment Info:</h3>
                               <p><strong>Status:</strong> ${invoiceData.paymentDetails.paymentStatus}</p>
                               <p><strong>Mode:</strong> ${invoiceData.paymentDetails.paymentMode}</p>
-                              <p><strong>Type:</strong> ${invoiceData.paymentDetails.billType} ${invoiceData.paymentDetails.saleType}</p>
                             </div>
                           </div>
 
@@ -1311,11 +1309,11 @@ export default function EditInvoice() {
                                 <span>- ₹${invoiceData.totals.totalDiscount.toFixed(2)}</span>
                               </div>
                               <div class="total-line">
-                                <span>CGST:</span>
+                                <span>CGST (9%):</span>
                                 <span>₹${(invoiceData.totals.totalTax / 2).toFixed(2)}</span>
                               </div>
                               <div class="total-line">
-                                <span>SGST:</span>
+                                <span>SGST (9%):</span>
                                 <span>₹${(invoiceData.totals.totalTax / 2).toFixed(2)}</span>
                               </div>
                               <div class="total-line grand-total">
