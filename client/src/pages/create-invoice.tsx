@@ -2110,64 +2110,7 @@ export default function CreateInvoice() {
                 </div>
 
                 {/* Bottom Action Buttons */}
-                <div className="flex justify-end space-x-4 pt-8 border-t">
-                  <Button 
-                    variant="outline"
-                    onClick={() => {
-                      if (!selectedCustomer || !selectedShop) return;
-                      
-                      const formData = form.getValues();
-                      const previewData = {
-                        invoiceNo: `INV-${Date.now().toString().slice(-6)}`,
-                        invoiceDate: new Date().toISOString(),
-                        shop: {
-                          name: selectedShop.name,
-                          place: selectedShop.place,
-                          tagline: "Quality Products & Services"
-                        },
-                        customer: {
-                          name: selectedCustomer.name,
-                          place: selectedCustomer.place,
-                          phone: selectedCustomer.phone
-                        },
-                        paymentDetails: {
-                          paymentStatus: formData.paymentStatus,
-                          paymentMode: formData.paymentMode,
-                          billType: formData.billType,
-                          saleType: formData.saleType
-                        },
-                        items: totals.items.map(item => ({
-                          name: item?.product?.name || 'Product',
-                          quantity: item?.quantity || 0,
-                          rate: item?.unitPrice || 0,
-                          discount: item?.discountAmount || 0,
-                          total: item?.totalPrice || 0,
-                          cgst: item?.cgst || 0,
-                          sgst: item?.sgst || 0,
-                          cgstAmount: item?.cgstAmount || 0,
-                          sgstAmount: item?.sgstAmount || 0,
-                        })),
-                        totals: {
-                          itemsBeforeDiscount: totals.itemsBeforeDiscount,
-                          subtotal: totals.subtotal,
-                          totalDiscount: totals.itemDiscounts,
-                          totalTax: totals.totalTax,
-                          grandTotal: totals.grandTotal,
-                          amountPaid: formData.amountPaid || 0,
-                          balance: totals.grandTotal - (formData.amountPaid || 0),
-                        },
-                        remarks: formData.remark,
-                        termsAndConditions: formData.termsAndConditions
-                      };
-                      
-                      setIsPreviewDialogOpen(true);
-                    }}
-                    className="flex items-center space-x-2"
-                  >
-                    <Eye className="h-4 w-4" />
-                    <span>Preview</span>
-                  </Button>
-                  
+                <div className="flex justify-end pt-8 border-t">
                   <Button 
                     type="submit"
                     disabled={!selectedCustomer || !selectedShop || fields.length === 0 || createInvoiceMutation.isPending || updateInvoiceMutation.isPending}
