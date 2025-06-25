@@ -2167,11 +2167,11 @@ export default function CreateInvoice() {
                   
                   <Button 
                     type="submit"
-                    disabled={!selectedCustomer || !selectedShop || fields.length === 0 || createMutation.isPending || updateMutation.isPending}
+                    disabled={!selectedCustomer || !selectedShop || fields.length === 0 || createInvoiceMutation.isPending || updateInvoiceMutation.isPending}
                     className="bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white border-0"
                   >
                     <Save className="h-4 w-4 mr-2" />
-                    {isEditMode ? (updateMutation.isPending ? "Updating..." : "Update Invoice") : (createMutation.isPending ? "Creating..." : "Create Invoice")}
+                    {isEditMode ? (updateInvoiceMutation.isPending ? "Updating..." : "Update Invoice") : (createInvoiceMutation.isPending ? "Creating..." : "Create Invoice")}
                   </Button>
                 </div>
 
