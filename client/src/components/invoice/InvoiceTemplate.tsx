@@ -129,8 +129,14 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
         .print-mode .company-details h1 {
           color: #000000 !important;
           font-weight: 900 !important;
-          font-size: 32px !important;
-          text-shadow: 2px 2px 4px rgba(0,0,0,0.8) !important;
+          font-size: 38px !important;
+          font-family: 'Arial Black', Arial, sans-serif !important;
+          letter-spacing: 2px !important;
+          text-transform: uppercase !important;
+          border: 4px solid #000000 !important;
+          padding: 12px 18px !important;
+          background: #ffffff !important;
+          text-shadow: none !important;
         }
 
         .company-tagline {
@@ -154,8 +160,14 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
         .print-mode .invoice-meta h2 {
           color: #000000 !important;
           font-weight: 900 !important;
-          font-size: 40px !important;
-          text-shadow: 2px 2px 4px rgba(0,0,0,0.8) !important;
+          font-size: 46px !important;
+          font-family: 'Arial Black', Arial, sans-serif !important;
+          letter-spacing: 3px !important;
+          border: 5px solid #000000 !important;
+          padding: 16px 22px !important;
+          background: #ffffff !important;
+          text-transform: uppercase !important;
+          text-shadow: none !important;
         }
 
         .invoice-number {
@@ -192,9 +204,13 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
         
         .print-mode .billing-block h3 {
           color: #000000 !important;
-          font-weight: 800 !important;
-          font-size: 17px !important;
-          border-bottom: 2px solid #000000 !important;
+          font-weight: 900 !important;
+          font-size: 20px !important;
+          border-bottom: 3px solid #000000 !important;
+          font-family: 'Arial Black', Arial, sans-serif !important;
+          letter-spacing: 1px !important;
+          text-transform: uppercase !important;
+          padding: 8px 0 !important;
         }
 
         .billing-block p {
@@ -205,14 +221,22 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
         
         .print-mode .billing-block p {
           color: #000000 !important;
-          font-weight: 600 !important;
-          font-size: 15px !important;
+          font-weight: 900 !important;
+          font-size: 16px !important;
+          font-family: 'Arial Black', Arial, sans-serif !important;
         }
 
         .customer-name {
           font-weight: 600;
           font-size: 16px;
           color: #2d3748;
+        }
+        
+        .print-mode .customer-name {
+          color: #000000 !important;
+          font-weight: 900 !important;
+          font-size: 18px !important;
+          font-family: 'Arial Black', Arial, sans-serif !important;
         }
 
         .items-table {
@@ -243,10 +267,12 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
           background: #000000 !important;
           color: #ffffff !important;
           font-weight: 900 !important;
-          border: 3px solid #000000 !important;
-          font-size: 16px !important;
-          text-shadow: none !important;
-          padding: 18px 15px !important;
+          border: 4px solid #000000 !important;
+          font-size: 18px !important;
+          text-shadow: 2px 2px 4px #000000 !important;
+          padding: 20px 15px !important;
+          font-family: 'Arial Black', Arial, sans-serif !important;
+          letter-spacing: 1px !important;
         }
 
         .items-table th.text-right {
@@ -262,9 +288,11 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
         
         .print-mode .items-table td {
           color: #000000 !important;
-          font-weight: 700 !important;
-          font-size: 14px !important;
-          border: 1px solid #000000 !important;
+          font-weight: 900 !important;
+          font-size: 16px !important;
+          border: 3px solid #000000 !important;
+          font-family: 'Arial Black', Arial, sans-serif !important;
+          padding: 16px 14px !important;
         }
 
         .items-table td.text-right {
@@ -306,8 +334,11 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
         
         .print-mode .total-row {
           color: #000000 !important;
-          font-weight: 700 !important;
-          font-size: 15px !important;
+          font-weight: 900 !important;
+          font-size: 18px !important;
+          font-family: 'Arial Black', Arial, sans-serif !important;
+          padding: 12px 0 !important;
+          border-bottom: 2px solid #000000 !important;
         }
 
         .total-row.grand-total {
@@ -322,8 +353,14 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
         .print-mode .total-row.grand-total {
           color: #000000 !important;
           font-weight: 900 !important;
-          font-size: 20px !important;
-          border-top: 3px solid #000000 !important;
+          font-size: 24px !important;
+          border: 5px solid #000000 !important;
+          font-family: 'Arial Black', Arial, sans-serif !important;
+          letter-spacing: 1px !important;
+          text-transform: uppercase !important;
+          padding: 18px 15px !important;
+          background: #ffffff !important;
+          margin: 15px 0 !important;
         }
 
         .total-row.balance {
@@ -358,8 +395,13 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
         
         .print-mode .terms-section h3 {
           color: #000000 !important;
-          font-weight: 800 !important;
-          font-size: 17px !important;
+          font-weight: 900 !important;
+          font-size: 20px !important;
+          font-family: 'Arial Black', Arial, sans-serif !important;
+          letter-spacing: 1px !important;
+          text-transform: uppercase !important;
+          border-bottom: 3px solid #000000 !important;
+          padding-bottom: 10px !important;
         }
 
         .terms-section p {
@@ -371,8 +413,9 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
         
         .print-mode .terms-section p {
           color: #000000 !important;
-          font-weight: 600 !important;
-          font-size: 14px !important;
+          font-weight: 800 !important;
+          font-size: 15px !important;
+          font-family: 'Arial', sans-serif !important;
         }
 
         .remarks-section {
@@ -451,7 +494,6 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
             <h3>Payment Details</h3>
             <p><strong>Status:</strong> {invoice.paymentStatus}</p>
             <p><strong>Mode:</strong> {invoice.paymentMode}</p>
-            <p><strong>Type:</strong> {invoice.billType} {invoice.saleType}</p>
             {invoice.dueDate && (
               <p><strong>Due Date:</strong> {new Date(invoice.dueDate).toLocaleDateString('en-IN')}</p>
             )}
