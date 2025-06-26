@@ -41,6 +41,8 @@ const invoiceSchema = z.object({
   shopId: z.number().min(1, "Shop is required"),
   discount: z.number().min(0, "Discount cannot be negative").default(0),
   discountType: z.enum(["PERCENTAGE", "AMOUNT"]).default("PERCENTAGE"),
+  additionalDiscount: z.number().min(0, "Additional discount cannot be negative").default(0),
+  additionalDiscountType: z.enum(["PERCENTAGE", "AMOUNT"]).default("AMOUNT"),
   amountPaid: z.number().min(0, "Amount paid cannot be negative").default(0),
   paymentMode: z.enum(["CASH", "CARD", "UPI", "CHEQUE", "BANK_TRANSFER"]).default("CASH"),
   paymentStatus: z.enum(["PAID", "PENDING", "OVERDUE"]).default("PAID"),
@@ -118,6 +120,8 @@ export default function CreateInvoice() {
       customerId: 0,
       shopId: 0,
       discount: 0,
+      additionalDiscount: 0,
+      additionalDiscountType: "AMOUNT",
       discountType: "AMOUNT",
       amountPaid: 0,
       paymentMode: "CASH",
@@ -345,8 +349,18 @@ export default function CreateInvoice() {
     const itemsBeforeDiscount = items.reduce((sum, item) => sum + (item?.itemSubtotal || 0), 0);
     const itemDiscounts = items.reduce((sum, item) => sum + (item?.discountAmount || 0), 0);
     
-    // Grand total is subtotal minus discounts (tax shown for info only)
-    const grandTotal = subtotal;
+    // Calculate additional discount
+    let additionalDiscountAmount = 0;
+    if (formData.additionalDiscount > 0) {
+      if (formData.additionalDiscountType === "PERCENTAGE") {
+        additionalDiscountAmount = (subtotal * formData.additionalDiscount) / 100;
+      } else {
+        additionalDiscountAmount = formData.additionalDiscount;
+      }
+    }
+    
+    // Grand total is subtotal minus all discounts (item-level + additional)
+    const grandTotal = subtotal - additionalDiscountAmount;
 
     console.log('Tax calculation debug:', { 
       subtotal, 
@@ -359,11 +373,12 @@ export default function CreateInvoice() {
     return { 
       subtotal, 
       totalTax, 
-      totalDiscount: itemDiscounts, 
-      overallDiscountAmount: itemDiscounts, 
+      totalDiscount: itemDiscounts + additionalDiscountAmount, 
+      overallDiscountAmount: itemDiscounts + additionalDiscountAmount, 
       grandTotal, 
       items, 
       itemDiscounts,
+      additionalDiscountAmount,
       itemsBeforeDiscount 
     };
   };
@@ -890,7 +905,12 @@ export default function CreateInvoice() {
                               </div>
                               <div class="total-line">
                                 <span>Item Discounts:</span>
-                                <span>- ₹${previewData.totals.totalDiscount.toFixed(2)}</span>
+                              ${(previewData.totals.additionalDiscountAmount || 0) > 0 ? `
+                              <div class="total-line">
+                                <span>Additional Discount:</span>
+                                <span>- ₹${previewData.totals.additionalDiscountAmount.toFixed(2)}</span>
+                              </div>` : ""}
+                                <span>- ₹${previewData.totals.itemDiscounts.toFixed(2)}</span>
                               </div>
                               <div class="total-line">
                                 <span>Total CGST (9%):</span>
@@ -1388,7 +1408,12 @@ export default function CreateInvoice() {
                               </div>
                               <div class="total-line">
                                 <span>Item Discounts:</span>
-                                <span>- ₹${previewData.totals.totalDiscount.toFixed(2)}</span>
+                              ${(previewData.totals.additionalDiscountAmount || 0) > 0 ? `
+                              <div class="total-line">
+                                <span>Additional Discount:</span>
+                                <span>- ₹${previewData.totals.additionalDiscountAmount.toFixed(2)}</span>
+                              </div>` : ""}
+                                <span>- ₹${previewData.totals.itemDiscounts.toFixed(2)}</span>
                               </div>
                               <div class="total-line">
                                 <span>Total CGST (9%):</span>
@@ -1842,6 +1867,11 @@ export default function CreateInvoice() {
                               </div>
                               <div class="total-line">
                                 <span>Item Discounts:</span>
+                              ${(previewData.totals.additionalDiscountAmount || 0) > 0 ? `
+                              <div class="total-line">
+                                <span>Additional Discount:</span>
+                                <span>- ₹${previewData.totals.additionalDiscountAmount.toFixed(2)}</span>
+                              </div>` : ""}
                                 <span>- ₹${invoiceData.totals.totalDiscount.toFixed(2)}</span>
                               </div>
                               <div class="total-line">
@@ -2512,6 +2542,11 @@ export default function CreateInvoice() {
                       </div>
                       <div className="flex justify-between text-gray-600">
                         <span>Item Discounts:</span>
+                              ${(previewData.totals.additionalDiscountAmount || 0) > 0 ? `
+                              <div class="total-line">
+                                <span>Additional Discount:</span>
+                                <span>- ₹${previewData.totals.additionalDiscountAmount.toFixed(2)}</span>
+                              </div>` : ""}
                         <span>-₹{totals.itemDiscounts.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between">
@@ -2533,6 +2568,59 @@ export default function CreateInvoice() {
                     </div>
 
                     <Separator />
+                    
+                    {/* Additional Discount Section */}
+                    <div className="space-y-3 p-3 bg-gray-50 rounded-lg">
+                      <label className="text-sm font-medium text-gray-700">Additional Discount</label>
+                      <div className="flex items-center space-x-2">
+                        <FormField
+                          control={form.control}
+                          name="additionalDiscount"
+                          render={({ field }) => (
+                            <Input
+                              type="text"
+                              value={field.value === 0 ? '' : field.value.toString()}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                                  const discount = value === '' ? 0 : parseFloat(value) || 0;
+                                  field.onChange(discount);
+                                }
+                              }}
+                              onBlur={(e) => {
+                                const value = e.target.value;
+                                if (value === '') {
+                                  field.onChange(0);
+                                }
+                              }}
+                              placeholder="0.00"
+                              className="flex-1"
+                            />
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="additionalDiscountType"
+                          render={({ field }) => (
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <SelectTrigger className="w-20">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="PERCENTAGE">%</SelectItem>
+                                <SelectItem value="AMOUNT">₹</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
+                      </div>
+                      {totals.additionalDiscountAmount > 0 && (
+                        <div className="flex justify-between text-sm text-gray-600">
+                          <span>Additional Discount Amount:</span>
+                          <span>- ₹{totals.additionalDiscountAmount.toFixed(2)}</span>
+                        </div>
+                      )}
+                    </div>
                     
                     <div className="flex justify-between text-xl font-bold">
                       <span>Grand Total:</span>
@@ -2710,12 +2798,23 @@ export default function CreateInvoice() {
                     </div>
                     <div className="flex justify-between text-gray-600">
                       <span>Item Discounts:</span>
+                              ${(previewData.totals.additionalDiscountAmount || 0) > 0 ? `
+                              <div class="total-line">
+                                <span>Additional Discount:</span>
+                                <span>- ₹${previewData.totals.additionalDiscountAmount.toFixed(2)}</span>
+                              </div>` : ""}
                       <span>- ₹{totals.itemDiscounts.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-black">
-                      <span>Subtotal (After Discount):</span>
+                      <span>Subtotal (After Item Discounts):</span>
                       <span>₹{totals.subtotal.toFixed(2)}</span>
                     </div>
+                    {totals.additionalDiscountAmount > 0 && (
+                      <div className="flex justify-between text-gray-600">
+                        <span>Additional Discount:</span>
+                        <span>- ₹{totals.additionalDiscountAmount.toFixed(2)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-gray-600">
                       <span>Total CGST:</span>
                       <span>₹{totals.items.reduce((sum, item) => sum + (item?.cgstAmount || 0), 0).toFixed(2)}</span>
