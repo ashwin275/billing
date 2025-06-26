@@ -904,13 +904,8 @@ export default function CreateInvoice() {
                                 <span>₹${previewData.totals.subtotal.toFixed(2)}</span>
                               </div>
                               <div class="total-line">
-                                <span>Item Discounts:</span>
-                              ${(previewData.totals.additionalDiscountAmount || 0) > 0 ? `
-                              <div class="total-line">
-                                <span>Additional Discount:</span>
-                                <span>- ₹${previewData.totals.additionalDiscountAmount.toFixed(2)}</span>
-                              </div>` : ""}
-                                <span>- ₹${previewData.totals.itemDiscounts.toFixed(2)}</span>
+                                <span>Total Discount:</span>
+                                <span>- ₹${(previewData.totals.itemDiscounts + (previewData.totals.additionalDiscountAmount || 0)).toFixed(2)}</span>
                               </div>
                               <div class="total-line">
                                 <span>Total CGST (9%):</span>
@@ -1407,13 +1402,6 @@ export default function CreateInvoice() {
                                 <span>₹${previewData.totals.subtotal.toFixed(2)}</span>
                               </div>
                               <div class="total-line">
-                                <span>Item Discounts:</span>
-                              ${(previewData.totals.additionalDiscountAmount || 0) > 0 ? `
-                              <div class="total-line">
-                                <span>Additional Discount:</span>
-                                <span>- ₹${previewData.totals.additionalDiscountAmount.toFixed(2)}</span>
-                              </div>` : ""}
-                                <span>- ₹${previewData.totals.itemDiscounts.toFixed(2)}</span>
                               </div>
                               <div class="total-line">
                                 <span>Total CGST (9%):</span>
@@ -1868,8 +1856,8 @@ export default function CreateInvoice() {
                                 <span>₹${invoiceData.totals.subtotal.toFixed(2)}</span>
                               </div>
                               <div class="total-line">
-                                <span>Item Discounts:</span>
-                                <span>- ₹${invoiceData.totals.totalDiscount.toFixed(2)}</span>
+                                <span>Total Discount:</span>
+                                <span>- ₹${(invoiceData.totals.itemDiscounts + (invoiceData.totals.additionalDiscountAmount || 0)).toFixed(2)}</span>
                               </div>
                               <div class="total-line">
                                 <span>Total CGST (9%):</span>
@@ -2553,299 +2541,1067 @@ export default function CreateInvoice() {
                         <span>Total SGST:</span>
                         <span>₹{totals.items.reduce((sum, item) => sum + (item?.sgstAmount || 0), 0).toFixed(2)}</span>
                       </div>
-                      <div className="flex justify-between text-gray-600">
-                        <span>Total Tax (Not included):</span>
-                        <span>₹{totals.totalTax.toFixed(2)}</span>
+                      <div className="flex justify-between border-t pt-2">
+                        <span className="font-semibold">Grand Total:</span>
+                        <span className="font-semibold text-lg">₹{totals.grandTotal.toFixed(2)}</span>
                       </div>
                     </div>
 
-                    <Separator />
-                    
                     {/* Additional Discount Section */}
-                    <div className="space-y-3 p-3 bg-gray-50 rounded-lg">
+                    <div className="space-y-3">
                       <label className="text-sm font-medium text-gray-700">Additional Discount</label>
-                      <div className="flex items-center space-x-2">
-                        <FormField
-                          control={form.control}
-                          name="additionalDiscount"
-                          render={({ field }) => (
-                            <Input
-                              type="text"
-                              value={field.value === 0 ? '' : field.value.toString()}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                                  const discount = value === '' ? 0 : parseFloat(value) || 0;
-                                  field.onChange(discount);
-                                }
-                              }}
-                              onBlur={(e) => {
-                                const value = e.target.value;
-                                if (value === '') {
-                                  field.onChange(0);
-                                }
-                              }}
-                              placeholder="0.00"
-                              className="flex-1"
-                            />
-                          )}
-                        />
+                      <div className="grid grid-cols-2 gap-3">
                         <FormField
                           control={form.control}
                           name="additionalDiscountType"
                           render={({ field }) => (
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <SelectTrigger className="w-20">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="PERCENTAGE">%</SelectItem>
-                                <SelectItem value="AMOUNT">₹</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            <FormItem>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Type" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="percentage">Percentage</SelectItem>
+                                  <SelectItem value="amount">Amount</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="additionalDiscountValue"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  placeholder="0"
+                                  {...field}
+                                  onChange={(e) => field.onChange(Number(e.target.value))}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
                           )}
                         />
                       </div>
-                      {totals.additionalDiscountAmount > 0 && (
-                        <div className="flex justify-between text-sm text-gray-600">
+                      <div className="text-sm text-gray-600 space-y-1">
+                        <div className="flex justify-between">
                           <span>Additional Discount Amount:</span>
-                          <span>- ₹{totals.additionalDiscountAmount.toFixed(2)}</span>
+                          <span>₹{totals.additionalDiscountAmount.toFixed(2)}</span>
                         </div>
-                      )}
+                      </div>
                     </div>
-                    
-                    <div className="flex justify-between text-xl font-bold">
-                      <span>Grand Total:</span>
-                      <span>₹{totals.grandTotal.toFixed(2)}</span>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Amount Paid:</span>
-                      <FormField
-                        control={form.control}
-                        name="amountPaid"
-                        render={({ field }) => (
-                          <Input
-                            type="text"
-                            value={field.value === 0 ? '' : field.value.toString()}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              // Allow empty string or valid decimal numbers
-                              if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                                const amount = value === '' ? 0 : parseFloat(value) || 0;
-                                field.onChange(amount);
-                              }
-                            }}
-                            onBlur={(e) => {
-                              const value = e.target.value;
-                              if (value === '') {
-                                field.onChange(0);
-                              }
-                            }}
-                            className="w-32 text-right"
-                          />
-                        )}
-                      />
-                    </div>
-                    
-                    <div className="flex justify-between text-lg font-semibold">
-                      <span>Balance:</span>
-                      <span className={totals.grandTotal - (form.watch("amountPaid") || 0) > 0 ? "text-red-600" : "text-green-600"}>
-                        ₹{(totals.grandTotal - (form.watch("amountPaid") || 0)).toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <Separator className="my-8" />
-
-                {/* Additional Fields */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  <div>
-                    <FormField
-                      control={form.control}
-                      name="remark"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Remarks (Optional)</FormLabel>
-                          <FormControl>
-                            <Textarea {...field} placeholder="Enter any remarks..." />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <div>
-                    <FormField
-                      control={form.control}
-                      name="termsAndConditions"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Terms and Conditions (Optional)</FormLabel>
-                          <FormControl>
-                            <Textarea {...field} placeholder="Enter terms and conditions..." />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                   </div>
                 </div>
 
                 {/* Bottom Action Buttons */}
-                <div className="flex justify-end pt-8 border-t">
-                  <Button 
-                    type="submit"
-                    disabled={!selectedCustomer || !selectedShop || fields.length === 0 || createInvoiceMutation.isPending || updateInvoiceMutation.isPending}
-                    className="bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white border-0"
-                  >
-                    <Save className="h-4 w-4 mr-2" />
-                    {isEditMode ? (updateInvoiceMutation.isPending ? "Updating..." : "Update Invoice") : (createInvoiceMutation.isPending ? "Creating..." : "Create Invoice")}
-                  </Button>
-                </div>
+                <div className="flex justify-between items-center pt-6 border-t">
+                  <div className="flex space-x-2">
+                    <Button 
+                      variant="outline"
+                      onClick={() => {
+                        if (!selectedCustomer || !selectedShop) return;
+                        
+                        const formData = form.getValues();
+                        const previewData = {
+                          invoiceDate: new Date().toISOString(),
+                          shop: {
+                            name: selectedShop.name,
+                            place: selectedShop.place,
+                            tagline: "Quality Products & Services"
+                          },
+                          customer: {
+                            name: selectedCustomer.name,
+                            place: selectedCustomer.place,
+                            phone: selectedCustomer.phone
+                          },
+                          paymentDetails: {
+                            paymentStatus: formData.paymentStatus,
+                            paymentMode: formData.paymentMode,
+                            billType: formData.billType,
+                            saleType: formData.saleType
+                          },
+                          items: totals.items.filter((item: any) => item),
+                          totals,
+                          amountPaid: formData.amountPaid || 0,
+                          remark: formData.remark
+                        };
 
+                        const previewWindow = window.open('', '_blank', 'width=900,height=700,scrollbars=yes');
+                        if (!previewWindow) return;
+
+                        previewWindow.document.write(`
+                          <!DOCTYPE html>
+                          <html>
+                            <head>
+                              <title>Invoice Preview</title>
+                              <style>
+                                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+                                
+                                * { margin: 0; padding: 0; box-sizing: border-box; }
+                                
+                                body { 
+                                  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+                                  background: #f8fafc;
+                                  padding: 20px;
+                                  line-height: 1.4;
+                                }
+                                
+                                .invoice-container {
+                                  max-width: 800px;
+                                  margin: 0 auto;
+                                  background: white;
+                                  border-radius: 12px;
+                                  overflow: hidden;
+                                  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+                                  position: relative;
+                                  page-break-inside: avoid;
+                                }
+                                
+                                .header-wave {
+                                  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+                                  height: 120px;
+                                  position: relative;
+                                  overflow: hidden;
+                                }
+                                
+                                .header-wave::after {
+                                  content: '';
+                                  position: absolute;
+                                  bottom: -50px;
+                                  left: -10%;
+                                  width: 120%;
+                                  height: 100px;
+                                  background: white;
+                                  border-radius: 50%;
+                                }
+                                
+                                .header-content {
+                                  position: relative;
+                                  z-index: 2;
+                                  padding: 30px 40px;
+                                  display: flex;
+                                  justify-content: space-between;
+                                  align-items: flex-start;
+                                  color: white;
+                                }
+                                
+                                .logo-section {
+                                  display: flex;
+                                  align-items: center;
+                                  gap: 15px;
+                                }
+                                
+                                .logo-placeholder {
+                                  width: 50px;
+                                  height: 50px;
+                                  background: rgba(255,255,255,0.2);
+                                  border-radius: 12px;
+                                  display: flex;
+                                  align-items: center;
+                                  justify-content: center;
+                                  font-weight: 700;
+                                  font-size: 24px;
+                                  backdrop-filter: blur(10px);
+                                }
+                                
+                                .company-info h1 {
+                                  font-size: 24px;
+                                  font-weight: 700;
+                                  margin-bottom: 4px;
+                                }
+                                
+                                .company-tagline {
+                                  font-size: 12px;
+                                  opacity: 0.9;
+                                  line-height: 1.3;
+                                }
+                                
+                                .invoice-title {
+                                  text-align: right;
+                                }
+                                
+                                .invoice-title h2 {
+                                  font-size: 28px;
+                                  font-weight: 700;
+                                  margin-bottom: 5px;
+                                }
+                                
+                                .invoice-meta {
+                                  font-size: 13px;
+                                  opacity: 0.9;
+                                  line-height: 1.4;
+                                }
+                                
+                                .content-section {
+                                  padding: 40px;
+                                }
+                                
+                                .bill-to-section {
+                                  display: grid;
+                                  grid-template-columns: 1fr 1fr;
+                                  gap: 30px;
+                                  margin-bottom: 35px;
+                                }
+                                
+                                .info-block h3 {
+                                  color: #4a5568;
+                                  font-size: 12px;
+                                  font-weight: 600;
+                                  text-transform: uppercase;
+                                  letter-spacing: 0.5px;
+                                  margin-bottom: 8px;
+                                }
+                                
+                                .customer-name {
+                                  font-weight: 600;
+                                  font-size: 16px;
+                                  color: #2d3748;
+                                  margin-bottom: 4px;
+                                }
+                                
+                                .info-block p {
+                                  color: #4a5568;
+                                  font-size: 13px;
+                                  line-height: 1.4;
+                                  margin-bottom: 2px;
+                                }
+                                
+                                .items-table {
+                                  width: 100%;
+                                  border-collapse: collapse;
+                                  margin-bottom: 30px;
+                                  border-radius: 8px;
+                                  overflow: hidden;
+                                  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                                }
+                                
+                                .items-table th {
+                                  background: #f7fafc;
+                                  padding: 12px 15px;
+                                  text-align: left;
+                                  font-weight: 600;
+                                  font-size: 12px;
+                                  color: #4a5568;
+                                  text-transform: uppercase;
+                                  letter-spacing: 0.5px;
+                                  border-bottom: 2px solid #e2e8f0;
+                                }
+                                
+                                .items-table td {
+                                  padding: 15px;
+                                  border-bottom: 1px solid #e2e8f0;
+                                  font-size: 13px;
+                                  color: #2d3748;
+                                }
+                                
+                                .items-table tr:last-child td {
+                                  border-bottom: none;
+                                }
+                                
+                                .items-table tr:hover {
+                                  background: #f7fafc;
+                                }
+                                
+                                .text-center { text-align: center; }
+                                .text-right { text-align: right; }
+                                .text-left { text-align: left; }
+                                
+                                .totals-section {
+                                  display: flex;
+                                  justify-content: flex-end;
+                                  margin-bottom: 30px;
+                                }
+                                
+                                .totals-box {
+                                  background: #f7fafc;
+                                  padding: 20px;
+                                  border-radius: 8px;
+                                  min-width: 300px;
+                                }
+                                
+                                .total-line {
+                                  display: flex;
+                                  justify-content: space-between;
+                                  margin-bottom: 8px;
+                                  font-size: 13px;
+                                }
+                                
+                                .total-line:last-child {
+                                  margin-bottom: 0;
+                                }
+                                
+                                .total-line span:first-child {
+                                  color: #4a5568;
+                                }
+                                
+                                .total-line span:last-child {
+                                  font-weight: 500;
+                                  color: #2d3748;
+                                }
+                                
+                                .grand-total {
+                                  border-top: 2px solid #e2e8f0;
+                                  margin-top: 10px;
+                                  padding-top: 10px;
+                                  font-size: 16px;
+                                  font-weight: 700;
+                                  color: #2d3748;
+                                }
+                                
+                                .balance {
+                                  font-weight: 600;
+                                  font-size: 14px;
+                                }
+                                
+                                .balance.positive { color: #e53e3e; }
+                                .balance.negative { color: #38a169; }
+                                
+                                .bottom-section {
+                                  display: grid;
+                                  grid-template-columns: 2fr 1fr;
+                                  gap: 25px;
+                                }
+                                
+                                .terms-section {
+                                  background: #f7fafc;
+                                  padding: 15px;
+                                  border-radius: 8px;
+                                }
+                                
+                                .terms-section h3 {
+                                  color: #2d3748;
+                                  font-size: 14px;
+                                  font-weight: 600;
+                                  margin-bottom: 8px;
+                                }
+                                
+                                .terms-section p {
+                                  color: #4a5568;
+                                  font-size: 11px;
+                                  line-height: 1.4;
+                                  margin-bottom: 4px;
+                                }
+                                
+                                .signature-section {
+                                  text-align: center;
+                                  padding: 15px;
+                                }
+                                
+                                .signature-line {
+                                  border-top: 2px solid #2d3748;
+                                  width: 120px;
+                                  margin: 25px auto 8px;
+                                }
+                                
+                                .signature-text {
+                                  color: #4a5568;
+                                  font-size: 12px;
+                                  font-weight: 500;
+                                }
+                                
+                                .footer-wave {
+                                  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+                                  height: 60px;
+                                  position: relative;
+                                  margin-top: 30px;
+                                }
+                                
+                                .footer-wave::before {
+                                  content: '';
+                                  position: absolute;
+                                  top: -30px;
+                                  left: 0;
+                                  width: 100%;
+                                  height: 60px;
+                                  background: white;
+                                  border-radius: 0 0 50% 50% / 0 0 100% 100%;
+                                }
+                                
+                                @media print {
+                                  body { 
+                                    background: white;
+                                    padding: 0;
+                                  }
+                                  .invoice-container {
+                                    box-shadow: none;
+                                    border-radius: 0;
+                                    page-break-inside: avoid;
+                                  }
+                                }
+                              </style>
+                            </head>
+                            <body>
+                              <div class="invoice-container">
+                                <!-- Header Wave Section -->
+                                <div class="header-wave">
+                                  <div class="header-content">
+                                    <div class="logo-section">
+                                      <div class="logo-placeholder">
+                                        ${previewData.shop.name.charAt(0)}
+                                      </div>
+                                      <div class="company-info">
+                                        <h1>${previewData.shop.name}</h1>
+                                        <div class="company-tagline">${previewData.shop.tagline}</div>
+                                      </div>
+                                    </div>
+                                    <div class="invoice-title">
+                                      <div class="invoice-meta">
+                                        <div>${new Date(previewData.invoiceDate).toLocaleDateString('en-GB')}</div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <!-- Content Section -->
+                                <div class="content-section">
+                                  <!-- Bill To Section -->
+                                  <div class="bill-to-section">
+                                    <div class="info-block">
+                                      <h3>Invoice To:</h3>
+                                      <p class="customer-name">${previewData.customer.name}</p>
+                                      <p>📍 ${previewData.customer.place}</p>
+                                      <p>📞 ${previewData.customer.phone}</p>
+                                    </div>
+                                    <div class="info-block">
+                                      <h3>Payment Info:</h3>
+                                      <p><strong>Status:</strong> ${previewData.paymentDetails.paymentStatus}</p>
+                                      <p><strong>Mode:</strong> ${previewData.paymentDetails.paymentMode}</p>
+                                    </div>
+                                  </div>
+
+                                  <!-- Items Table -->
+                                  <table class="items-table">
+                                    <thead>
+                                      <tr>
+                                        <th class="text-left">Item Description</th>
+                                        <th class="text-center">Qty.</th>
+                                        <th class="text-right">Price</th>
+                                        <th class="text-right">Discount</th>
+                                        <th class="text-right">CGST (9%)</th>
+                                        <th class="text-right">SGST (9%)</th>
+                                        <th class="text-right">Total</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      ${previewData.items.map((item, index) => `
+                                        <tr>
+                                          <td class="text-left">
+                                            <div style="font-weight: 600; color: #2d3748;">${item?.product?.name || 'N/A'}</div>
+                                          </td>
+                                          <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
+                                          <td class="text-right">₹${item?.unitPrice?.toFixed(2) || '0.00'}</td>
+                                          <td class="text-right">₹${item?.discountAmount?.toFixed(2) || '0.00'}</td>
+                                          <td class="text-right">₹${(item?.cgstAmount || 0).toFixed(2)}</td>
+                                          <td class="text-right">₹${(item?.sgstAmount || 0).toFixed(2)}</td>
+                                          <td class="text-right" style="font-weight: 600; color: #2d3748;">₹${item?.totalPrice?.toFixed(2) || '0.00'}</td>
+                                        </tr>
+                                      `).join('')}
+                                    </tbody>
+                                  </table>
+
+                                  <!-- Totals Section -->
+                                  <div class="totals-section">
+                                    <div class="totals-box">
+                                      <div class="total-line">
+                                        <span>Sub Total:</span>
+                                        <span>₹${previewData.totals.subtotal.toFixed(2)}</span>
+                                      </div>
+                                      <div class="total-line">
+                                        <span>Total Discount:</span>
+                                        <span>- ₹${(previewData.totals.itemDiscounts + (previewData.totals.additionalDiscountAmount || 0)).toFixed(2)}</span>
+                                      </div>
+                                      <div class="total-line">
+                                        <span>Total CGST (9%):</span>
+                                        <span>₹${((previewData.totals.totalTax || 0) / 2).toFixed(2)}</span>
+                                      </div>
+                                      <div class="total-line">
+                                        <span>Total SGST (9%):</span>
+                                        <span>₹${((previewData.totals.totalTax || 0) / 2).toFixed(2)}</span>
+                                      </div>
+                                      <div class="total-line grand-total">
+                                        <span>Grand Total:</span>
+                                        <span>₹${previewData.totals.grandTotal.toFixed(2)}</span>
+                                      </div>
+                                      <div class="total-line">
+                                        <span>Amount Paid:</span>
+                                        <span>₹${previewData.amountPaid.toFixed(2)}</span>
+                                      </div>
+                                      <div class="total-line balance ${(previewData.totals.grandTotal - previewData.amountPaid) > 0 ? 'positive' : 'negative'}">
+                                        <span>Balance:</span>
+                                        <span>₹${(previewData.totals.grandTotal - previewData.amountPaid).toFixed(2)}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <!-- Bottom Section -->
+                                  <div class="bottom-section">
+                                    <div class="terms-section">
+                                      <h3>Terms & Conditions</h3>
+                                      <p>1. Payment is due within 30 days of invoice date.</p>
+                                      <p>2. Late payments may incur additional charges.</p>
+                                      <p>3. Goods once sold cannot be returned without prior approval.</p>
+                                      <p>4. Any disputes must be resolved within 7 days of delivery.</p>
+                                      ${previewData.remark ? `
+                                        <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #e2e8f0;">
+                                          <strong>Remarks:</strong><br>
+                                          ${previewData.remark}
+                                        </div>
+                                      ` : ''}
+                                    </div>
+
+                                    <div class="signature-section">
+                                      <div class="signature-line"></div>
+                                      <p class="signature-text">Authorized Signature</p>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div class="footer-wave"></div>
+                              </div>
+                            </body>
+                          </html>
+                        `);
+                        
+                        previewWindow.document.close();
+                      }}
+                      disabled={!selectedCustomer || !selectedShop}
+                    >
+                      <Eye className="h-4 w-4 mr-2" />
+                      Preview
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      onClick={() => {
+                        if (!selectedCustomer || !selectedShop) return;
+                        
+                        const formData = form.getValues();
+                        const totals = calculateTotals();
+                        
+                        const invoiceData = {
+                          invoiceDate: new Date().toISOString(),
+                          shop: {
+                            name: selectedShop.name,
+                            place: selectedShop.place,
+                            gstNo: selectedShop.gstNo || "",
+                            phone: selectedShop.phone || "",
+                            tagline: "Quality Products & Services"
+                          },
+                          customer: {
+                            name: selectedCustomer.name,
+                            place: selectedCustomer.place,
+                            phone: selectedCustomer.phone?.toString() || ""
+                          },
+                          paymentDetails: {
+                            paymentStatus: formData.paymentStatus,
+                            paymentMode: formData.paymentMode,
+                            billType: formData.billType,
+                            saleType: formData.saleType
+                          },
+                          items: totals.items.filter(item => item),
+                          totals,
+                          amountPaid: formData.amountPaid || 0,
+                          remark: formData.remark
+                        };
+
+                        // Create a new window for PDF generation
+                        const printWindow = window.open('', '_blank');
+                        if (!printWindow) return;
+
+                        printWindow.document.write(`
+                          <!DOCTYPE html>
+                          <html>
+                            <head>
+                              <title>Invoice Preview</title>
+                              <style>
+                                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+                                
+                                * { margin: 0; padding: 0; box-sizing: border-box; }
+                                
+                                body { 
+                                  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+                                  background: #f8fafc;
+                                  padding: 20px;
+                                  line-height: 1.4;
+                                }
+                                
+                                .invoice-container {
+                                  max-width: 800px;
+                                  margin: 0 auto;
+                                  background: white;
+                                  border-radius: 12px;
+                                  overflow: hidden;
+                                  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+                                  position: relative;
+                                  page-break-inside: avoid;
+                                }
+                                
+                                .header-wave {
+                                  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+                                  height: 120px;
+                                  position: relative;
+                                  overflow: hidden;
+                                }
+                                
+                                .header-wave::after {
+                                  content: '';
+                                  position: absolute;
+                                  bottom: -50px;
+                                  left: -10%;
+                                  width: 120%;
+                                  height: 100px;
+                                  background: white;
+                                  border-radius: 50%;
+                                }
+                                
+                                .header-content {
+                                  position: relative;
+                                  z-index: 2;
+                                  padding: 30px 40px;
+                                  display: flex;
+                                  justify-content: space-between;
+                                  align-items: flex-start;
+                                  color: white;
+                                }
+                                
+                                .logo-section {
+                                  display: flex;
+                                  align-items: center;
+                                  gap: 15px;
+                                }
+                                
+                                .logo-placeholder {
+                                  width: 50px;
+                                  height: 50px;
+                                  background: rgba(255,255,255,0.2);
+                                  border-radius: 12px;
+                                  display: flex;
+                                  align-items: center;
+                                  justify-content: center;
+                                  font-weight: 700;
+                                  font-size: 24px;
+                                  backdrop-filter: blur(10px);
+                                }
+                                
+                                .company-info h1 {
+                                  font-size: 24px;
+                                  font-weight: 700;
+                                  margin-bottom: 4px;
+                                }
+                                
+                                .company-tagline {
+                                  font-size: 12px;
+                                  opacity: 0.9;
+                                  line-height: 1.3;
+                                }
+                                
+                                .invoice-title {
+                                  text-align: right;
+                                }
+                                
+                                .invoice-title h2 {
+                                  font-size: 28px;
+                                  font-weight: 700;
+                                  margin-bottom: 5px;
+                                }
+                                
+                                .invoice-meta {
+                                  font-size: 13px;
+                                  opacity: 0.9;
+                                  line-height: 1.4;
+                                }
+                                
+                                .content-section {
+                                  padding: 40px;
+                                }
+                                
+                                .bill-to-section {
+                                  display: grid;
+                                  grid-template-columns: 1fr 1fr;
+                                  gap: 30px;
+                                  margin-bottom: 35px;
+                                }
+                                
+                                .info-block h3 {
+                                  color: #4a5568;
+                                  font-size: 12px;
+                                  font-weight: 600;
+                                  text-transform: uppercase;
+                                  letter-spacing: 0.5px;
+                                  margin-bottom: 8px;
+                                }
+                                
+                                .customer-name {
+                                  font-weight: 600;
+                                  font-size: 16px;
+                                  color: #2d3748;
+                                  margin-bottom: 4px;
+                                }
+                                
+                                .info-block p {
+                                  color: #4a5568;
+                                  font-size: 13px;
+                                  line-height: 1.4;
+                                  margin-bottom: 2px;
+                                }
+                                
+                                .items-table {
+                                  width: 100%;
+                                  border-collapse: collapse;
+                                  margin-bottom: 30px;
+                                  border-radius: 8px;
+                                  overflow: hidden;
+                                  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                                }
+                                
+                                .items-table th {
+                                  background: #f7fafc;
+                                  padding: 12px 15px;
+                                  text-align: left;
+                                  font-weight: 600;
+                                  font-size: 12px;
+                                  color: #4a5568;
+                                  text-transform: uppercase;
+                                  letter-spacing: 0.5px;
+                                  border-bottom: 2px solid #e2e8f0;
+                                }
+                                
+                                .items-table td {
+                                  padding: 15px;
+                                  border-bottom: 1px solid #e2e8f0;
+                                  font-size: 13px;
+                                  color: #2d3748;
+                                }
+                                
+                                .items-table tr:last-child td {
+                                  border-bottom: none;
+                                }
+                                
+                                .items-table tr:hover {
+                                  background: #f7fafc;
+                                }
+                                
+                                .text-center { text-align: center; }
+                                .text-right { text-align: right; }
+                                .text-left { text-align: left; }
+                                
+                                .totals-section {
+                                  display: flex;
+                                  justify-content: flex-end;
+                                  margin-bottom: 30px;
+                                }
+                                
+                                .totals-box {
+                                  background: #f7fafc;
+                                  padding: 20px;
+                                  border-radius: 8px;
+                                  min-width: 300px;
+                                }
+                                
+                                .total-line {
+                                  display: flex;
+                                  justify-content: space-between;
+                                  margin-bottom: 8px;
+                                  font-size: 13px;
+                                }
+                                
+                                .total-line:last-child {
+                                  margin-bottom: 0;
+                                }
+                                
+                                .total-line span:first-child {
+                                  color: #4a5568;
+                                }
+                                
+                                .total-line span:last-child {
+                                  font-weight: 500;
+                                  color: #2d3748;
+                                }
+                                
+                                .grand-total {
+                                  border-top: 2px solid #e2e8f0;
+                                  margin-top: 10px;
+                                  padding-top: 10px;
+                                  font-size: 16px;
+                                  font-weight: 700;
+                                  color: #2d3748;
+                                }
+                                
+                                .balance {
+                                  font-weight: 600;
+                                  font-size: 14px;
+                                }
+                                
+                                .balance.positive { color: #e53e3e; }
+                                .balance.negative { color: #38a169; }
+                                
+                                .bottom-section {
+                                  display: grid;
+                                  grid-template-columns: 2fr 1fr;
+                                  gap: 25px;
+                                }
+                                
+                                .terms-section {
+                                  background: #f7fafc;
+                                  padding: 15px;
+                                  border-radius: 8px;
+                                }
+                                
+                                .terms-section h3 {
+                                  color: #2d3748;
+                                  font-size: 14px;
+                                  font-weight: 600;
+                                  margin-bottom: 8px;
+                                }
+                                
+                                .terms-section p {
+                                  color: #4a5568;
+                                  font-size: 11px;
+                                  line-height: 1.4;
+                                  margin-bottom: 4px;
+                                }
+                                
+                                .signature-section {
+                                  text-align: center;
+                                  padding: 15px;
+                                }
+                                
+                                .signature-line {
+                                  border-top: 2px solid #2d3748;
+                                  width: 120px;
+                                  margin: 25px auto 8px;
+                                }
+                                
+                                .signature-text {
+                                  color: #4a5568;
+                                  font-size: 12px;
+                                  font-weight: 500;
+                                }
+                                
+                                .footer-wave {
+                                  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+                                  height: 60px;
+                                  position: relative;
+                                  margin-top: 30px;
+                                }
+                                
+                                .footer-wave::before {
+                                  content: '';
+                                  position: absolute;
+                                  top: -30px;
+                                  left: 0;
+                                  width: 100%;
+                                  height: 60px;
+                                  background: white;
+                                  border-radius: 0 0 50% 50% / 0 0 100% 100%;
+                                }
+                                
+                                @media print {
+                                  body { 
+                                    background: white;
+                                    padding: 0;
+                                  }
+                                  .invoice-container {
+                                    box-shadow: none;
+                                    border-radius: 0;
+                                    page-break-inside: avoid;
+                                  }
+                                }
+                              </style>
+                            </head>
+                            <body>
+                              <div class="invoice-container">
+                                <!-- Header Wave Section -->
+                                <div class="header-wave">
+                                  <div class="header-content">
+                                    <div class="logo-section">
+                                      <div class="logo-placeholder">
+                                        ${invoiceData.shop.name.charAt(0)}
+                                      </div>
+                                      <div class="company-info">
+                                        <h1>${invoiceData.shop.name}</h1>
+                                        <div class="company-tagline">${invoiceData.shop.tagline}</div>
+                                        ${invoiceData.shop.gstNo ? `<div class="company-tagline">GST: ${invoiceData.shop.gstNo}</div>` : ''}
+                                        ${invoiceData.shop.phone ? `<div class="company-tagline">Phone: ${invoiceData.shop.phone}</div>` : ''}
+                                      </div>
+                                    </div>
+                                    <div class="invoice-title">
+                                      <div class="invoice-meta">
+                                        <div><strong>Date:</strong> ${new Date(invoiceData.invoiceDate).toLocaleDateString()}</div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <!-- Content Section -->
+                                <div class="content-section">
+                                  <!-- Bill To Section -->
+                                  <div class="bill-to-section">
+                                    <div class="info-block">
+                                      <h3>Invoice To:</h3>
+                                      <p class="customer-name">${invoiceData.customer.name}</p>
+                                      <p>📍 ${invoiceData.customer.place}</p>
+                                      <p>📞 ${invoiceData.customer.phone}</p>
+                                    </div>
+                                    <div class="info-block">
+                                      <h3>Payment Info:</h3>
+                                      <p><strong>Status:</strong> ${invoiceData.paymentDetails.paymentStatus}</p>
+                                      <p><strong>Mode:</strong> ${invoiceData.paymentDetails.paymentMode}</p>
+                                    </div>
+                                  </div>
+
+                                  <!-- Items Table -->
+                                  <table class="items-table">
+                                    <thead>
+                                      <tr>
+                                        <th class="text-left">Item Description</th>
+                                        <th class="text-center">Qty.</th>
+                                        <th class="text-right">Price</th>
+                                        <th class="text-right">Discount</th>
+                                        <th class="text-right">CGST (9%)</th>
+                                        <th class="text-right">SGST (9%)</th>
+                                        <th class="text-right">Total</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      ${invoiceData.items.map((item, index) => `
+                                        <tr>
+                                          <td class="text-left">
+                                            <div style="font-weight: 600; color: #2d3748;">${item?.product?.name || 'N/A'}</div>
+                                          </td>
+                                          <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
+                                          <td class="text-right">₹${item?.unitPrice?.toFixed(2) || '0.00'}</td>
+                                          <td class="text-right">₹${item?.discountAmount?.toFixed(2) || '0.00'}</td>
+                                          <td class="text-right">₹${(item?.cgstAmount || 0).toFixed(2)}</td>
+                                          <td class="text-right">₹${(item?.sgstAmount || 0).toFixed(2)}</td>
+                                          <td class="text-right" style="font-weight: 600; color: #2d3748;">₹${item?.totalPrice?.toFixed(2) || '0.00'}</td>
+                                        </tr>
+                                      `).join('')}
+                                    </tbody>
+                                  </table>
+
+                                  <!-- Totals Section -->
+                                  <div class="totals-section">
+                                    <div class="totals-box">
+                                      <div class="total-line">
+                                        <span>Sub Total:</span>
+                                        <span>₹${invoiceData.totals.subtotal.toFixed(2)}</span>
+                                      </div>
+                                      <div class="total-line">
+                                        <span>Total Discount:</span>
+                                        <span>- ₹${(invoiceData.totals.itemDiscounts + (invoiceData.totals.additionalDiscountAmount || 0)).toFixed(2)}</span>
+                                      </div>
+                                      <div class="total-line">
+                                        <span>Total CGST (9%):</span>
+                                        <span>₹${((invoiceData.totals.totalTax || 0) / 2).toFixed(2)}</span>
+                                      </div>
+                                      <div class="total-line">
+                                        <span>Total SGST (9%):</span>
+                                        <span>₹${((invoiceData.totals.totalTax || 0) / 2).toFixed(2)}</span>
+                                      </div>
+                                      <div class="total-line grand-total">
+                                        <span>Grand Total:</span>
+                                        <span>₹${invoiceData.totals.grandTotal.toFixed(2)}</span>
+                                      </div>
+                                      <div class="total-line">
+                                        <span>Amount Paid:</span>
+                                        <span>₹${invoiceData.amountPaid.toFixed(2)}</span>
+                                      </div>
+                                      <div class="total-line balance ${(invoiceData.totals.grandTotal - invoiceData.amountPaid) > 0 ? 'positive' : 'negative'}">
+                                        <span>Balance:</span>
+                                        <span>₹${(invoiceData.totals.grandTotal - invoiceData.amountPaid).toFixed(2)}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <!-- Bottom Section -->
+                                  <div class="bottom-section">
+                                    <div class="terms-section">
+                                      <h3>Terms & Conditions</h3>
+                                      <p>1. Payment is due within 30 days of invoice date.</p>
+                                      <p>2. Late payments may incur additional charges.</p>
+                                      <p>3. Goods once sold cannot be returned without prior approval.</p>
+                                      <p>4. Any disputes must be resolved within 7 days of delivery.</p>
+                                      ${invoiceData.remark ? `
+                                        <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #e2e8f0;">
+                                          <strong>Remarks:</strong><br>
+                                          ${invoiceData.remark}
+                                        </div>
+                                      ` : ''}
+                                    </div>
+
+                                  </div>
+                                </div>
+
+
+                              </div>
+                              
+                              <script>
+                                window.onload = function() {
+                                  window.print();
+                                  setTimeout(function() { window.close(); }, 1000);
+                                }
+                              </script>
+                            </body>
+                          </html>
+                        `);
+                        
+                        printWindow.document.close();
+                      }}
+                      disabled={!selectedCustomer || !selectedShop}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download PDF
+                    </Button>
+                    <Button 
+                      onClick={() => form.handleSubmit(onSubmit)()}
+                      disabled={isEditMode ? updateInvoiceMutation.isPending : createInvoiceMutation.isPending}
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      {isEditMode 
+                        ? (updateInvoiceMutation.isPending ? "Updating..." : "Update Invoice")
+                        : (createInvoiceMutation.isPending ? "Creating..." : "Create Invoice")
+                      }
+                    </Button>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </form>
         </Form>
 
-        {/* Preview Dialog */}
-        <Dialog open={isPreviewDialogOpen} onOpenChange={setIsPreviewDialogOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        {/* Success Dialog */}
+        <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+          <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Invoice Preview</DialogTitle>
+              <DialogTitle className="text-center">
+                <span className="text-green-600">✓</span> Invoice Created Successfully!
+              </DialogTitle>
             </DialogHeader>
-            
-            {selectedCustomer && selectedShop && (
-              <div className="space-y-6 p-6 bg-white text-black">
-                {/* Invoice Header */}
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h2 className="text-2xl font-bold text-black">{selectedShop.name}</h2>
-                    <p className="text-gray-600">{selectedShop.place}</p>
-                    {selectedShop.gstNo && <p className="text-gray-600">GST: {selectedShop.gstNo}</p>}
-                    {selectedShop.phone && <p className="text-gray-600">Phone: {selectedShop.phone}</p>}
-                  </div>
-                  <div className="text-right">
-                    <h3 className="text-xl font-bold text-black">INVOICE</h3>
-                    <p className="text-gray-600">{new Date().toLocaleDateString()}</p>
-                  </div>
-                </div>
-
-                <Separator className="border-black" />
-
-                {/* Invoice Details */}
-                <div className="grid grid-cols-2 gap-8">
-                  <div>
-                    <h4 className="font-semibold text-black mb-2">Bill To:</h4>
-                    <p className="text-gray-600">{selectedCustomer.name}</p>
-                    <p className="text-gray-600">{selectedCustomer.place}</p>
-                    <p className="text-gray-600">{selectedCustomer.phone}</p>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-black mb-2">Payment Details:</h4>
-                    <p className="text-gray-600">Status: {form.watch("paymentStatus")}</p>
-                    <p className="text-gray-600">Mode: {form.watch("paymentMode")}</p>
-                    <p className="text-gray-600">Type: {form.watch("billType")} {form.watch("saleType")}</p>
-                  </div>
-                </div>
-
-                {/* Items Table */}
-                <div>
-                  <h4 className="font-semibold text-black mb-4">Items:</h4>
-                  <div className="border border-black">
-                    <table className="w-full">
-                      <thead className="bg-gray-100">
-                        <tr>
-                          <th className="border-b border-black p-2 text-left text-black">Product</th>
-                          <th className="border-b border-black p-2 text-right text-black">Qty</th>
-                          <th className="border-b border-black p-2 text-right text-black">Rate</th>
-                          <th className="border-b border-black p-2 text-right text-black">Discount</th>
-                          <th className="border-b border-black p-2 text-right text-black">Total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {totals.items.map((item, index) => (
-                          <tr key={index}>
-                            <td className="border-b border-black p-2 text-black">{item?.product?.name || 'Product'}</td>
-                            <td className="border-b border-black p-2 text-right text-black">{item?.quantity}</td>
-                            <td className="border-b border-black p-2 text-right text-black">₹{item?.unitPrice?.toFixed(2)}</td>
-                            <td className="border-b border-black p-2 text-right text-black">₹{(item?.discountAmount || 0).toFixed(2)}</td>
-                            <td className="border-b border-black p-2 text-right text-black">₹{item?.totalPrice?.toFixed(2)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                {/* Totals */}
-                <div className="flex justify-end">
-                  <div className="w-64 space-y-2">
-                    <div className="flex justify-between text-black">
-                      <span>Total (Before Discount):</span>
-                      <span>₹{totals.itemsBeforeDiscount.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-gray-600">
-                      <span>Item Discounts:</span>
-                      <span>- ₹{totals.itemDiscounts.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-black">
-                      <span>Subtotal (After Item Discounts):</span>
-                      <span>₹{totals.subtotal.toFixed(2)}</span>
-                    </div>
-                    {totals.additionalDiscountAmount > 0 && (
-                      <div className="flex justify-between text-gray-600">
-                        <span>Additional Discount:</span>
-                        <span>- ₹{totals.additionalDiscountAmount.toFixed(2)}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between text-gray-600">
-                      <span>Total CGST:</span>
-                      <span>₹{totals.items.reduce((sum, item) => sum + (item?.cgstAmount || 0), 0).toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-gray-600">
-                      <span>Total SGST:</span>
-                      <span>₹{totals.items.reduce((sum, item) => sum + (item?.sgstAmount || 0), 0).toFixed(2)}</span>
-                    </div>
-                    <Separator className="border-black" />
-                    <div className="flex justify-between font-bold text-lg text-black">
-                      <span>Grand Total:</span>
-                      <span>₹{totals.grandTotal.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-black">
-                      <span>Amount Paid:</span>
-                      <span>₹{(form.watch("amountPaid") || 0).toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between font-semibold text-black">
-                      <span>Balance:</span>
-                      <span>₹{(totals.grandTotal - (form.watch("amountPaid") || 0)).toFixed(2)}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Remarks */}
-                {form.watch("remark") && (
-                  <div>
-                    <h4 className="font-semibold text-black mb-2">Remarks:</h4>
-                    <p className="text-gray-600">{form.watch("remark")}</p>
-                  </div>
-                )}
-
-                {/* Terms and Conditions */}
-                <div className="mt-8">
-                  <h4 className="font-semibold text-black mb-2">Terms and Conditions:</h4>
-                  <div className="text-sm text-gray-600 space-y-1">
-                    <p>1. Payment is due within 30 days of invoice date.</p>
-                    <p>2. Late payments may incur additional charges.</p>
-                    <p>3. Goods once sold cannot be returned without prior approval.</p>
-                    <p>4. Any disputes must be resolved within 7 days of delivery.</p>
-                  </div>
-                </div>
+            <div className="text-center space-y-4">
+              <p className="text-gray-600">Your invoice has been created and saved.</p>
+              <div className="flex justify-center space-x-3">
+                <Button 
+                  onClick={downloadInvoicePDF}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download PDF
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setLocation("/dashboard")}
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Dashboard
+                </Button>
               </div>
-            )}
+            </div>
           </DialogContent>
         </Dialog>
 
@@ -2855,14 +3611,12 @@ export default function CreateInvoice() {
             <AlertDialogHeader>
               <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
               <AlertDialogDescription>
-                You have unsaved changes that will be lost if you leave this page. Are you sure you want to continue?
+                You have unsaved changes. Are you sure you want to leave this page?
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setShowBackWarning(false)}>
-                Stay on Page
-              </AlertDialogCancel>
-              <AlertDialogAction onClick={handleConfirmNavigation} className="bg-red-600 hover:bg-red-700">
+              <AlertDialogCancel>Stay on Page</AlertDialogCancel>
+              <AlertDialogAction onClick={() => setLocation("/dashboard")}>
                 Leave Page
               </AlertDialogAction>
             </AlertDialogFooter>
@@ -2870,59 +3624,99 @@ export default function CreateInvoice() {
         </AlertDialog>
 
         {/* Customer Search Dialog */}
-        <CustomerSearchDialog
-          open={isCustomerSearchDialogOpen}
-          onOpenChange={setIsCustomerSearchDialogOpen}
-          customers={Array.isArray(customers) ? customers : []}
-          selectedCustomer={selectedCustomer}
-          onSelectCustomer={handleSelectCustomer}
-        />
-
-        {/* Success Dialog */}
-        <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
-          <DialogContent className="max-w-md">
+        <Dialog open={isCustomerSearchDialogOpen} onOpenChange={setIsCustomerSearchDialogOpen}>
+          <DialogContent className="sm:max-w-[700px] max-h-[600px]">
             <DialogHeader>
-              <DialogTitle className="text-center text-green-600 text-xl font-semibold">
-                Invoice Created Successfully!
-              </DialogTitle>
+              <DialogTitle>Select Customer</DialogTitle>
             </DialogHeader>
-            
-            {createdInvoiceData && (
-              <div className="space-y-6 py-4">
-                <div className="text-center space-y-2">
-                  <p className="text-gray-600">Customer: {createdInvoiceData.customer?.name}</p>
-                  <p className="text-lg font-semibold">₹{createdInvoiceData.totals?.grandTotal.toFixed(2)}</p>
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-green-600 font-medium">PAID</span>
+            <div className="max-h-[400px] overflow-y-auto">
+              <div className="space-y-2">
+                {customers.map((customer) => (
+                  <div 
+                    key={customer.customerId} 
+                    className="flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-gray-50"
+                    onClick={() => {
+                      handleSelectCustomer(customer);
+                      setIsCustomerSearchDialogOpen(false);
+                    }}
+                  >
+                    <div>
+                      <h3 className="font-medium">{customer.name}</h3>
+                      <p className="text-sm text-gray-500">{customer.place}</p>
+                      <p className="text-sm text-gray-500">{customer.phone}</p>
+                    </div>
+                    <Button size="sm">Select</Button>
                   </div>
-                </div>
-                
-                <div className="flex flex-col gap-3">
-                  <Button 
-                    onClick={() => {
-                      downloadInvoicePDF();
-                      setShowSuccessDialog(false);
-                    }}
-                    className="w-full bg-blue-600 hover:bg-blue-700"
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Download Invoice
-                  </Button>
-                  
-                  <Button 
-                    variant="outline"
-                    onClick={() => {
-                      setShowSuccessDialog(false);
-                      setLocation("/dashboard?tab=invoices");
-                    }}
-                    className="w-full"
-                  >
-                    Go to Dashboard
-                  </Button>
-                </div>
+                ))}
               </div>
-            )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Add Customer Dialog */}
+        <Dialog open={isAddCustomerDialogOpen} onOpenChange={setIsAddCustomerDialogOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Add New Customer</DialogTitle>
+            </DialogHeader>
+            <Form {...customerForm}>
+              <form onSubmit={customerForm.handleSubmit(onAddCustomer)} className="space-y-4">
+                <FormField
+                  control={customerForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Customer Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter customer name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={customerForm.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone Number</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="tel" 
+                          placeholder="Enter phone number" 
+                          {...field}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={customerForm.control}
+                  name="place"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Address</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter address" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="flex justify-end space-x-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setIsAddCustomerDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit">Add Customer</Button>
+                </div>
+              </form>
+            </Form>
           </DialogContent>
         </Dialog>
       </div>
