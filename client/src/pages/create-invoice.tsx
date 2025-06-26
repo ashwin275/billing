@@ -2578,10 +2578,24 @@ export default function CreateInvoice() {
                             <FormItem>
                               <FormControl>
                                 <Input
-                                  type="number"
+                                  type="text"
                                   placeholder="0"
-                                  {...field}
-                                  onChange={(e) => field.onChange(Number(e.target.value))}
+                                  value={field.value || ''}
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    // Allow empty string or valid decimal numbers
+                                    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                                      const discount = value === '' ? '' : parseFloat(value) || 0;
+                                      field.onChange(discount);
+                                    }
+                                  }}
+                                  onBlur={(e) => {
+                                    // Ensure minimum value on blur
+                                    const value = e.target.value;
+                                    if (value === '') {
+                                      field.onChange(0);
+                                    }
+                                  }}
                                 />
                               </FormControl>
                               <FormMessage />
