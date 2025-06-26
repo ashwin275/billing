@@ -245,7 +245,7 @@ export default function CreateInvoice() {
     }
 
     const totalDiscounts = itemDiscounts + additionalDiscountAmount;
-    const grandTotal = subtotal + totalTax - additionalDiscountAmount;
+    const grandTotal = subtotal - additionalDiscountAmount + totalTax;
 
     return {
       subtotal,
@@ -1095,7 +1095,7 @@ export default function CreateInvoice() {
                   </div>
                 </div>
 
-                {/* Action Buttons */}
+                {/* Action Buttons - Only Create Invoice button */}
                 <div className="flex justify-end pt-6">
                   <Button 
                     type="submit"
