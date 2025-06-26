@@ -3585,14 +3585,7 @@ export default function CreateInvoice() {
             </DialogHeader>
             <div className="text-center space-y-4">
               <p className="text-gray-600">Your invoice has been created and saved.</p>
-              <div className="flex justify-center space-x-3">
-                <Button 
-                  variant="outline"
-                  onClick={downloadInvoicePDF}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Download PDF
-                </Button>
+              <div className="flex justify-center">
                 <Button 
                   variant="outline" 
                   onClick={() => setLocation("/dashboard")}
