@@ -48,18 +48,25 @@ const invoiceSchema = z.object({
   paymentStatus: z.enum(["PAID", "PENDING", "OVERDUE"]).default("PAID"),
   remark: z.string().default(""),
   dueDate: z.string().nullable().default(null),
-  invoiceDate: z.string(),
+  billType: z.enum(["GST", "NON_GST"]).default("GST"),
+  saleType: z.enum(["RETAIL", "WHOLESALE"]).default("RETAIL"),
   transactionId: z.string().min(1, "Transaction ID is required"),
-  saleItems: z.array(saleItemSchema).min(1, "At least one item is required")
+  signature: z.string().optional(),
+  saleItems: z.array(saleItemSchema).min(0, "No items required for validation"),
+  termsAndConditions: z.string().optional(),
+  useCustomBillingAddress: z.boolean().default(false),
+  customBillingAddress: z.string().optional(),
 });
+
+type InvoiceFormData = z.infer<typeof invoiceSchema>;
 
 const customerSchema = z.object({
-  name: z.string().min(1, "Customer name is required"),
-  phone: z.number().min(1000000000, "Phone number must be 10 digits").max(9999999999, "Phone number must be 10 digits"),
-  place: z.string().min(1, "Address is required")
+  name: z.string().min(1, "Name is required"),
+  place: z.string().min(1, "Place is required"),
+  phone: z.string().min(10, "Phone number must be at least 10 digits"),
+  shopId: z.number().min(1, "Shop is required"),
 });
 
-type FormData = z.infer<typeof invoiceSchema>;
 type CustomerFormData = z.infer<typeof customerSchema>;
 
 export default function CreateInvoice() {
@@ -74,478 +81,112 @@ export default function CreateInvoice() {
   
   const [isAddCustomerDialogOpen, setIsAddCustomerDialogOpen] = useState(false);
   const [isCustomerSearchDialogOpen, setIsCustomerSearchDialogOpen] = useState(false);
-  const [isProductSearchDialogOpen, setIsProductSearchDialogOpen] = useState(false);
-  const [currentItemIndex, setCurrentItemIndex] = useState<number | null>(null);
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [selectedShop, setSelectedShop] = useState<Shop | null>(null);
+  const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
+  const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
+  const [showBackWarning, setShowBackWarning] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [createdInvoiceData, setCreatedInvoiceData] = useState<any>(null);
-  const [currentTotals, setCurrentTotals] = useState({
-    subtotal: 0,
-    totalDiscounts: 0,
-    totalTax: 0,
-    grandTotal: 0,
-    itemDiscounts: 0,
-    additionalDiscountAmount: 0
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [selectedShop, setSelectedShop] = useState<Shop | null>(null);
+
+  // Fetch data
+  const { data: products = [] } = useQuery({
+    queryKey: ["/api/products/all"],
+    queryFn: () => productsApi.getAllProducts(),
   });
 
-  // Form setup
-  const form = useForm<FormData>({
+  const { data: customers = [] } = useQuery({
+    queryKey: ["/api/customers/all"],
+    queryFn: () => customersApi.getAllCustomers(),
+  });
+
+  const { data: shops = [] } = useQuery({
+    queryKey: ["/shop/all"],
+    queryFn: () => shopsApi.getAllShops(),
+  });
+
+  // Fetch invoice data if in edit mode
+  const { data: editInvoice } = useQuery({
+    queryKey: ["/api/invoices", editInvoiceId],
+    queryFn: () => invoicesApi.getInvoiceById(parseInt(editInvoiceId!)),
+    enabled: isEditMode && !!editInvoiceId,
+  });
+
+  // Main invoice form
+  const form = useForm<InvoiceFormData>({
     resolver: zodResolver(invoiceSchema),
     defaultValues: {
       customerId: 0,
       shopId: 0,
       discount: 0,
-      discountType: "PERCENTAGE",
       additionalDiscount: 0,
       additionalDiscountType: "AMOUNT",
+      discountType: "AMOUNT",
       amountPaid: 0,
       paymentMode: "CASH",
       paymentStatus: "PAID",
       remark: "",
       dueDate: null,
-      invoiceDate: new Date().toISOString().split('T')[0],
+      billType: "GST",
+      saleType: "RETAIL",
       transactionId: `TXN${Date.now()}`,
-      saleItems: [
-        {
-          productId: 0,
-          quantity: 1,
-          discount: 0,
-          discountType: "AMOUNT",
-          unitPrice: 0
-        }
-      ]
-    }
-  });
-
-  const customerForm = useForm<CustomerFormData>({
-    resolver: zodResolver(customerSchema),
-    defaultValues: {
-      name: "",
-      phone: 0,
-      place: ""
-    }
+      saleItems: [{ productId: 0, quantity: 1, discount: 0, discountType: "PERCENTAGE" }],
+      termsAndConditions: "",
+      signature: "",
+      useCustomBillingAddress: false,
+      customBillingAddress: "",
+    },
   });
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
-    name: "saleItems"
+    name: "saleItems",
   });
 
-  // API queries
-  const { data: products = [] } = useQuery({
-    queryKey: ["/api/products"],
-    select: (data: any) => Array.isArray(data) ? data : []
-  });
-
-  const { data: customers = [] } = useQuery({
-    queryKey: ["/api/customers"],  
-    select: (data: any) => Array.isArray(data) ? data : []
-  });
-
-  const { data: shops = [] } = useQuery({
-    queryKey: ["/api/shops"],
-    select: (data: any) => Array.isArray(data) ? data : []
-  });
-
-  // Mutations
-  const createInvoiceMutation = useMutation({
-    mutationFn: (data: InvoiceInput) => invoicesApi.create(data),
-    onSuccess: (response, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
-      
-      // Store created invoice data for PDF generation
-      const customer = customers.find(c => c.customerId === variables.customerId);
-      const shop = shops.find(s => s.shopId === variables.shopId);
-      const totals = calculateTotals();
-      
-      setCreatedInvoiceData({
-        customer,
-        shop,
-        totals,
-        formData: variables
-      });
-
-      toast({
-        title: "Success",
-        description: "Invoice created successfully",
-        variant: "default"
-      });
-
-      setShowSuccessDialog(true);
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create invoice",
-        variant: "destructive"
-      });
-    }
-  });
-
-  const addCustomerMutation = useMutation({
-    mutationFn: (data: CustomerFormData) => customersApi.create(data),
-    onSuccess: (newCustomer) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
-      setSelectedCustomer(newCustomer);
-      form.setValue('customerId', newCustomer.customerId);
-      setIsAddCustomerDialogOpen(false);
-      customerForm.reset();
-      toast({
-        title: "Success",
-        description: "Customer added successfully",
-        variant: "default"
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to add customer",
-        variant: "destructive"
-      });
-    }
-  });
-
-  // Calculate totals with additional discount included
-  const calculateTotals = () => {
-    const formData = form.getValues();
-    const items = formData.saleItems;
-    
-    let subtotal = 0;
-    let itemDiscounts = 0;
-    let totalTax = 0;
-
-    items.forEach((item, index) => {
-      const product = products.find(p => p.productId === item.productId);
-      if (!product) return;
-
-      const basePrice = item.unitPrice * item.quantity;
-      let discountAmount = 0;
-
-      if (item.discountType === "PERCENTAGE") {
-        discountAmount = (basePrice * item.discount) / 100;
-      } else {
-        discountAmount = item.discount;
-      }
-
-      const itemTotal = basePrice - discountAmount;
-      const tax = itemTotal * 0.18; // 18% GST
-
-      subtotal += itemTotal;
-      itemDiscounts += discountAmount;
-      totalTax += tax;
-    });
-
-    // Calculate additional discount amount
-    let additionalDiscountAmount = 0;
-    if (formData.additionalDiscountType === "PERCENTAGE") {
-      additionalDiscountAmount = (subtotal * formData.additionalDiscount) / 100;
-    } else {
-      additionalDiscountAmount = formData.additionalDiscount;
-    }
-
-    const totalDiscounts = itemDiscounts + additionalDiscountAmount;
-    const grandTotal = subtotal - additionalDiscountAmount + totalTax;
-
-    return {
-      subtotal,
-      itemDiscounts,
-      additionalDiscountAmount,
-      totalDiscounts,
-      totalTax,
-      grandTotal,
-      items: items.map((item, index) => {
-        const product = products.find(p => p.productId === item.productId);
-        if (!product) return null;
-
-        const basePrice = item.unitPrice * item.quantity;
-        let discountAmount = 0;
-
-        if (item.discountType === "PERCENTAGE") {
-          discountAmount = (basePrice * item.discount) / 100;
-        } else {
-          discountAmount = item.discount;
-        }
-
-        const itemTotal = basePrice - discountAmount;
-        const cgstAmount = (itemTotal * 0.09);
-        const sgstAmount = (itemTotal * 0.09);
-
-        return {
-          ...item,
-          productName: product.name,
-          hsn: product.hsn,
-          unitPrice: item.unitPrice,
-          discountAmount,
-          cgstAmount,
-          sgstAmount,
-          totalPrice: itemTotal
-        };
-      }).filter(Boolean)
-    };
-  };
-
-  // Update totals when form changes
+  // Prevent default items from being added
   useEffect(() => {
-    const subscription = form.watch(() => {
-      const totals = calculateTotals();
-      setCurrentTotals(totals);
-    });
-    return () => subscription.unsubscribe();
-  }, [form, products]);
+    if (!isEditMode && fields.length > 0 && form.getValues('saleItems').some(item => item.productId === 0)) {
+      form.setValue('saleItems', []);
+    }
+  }, [fields, form, isEditMode]);
 
-  // Handle form submission
-  const onSubmit = (data: FormData) => {
-    if (!selectedCustomer || !selectedShop) {
+  // Auto-select shop if only one is available
+  useEffect(() => {
+    if (Array.isArray(shops) && shops.length === 1 && !form.getValues('shopId')) {
+      const singleShop = shops[0];
+      form.setValue('shopId', singleShop.shopId);
+      setSelectedShop(singleShop);
+    }
+  }, [shops, form]);
+
+  // Customer form
+  const customerForm = useForm<CustomerFormData>({
+    resolver: zodResolver(customerSchema),
+    defaultValues: {
+      name: "",
+      place: "",
+      phone: "",
+      shopId: 1,
+    },
+  });
+
+  // Create invoice mutation
+  const createInvoiceMutation = useMutation({
+    mutationFn: async (invoiceData: InvoiceInput) => {
+      const response = await invoicesApi.addInvoice(invoiceData);
+      return response;
+    },
+    onSuccess: (data, variables) => {
+      const invoiceNumber = variables.transactionId;
+      const customerName = selectedCustomer?.name || "Customer";
+      const currentTotals = calculateTotals();
+      
       toast({
-        title: "Error",
-        description: "Please select customer and shop",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    const totals = calculateTotals();
-    
-    const invoiceData: InvoiceInput = {
-      customerId: data.customerId,
-      shopId: data.shopId,
-      invoiceDate: data.invoiceDate,
-      transactionId: data.transactionId,
-      discount: data.additionalDiscount,
-      discountType: data.additionalDiscountType,
-      amountPaid: totals.grandTotal,
-      paymentMode: data.paymentMode,
-      paymentStatus: data.paymentStatus,
-      remark: data.remark,
-      dueDate: data.dueDate,
-      saleItems: data.saleItems.map(item => ({
-        productId: item.productId,
-        quantity: item.quantity,
-        discount: item.discount,
-        discountType: item.discountType,
-        unitPrice: item.unitPrice
-      }))
-    };
-
-    createInvoiceMutation.mutate(invoiceData);
-  };
-
-  const onAddCustomer = (data: CustomerFormData) => {
-    addCustomerMutation.mutate(data);
-  };
-
-  const handleProductSelect = (product: Product) => {
-    if (currentItemIndex !== null) {
-      form.setValue(`saleItems.${currentItemIndex}.productId`, product.productId);
-      form.setValue(`saleItems.${currentItemIndex}.unitPrice`, product.retailPrice);
-    }
-    setIsProductSearchDialogOpen(false);
-    setCurrentItemIndex(null);
-  };
-
-  const handleCustomerSelect = (customer: Customer) => {
-    setSelectedCustomer(customer);
-    form.setValue('customerId', customer.customerId);
-  };
-
-  // PDF Download function
-  const downloadInvoicePDF = () => {
-    if (!createdInvoiceData) return;
-    
-    const { customer, shop, totals, formData } = createdInvoiceData;
-    
-    const invoiceData = {
-      customer,
-      shop,
-      items: totals.items,
-      totals,
-      amountPaid: totals.grandTotal,
-      date: formData.invoiceDate,
-      transactionId: formData.transactionId
-    };
-
-    const printWindow = window.open('', '_blank', 'width=800,height=1000');
-    if (!printWindow) return;
-
-    const htmlContent = `<!DOCTYPE html>
-      <html>
-        <head>
-          <title>Invoice</title>
-          <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; }
-            .invoice-container { max-width: 800px; margin: 0 auto; background: white; padding: 40px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-            .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; border-bottom: 2px solid #3b82f6; padding-bottom: 20px; }
-            .shop-info h1 { color: #3b82f6; font-size: 28px; margin-bottom: 5px; }
-            .shop-info p { color: #6b7280; font-size: 14px; line-height: 1.4; }
-            .invoice-details { text-align: right; }
-            .invoice-details h2 { color: #1f2937; font-size: 24px; margin-bottom: 10px; }
-            .invoice-details p { color: #6b7280; font-size: 14px; margin-bottom: 4px; }
-            .billing-section { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin: 30px 0; }
-            .billing-info h3 { color: #1f2937; font-size: 16px; margin-bottom: 10px; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px; }
-            .billing-info p { color: #4b5563; font-size: 14px; margin-bottom: 4px; }
-            .items-table { width: 100%; border-collapse: collapse; margin: 30px 0; }
-            .items-table th { background: #f9fafb; color: #374151; font-weight: 600; padding: 12px 8px; text-align: left; border-bottom: 2px solid #e5e7eb; font-size: 14px; }
-            .items-table td { padding: 12px 8px; border-bottom: 1px solid #e5e7eb; font-size: 14px; color: #4b5563; }
-            .items-table tr:hover { background: #f9fafb; }
-            .text-right { text-align: right; }
-            .totals-section { margin-top: 30px; }
-            .totals-box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-left: auto; width: 300px; }
-            .total-line { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
-            .total-line span:first-child { color: #6b7280; }
-            .total-line span:last-child { color: #1f2937; font-weight: 500; }
-            .grand-total { border-top: 2px solid #3b82f6; padding-top: 8px; margin-top: 12px; font-weight: 600; font-size: 16px; }
-            .grand-total span { color: #1f2937; }
-            .payment-status { margin-top: 30px; padding: 15px; background: #dcfce7; border: 1px solid #bbf7d0; border-radius: 8px; text-align: center; }
-            .payment-status p { color: #166534; font-weight: 600; font-size: 16px; }
-            .footer { margin-top: 40px; text-align: center; color: #6b7280; font-size: 12px; border-top: 1px solid #e5e7eb; padding-top: 20px; }
-            @media print { body { background: white; padding: 0; } .invoice-container { box-shadow: none; padding: 20px; } }
-          </style>
-        </head>
-        <body>
-          <div class="invoice-container">
-            <div class="header">
-              <div class="shop-info">
-                <h1>${invoiceData.shop.shopName}</h1>
-                <p>${invoiceData.shop.ownerName}</p>
-                <p>${invoiceData.shop.place}</p>
-                <p>Phone: ${invoiceData.shop.phone}</p>
-              </div>
-              <div class="invoice-details">
-                <h2>INVOICE</h2>
-                <p><strong>Date:</strong> ${new Date(invoiceData.date).toLocaleDateString()}</p>
-                <p><strong>Transaction ID:</strong> ${invoiceData.transactionId}</p>
-              </div>
-            </div>
-
-            <div class="billing-section">
-              <div class="billing-info">
-                <h3>Bill To:</h3>
-                <p><strong>${invoiceData.customer.name}</strong></p>
-                <p>${invoiceData.customer.place}</p>
-                <p>Phone: ${invoiceData.customer.phone}</p>
-              </div>
-              <div class="billing-info">
-                <h3>Payment Information:</h3>
-                <p><strong>Status:</strong> <span style="color: #16a34a;">PAID</span></p>
-                <p><strong>Amount:</strong> ₹${(invoiceData.amountPaid || 0).toFixed(2)}</p>
-              </div>
-            </div>
-
-            <table class="items-table">
-              <thead>
-                <tr>
-                  <th>Item</th>
-                  <th class="text-right">Qty</th>
-                  <th class="text-right">Unit Price</th>
-                  <th class="text-right">Discount</th>
-                  <th class="text-right">CGST (9%)</th>
-                  <th class="text-right">SGST (9%)</th>
-                  <th class="text-right">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${invoiceData.items.map(item => 
-                  `<tr>
-                    <td>
-                      <div>
-                        <div style="font-weight: 500; color: #1f2937;">${item.productName}</div>
-                        <div style="font-size: 12px; color: #6b7280;">HSN: ${item.hsn}</div>
-                      </div>
-                    </td>
-                    <td class="text-right">${item.quantity}</td>
-                    <td class="text-right">₹${(item?.unitPrice || 0).toFixed(2)}</td>
-                    <td class="text-right">₹${(item?.discountAmount || 0).toFixed(2)}</td>
-                    <td class="text-right">₹${(item?.cgstAmount || 0).toFixed(2)}</td>
-                    <td class="text-right">₹${(item?.sgstAmount || 0).toFixed(2)}</td>
-                    <td class="text-right" style="font-weight: 600; color: #2d3748;">₹${(item?.totalPrice || 0).toFixed(2)}</td>
-                  </tr>`
-                ).join('')}
-              </tbody>
-            </table>
-
-            <div class="totals-section">
-              <div class="totals-box">
-                <div class="total-line">
-                  <span>Sub Total:</span>
-                  <span>₹${(invoiceData.totals.subtotal || 0).toFixed(2)}</span>
-                </div>
-                <div class="total-line">
-                  <span>Total Discount:</span>
-                  <span>- ₹${((invoiceData.totals.itemDiscounts || 0) + (invoiceData.totals.additionalDiscountAmount || 0)).toFixed(2)}</span>
-                </div>
-                <div class="total-line">
-                  <span>Total CGST (9%):</span>
-                  <span>₹${((invoiceData.totals.totalTax || 0) / 2).toFixed(2)}</span>
-                </div>
-                <div class="total-line">
-                  <span>Total SGST (9%):</span>
-                  <span>₹${((invoiceData.totals.totalTax || 0) / 2).toFixed(2)}</span>
-                </div>
-                <div class="total-line grand-total">
-                  <span>Grand Total:</span>
-                  <span>₹${(invoiceData.totals.grandTotal || 0).toFixed(2)}</span>
-                </div>
-                <div class="total-line">
-                  <span>Amount Paid:</span>
-                  <span>₹${(invoiceData.amountPaid || 0).toFixed(2)}</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="payment-status">
-              <p>✓ Payment Completed - Thank you for your business!</p>
-            </div>
-
-            <div class="footer">
-              <p>This is a computer-generated invoice. Thank you for your business!</p>
-            </div>
-          </div>
-
-          <script>
-            window.onload = function() {
-              window.print();
-              setTimeout(function() { window.close(); }, 1000);
-            }
-          </script>
-        </body>
-      </html>`;
-    
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center">
-              <Link href="/dashboard">
-                <Button variant="ghost" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Dashboard
-                </Button>
-              </Link>
-              <div className="ml-4">
-                <h1 className="text-2xl font-bold text-gray-900">
-                  {isEditMode ? "Edit Invoice" : "Create Invoice"}
-                </h1>
-              </div>
-            </div>
-            <div className="text-sm text-gray-500">
-              Transaction ID: {form.watch("transactionId")}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Payment Status Banner */}
-      <div className="bg-green-600 border-green-600 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-          <div className="flex items-center justify-between">
+        title: "Invoice Created Successfully!",
+        description: (
+          <div className="space-y-2">
+            <p className="text-sm text-green-100">Customer: {customerName}</p>
             <div className="flex items-center gap-3 text-sm">
               <div className="flex items-center gap-1">
                 <div className="w-2 h-2 bg-white rounded-full"></div>
@@ -555,463 +196,1842 @@ export default function CreateInvoice() {
               <span className="font-medium text-white">₹{(currentTotals.grandTotal || 0).toFixed(2)}</span>
             </div>
           </div>
-        </div>
-      </div>
+        ),
+        className: "bg-green-600 border-green-600 text-white [&>div]:text-white",
+        duration: 4000,
+      });
+      
+      // Store created invoice data for the popup
+      setCreatedInvoiceData({
+        invoiceNumber: variables.transactionId,
+        customer: selectedCustomer,
+        shop: selectedShop,
+        totals: currentTotals,
+        formData: variables
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices/all"] });
+      
+      // Show success dialog instead of navigating
+      setShowSuccessDialog(true);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to Create Invoice",
+        description: (
+          <div className="space-y-2">
+            <p className="text-sm text-red-600">{error?.detail || error?.message || "An unexpected error occurred while creating the invoice."}</p>
+            <div className="flex gap-2 pt-2">
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => {
+                  // Retry with current form data
+                  const formData = form.getValues();
+                  const totals = calculateTotals();
+                  const invoiceInput = {
+                    ...formData,
+                    totalAmount: totals.grandTotal,
+                    tax: totals.totalTax,
+                  };
+                  createInvoiceMutation.mutate(invoiceInput);
+                }}
+                className="h-8 px-3 text-xs"
+              >
+                Try Again
+              </Button>
+            </div>
+          </div>
+        ),
+        variant: "destructive",
+        duration: 10000,
+      });
+    },
+  });
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  // Update invoice mutation
+  const updateInvoiceMutation = useMutation({
+    mutationFn: async (invoiceData: InvoiceInput) => {
+      await invoicesApi.updateInvoice(parseInt(editInvoiceId!), invoiceData);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Invoice updated successfully",
+        description: "The invoice has been updated.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices/all"] });
+      setLocation("/dashboard?tab=invoices");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to update invoice",
+        description: error?.detail || error?.message || "Failed to update invoice.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Add customer mutation
+  const addCustomerMutation = useMutation({
+    mutationFn: async (customerData: any) => {
+      await customersApi.addCustomer(customerData);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Customer added",
+        description: "Customer has been successfully added.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/customers/all"] });
+      setIsAddCustomerDialogOpen(false);
+      customerForm.reset();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to add customer",
+        description: error?.detail || error?.message || "Failed to add customer.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Calculate totals with reactivity
+  const calculateTotals = () => {
+    const formData = form.watch();
+    
+    if (!selectedCustomer || !selectedShop) return { subtotal: 0, totalTax: 0, totalDiscount: 0, overallDiscountAmount: 0, grandTotal: 0, items: [], itemDiscounts: 0, itemsBeforeDiscount: 0 };
+
+    const items = formData.saleItems.map(item => {
+      const product = Array.isArray(products) ? products.find(p => p.productId === item.productId) : null;
+      if (!product) return null;
+
+      const unitPrice = formData.saleType === 'RETAIL' ? product.retailRate : product.wholesaleRate;
+      const itemSubtotal = unitPrice * item.quantity;
+      
+      let discountAmount = 0;
+      if (item.discountType === 'PERCENTAGE') {
+        discountAmount = (itemSubtotal * item.discount) / 100;
+      } else {
+        discountAmount = item.discount; // Apply discount to total product value
+      }
+      
+      const lineTotal = itemSubtotal - discountAmount;
+      
+      const cgstRate = formData.billType === 'GST' ? (product.cgst || 9) : 0;
+      const sgstRate = formData.billType === 'GST' ? (product.sgst || 9) : 0;
+      
+      const cgstAmount = (lineTotal * cgstRate) / 100;
+      const sgstAmount = (lineTotal * sgstRate) / 100;
+      const taxAmount = cgstAmount + sgstAmount;
+      const totalPrice = lineTotal; // Tax shown separately, not added to total
+
+      return {
+        product,
+        quantity: item.quantity,
+        discount: item.discount,
+        discountType: item.discountType,
+        discountAmount,
+        unitPrice,
+        itemSubtotal,
+        lineTotal,
+        cgst: cgstRate,
+        sgst: sgstRate,
+        cgstAmount,
+        sgstAmount,
+        taxAmount,
+        totalPrice,
+      };
+    }).filter(Boolean);
+
+    const subtotal = items.reduce((sum, item) => sum + (item?.lineTotal || 0), 0);
+    const totalTax = items.reduce((sum, item) => sum + (item?.taxAmount || 0), 0);
+    
+    // Calculate totals before and after discounts
+    const itemsBeforeDiscount = items.reduce((sum, item) => sum + (item?.itemSubtotal || 0), 0);
+    const itemDiscounts = items.reduce((sum, item) => sum + (item?.discountAmount || 0), 0);
+    
+    // Calculate additional discount
+    let additionalDiscountAmount = 0;
+    if (formData.additionalDiscount > 0) {
+      if (formData.additionalDiscountType === "PERCENTAGE") {
+        additionalDiscountAmount = (subtotal * formData.additionalDiscount) / 100;
+      } else {
+        additionalDiscountAmount = formData.additionalDiscount;
+      }
+    }
+    
+    // Grand total is subtotal minus all discounts (item-level + additional)
+    const grandTotal = subtotal - additionalDiscountAmount;
+
+    console.log('Tax calculation debug:', { 
+      subtotal, 
+      totalTax, 
+      itemsCount: items.length,
+      billType: formData.billType,
+      items: items.map(item => ({ name: item?.product?.name, cgst: item?.cgst, sgst: item?.sgst, taxAmount: item?.taxAmount }))
+    });
+    
+    return { 
+      subtotal, 
+      totalTax, 
+      totalDiscount: itemDiscounts + additionalDiscountAmount, 
+      overallDiscountAmount: itemDiscounts + additionalDiscountAmount, 
+      grandTotal, 
+      items, 
+      itemDiscounts,
+      additionalDiscountAmount,
+      itemsBeforeDiscount 
+    };
+  };
+
+  const totals = calculateTotals();
+
+  // Handle form submission
+  const onSubmit = (data: InvoiceFormData) => {
+    const totals = calculateTotals();
+    
+    const invoiceInput: InvoiceInput = {
+      customerId: data.customerId,
+      shopId: data.shopId,
+      discount: data.discount,
+      amountPaid: data.amountPaid,
+      paymentMode: data.paymentMode,
+      paymentStatus: data.paymentStatus,
+      remark: data.remark,
+      dueDate: data.dueDate,
+      billType: data.billType,
+      saleType: data.saleType,
+      transactionId: data.transactionId,
+      totalAmount: totals.grandTotal,
+      tax: totals.totalTax,
+      saleItems: data.saleItems.map(item => ({
+        productId: item.productId,
+        quantity: item.quantity,
+        discount: item.discount,
+      })),
+    };
+
+    if (isEditMode) {
+      updateInvoiceMutation.mutate(invoiceInput);
+    } else {
+      createInvoiceMutation.mutate(invoiceInput);
+    }
+  };
+
+  // Handle add customer
+  const onAddCustomer = (data: CustomerFormData) => {
+    const customerInput = {
+      name: data.name,
+      place: data.place,
+      phone: data.phone,
+      shopId: data.shopId,
+    };
+    addCustomerMutation.mutate(customerInput);
+  };
+
+  // Update selected customer when form changes
+  useEffect(() => {
+    const customerId = form.watch("customerId");
+    const customer = Array.isArray(customers) ? customers.find(c => c.customerId === customerId) : null;
+    setSelectedCustomer(customer || null);
+  }, [form.watch("customerId"), customers]);
+
+  // Update selected shop when form changes
+  useEffect(() => {
+    const shopId = form.watch("shopId");
+    const shop = Array.isArray(shops) ? shops.find(s => s.shopId === shopId) : null;
+    setSelectedShop(shop || null);
+  }, [form.watch("shopId"), shops]);
+
+  // Populate form with edit data
+  useEffect(() => {
+    if (isEditMode && editInvoice) {
+      form.reset({
+        customerId: editInvoice.customerId,
+        shopId: editInvoice.shopId,
+        discount: editInvoice.discount || 0,
+        discountType: "AMOUNT",
+        amountPaid: editInvoice.amountPaid || 0,
+        paymentMode: editInvoice.paymentMode,
+        paymentStatus: editInvoice.paymentStatus,
+        remark: editInvoice.remark || "",
+        dueDate: editInvoice.dueDate ? editInvoice.dueDate.split('T')[0] : null,
+        billType: editInvoice.billType || "GST",
+        saleType: editInvoice.saleType || "RETAIL",
+        transactionId: editInvoice.transactionId || `TXN${Date.now()}`,
+        saleItems: editInvoice.saleItems && editInvoice.saleItems.length > 0 
+          ? editInvoice.saleItems.map(item => ({
+              productId: item.product?.productId || 0,
+              quantity: item.quantity,
+              discount: item.discount,
+              discountType: "AMOUNT" as const,
+              unitPrice: item.unitPrice || 0
+            }))
+          : [],
+      });
+    }
+  }, [isEditMode, editInvoice, form]);
+
+  // Auto-update amount paid to match grand total for new invoices
+  useEffect(() => {
+    if (!isEditMode && totals.grandTotal > 0) {
+      // Always update amount paid to match grand total for new invoices
+      form.setValue('amountPaid', totals.grandTotal);
+    }
+  }, [totals.grandTotal, isEditMode, form]);
+
+  // Track form changes to detect unsaved data
+  useEffect(() => {
+    const subscription = form.watch(() => {
+      setHasUnsavedChanges(true);
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
+
+  // Reset unsaved changes flag when form is submitted
+  const handleFormSubmit = (data: InvoiceFormData) => {
+    setHasUnsavedChanges(false);
+    if (isEditMode) {
+      const totals = calculateTotals();
+      updateInvoiceMutation.mutate({
+        ...data,
+        totalAmount: totals.grandTotal,
+        tax: totals.totalTax,
+      });
+    } else {
+      const totals = calculateTotals();
+      createInvoiceMutation.mutate({
+        ...data,
+        totalAmount: totals.grandTotal,
+        tax: totals.totalTax,
+      });
+    }
+  };
+
+  // Handle back button with warning
+  const handleBackClick = () => {
+    if (hasUnsavedChanges) {
+      setShowBackWarning(true);
+    } else {
+      setLocation("/dashboard");
+    }
+  };
+
+  // Confirm navigation away
+  const handleConfirmNavigation = () => {
+    setShowBackWarning(false);
+    setHasUnsavedChanges(false);
+    setLocation("/dashboard");
+  };
+
+  // Handle customer selection
+  const handleSelectCustomer = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    form.setValue('customerId', customer.customerId);
+  };
+
+  // @ts-ignore
+  // Download PDF function - using exact same design as preview
+  const downloadInvoicePDF = () => {
+    if (!createdInvoiceData) return;
+    
+    const { customer, shop, totals, formData } = createdInvoiceData;
+    
+    const previewData = {
+      invoiceDate: new Date().toISOString(),
+      shop: {
+        name: shop.name,
+        place: shop.place,
+        tagline: "Quality Products & Services"
+      },
+      customer: {
+        name: customer.name,
+        place: customer.place,
+        phone: customer.phone
+      },
+      paymentDetails: {
+        paymentStatus: formData.paymentStatus,
+        paymentMode: formData.paymentMode,
+        billType: formData.billType,
+        saleType: formData.saleType
+      },
+      items: totals.items.filter((item: any) => item),
+      totals,
+      amountPaid: formData.amountPaid || 0,
+      remark: formData.remark
+    };
+
+    // Create PDF window with EXACT same template as existing preview function
+    const pdfWindow = window.open('', '_blank', 'width=900,height=700,scrollbars=yes');
+    if (!pdfWindow) return;
+
+    pdfWindow.document.write(`
+                  <!DOCTYPE html>
+                  <html>
+                    <head>
+                      <title>Invoice Preview - ${previewData.invoiceNo}</title>
+                      <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+                        
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+                        
+                        body { 
+                          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+                          background: #f8fafc;
+                          padding: 20px;
+                          line-height: 1.4;
+                        }
+                        
+                        .invoice-container {
+                          max-width: 800px;
+                          margin: 0 auto;
+                          background: white;
+                          border-radius: 12px;
+                          overflow: hidden;
+                          box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+                          position: relative;
+                          page-break-inside: avoid;
+                        }
+                        
+                        .header-wave {
+                          background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+                          height: 120px;
+                          position: relative;
+                          overflow: hidden;
+                        }
+                        
+                        .header-wave::after {
+                          content: '';
+                          position: absolute;
+                          bottom: -30px;
+                          left: 0;
+                          width: 100%;
+                          height: 60px;
+                          background: white;
+                          border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+                        }
+                        
+                        .header-content {
+                          position: relative;
+                          z-index: 2;
+                          color: white;
+                          padding: 25px 40px;
+                          display: flex;
+                          justify-content: space-between;
+                          align-items: flex-start;
+                        }
+                        
+                        .logo-section {
+                          display: flex;
+                          align-items: center;
+                          gap: 15px;
+                        }
+                        
+                        .logo-placeholder {
+                          width: 50px;
+                          height: 50px;
+                          background: rgba(255,255,255,0.2);
+                          border-radius: 10px;
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                          font-size: 20px;
+                          font-weight: bold;
+                          border: 2px solid rgba(255,255,255,0.3);
+                        }
+                        
+                        .company-info h1 {
+                          font-size: 26px;
+                          font-weight: 700;
+                          margin-bottom: 5px;
+                          text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                        }
+                        
+                        .company-tagline {
+                          font-size: 13px;
+                          opacity: 0.9;
+                          font-weight: 300;
+                        }
+                        
+                        .invoice-title {
+                          text-align: right;
+                        }
+                        
+                        .invoice-title h2 {
+                          font-size: 34px;
+                          font-weight: 300;
+                          letter-spacing: 2px;
+                          margin-bottom: 5px;
+                          text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                        }
+                        
+                        .invoice-meta {
+                          font-size: 13px;
+                          opacity: 0.9;
+                        }
+                        
+                        .content-section {
+                          padding: 40px 40px 30px;
+                        }
+                        
+                        .bill-to-section {
+                          display: grid;
+                          grid-template-columns: 1fr 1fr;
+                          gap: 40px;
+                          margin-bottom: 30px;
+                        }
+                        
+                        .info-block h3 {
+                          color: #2d3748;
+                          font-size: 14px;
+                          font-weight: 600;
+                          margin-bottom: 10px;
+                          padding-bottom: 5px;
+                          border-bottom: 2px solid #e2e8f0;
+                        }
+                        
+                        .info-block p {
+                          color: #4a5568;
+                          line-height: 1.5;
+                          margin-bottom: 3px;
+                          font-size: 13px;
+                        }
+                        
+                        .customer-name {
+                          font-weight: 600;
+                          color: #2d3748;
+                          font-size: 15px;
+                        }
+                        
+                        .items-table {
+                          width: 100%;
+                          border-collapse: collapse;
+                          margin-bottom: 25px;
+                          border-radius: 8px;
+                          overflow: hidden;
+                          box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                        }
+                        
+                        .items-table thead tr {
+                          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                          color: white;
+                        }
+                        
+                        .items-table th {
+                          padding: 12px 10px;
+                          font-weight: 600;
+                          font-size: 12px;
+                          letter-spacing: 0.5px;
+                        }
+                        
+                        .items-table td {
+                          padding: 10px;
+                          border-bottom: 1px solid #e2e8f0;
+                          color: #4a5568;
+                          font-size: 12px;
+                        }
+                        
+                        .items-table tbody tr:last-child td {
+                          border-bottom: none;
+                        }
+                        
+                        .text-right { text-align: right; }
+                        .text-center { text-align: center; }
+                        .text-left { text-align: left; }
+                        
+                        .totals-section {
+                          display: flex;
+                          justify-content: flex-end;
+                          margin-bottom: 25px;
+                        }
+                        
+                        .totals-box {
+                          background: #f7fafc;
+                          padding: 20px;
+                          border-radius: 8px;
+                          min-width: 280px;
+                        }
+                        
+                        .total-line {
+                          display: flex;
+                          justify-content: space-between;
+                          padding: 4px 0;
+                          color: #4a5568;
+                          font-size: 13px;
+                        }
+                        
+                        .grand-total {
+                          border-top: 2px solid #e2e8f0;
+                          margin-top: 10px;
+                          padding-top: 10px;
+                          font-size: 16px;
+                          font-weight: 700;
+                          color: #2d3748;
+                        }
+                        
+                        .balance {
+                          font-weight: 600;
+                          font-size: 14px;
+                        }
+                        
+                        .balance.positive { color: #e53e3e; }
+                        .balance.negative { color: #38a169; }
+                        
+                        .bottom-section {
+                          display: grid;
+                          grid-template-columns: 2fr 1fr;
+                          gap: 25px;
+                        }
+                        
+                        .terms-section {
+                          background: #f7fafc;
+                          padding: 15px;
+                          border-radius: 8px;
+                        }
+                        
+                        .terms-section h3 {
+                          color: #2d3748;
+                          font-size: 14px;
+                          font-weight: 600;
+                          margin-bottom: 8px;
+                        }
+                        
+                        .terms-section p {
+                          color: #4a5568;
+                          font-size: 11px;
+                          line-height: 1.4;
+                          margin-bottom: 4px;
+                        }
+                        
+                        .signature-section {
+                          text-align: center;
+                          padding: 15px;
+                        }
+                        
+                        .signature-line {
+                          border-top: 2px solid #2d3748;
+                          width: 120px;
+                          margin: 25px auto 8px;
+                        }
+                        
+                        .signature-text {
+                          color: #4a5568;
+                          font-size: 12px;
+                          font-weight: 500;
+                        }
+                        
+                        @media print {
+                          body { padding: 0; background: white; }
+                          .invoice-container { box-shadow: none; }
+                          .header-wave::after { display: none; }
+                        }
+                      </style>
+                    </head>
+                    <body>
+                      <div class="invoice-container">
+                        <!-- Header Section -->
+                        <div class="header-wave">
+                          <div class="header-content">
+                            <div class="logo-section">
+                              <div class="logo-placeholder">
+                                ${previewData.shop.name.charAt(0)}
+                              </div>
+                              <div class="company-info">
+                                <h1>${previewData.shop.name}</h1>
+                                <div class="company-tagline">${previewData.shop.tagline}</div>
+                              </div>
+                            </div>
+                            <div class="invoice-title">
+                              <h2>INVOICE</h2>
+                              <div class="invoice-meta">
+                                <div>${new Date(previewData.invoiceDate).toLocaleDateString('en-GB')}</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Content Section -->
+                        <div class="content-section">
+                          <!-- Bill To Section -->
+                          <div class="bill-to-section">
+                            <div class="info-block">
+                              <h3>Invoice To:</h3>
+                              <p class="customer-name">${previewData.customer.name}</p>
+                              <p>📍 ${previewData.customer.place}</p>
+                              <p>📞 ${previewData.customer.phone}</p>
+                            </div>
+                            <div class="info-block">
+                              <h3>Payment Info:</h3>
+                              <p><strong>Status:</strong> ${previewData.paymentDetails.paymentStatus}</p>
+                              <p><strong>Mode:</strong> ${previewData.paymentDetails.paymentMode}</p>
+                            </div>
+                          </div>
+
+                          <!-- Items Table -->
+                          <table class="items-table">
+                            <thead>
+                              <tr>
+                                <th class="text-left">Item Description</th>
+                                <th class="text-center">Qty.</th>
+                                <th class="text-right">Price</th>
+                                <th class="text-right">Discount</th>
+                                <th class="text-right">CGST (9%)</th>
+                                <th class="text-right">SGST (9%)</th>
+                                <th class="text-right">Total</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              ${previewData.items.map((item, index) => `
+                                <tr>
+                                  <td class="text-left">
+                                    <div style="font-weight: 600; color: #2d3748;">${item?.product?.name || 'N/A'}</div>
+                                  </td>
+                                  <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
+                                  <td class="text-right">₹${item?.unitPrice?.toFixed(2) || '0.00'}</td>
+                                  <td class="text-right">₹${item?.discountAmount?.toFixed(2) || '0.00'}</td>
+                                  <td class="text-right">₹${(item?.cgstAmount || 0).toFixed(2)}</td>
+                                  <td class="text-right">₹${(item?.sgstAmount || 0).toFixed(2)}</td>
+                                  <td class="text-right" style="font-weight: 600; color: #2d3748;">₹${item?.totalPrice?.toFixed(2) || '0.00'}</td>
+                                </tr>
+                              `).join('')}
+                            </tbody>
+                          </table>
+
+                          <!-- Totals Section -->
+                          <div class="totals-section">
+                            <div class="totals-box">
+                              <div class="total-line">
+                                <span>Sub Total:</span>
+                                <span>₹${(previewData.totals.subtotal || 0).toFixed(2)}</span>
+                              </div>
+                              <div class="total-line">
+                                <span>Total Discount:</span>
+                                <span>- ₹${((previewData.totals.itemDiscounts || 0) + (previewData.totals.additionalDiscountAmount || 0)).toFixed(2)}</span>
+                              </div>
+                              <div class="total-line">
+                                <span>Total CGST (9%):</span>
+                                <span>₹${((previewData.totals.totalTax || 0) / 2).toFixed(2)}</span>
+                              </div>
+                              <div class="total-line">
+                                <span>Total SGST (9%):</span>
+                                <span>₹${((previewData.totals.totalTax || 0) / 2).toFixed(2)}</span>
+                              </div>
+                              <div class="total-line grand-total">
+                                <span>Grand Total:</span>
+                                <span>₹${(previewData.totals.grandTotal || 0).toFixed(2)}</span>
+                              </div>
+                              <div class="total-line">
+                                <span>Amount Paid:</span>
+                                <span>₹${(previewData.amountPaid || 0).toFixed(2)}</span>
+                              </div>
+                              <div class="total-line balance ${(previewData.totals.grandTotal - previewData.amountPaid) > 0 ? 'positive' : 'negative'}">
+                                <span>Balance:</span>
+                                <span>₹${(previewData.totals.grandTotal - previewData.amountPaid).toFixed(2)}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <!-- Bottom Section -->
+                          <div class="bottom-section">
+                            <div class="terms-section">
+                              <h3>Terms & Conditions</h3>
+                              <p>1. Payment is due within 30 days of invoice date.</p>
+                              <p>2. Late payments may incur additional charges.</p>
+                              <p>3. Goods once sold cannot be returned without prior approval.</p>
+                              <p>4. Any disputes must be resolved within 7 days of delivery.</p>
+                              ${previewData.remark ? `
+                                <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #e2e8f0;">
+                                  <strong>Remarks:</strong><br>
+                                  ${previewData.remark}
+                                </div>
+                              ` : ''}
+                            </div>
+
+                            <div class="signature-section">
+                              <div class="signature-line"></div>
+                              <p class="signature-text">Authorized Signature</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <script>
+                        window.onload = function() {
+                          setTimeout(() => {
+                            window.print();
+                          }, 500);
+                        }
+                      </script>
+                    </body>
+                  </html>
+                `);
+    
+    pdfWindow.document.close();
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="max-w-5xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-4">
+            <Button variant="outline" size="sm" onClick={handleBackClick}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Dashboard
+            </Button>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {isEditMode ? "Edit Invoice" : "Create Invoice"}
+            </h1>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button 
+              variant="outline"
+              onClick={() => {
+                if (!selectedCustomer || !selectedShop) return;
+                
+                const formData = form.getValues();
+                const previewData = {
+                  invoiceDate: new Date().toISOString(),
+                  shop: {
+                    name: selectedShop.name,
+                    place: selectedShop.place,
+                    tagline: "Quality Products & Services"
+                  },
+                  customer: {
+                    name: selectedCustomer.name,
+                    place: selectedCustomer.place,
+                    phone: selectedCustomer.phone
+                  },
+                  paymentDetails: {
+                    paymentStatus: formData.paymentStatus,
+                    paymentMode: formData.paymentMode,
+                    billType: formData.billType,
+                    saleType: formData.saleType
+                  },
+                  items: totals.items.filter(item => item),
+                  totals,
+                  amountPaid: formData.amountPaid || 0,
+                  remark: formData.remark
+                };
+                
+                // Create preview window with modern compact design
+                const previewWindow = window.open('', '_blank', 'width=900,height=700,scrollbars=yes');
+                if (!previewWindow) return;
+
+                previewWindow.document.write(`
+                  <!DOCTYPE html>
+                  <html>
+                    <head>
+                      <title>Invoice Preview - ${previewData.invoiceNo}</title>
+                      <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+                        
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+                        
+                        body { 
+                          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+                          background: #f8fafc;
+                          padding: 20px;
+                          line-height: 1.4;
+                        }
+                        
+                        .invoice-container {
+                          max-width: 800px;
+                          margin: 0 auto;
+                          background: white;
+                          border-radius: 12px;
+                          overflow: hidden;
+                          box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+                          position: relative;
+                          page-break-inside: avoid;
+                        }
+                        
+                        .header-wave {
+                          background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+                          height: 120px;
+                          position: relative;
+                          overflow: hidden;
+                        }
+                        
+                        .header-wave::after {
+                          content: '';
+                          position: absolute;
+                          bottom: -30px;
+                          left: 0;
+                          width: 100%;
+                          height: 60px;
+                          background: white;
+                          border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+                        }
+                        
+                        .header-content {
+                          position: relative;
+                          z-index: 2;
+                          color: white;
+                          padding: 25px 40px;
+                          display: flex;
+                          justify-content: space-between;
+                          align-items: flex-start;
+                        }
+                        
+                        .logo-section {
+                          display: flex;
+                          align-items: center;
+                          gap: 12px;
+                        }
+                        
+                        .logo-placeholder {
+                          width: 45px;
+                          height: 45px;
+                          background: rgba(255,255,255,0.2);
+                          border-radius: 8px;
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                          font-size: 18px;
+                          font-weight: bold;
+                          border: 2px solid rgba(255,255,255,0.3);
+                        }
+                        
+                        .company-info h1 {
+                          font-size: 24px;
+                          font-weight: 700;
+                          margin-bottom: 3px;
+                          text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                        }
+                        
+                        .company-tagline {
+                          font-size: 12px;
+                          opacity: 0.9;
+                          font-weight: 300;
+                        }
+                        
+                        .invoice-title {
+                          text-align: right;
+                        }
+                        
+                        .invoice-title h2 {
+                          font-size: 32px;
+                          font-weight: 300;
+                          letter-spacing: 2px;
+                          margin-bottom: 5px;
+                          text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                        }
+                        
+                        .invoice-meta {
+                          font-size: 12px;
+                          opacity: 0.9;
+                        }
+                        
+                        .content-section {
+                          padding: 40px 40px 30px;
+                        }
+                        
+                        .bill-to-section {
+                          display: grid;
+                          grid-template-columns: 1fr 1fr;
+                          gap: 40px;
+                          margin-bottom: 30px;
+                        }
+                        
+                        .info-block h3 {
+                          color: #2d3748;
+                          font-size: 14px;
+                          font-weight: 600;
+                          margin-bottom: 10px;
+                          padding-bottom: 5px;
+                          border-bottom: 2px solid #e2e8f0;
+                        }
+                        
+                        .info-block p {
+                          color: #4a5568;
+                          line-height: 1.5;
+                          margin-bottom: 3px;
+                          font-size: 13px;
+                        }
+                        
+                        .customer-name {
+                          font-weight: 600;
+                          color: #2d3748;
+                          font-size: 15px;
+                        }
+                        
+                        .items-table {
+                          width: 100%;
+                          border-collapse: collapse;
+                          margin-bottom: 25px;
+                          border-radius: 8px;
+                          overflow: hidden;
+                          box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                        }
+                        
+                        .items-table thead tr {
+                          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                          color: white;
+                        }
+                        
+                        .items-table th {
+                          padding: 12px 10px;
+                          font-weight: 600;
+                          font-size: 12px;
+                          letter-spacing: 0.5px;
+                        }
+                        
+                        .items-table td {
+                          padding: 10px;
+                          border-bottom: 1px solid #e2e8f0;
+                          color: #4a5568;
+                          font-size: 12px;
+                        }
+                        
+                        .items-table tbody tr:last-child td {
+                          border-bottom: none;
+                        }
+                        
+                        .text-right { text-align: right; }
+                        .text-center { text-align: center; }
+                        .text-left { text-align: left; }
+                        
+                        .totals-section {
+                          display: flex;
+                          justify-content: flex-end;
+                          margin-bottom: 25px;
+                        }
+                        
+                        .totals-box {
+                          background: #f7fafc;
+                          padding: 20px;
+                          border-radius: 8px;
+                          min-width: 280px;
+                        }
+                        
+                        .total-line {
+                          display: flex;
+                          justify-content: space-between;
+                          padding: 4px 0;
+                          color: #4a5568;
+                          font-size: 13px;
+                        }
+                        
+                        .grand-total {
+                          border-top: 2px solid #e2e8f0;
+                          margin-top: 10px;
+                          padding-top: 10px;
+                          font-size: 16px;
+                          font-weight: 700;
+                          color: #2d3748;
+                        }
+                        
+                        .balance {
+                          font-weight: 600;
+                          font-size: 14px;
+                        }
+                        
+                        .balance.positive { color: #e53e3e; }
+                        .balance.negative { color: #38a169; }
+                        
+                        .bottom-section {
+                          display: grid;
+                          grid-template-columns: 2fr 1fr;
+                          gap: 25px;
+                        }
+                        
+                        .terms-section {
+                          background: #f7fafc;
+                          padding: 15px;
+                          border-radius: 8px;
+                        }
+                        
+                        .terms-section h3 {
+                          color: #2d3748;
+                          font-size: 14px;
+                          font-weight: 600;
+                          margin-bottom: 8px;
+                        }
+                        
+                        .terms-section p {
+                          color: #4a5568;
+                          font-size: 11px;
+                          line-height: 1.4;
+                          margin-bottom: 4px;
+                        }
+                        
+                        .signature-section {
+                          text-align: center;
+                          padding: 15px;
+                        }
+                        
+                        .signature-line {
+                          border-top: 2px solid #2d3748;
+                          width: 120px;
+                          margin: 25px auto 8px;
+                        }
+                        
+                        .signature-text {
+                          color: #4a5568;
+                          font-size: 12px;
+                          font-weight: 500;
+                        }
+                        
+                        .preview-controls {
+                          position: fixed;
+                          top: 20px;
+                          right: 20px;
+                          background: white;
+                          padding: 12px;
+                          border-radius: 6px;
+                          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                          z-index: 1000;
+                        }
+                        
+                        .preview-controls button {
+                          margin-left: 8px;
+                          padding: 6px 12px;
+                          border: none;
+                          border-radius: 4px;
+                          cursor: pointer;
+                          font-weight: 500;
+                          font-size: 13px;
+                        }
+                        
+                        .btn-close {
+                          background: #e53e3e;
+                          color: white;
+                        }
+                        
+                        .btn-print {
+                          background: #4299e1;
+                          color: white;
+                        }
+                        
+                        @media print {
+                          body { 
+                            background: white;
+                            padding: 0;
+                          }
+                          .invoice-container {
+                            box-shadow: none;
+                            border-radius: 0;
+                            page-break-inside: avoid;
+                          }
+                          .preview-controls {
+                            display: none;
+                          }
+                        }
+                      </style>
+                    </head>
+                    <body>
+                      <div class="preview-controls">
+                        <button class="btn-print" onclick="window.print()">Print</button>
+                        <button class="btn-close" onclick="window.close()">Close</button>
+                      </div>
+                      
+                      <div class="invoice-container">
+                        <!-- Header Wave Section -->
+                        <div class="header-wave">
+                          <div class="header-content">
+                            <div class="logo-section">
+                              <div class="logo-placeholder">
+                                ${previewData.shop.name.charAt(0)}
+                              </div>
+                              <div class="company-info">
+                                <h1>${previewData.shop.name}</h1>
+                                <div class="company-tagline">${previewData.shop.tagline}</div>
+                              </div>
+                            </div>
+                            <div class="invoice-title">
+                              <h2>INVOICE</h2>
+                              <div class="invoice-meta">
+                                <div><strong>Date:</strong> ${new Date(previewData.invoiceDate).toLocaleDateString()}</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Content Section -->
+                        <div class="content-section">
+                          <!-- Bill To Section -->
+                          <div class="bill-to-section">
+                            <div class="info-block">
+                              <h3>Invoice To:</h3>
+                              <p class="customer-name">${previewData.customer.name}</p>
+                              <p>📍 ${previewData.customer.place}</p>
+                              <p>📞 ${previewData.customer.phone}</p>
+                            </div>
+                            <div class="info-block">
+                              <h3>Payment Info:</h3>
+                              <p><strong>Status:</strong> ${previewData.paymentDetails.paymentStatus}</p>
+                              <p><strong>Mode:</strong> ${previewData.paymentDetails.paymentMode}</p>
+                            </div>
+                          </div>
+
+                          <!-- Items Table -->
+                          <table class="items-table">
+                            <thead>
+                              <tr>
+                                <th class="text-left">Item Description</th>
+                                <th class="text-center">Qty.</th>
+                                <th class="text-right">Price</th>
+                                <th class="text-right">Discount</th>
+                                <th class="text-right">CGST (9%)</th>
+                                <th class="text-right">SGST (9%)</th>
+                                <th class="text-right">Total</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              ${previewData.items.map((item, index) => `
+                                <tr>
+                                  <td class="text-left">
+                                    <div style="font-weight: 600; color: #2d3748;">${item?.product?.name || 'N/A'}</div>
+                                  </td>
+                                  <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
+                                  <td class="text-right">₹${item?.unitPrice?.toFixed(2) || '0.00'}</td>
+                                  <td class="text-right">₹${item?.discountAmount?.toFixed(2) || '0.00'}</td>
+                                  <td class="text-right">₹${(item?.cgstAmount || 0).toFixed(2)}</td>
+                                  <td class="text-right">₹${(item?.sgstAmount || 0).toFixed(2)}</td>
+                                  <td class="text-right" style="font-weight: 600; color: #2d3748;">₹${item?.totalPrice?.toFixed(2) || '0.00'}</td>
+                                </tr>
+                              `).join('')}
+                            </tbody>
+                          </table>
+
+                          <!-- Totals Section -->
+                          <div class="totals-section">
+                            <div class="totals-box">
+                              <div class="total-line">
+                                <span>Sub Total:</span>
+                                <span>₹${(previewData.totals.subtotal || 0).toFixed(2)}</span>
+                              </div>
+                              <div class="total-line">
+                              </div>
+                              <div class="total-line">
+                                <span>Total CGST (9%):</span>
+                                <span>₹${((previewData.totals.totalTax || 0) / 2).toFixed(2)}</span>
+                              </div>
+                              <div class="total-line">
+                                <span>Total SGST (9%):</span>
+                                <span>₹${((previewData.totals.totalTax || 0) / 2).toFixed(2)}</span>
+                              </div>
+                              <div class="total-line grand-total">
+                                <span>Grand Total:</span>
+                                <span>₹${(previewData.totals.grandTotal || 0).toFixed(2)}</span>
+                              </div>
+                              <div class="total-line">
+                                <span>Amount Paid:</span>
+                                <span>₹${(previewData.amountPaid || 0).toFixed(2)}</span>
+                              </div>
+                              <div class="total-line balance ${(previewData.totals.grandTotal - previewData.amountPaid) > 0 ? 'positive' : 'negative'}">
+                                <span>Balance:</span>
+                                <span>₹${(previewData.totals.grandTotal - previewData.amountPaid).toFixed(2)}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <!-- Bottom Section -->
+                          <div class="bottom-section">
+                            <div class="terms-section">
+                              <h3>Terms & Conditions</h3>
+                              <p>1. Payment is due within 30 days of invoice date.</p>
+                              <p>2. Late payments may incur additional charges.</p>
+                              <p>3. Goods once sold cannot be returned without prior approval.</p>
+                              <p>4. Any disputes must be resolved within 7 days of delivery.</p>
+                              ${previewData.remark ? `
+                                <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #e2e8f0;">
+                                  <strong>Remarks:</strong><br>
+                                  ${previewData.remark}
+                                </div>
+                              ` : ''}
+                            </div>
+
+                          </div>
+                        </div>
+                      </div>
+                    </body>
+                  </html>
+                `);
+                
+                previewWindow.document.close();
+              }}
+              disabled={!selectedCustomer || !selectedShop}
+            >
+              <Eye className="h-4 w-4 mr-2" />
+              Preview
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => {
+                if (!selectedCustomer || !selectedShop) return;
+                
+                const formData = form.getValues();
+                const totals = calculateTotals();
+                
+                const invoiceData = {
+                  invoiceDate: new Date().toISOString(),
+                  shop: {
+                    name: selectedShop.name,
+                    place: selectedShop.place,
+                    gstNo: selectedShop.gstNo || "",
+                    phone: selectedShop.phone || "",
+                    tagline: "Quality Products & Services"
+                  },
+                  customer: {
+                    name: selectedCustomer.name,
+                    place: selectedCustomer.place,
+                    phone: selectedCustomer.phone?.toString() || ""
+                  },
+                  paymentDetails: {
+                    paymentStatus: formData.paymentStatus,
+                    paymentMode: formData.paymentMode,
+                    billType: formData.billType,
+                    saleType: formData.saleType
+                  },
+                  items: totals.items.filter(item => item),
+                  totals,
+                  amountPaid: formData.amountPaid || 0,
+                  remark: formData.remark
+                };
+
+                // Create a new window for PDF generation
+                const printWindow = window.open('', '_blank');
+                if (!printWindow) return;
+
+                printWindow.document.write(`
+                  <!DOCTYPE html>
+                  <html>
+                    <head>
+                      <title>Invoice Preview</title>
+                      <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+                        
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+                        
+                        body { 
+                          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+                          background: white;
+                          padding: 0;
+                          line-height: 1.4;
+                        }
+                        
+                        .invoice-container {
+                          max-width: 800px;
+                          margin: 0 auto;
+                          background: white;
+                          position: relative;
+                          page-break-inside: avoid;
+                        }
+                        
+                        .header-wave {
+                          background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+                          height: 120px;
+                          position: relative;
+                          overflow: hidden;
+                        }
+                        
+                        .header-wave::after {
+                          content: '';
+                          position: absolute;
+                          bottom: -30px;
+                          left: 0;
+                          width: 100%;
+                          height: 60px;
+                          background: white;
+                          border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+                        }
+                        
+                        .header-content {
+                          position: relative;
+                          z-index: 2;
+                          color: white;
+                          padding: 25px 40px;
+                          display: flex;
+                          justify-content: space-between;
+                          align-items: flex-start;
+                        }
+                        
+                        .logo-section {
+                          display: flex;
+                          align-items: center;
+                          gap: 12px;
+                        }
+                        
+                        .logo-placeholder {
+                          width: 45px;
+                          height: 45px;
+                          background: rgba(255,255,255,0.2);
+                          border-radius: 8px;
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                          font-size: 18px;
+                          font-weight: bold;
+                          border: 2px solid rgba(255,255,255,0.3);
+                        }
+                        
+                        .company-info h1 {
+                          font-size: 24px;
+                          font-weight: 700;
+                          margin-bottom: 3px;
+                          text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                        }
+                        
+                        .company-tagline {
+                          font-size: 12px;
+                          opacity: 0.9;
+                          font-weight: 300;
+                        }
+                        
+                        .invoice-title {
+                          text-align: right;
+                        }
+                        
+                        .invoice-title h2 {
+                          font-size: 32px;
+                          font-weight: 300;
+                          letter-spacing: 2px;
+                          margin-bottom: 5px;
+                          text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                        }
+                        
+                        .invoice-meta {
+                          font-size: 12px;
+                          opacity: 0.9;
+                        }
+                        
+                        .content-section {
+                          padding: 40px 40px 30px;
+                        }
+                        
+                        .bill-to-section {
+                          display: grid;
+                          grid-template-columns: 1fr 1fr;
+                          gap: 40px;
+                          margin-bottom: 30px;
+                        }
+                        
+                        .info-block h3 {
+                          color: #2d3748;
+                          font-size: 14px;
+                          font-weight: 600;
+                          margin-bottom: 10px;
+                          padding-bottom: 5px;
+                          border-bottom: 2px solid #e2e8f0;
+                        }
+                        
+                        .info-block p {
+                          color: #4a5568;
+                          line-height: 1.5;
+                          margin-bottom: 3px;
+                          font-size: 13px;
+                        }
+                        
+                        .customer-name {
+                          font-weight: 600;
+                          color: #2d3748;
+                          font-size: 15px;
+                        }
+                        
+                        .items-table {
+                          width: 100%;
+                          border-collapse: collapse;
+                          margin-bottom: 25px;
+                          border-radius: 8px;
+                          overflow: hidden;
+                          box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                        }
+                        
+                        .items-table thead tr {
+                          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                          color: white;
+                        }
+                        
+                        .items-table th {
+                          padding: 12px 10px;
+                          font-weight: 600;
+                          font-size: 12px;
+                          letter-spacing: 0.5px;
+                        }
+                        
+                        .items-table td {
+                          padding: 10px;
+                          border-bottom: 1px solid #e2e8f0;
+                          color: #4a5568;
+                          font-size: 12px;
+                        }
+                        
+                        .items-table tbody tr:last-child td {
+                          border-bottom: none;
+                        }
+                        
+                        .text-right { text-align: right; }
+                        .text-center { text-align: center; }
+                        .text-left { text-align: left; }
+                        
+                        .totals-section {
+                          display: flex;
+                          justify-content: flex-end;
+                          margin-bottom: 25px;
+                        }
+                        
+                        .totals-box {
+                          background: #f7fafc;
+                          padding: 20px;
+                          border-radius: 8px;
+                          min-width: 280px;
+                        }
+                        
+                        .total-line {
+                          display: flex;
+                          justify-content: space-between;
+                          padding: 4px 0;
+                          color: #4a5568;
+                          font-size: 13px;
+                        }
+                        
+                        .grand-total {
+                          border-top: 2px solid #e2e8f0;
+                          margin-top: 10px;
+                          padding-top: 10px;
+                          font-size: 16px;
+                          font-weight: 700;
+                          color: #2d3748;
+                        }
+                        
+                        .balance {
+                          font-weight: 600;
+                          font-size: 14px;
+                        }
+                        
+                        .balance.positive { color: #e53e3e; }
+                        .balance.negative { color: #38a169; }
+                        
+                        .bottom-section {
+                          display: grid;
+                          grid-template-columns: 2fr 1fr;
+                          gap: 25px;
+                        }
+                        
+                        .terms-section {
+                          background: #f7fafc;
+                          padding: 15px;
+                          border-radius: 8px;
+                        }
+                        
+                        .terms-section h3 {
+                          color: #2d3748;
+                          font-size: 14px;
+                          font-weight: 600;
+                          margin-bottom: 8px;
+                        }
+                        
+                        .terms-section p {
+                          color: #4a5568;
+                          font-size: 11px;
+                          line-height: 1.4;
+                          margin-bottom: 4px;
+                        }
+                        
+                        .signature-section {
+                          text-align: center;
+                          padding: 15px;
+                        }
+                        
+                        .signature-line {
+                          border-top: 2px solid #2d3748;
+                          width: 120px;
+                          margin: 25px auto 8px;
+                        }
+                        
+                        .signature-text {
+                          color: #4a5568;
+                          font-size: 12px;
+                          font-weight: 500;
+                        }
+                        
+                        .footer-wave {
+                          background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+                          height: 60px;
+                          position: relative;
+                          margin-top: 30px;
+                        }
+                        
+                        .footer-wave::before {
+                          content: '';
+                          position: absolute;
+                          top: -30px;
+                          left: 0;
+                          width: 100%;
+                          height: 60px;
+                          background: white;
+                          border-radius: 0 0 50% 50% / 0 0 100% 100%;
+                        }
+                        
+                        @media print {
+                          body { 
+                            background: white;
+                            padding: 0;
+                          }
+                          .invoice-container {
+                            box-shadow: none;
+                            border-radius: 0;
+                            page-break-inside: avoid;
+                          }
+                        }
+                      </style>
+                    </head>
+                    <body>
+                      <div class="invoice-container">
+                        <!-- Header Wave Section -->
+                        <div class="header-wave">
+                          <div class="header-content">
+                            <div class="logo-section">
+                              <div class="logo-placeholder">
+                                ${invoiceData.shop.name.charAt(0)}
+                              </div>
+                              <div class="company-info">
+                                <h1>${invoiceData.shop.name}</h1>
+                                <div class="company-tagline">${invoiceData.shop.tagline}</div>
+                                ${invoiceData.shop.gstNo ? `<div class="company-tagline">GST: ${invoiceData.shop.gstNo}</div>` : ''}
+                                ${invoiceData.shop.phone ? `<div class="company-tagline">Phone: ${invoiceData.shop.phone}</div>` : ''}
+                              </div>
+                            </div>
+                            <div class="invoice-title">
+                              <div class="invoice-meta">
+                                <div><strong>Date:</strong> ${new Date(invoiceData.invoiceDate).toLocaleDateString()}</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Content Section -->
+                        <div class="content-section">
+                          <!-- Bill To Section -->
+                          <div class="bill-to-section">
+                            <div class="info-block">
+                              <h3>Invoice To:</h3>
+                              <p class="customer-name">${invoiceData.customer.name}</p>
+                              <p>📍 ${invoiceData.customer.place}</p>
+                              <p>📞 ${invoiceData.customer.phone}</p>
+                            </div>
+                            <div class="info-block">
+                              <h3>Payment Info:</h3>
+                              <p><strong>Status:</strong> ${invoiceData.paymentDetails.paymentStatus}</p>
+                              <p><strong>Mode:</strong> ${invoiceData.paymentDetails.paymentMode}</p>
+                            </div>
+                          </div>
+
+                          <!-- Items Table -->
+                          <table class="items-table">
+                            <thead>
+                              <tr>
+                                <th class="text-left">Item Description</th>
+                                <th class="text-center">Qty.</th>
+                                <th class="text-right">Price</th>
+                                <th class="text-right">Discount</th>
+                                <th class="text-right">CGST (9%)</th>
+                                <th class="text-right">SGST (9%)</th>
+                                <th class="text-right">Total</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              ${invoiceData.items.map((item, index) => `
+                                <tr>
+                                  <td class="text-left">
+                                    <div style="font-weight: 600; color: #2d3748;">${item?.product?.name || 'N/A'}</div>
+                                  </td>
+                                  <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
+                                  <td class="text-right">₹${item?.unitPrice?.toFixed(2) || '0.00'}</td>
+                                  <td class="text-right">₹${item?.discountAmount?.toFixed(2) || '0.00'}</td>
+                                  <td class="text-right">₹${(item?.cgstAmount || 0).toFixed(2)}</td>
+                                  <td class="text-right">₹${(item?.sgstAmount || 0).toFixed(2)}</td>
+                                  <td class="text-right" style="font-weight: 600; color: #2d3748;">₹${item?.totalPrice?.toFixed(2) || '0.00'}</td>
+                                </tr>
+                              `).join('')}
+                            </tbody>
+                          </table>
+
+                          <!-- Totals Section -->
+                          <div class="totals-section">
+                            <div class="totals-box">
+                              <div class="total-line">
+                                <span>Sub Total:</span>
+                                <span>₹${invoiceData.totals.subtotal.toFixed(2)}</span>
+                              </div>
+                              <div class="total-line">
+                                <span>Total Discount:</span>
+                                <span>- ₹${(invoiceData.totals.itemDiscounts + (invoiceData.totals.additionalDiscountAmount || 0)).toFixed(2)}</span>
+                              </div>
+                              <div class="total-line">
+                                <span>Total CGST (9%):</span>
+                                <span>₹${((invoiceData.totals.totalTax || 0) / 2).toFixed(2)}</span>
+                              </div>
+                              <div class="total-line">
+                                <span>Total SGST (9%):</span>
+                                <span>₹${((invoiceData.totals.totalTax || 0) / 2).toFixed(2)}</span>
+                              </div>
+                              <div class="total-line grand-total">
+                                <span>Grand Total:</span>
+                                <span>₹${invoiceData.totals.grandTotal.toFixed(2)}</span>
+                              </div>
+                              <div class="total-line">
+                                <span>Amount Paid:</span>
+                                <span>₹${invoiceData.amountPaid.toFixed(2)}</span>
+                              </div>
+                              <div class="total-line balance ${(invoiceData.totals.grandTotal - invoiceData.amountPaid) > 0 ? 'positive' : 'negative'}">
+                                <span>Balance:</span>
+                                <span>₹${(invoiceData.totals.grandTotal - invoiceData.amountPaid).toFixed(2)}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <!-- Bottom Section -->
+                          <div class="bottom-section">
+                            <div class="terms-section">
+                              <h3>Terms & Conditions</h3>
+                              <p>1. Payment is due within 30 days of invoice date.</p>
+                              <p>2. Late payments may incur additional charges.</p>
+                              <p>3. Goods once sold cannot be returned without prior approval.</p>
+                              <p>4. Any disputes must be resolved within 7 days of delivery.</p>
+                              ${invoiceData.remark ? `
+                                <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #e2e8f0;">
+                                  <strong>Remarks:</strong><br>
+                                  ${invoiceData.remark}
+                                </div>
+                              ` : ''}
+                            </div>
+
+                          </div>
+                        </div>
+
+
+                      </div>
+                      
+                      <script>
+                        window.onload = function() {
+                          window.print();
+                          setTimeout(function() { window.close(); }, 1000);
+                        }
+                      </script>
+                    </body>
+                  </html>
+                `);
+                
+                printWindow.document.close();
+              }}
+              disabled={!selectedCustomer || !selectedShop}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download PDF
+            </Button>
+            <Button 
+              onClick={() => form.handleSubmit(onSubmit)()}
+              disabled={isEditMode ? updateInvoiceMutation.isPending : createInvoiceMutation.isPending}
+            >
+              <Save className="h-4 w-4 mr-2" />
+              {isEditMode 
+                ? (updateInvoiceMutation.isPending ? "Updating..." : "Update Invoice")
+                : (createInvoiceMutation.isPending ? "Creating..." : "Create Invoice")
+              }
+            </Button>
+          </div>
+        </div>
+
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
             {/* Invoice Layout */}
             <Card className="bg-white">
               <CardContent className="p-8">
-                {/* Invoice Header */}
-                <div className="flex justify-between items-start mb-8">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm text-gray-600">Date:</span>
-                      <FormField
-                        control={form.control}
-                        name="invoiceDate"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input 
-                                type="date" 
-                                {...field} 
-                                className="w-auto border-0 p-0 font-medium text-gray-900"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Hash className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm text-gray-600">Transaction ID:</span>
-                      <FormField
-                        control={form.control}
-                        name="transactionId"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input 
-                                {...field} 
-                                className="w-auto border-0 p-0 font-medium text-gray-900"
-                                placeholder="Enter transaction ID"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Customer and Shop Selection */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                  {/* Customer Selection */}
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                        <User className="h-5 w-5" />
-                        Bill To
-                      </h3>
-                      <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setIsCustomerSearchDialogOpen(true)}
-                        >
-                          Select Customer
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setIsAddCustomerDialogOpen(true)}
-                        >
-                          <Plus className="h-4 w-4 mr-1" />
-                          Add New
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    {selectedCustomer ? (
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h4 className="font-semibold text-gray-900">{selectedCustomer.name}</h4>
-                            <div className="mt-1 space-y-1">
-                              <div className="flex items-center gap-2 text-sm text-gray-600">
-                                <Phone className="h-3 w-3" />
-                                {selectedCustomer.phone}
-                              </div>
-                              <div className="flex items-center gap-2 text-sm text-gray-600">
-                                <MapPin className="h-3 w-3" />
-                                {selectedCustomer.place}
-                              </div>
-                            </div>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedCustomer(null);
-                              form.setValue('customerId', 0);
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                        <User className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                        <p className="text-gray-500">No customer selected</p>
-                        <p className="text-sm text-gray-400">Click "Select Customer" to choose</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Shop Selection */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                      <Building2 className="h-5 w-5" />
-                      From Shop
-                    </h3>
-                    
-                    <FormField
-                      control={form.control}
-                      name="shopId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <Select 
-                            onValueChange={(value) => {
-                              field.onChange(Number(value));
-                              const shop = shops.find(s => s.shopId === Number(value));
-                              setSelectedShop(shop || null);
-                            }} 
-                            value={field.value?.toString()}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select shop" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {shops.map((shop) => (
-                                <SelectItem key={shop.shopId} value={shop.shopId.toString()}>
-                                  {shop.shopName} - {shop.place}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    {selectedShop && (
-                      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                        <h4 className="font-semibold text-gray-900">{selectedShop.shopName}</h4>
-                        <div className="mt-1 space-y-1">
-                          <p className="text-sm text-gray-600">{selectedShop.ownerName}</p>
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <MapPin className="h-3 w-3" />
-                            {selectedShop.place}
-                          </div>
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <Phone className="h-3 w-3" />
-                            {selectedShop.phone}
+                {/* Header Section */}
+                <div className="mb-8">
+                  <div className="flex justify-between items-start">
+                    {/* Shop Info */}
+                    <div className="flex-1">
+{Array.isArray(shops) && shops.length === 1 ? (
+                        // Show shop info directly when only one shop exists
+                        <div>
+                          <FormLabel className="text-sm text-gray-600">Shop</FormLabel>
+                          <div className="border border-gray-300 text-2xl font-bold text-gray-900 p-3 rounded-md bg-gray-50">
+                            {shops[0].name}
                           </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <Separator className="my-8" />
-
-                {/* Items Section */}
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                      <Package className="h-5 w-5" />
-                      Items
-                    </h3>
-                    <Button
-                      type="button"
-                      onClick={() => append({
-                        productId: 0,
-                        quantity: 1,
-                        discount: 0,
-                        discountType: "AMOUNT",
-                        unitPrice: 0
-                      })}
-                      size="sm"
-                    >
-                      <Plus className="h-4 w-4 mr-1" />
-                      Add Item
-                    </Button>
-                  </div>
-
-                  <div className="space-y-4">
-                    {fields.map((field, index) => {
-                      const product = products.find(p => p.productId === form.watch(`saleItems.${index}.productId`));
-                      
-                      return (
-                        <Card key={field.id} className="border-l-4 border-l-blue-500">
-                          <CardContent className="p-4">
-                            <div className="flex items-center justify-between mb-4">
-                              <h4 className="font-medium text-gray-900">Item {index + 1}</h4>
-                              {fields.length > 1 && (
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => remove(index)}
-                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              )}
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                              {/* Product Selection */}
-                              <div className="space-y-2">
-                                <Label>Product</Label>
-                                <div className="flex gap-2">
-                                  <Select
-                                    onValueChange={(value) => {
-                                      const productId = Number(value);
-                                      const selectedProduct = products.find(p => p.productId === productId);
-                                      form.setValue(`saleItems.${index}.productId`, productId);
-                                      if (selectedProduct) {
-                                        form.setValue(`saleItems.${index}.unitPrice`, selectedProduct.retailPrice);
-                                      }
-                                    }}
-                                    value={form.watch(`saleItems.${index}.productId`)?.toString() || ""}
-                                  >
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select product" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {products.map((product) => (
-                                        <SelectItem key={product.productId} value={product.productId.toString()}>
-                                          {product.name} - ₹{product.retailPrice}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                      setCurrentItemIndex(index);
-                                      setIsProductSearchDialogOpen(true);
-                                    }}
-                                  >
-                                    <Plus className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                                {product && (
-                                  <div className="bg-gray-50 p-2 rounded text-xs">
-                                    <p className="font-medium">{product.name}</p>
-                                    <p className="text-gray-600">HSN: {product.hsn}</p>
-                                    <p className="text-gray-600">Stock: {product.quantity}</p>
-                                  </div>
-                                )}
-                              </div>
-
-                              {/* Quantity */}
-                              <FormField
-                                control={form.control}
-                                name={`saleItems.${index}.quantity`}
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Quantity</FormLabel>
-                                    <FormControl>
-                                      <Input
-                                        type="number"
-                                        min="1"
-                                        {...field}
-                                        onChange={(e) => field.onChange(Number(e.target.value))}
-                                      />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-
-                              {/* Unit Price */}
-                              <FormField
-                                control={form.control}
-                                name={`saleItems.${index}.unitPrice`}
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Unit Price</FormLabel>
-                                    <FormControl>
-                                      <Input
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        {...field}
-                                        onChange={(e) => field.onChange(Number(e.target.value))}
-                                      />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-
-                              {/* Discount */}
-                              <div className="space-y-2">
-                                <Label>Discount</Label>
-                                <div className="flex gap-2">
-                                  <FormField
-                                    control={form.control}
-                                    name={`saleItems.${index}.discount`}
-                                    render={({ field }) => (
-                                      <FormItem className="flex-1">
-                                        <FormControl>
-                                          <Input
-                                            type="number"
-                                            min="0"
-                                            step="0.01"
-                                            {...field}
-                                            onChange={(e) => field.onChange(Number(e.target.value))}
-                                          />
-                                        </FormControl>
-                                        <FormMessage />
-                                      </FormItem>
-                                    )}
-                                  />
-                                  <FormField
-                                    control={form.control}
-                                    name={`saleItems.${index}.discountType`}
-                                    render={({ field }) => (
-                                      <FormItem>
-                                        <Select onValueChange={field.onChange} value={field.value}>
-                                          <FormControl>
-                                            <SelectTrigger className="w-20">
-                                              <SelectValue />
-                                            </SelectTrigger>
-                                          </FormControl>
-                                          <SelectContent>
-                                            <SelectItem value="AMOUNT">₹</SelectItem>
-                                            <SelectItem value="PERCENTAGE">%</SelectItem>
-                                          </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                      </FormItem>
-                                    )}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Item calculations display */}
-                            {product && (
-                              <div className="mt-4 bg-gray-50 p-3 rounded-lg">
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                                  <div>
-                                    <span className="text-gray-600">Base Price:</span>
-                                    <p className="font-medium">₹{(form.watch(`saleItems.${index}.unitPrice`) * form.watch(`saleItems.${index}.quantity`)).toFixed(2)}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-gray-600">CGST (9%):</span>
-                                    <p className="font-medium">₹{(((form.watch(`saleItems.${index}.unitPrice`) * form.watch(`saleItems.${index}.quantity`)) - (form.watch(`saleItems.${index}.discountType`) === "PERCENTAGE" ? (form.watch(`saleItems.${index}.unitPrice`) * form.watch(`saleItems.${index}.quantity`) * form.watch(`saleItems.${index}.discount`)) / 100 : form.watch(`saleItems.${index}.discount`))) * 0.09).toFixed(2)}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-gray-600">SGST (9%):</span>
-                                    <p className="font-medium">₹{(((form.watch(`saleItems.${index}.unitPrice`) * form.watch(`saleItems.${index}.quantity`)) - (form.watch(`saleItems.${index}.discountType`) === "PERCENTAGE" ? (form.watch(`saleItems.${index}.unitPrice`) * form.watch(`saleItems.${index}.quantity`) * form.watch(`saleItems.${index}.discount`)) / 100 : form.watch(`saleItems.${index}.discount`))) * 0.09).toFixed(2)}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-gray-600">Item Total:</span>
-                                    <p className="font-medium text-blue-600">₹{(
-                                      (form.watch(`saleItems.${index}.unitPrice`) * form.watch(`saleItems.${index}.quantity`)) - 
-                                      (form.watch(`saleItems.${index}.discountType`) === "PERCENTAGE" ? 
-                                        (form.watch(`saleItems.${index}.unitPrice`) * form.watch(`saleItems.${index}.quantity`) * form.watch(`saleItems.${index}.discount`)) / 100 : 
-                                        form.watch(`saleItems.${index}.discount`)
-                                      )
-                                    ).toFixed(2)}</p>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <Separator className="my-8" />
-
-                {/* Additional Discount Section */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                    <Percent className="h-5 w-5" />
-                    Additional Discount
-                  </h3>
-                  
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <Label>Additional Discount</Label>
-                        <div className="flex gap-2">
-                          <FormField
-                            control={form.control}
-                            name="additionalDiscount"
-                            render={({ field }) => (
-                              <FormItem className="flex-1">
+                      ) : (
+                        // Show dropdown when multiple shops exist
+                        <FormField
+                          control={form.control}
+                          name="shopId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm text-gray-600">Shop</FormLabel>
+                              <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
                                 <FormControl>
-                                  <Input
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    {...field}
-                                    onChange={(e) => field.onChange(Number(e.target.value))}
-                                    placeholder="0"
-                                  />
+                                  <SelectTrigger className="border border-gray-300 text-2xl font-bold text-gray-900 p-3 h-auto rounded-md">
+                                    <SelectValue placeholder="Select Shop" />
+                                  </SelectTrigger>
                                 </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                                <SelectContent>
+                                  {Array.isArray(shops) ? shops.map((shop) => (
+                                    <SelectItem key={shop.shopId} value={shop.shopId.toString()}>
+                                      {shop.name}
+                                    </SelectItem>
+                                  )) : null}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+                      {selectedShop && (
+                        <div className="mt-2">
                           <FormField
                             control={form.control}
-                            name="additionalDiscountType"
+                            name="useCustomBillingAddress"
                             render={({ field }) => (
-                              <FormItem>
-                                <Select onValueChange={field.onChange} value={field.value}>
-                                  <FormControl>
-                                    <SelectTrigger className="w-20">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    <SelectItem value="AMOUNT">₹</SelectItem>
-                                    <SelectItem value="PERCENTAGE">%</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
+                              <div className="flex items-center space-x-2">
+                                <input
+                                  type="checkbox"
+                                  checked={field.value}
+                                  onChange={field.onChange}
+                                  className="rounded"
+                                />
+                                <label className="text-sm">Use custom billing address</label>
+                              </div>
                             )}
                           />
+                          {form.watch("useCustomBillingAddress") ? (
+                            <FormField
+                              control={form.control}
+                              name="customBillingAddress"
+                              render={({ field }) => (
+                                <Textarea
+                                  {...field}
+                                  placeholder="Enter custom billing address"
+                                  className="mt-2 text-gray-600"
+                                />
+                              )}
+                            />
+                          ) : (
+                            <p className="text-gray-600 mt-1">{selectedShop.place}</p>
+                          )}
                         </div>
-                      </div>
-                      <div className="text-sm text-gray-600 space-y-1">
-                        <div className="flex justify-between">
-                          <span>Additional Discount Amount:</span>
-                          <span>₹{(currentTotals.additionalDiscountAmount || 0).toFixed(2)}</span>
+                      )}
+                    </div>
+
+                    {/* Invoice Details */}
+                    <div className="text-right">
+                      <h2 className="text-3xl font-bold text-gray-900 mb-4">INVOICE</h2>
+                      <div className="space-y-2">
+                        <div>
+                          <Label className="text-sm text-gray-600">Date</Label>
+                          <p className="font-semibold">{new Date().toLocaleDateString()}</p>
+                        </div>
+                        <div>
+                          <Label className="text-sm text-gray-600">Transaction ID</Label>
+                          <FormField
+                            control={form.control}
+                            name="transactionId"
+                            render={({ field }) => (
+                              <Input {...field} className="text-right border-none p-0 font-semibold" />
+                            )}
+                          />
                         </div>
                       </div>
                     </div>
@@ -1020,41 +2040,194 @@ export default function CreateInvoice() {
 
                 <Separator className="my-8" />
 
-                {/* Totals Section */}
-                <div className="bg-gray-50 p-6 rounded-lg">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Invoice Summary</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-3">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Sub Total:</span>
-                        <span className="font-medium">₹{currentTotals.subtotal.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Item Discounts:</span>
-                        <span className="font-medium text-red-600">-₹{currentTotals.itemDiscounts.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Additional Discount:</span>
-                        <span className="font-medium text-red-600">-₹{currentTotals.additionalDiscountAmount.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Total Tax (18%):</span>
-                        <span className="font-medium">₹{currentTotals.totalTax.toFixed(2)}</span>
-                      </div>
-                      <Separator />
-                      <div className="flex justify-between text-lg font-semibold">
-                        <span>Grand Total:</span>
-                        <span className="text-blue-600">₹{currentTotals.grandTotal.toFixed(2)}</span>
-                      </div>
+                {/* Customer and Settings Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                  {/* Bill To */}
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-gray-900">Bill To:</h3>
+                      <Dialog open={isAddCustomerDialogOpen} onOpenChange={setIsAddCustomerDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Button size="sm" className="bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white border-0">
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Customer
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Add New Customer</DialogTitle>
+                          </DialogHeader>
+                          <Form {...customerForm}>
+                            <form onSubmit={customerForm.handleSubmit(onAddCustomer)} className="space-y-4">
+                              <FormField
+                                control={customerForm.control}
+                                name="name"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Customer Name</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} placeholder="Enter customer name" />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={customerForm.control}
+                                name="place"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Place</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} placeholder="Enter place" />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={customerForm.control}
+                                name="phone"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Phone</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} placeholder="Enter phone number" />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={customerForm.control}
+                                name="shopId"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Shop</FormLabel>
+                                    <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                                      <FormControl>
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Select shop" />
+                                        </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                        {Array.isArray(shops) ? shops.map((shop) => (
+                                          <SelectItem key={shop.shopId} value={shop.shopId.toString()}>
+                                            {shop.name} - {shop.place}
+                                          </SelectItem>
+                                        )) : null}
+                                      </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <div className="flex justify-end space-x-2">
+                                <Button type="button" variant="outline" onClick={() => setIsAddCustomerDialogOpen(false)}>
+                                  Cancel
+                                </Button>
+                                <Button type="submit" disabled={addCustomerMutation.isPending}>
+                                  {addCustomerMutation.isPending ? "Adding..." : "Add Customer"}
+                                </Button>
+                              </div>
+                            </form>
+                          </Form>
+                        </DialogContent>
+                      </Dialog>
                     </div>
                     
-                    <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full justify-start text-left h-12 border-dashed border-2"
+                        onClick={() => setIsCustomerSearchDialogOpen(true)}
+                      >
+                        <User className="h-4 w-4 mr-2" />
+                        {selectedCustomer ? (
+                          <div className="flex flex-col items-start">
+                            <span className="font-medium">{selectedCustomer.name} - {selectedCustomer.place}</span>
+                            <span className="text-xs text-gray-500">{selectedCustomer.phone}</span>
+                          </div>
+                        ) : (
+                          <span className="text-gray-500">Select Customer</span>
+                        )}
+                      </Button>
+                    </div>
+                    
+                    {selectedCustomer && (
+                      <div className="mt-4 p-4 bg-gray-50 rounded border">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <User className="h-4 w-4 text-gray-600" />
+                          <span className="font-medium">{selectedCustomer.name}</span>
+                        </div>
+                        <div className="flex items-center space-x-2 mb-2">
+                          <MapPin className="h-4 w-4 text-gray-600" />
+                          <span className="text-gray-600">{selectedCustomer.place}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Phone className="h-4 w-4 text-gray-600" />
+                          <span className="text-gray-600">{selectedCustomer.phone}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Invoice Settings */}
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="billType"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Bill Type</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="GST">GST Bill</SelectItem>
+                                <SelectItem value="NON_GST">Non-GST Bill</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="saleType"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Sale Type</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="RETAIL">Retail</SelectItem>
+                                <SelectItem value="WHOLESALE">Wholesale</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
                         name="paymentMode"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Payment Mode</FormLabel>  
+                            <FormLabel>Payment Mode</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger>
@@ -1063,8 +2236,8 @@ export default function CreateInvoice() {
                               </FormControl>
                               <SelectContent>
                                 <SelectItem value="CASH">Cash</SelectItem>
-                                <SelectItem value="UPI">UPI</SelectItem>
                                 <SelectItem value="CARD">Card</SelectItem>
+                                <SelectItem value="UPI">UPI</SelectItem>
                                 <SelectItem value="CHEQUE">Cheque</SelectItem>
                                 <SelectItem value="BANK_TRANSFER">Bank Transfer</SelectItem>
                               </SelectContent>
@@ -1073,38 +2246,1329 @@ export default function CreateInvoice() {
                           </FormItem>
                         )}
                       />
-
+                      
                       <FormField
                         control={form.control}
-                        name="remark"
+                        name="paymentStatus"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Remark (Optional)</FormLabel>
-                            <FormControl>
-                              <Textarea 
-                                {...field} 
-                                placeholder="Add any notes or remarks..."
-                                rows={3}
-                              />
-                            </FormControl>
+                            <FormLabel>Payment Status</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="PAID">Paid</SelectItem>
+                                <SelectItem value="PENDING">Pending</SelectItem>
+                                <SelectItem value="OVERDUE">Overdue</SelectItem>
+                              </SelectContent>
+                            </Select>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
                     </div>
+
+                    <FormField
+                      control={form.control}
+                      name="dueDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Due Date (Optional)</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="date" value={field.value || ""} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
                 </div>
 
-                {/* Action Buttons - Only Create Invoice button */}
-                <div className="flex justify-end pt-6">
-                  <Button 
-                    type="submit"
-                    disabled={createInvoiceMutation.isPending}
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    <Save className="h-4 w-4 mr-2" />
-                    {createInvoiceMutation.isPending ? "Creating..." : "Create Invoice"}
-                  </Button>
+                <Separator className="my-8" />
+
+                {/* Items Section */}
+                <div className="mb-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Items</h3>
+                    <ProductSearchDialog
+                      products={Array.isArray(products) ? products : []}
+                      saleType={form.watch("saleType")}
+                      existingItems={fields.map((field, index) => {
+                        const productId = form.watch(`saleItems.${index}.productId`);
+                        const product = Array.isArray(products) ? products.find(p => p.productId === productId) : null;
+                        if (!product) return null;
+                        return {
+                          ...product,
+                          quantity: form.watch(`saleItems.${index}.quantity`) || 1,
+                          discountAmount: form.watch(`saleItems.${index}.discount`) || 0
+                        };
+                      }).filter((item): item is NonNullable<typeof item> => item !== null)}
+                      onSelect={(selectedProducts) => {
+                        // Replace all items with new selection
+                        form.setValue('saleItems', []);
+                        selectedProducts.forEach((product) => {
+                          const rate = form.watch("saleType") === 'RETAIL' ? product.retailRate : product.wholesaleRate;
+                          append({
+                            productId: product.productId,
+                            quantity: product.quantity,
+                            unitPrice: rate,
+                            discount: product.discountAmount || 0,
+                            discountType: "AMOUNT"
+                          });
+                        });
+                      }}
+                      trigger={
+                        <Button size="sm" className="bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white border-0">
+                          <Plus className="mr-2 h-4 w-4" />
+                          Add Items
+                        </Button>
+                      }
+                    />
+                  </div>
+
+                  <div className="border rounded-lg overflow-hidden">
+                    <div className="grid grid-cols-12 gap-4 p-4 bg-gray-50 font-semibold text-sm">
+                      <div className="col-span-3">Product</div>
+                      <div className="col-span-1">HSN</div>
+                      <div className="col-span-1">Qty</div>
+                      <div className="col-span-1">Rate</div>
+                      <div className="col-span-2">Discount</div>
+                      <div className="col-span-1">CGST</div>
+                      <div className="col-span-1">SGST</div>
+                      <div className="col-span-1">Total</div>
+                      <div className="col-span-1">Action</div>
+                    </div>
+
+                    {fields.length === 0 ? (
+                      <div className="p-8 text-center text-gray-500">
+                        <Package className="mx-auto h-12 w-12 mb-4 text-gray-400" />
+                        <p>No items added yet. Click "Add Items" to get started.</p>
+                      </div>
+                    ) : fields.map((field, index) => {
+                      const selectedProduct = Array.isArray(products) ? products.find(p => p.productId === form.watch(`saleItems.${index}.productId`)) : null;
+                      const quantity = form.watch(`saleItems.${index}.quantity`) || 0;
+                      const discount = form.watch(`saleItems.${index}.discount`) || 0;
+                      const discountType = form.watch(`saleItems.${index}.discountType`) || "AMOUNT";
+                      
+                      let itemTotal = 0;
+                      let cgstAmount = 0;
+                      let sgstAmount = 0;
+                      
+                      if (selectedProduct) {
+                        const saleType = form.watch("saleType");
+                        const unitPrice = saleType === 'RETAIL' ? selectedProduct.retailRate : selectedProduct.wholesaleRate;
+                        
+                        const baseAmount = unitPrice * quantity;
+                        let discountAmount = 0;
+                        
+                        if (discountType === 'PERCENTAGE') {
+                          discountAmount = (baseAmount * discount) / 100;
+                        } else {
+                          discountAmount = discount;
+                        }
+                        
+                        itemTotal = baseAmount - discountAmount;
+                        
+                        // Calculate CGST/SGST for display only (not added to total)
+                        cgstAmount = (itemTotal * (selectedProduct.cgst || 0)) / 100;
+                        sgstAmount = (itemTotal * (selectedProduct.sgst || 0)) / 100;
+                      }
+
+                      return (
+                        <div key={field.id} className="grid grid-cols-12 gap-4 p-4 border-b items-center">
+                          <div className="col-span-3">
+                            <div className="text-sm font-medium">
+                              {selectedProduct ? selectedProduct.name : 'Unknown Product'}
+                            </div>
+                          </div>
+                          
+                          <div className="col-span-1 text-sm text-gray-600">
+                            {selectedProduct?.hsn || '-'}
+                          </div>
+                          
+                          <div className="col-span-1">
+                            <FormField
+                              control={form.control}
+                              name={`saleItems.${index}.quantity`}
+                              render={({ field }) => (
+                                <Input
+                                  type="text"
+                                  value={field.value || ''}
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    // Allow empty string or valid numbers
+                                    if (value === '' || /^\d+$/.test(value)) {
+                                      const qty = value === '' ? '' : parseInt(value);
+                                      field.onChange(qty);
+                                    }
+                                  }}
+                                  onBlur={(e) => {
+                                    // Ensure minimum value on blur
+                                    const value = e.target.value;
+                                    if (value === '' || parseInt(value) < 1) {
+                                      field.onChange(1);
+                                    }
+                                  }}
+                                  className="text-center h-8"
+                                />
+                              )}
+                            />
+                          </div>
+                          
+                          <div className="col-span-1">
+                            <div className="text-sm text-center">
+                              ₹{selectedProduct ? (form.watch("saleType") === 'RETAIL' ? selectedProduct.retailRate : selectedProduct.wholesaleRate).toFixed(2) : '0.00'}
+                            </div>
+                          </div>
+                          
+                          <div className="col-span-2">
+                            <div className="flex space-x-1">
+                              <FormField
+                                control={form.control}
+                                name={`saleItems.${index}.discount`}
+                                render={({ field }) => (
+                                  <Input
+                                    type="text"
+                                    value={field.value || ''}
+                                    onChange={(e) => {
+                                      const value = e.target.value;
+                                      // Allow empty string or valid decimal numbers
+                                      if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                                        const discount = value === '' ? '' : parseFloat(value) || 0;
+                                        field.onChange(discount);
+                                      }
+                                    }}
+                                    onBlur={(e) => {
+                                      // Ensure minimum value on blur
+                                      const value = e.target.value;
+                                      if (value === '') {
+                                        field.onChange(0);
+                                      }
+                                    }}
+                                    className="flex-1 h-8"
+                                  />
+                                )}
+                              />
+                              <FormField
+                                control={form.control}
+                                name={`saleItems.${index}.discountType`}
+                                render={({ field }) => (
+                                  <Select onValueChange={field.onChange} value={field.value}>
+                                    <SelectTrigger className="w-16">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="PERCENTAGE">%</SelectItem>
+                                      <SelectItem value="AMOUNT">₹</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                )}
+                              />
+                            </div>
+                          </div>
+                          
+                          <div className="col-span-1 text-sm text-gray-600">
+                            {form.watch("billType") === 'GST' && selectedProduct ? (
+                              <div>
+                                <div>{selectedProduct.cgst || 0}%</div>
+                                <div className="text-xs">₹{cgstAmount.toFixed(2)}</div>
+                              </div>
+                            ) : '-'}
+                          </div>
+                          
+                          <div className="col-span-1 text-sm text-gray-600">
+                            {form.watch("billType") === 'GST' && selectedProduct ? (
+                              <div>
+                                <div>{selectedProduct.sgst || 0}%</div>
+                                <div className="text-xs">₹{sgstAmount.toFixed(2)}</div>
+                              </div>
+                            ) : '-'}
+                          </div>
+                          
+                          <div className="col-span-1 font-semibold">
+                            ₹{itemTotal.toFixed(2)}
+                          </div>
+                          
+                          <div className="col-span-1">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => remove(index)}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
+                            >
+                              <Trash2 className="h-4 w-4 text-red-600" />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <Separator className="my-8" />
+
+                {/* Totals Section */}
+                <div className="flex justify-end">
+                  <div className="w-96 space-y-4">
+                    {/* Overall Discount - Display Only */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600">Overall Discount:</span>
+                      <span className="font-semibold text-gray-900">₹{totals.itemDiscounts.toFixed(2)}</span>
+                    </div>
+
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span>Total (Before Discount):</span>
+                        <span className="font-semibold">₹{totals.itemsBeforeDiscount.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-gray-600">
+                        <span>Item Discounts:</span>
+                        <span>-₹{totals.itemDiscounts.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Subtotal (After Discount):</span>
+                        <span className="font-semibold">₹{totals.subtotal.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-gray-600">
+                        <span>Total CGST:</span>
+                        <span>₹{totals.items.reduce((sum, item) => sum + (item?.cgstAmount || 0), 0).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-gray-600">
+                        <span>Total SGST:</span>
+                        <span>₹{totals.items.reduce((sum, item) => sum + (item?.sgstAmount || 0), 0).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between border-t pt-2">
+                        <span className="font-semibold">Grand Total:</span>
+                        <span className="font-semibold text-lg">₹{totals.grandTotal.toFixed(2)}</span>
+                      </div>
+                    </div>
+
+                    {/* Additional Discount Section */}
+                    <div className="space-y-3">
+                      <label className="text-sm font-medium text-gray-700">Additional Discount</label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <FormField
+                          control={form.control}
+                          name="additionalDiscountType"
+                          render={({ field }) => (
+                            <FormItem>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Type" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="percentage">Percentage</SelectItem>
+                                  <SelectItem value="amount">Amount</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="additionalDiscountValue"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  placeholder="0"
+                                  {...field}
+                                  onChange={(e) => field.onChange(Number(e.target.value))}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      <div className="text-sm text-gray-600 space-y-1">
+                        <div className="flex justify-between">
+                          <span>Additional Discount Amount:</span>
+                          <span>₹{(totals.additionalDiscountAmount || 0).toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Action Buttons */}
+                <div className="flex justify-between items-center pt-6 border-t">
+                  <div className="flex space-x-2">
+                    <Button 
+                      variant="outline"
+                      onClick={() => {
+                        if (!selectedCustomer || !selectedShop) return;
+                        
+                        const formData = form.getValues();
+                        const previewData = {
+                          invoiceDate: new Date().toISOString(),
+                          shop: {
+                            name: selectedShop.name,
+                            place: selectedShop.place,
+                            tagline: "Quality Products & Services"
+                          },
+                          customer: {
+                            name: selectedCustomer.name,
+                            place: selectedCustomer.place,
+                            phone: selectedCustomer.phone
+                          },
+                          paymentDetails: {
+                            paymentStatus: formData.paymentStatus,
+                            paymentMode: formData.paymentMode,
+                            billType: formData.billType,
+                            saleType: formData.saleType
+                          },
+                          items: totals.items.filter((item: any) => item),
+                          totals,
+                          amountPaid: formData.amountPaid || 0,
+                          remark: formData.remark
+                        };
+
+                        const previewWindow = window.open('', '_blank', 'width=900,height=700,scrollbars=yes');
+                        if (!previewWindow) return;
+
+                        previewWindow.document.write(`
+                          <!DOCTYPE html>
+                          <html>
+                            <head>
+                              <title>Invoice Preview</title>
+                              <style>
+                                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+                                
+                                * { margin: 0; padding: 0; box-sizing: border-box; }
+                                
+                                body { 
+                                  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+                                  background: #f8fafc;
+                                  padding: 20px;
+                                  line-height: 1.4;
+                                }
+                                
+                                .invoice-container {
+                                  max-width: 800px;
+                                  margin: 0 auto;
+                                  background: white;
+                                  border-radius: 12px;
+                                  overflow: hidden;
+                                  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+                                  position: relative;
+                                  page-break-inside: avoid;
+                                }
+                                
+                                .header-wave {
+                                  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+                                  height: 120px;
+                                  position: relative;
+                                  overflow: hidden;
+                                }
+                                
+                                .header-wave::after {
+                                  content: '';
+                                  position: absolute;
+                                  bottom: -50px;
+                                  left: -10%;
+                                  width: 120%;
+                                  height: 100px;
+                                  background: white;
+                                  border-radius: 50%;
+                                }
+                                
+                                .header-content {
+                                  position: relative;
+                                  z-index: 2;
+                                  padding: 30px 40px;
+                                  display: flex;
+                                  justify-content: space-between;
+                                  align-items: flex-start;
+                                  color: white;
+                                }
+                                
+                                .logo-section {
+                                  display: flex;
+                                  align-items: center;
+                                  gap: 15px;
+                                }
+                                
+                                .logo-placeholder {
+                                  width: 50px;
+                                  height: 50px;
+                                  background: rgba(255,255,255,0.2);
+                                  border-radius: 12px;
+                                  display: flex;
+                                  align-items: center;
+                                  justify-content: center;
+                                  font-weight: 700;
+                                  font-size: 24px;
+                                  backdrop-filter: blur(10px);
+                                }
+                                
+                                .company-info h1 {
+                                  font-size: 24px;
+                                  font-weight: 700;
+                                  margin-bottom: 4px;
+                                }
+                                
+                                .company-tagline {
+                                  font-size: 12px;
+                                  opacity: 0.9;
+                                  line-height: 1.3;
+                                }
+                                
+                                .invoice-title {
+                                  text-align: right;
+                                }
+                                
+                                .invoice-title h2 {
+                                  font-size: 28px;
+                                  font-weight: 700;
+                                  margin-bottom: 5px;
+                                }
+                                
+                                .invoice-meta {
+                                  font-size: 13px;
+                                  opacity: 0.9;
+                                  line-height: 1.4;
+                                }
+                                
+                                .content-section {
+                                  padding: 40px;
+                                }
+                                
+                                .bill-to-section {
+                                  display: grid;
+                                  grid-template-columns: 1fr 1fr;
+                                  gap: 30px;
+                                  margin-bottom: 35px;
+                                }
+                                
+                                .info-block h3 {
+                                  color: #4a5568;
+                                  font-size: 12px;
+                                  font-weight: 600;
+                                  text-transform: uppercase;
+                                  letter-spacing: 0.5px;
+                                  margin-bottom: 8px;
+                                }
+                                
+                                .customer-name {
+                                  font-weight: 600;
+                                  font-size: 16px;
+                                  color: #2d3748;
+                                  margin-bottom: 4px;
+                                }
+                                
+                                .info-block p {
+                                  color: #4a5568;
+                                  font-size: 13px;
+                                  line-height: 1.4;
+                                  margin-bottom: 2px;
+                                }
+                                
+                                .items-table {
+                                  width: 100%;
+                                  border-collapse: collapse;
+                                  margin-bottom: 30px;
+                                  border-radius: 8px;
+                                  overflow: hidden;
+                                  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                                }
+                                
+                                .items-table th {
+                                  background: #f7fafc;
+                                  padding: 12px 15px;
+                                  text-align: left;
+                                  font-weight: 600;
+                                  font-size: 12px;
+                                  color: #4a5568;
+                                  text-transform: uppercase;
+                                  letter-spacing: 0.5px;
+                                  border-bottom: 2px solid #e2e8f0;
+                                }
+                                
+                                .items-table td {
+                                  padding: 15px;
+                                  border-bottom: 1px solid #e2e8f0;
+                                  font-size: 13px;
+                                  color: #2d3748;
+                                }
+                                
+                                .items-table tr:last-child td {
+                                  border-bottom: none;
+                                }
+                                
+                                .items-table tr:hover {
+                                  background: #f7fafc;
+                                }
+                                
+                                .text-center { text-align: center; }
+                                .text-right { text-align: right; }
+                                .text-left { text-align: left; }
+                                
+                                .totals-section {
+                                  display: flex;
+                                  justify-content: flex-end;
+                                  margin-bottom: 30px;
+                                }
+                                
+                                .totals-box {
+                                  background: #f7fafc;
+                                  padding: 20px;
+                                  border-radius: 8px;
+                                  min-width: 300px;
+                                }
+                                
+                                .total-line {
+                                  display: flex;
+                                  justify-content: space-between;
+                                  margin-bottom: 8px;
+                                  font-size: 13px;
+                                }
+                                
+                                .total-line:last-child {
+                                  margin-bottom: 0;
+                                }
+                                
+                                .total-line span:first-child {
+                                  color: #4a5568;
+                                }
+                                
+                                .total-line span:last-child {
+                                  font-weight: 500;
+                                  color: #2d3748;
+                                }
+                                
+                                .grand-total {
+                                  border-top: 2px solid #e2e8f0;
+                                  margin-top: 10px;
+                                  padding-top: 10px;
+                                  font-size: 16px;
+                                  font-weight: 700;
+                                  color: #2d3748;
+                                }
+                                
+                                .balance {
+                                  font-weight: 600;
+                                  font-size: 14px;
+                                }
+                                
+                                .balance.positive { color: #e53e3e; }
+                                .balance.negative { color: #38a169; }
+                                
+                                .bottom-section {
+                                  display: grid;
+                                  grid-template-columns: 2fr 1fr;
+                                  gap: 25px;
+                                }
+                                
+                                .terms-section {
+                                  background: #f7fafc;
+                                  padding: 15px;
+                                  border-radius: 8px;
+                                }
+                                
+                                .terms-section h3 {
+                                  color: #2d3748;
+                                  font-size: 14px;
+                                  font-weight: 600;
+                                  margin-bottom: 8px;
+                                }
+                                
+                                .terms-section p {
+                                  color: #4a5568;
+                                  font-size: 11px;
+                                  line-height: 1.4;
+                                  margin-bottom: 4px;
+                                }
+                                
+                                .signature-section {
+                                  text-align: center;
+                                  padding: 15px;
+                                }
+                                
+                                .signature-line {
+                                  border-top: 2px solid #2d3748;
+                                  width: 120px;
+                                  margin: 25px auto 8px;
+                                }
+                                
+                                .signature-text {
+                                  color: #4a5568;
+                                  font-size: 12px;
+                                  font-weight: 500;
+                                }
+                                
+                                .footer-wave {
+                                  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+                                  height: 60px;
+                                  position: relative;
+                                  margin-top: 30px;
+                                }
+                                
+                                .footer-wave::before {
+                                  content: '';
+                                  position: absolute;
+                                  top: -30px;
+                                  left: 0;
+                                  width: 100%;
+                                  height: 60px;
+                                  background: white;
+                                  border-radius: 0 0 50% 50% / 0 0 100% 100%;
+                                }
+                                
+                                @media print {
+                                  body { 
+                                    background: white;
+                                    padding: 0;
+                                  }
+                                  .invoice-container {
+                                    box-shadow: none;
+                                    border-radius: 0;
+                                    page-break-inside: avoid;
+                                  }
+                                }
+                              </style>
+                            </head>
+                            <body>
+                              <div class="invoice-container">
+                                <!-- Header Wave Section -->
+                                <div class="header-wave">
+                                  <div class="header-content">
+                                    <div class="logo-section">
+                                      <div class="logo-placeholder">
+                                        ${previewData.shop.name.charAt(0)}
+                                      </div>
+                                      <div class="company-info">
+                                        <h1>${previewData.shop.name}</h1>
+                                        <div class="company-tagline">${previewData.shop.tagline}</div>
+                                      </div>
+                                    </div>
+                                    <div class="invoice-title">
+                                      <div class="invoice-meta">
+                                        <div>${new Date(previewData.invoiceDate).toLocaleDateString('en-GB')}</div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <!-- Content Section -->
+                                <div class="content-section">
+                                  <!-- Bill To Section -->
+                                  <div class="bill-to-section">
+                                    <div class="info-block">
+                                      <h3>Invoice To:</h3>
+                                      <p class="customer-name">${previewData.customer.name}</p>
+                                      <p>📍 ${previewData.customer.place}</p>
+                                      <p>📞 ${previewData.customer.phone}</p>
+                                    </div>
+                                    <div class="info-block">
+                                      <h3>Payment Info:</h3>
+                                      <p><strong>Status:</strong> ${previewData.paymentDetails.paymentStatus}</p>
+                                      <p><strong>Mode:</strong> ${previewData.paymentDetails.paymentMode}</p>
+                                    </div>
+                                  </div>
+
+                                  <!-- Items Table -->
+                                  <table class="items-table">
+                                    <thead>
+                                      <tr>
+                                        <th class="text-left">Item Description</th>
+                                        <th class="text-center">Qty.</th>
+                                        <th class="text-right">Price</th>
+                                        <th class="text-right">Discount</th>
+                                        <th class="text-right">CGST (9%)</th>
+                                        <th class="text-right">SGST (9%)</th>
+                                        <th class="text-right">Total</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      ${previewData.items.map((item, index) => `
+                                        <tr>
+                                          <td class="text-left">
+                                            <div style="font-weight: 600; color: #2d3748;">${item?.product?.name || 'N/A'}</div>
+                                          </td>
+                                          <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
+                                          <td class="text-right">₹${item?.unitPrice?.toFixed(2) || '0.00'}</td>
+                                          <td class="text-right">₹${item?.discountAmount?.toFixed(2) || '0.00'}</td>
+                                          <td class="text-right">₹${(item?.cgstAmount || 0).toFixed(2)}</td>
+                                          <td class="text-right">₹${(item?.sgstAmount || 0).toFixed(2)}</td>
+                                          <td class="text-right" style="font-weight: 600; color: #2d3748;">₹${item?.totalPrice?.toFixed(2) || '0.00'}</td>
+                                        </tr>
+                                      `).join('')}
+                                    </tbody>
+                                  </table>
+
+                                  <!-- Totals Section -->
+                                  <div class="totals-section">
+                                    <div class="totals-box">
+                                      <div class="total-line">
+                                        <span>Sub Total:</span>
+                                        <span>₹${(previewData.totals.subtotal || 0).toFixed(2)}</span>
+                                      </div>
+                                      <div class="total-line">
+                                        <span>Total Discount:</span>
+                                        <span>- ₹${((previewData.totals.itemDiscounts || 0) + (previewData.totals.additionalDiscountAmount || 0)).toFixed(2)}</span>
+                                      </div>
+                                      <div class="total-line">
+                                        <span>Total CGST (9%):</span>
+                                        <span>₹${((previewData.totals.totalTax || 0) / 2).toFixed(2)}</span>
+                                      </div>
+                                      <div class="total-line">
+                                        <span>Total SGST (9%):</span>
+                                        <span>₹${((previewData.totals.totalTax || 0) / 2).toFixed(2)}</span>
+                                      </div>
+                                      <div class="total-line grand-total">
+                                        <span>Grand Total:</span>
+                                        <span>₹${(previewData.totals.grandTotal || 0).toFixed(2)}</span>
+                                      </div>
+                                      <div class="total-line">
+                                        <span>Amount Paid:</span>
+                                        <span>₹${(previewData.amountPaid || 0).toFixed(2)}</span>
+                                      </div>
+                                      <div class="total-line balance ${(previewData.totals.grandTotal - previewData.amountPaid) > 0 ? 'positive' : 'negative'}">
+                                        <span>Balance:</span>
+                                        <span>₹${(previewData.totals.grandTotal - previewData.amountPaid).toFixed(2)}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <!-- Bottom Section -->
+                                  <div class="bottom-section">
+                                    <div class="terms-section">
+                                      <h3>Terms & Conditions</h3>
+                                      <p>1. Payment is due within 30 days of invoice date.</p>
+                                      <p>2. Late payments may incur additional charges.</p>
+                                      <p>3. Goods once sold cannot be returned without prior approval.</p>
+                                      <p>4. Any disputes must be resolved within 7 days of delivery.</p>
+                                      ${previewData.remark ? `
+                                        <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #e2e8f0;">
+                                          <strong>Remarks:</strong><br>
+                                          ${previewData.remark}
+                                        </div>
+                                      ` : ''}
+                                    </div>
+
+                                    <div class="signature-section">
+                                      <div class="signature-line"></div>
+                                      <p class="signature-text">Authorized Signature</p>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div class="footer-wave"></div>
+                              </div>
+                            </body>
+                          </html>
+                        `);
+                        
+                        previewWindow.document.close();
+                      }}
+                      disabled={!selectedCustomer || !selectedShop}
+                    >
+                      <Eye className="h-4 w-4 mr-2" />
+                      Preview
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      onClick={() => {
+                        if (!selectedCustomer || !selectedShop) return;
+                        
+                        const formData = form.getValues();
+                        const totals = calculateTotals();
+                        
+                        const invoiceData = {
+                          invoiceDate: new Date().toISOString(),
+                          shop: {
+                            name: selectedShop.name,
+                            place: selectedShop.place,
+                            gstNo: selectedShop.gstNo || "",
+                            phone: selectedShop.phone || "",
+                            tagline: "Quality Products & Services"
+                          },
+                          customer: {
+                            name: selectedCustomer.name,
+                            place: selectedCustomer.place,
+                            phone: selectedCustomer.phone?.toString() || ""
+                          },
+                          paymentDetails: {
+                            paymentStatus: formData.paymentStatus,
+                            paymentMode: formData.paymentMode,
+                            billType: formData.billType,
+                            saleType: formData.saleType
+                          },
+                          items: totals.items.filter(item => item),
+                          totals,
+                          amountPaid: formData.amountPaid || 0,
+                          remark: formData.remark
+                        };
+
+                        // Create a new window for PDF generation
+                        const printWindow = window.open('', '_blank');
+                        if (!printWindow) return;
+
+                        printWindow.document.write(`
+                          <!DOCTYPE html>
+                          <html>
+                            <head>
+                              <title>Invoice Preview</title>
+                              <style>
+                                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+                                
+                                * { margin: 0; padding: 0; box-sizing: border-box; }
+                                
+                                body { 
+                                  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+                                  background: #f8fafc;
+                                  padding: 20px;
+                                  line-height: 1.4;
+                                }
+                                
+                                .invoice-container {
+                                  max-width: 800px;
+                                  margin: 0 auto;
+                                  background: white;
+                                  border-radius: 12px;
+                                  overflow: hidden;
+                                  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+                                  position: relative;
+                                  page-break-inside: avoid;
+                                }
+                                
+                                .header-wave {
+                                  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+                                  height: 120px;
+                                  position: relative;
+                                  overflow: hidden;
+                                }
+                                
+                                .header-wave::after {
+                                  content: '';
+                                  position: absolute;
+                                  bottom: -50px;
+                                  left: -10%;
+                                  width: 120%;
+                                  height: 100px;
+                                  background: white;
+                                  border-radius: 50%;
+                                }
+                                
+                                .header-content {
+                                  position: relative;
+                                  z-index: 2;
+                                  padding: 30px 40px;
+                                  display: flex;
+                                  justify-content: space-between;
+                                  align-items: flex-start;
+                                  color: white;
+                                }
+                                
+                                .logo-section {
+                                  display: flex;
+                                  align-items: center;
+                                  gap: 15px;
+                                }
+                                
+                                .logo-placeholder {
+                                  width: 50px;
+                                  height: 50px;
+                                  background: rgba(255,255,255,0.2);
+                                  border-radius: 12px;
+                                  display: flex;
+                                  align-items: center;
+                                  justify-content: center;
+                                  font-weight: 700;
+                                  font-size: 24px;
+                                  backdrop-filter: blur(10px);
+                                }
+                                
+                                .company-info h1 {
+                                  font-size: 24px;
+                                  font-weight: 700;
+                                  margin-bottom: 4px;
+                                }
+                                
+                                .company-tagline {
+                                  font-size: 12px;
+                                  opacity: 0.9;
+                                  line-height: 1.3;
+                                }
+                                
+                                .invoice-title {
+                                  text-align: right;
+                                }
+                                
+                                .invoice-title h2 {
+                                  font-size: 28px;
+                                  font-weight: 700;
+                                  margin-bottom: 5px;
+                                }
+                                
+                                .invoice-meta {
+                                  font-size: 13px;
+                                  opacity: 0.9;
+                                  line-height: 1.4;
+                                }
+                                
+                                .content-section {
+                                  padding: 40px;
+                                }
+                                
+                                .bill-to-section {
+                                  display: grid;
+                                  grid-template-columns: 1fr 1fr;
+                                  gap: 30px;
+                                  margin-bottom: 35px;
+                                }
+                                
+                                .info-block h3 {
+                                  color: #4a5568;
+                                  font-size: 12px;
+                                  font-weight: 600;
+                                  text-transform: uppercase;
+                                  letter-spacing: 0.5px;
+                                  margin-bottom: 8px;
+                                }
+                                
+                                .customer-name {
+                                  font-weight: 600;
+                                  font-size: 16px;
+                                  color: #2d3748;
+                                  margin-bottom: 4px;
+                                }
+                                
+                                .info-block p {
+                                  color: #4a5568;
+                                  font-size: 13px;
+                                  line-height: 1.4;
+                                  margin-bottom: 2px;
+                                }
+                                
+                                .items-table {
+                                  width: 100%;
+                                  border-collapse: collapse;
+                                  margin-bottom: 30px;
+                                  border-radius: 8px;
+                                  overflow: hidden;
+                                  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                                }
+                                
+                                .items-table th {
+                                  background: #f7fafc;
+                                  padding: 12px 15px;
+                                  text-align: left;
+                                  font-weight: 600;
+                                  font-size: 12px;
+                                  color: #4a5568;
+                                  text-transform: uppercase;
+                                  letter-spacing: 0.5px;
+                                  border-bottom: 2px solid #e2e8f0;
+                                }
+                                
+                                .items-table td {
+                                  padding: 15px;
+                                  border-bottom: 1px solid #e2e8f0;
+                                  font-size: 13px;
+                                  color: #2d3748;
+                                }
+                                
+                                .items-table tr:last-child td {
+                                  border-bottom: none;
+                                }
+                                
+                                .items-table tr:hover {
+                                  background: #f7fafc;
+                                }
+                                
+                                .text-center { text-align: center; }
+                                .text-right { text-align: right; }
+                                .text-left { text-align: left; }
+                                
+                                .totals-section {
+                                  display: flex;
+                                  justify-content: flex-end;
+                                  margin-bottom: 30px;
+                                }
+                                
+                                .totals-box {
+                                  background: #f7fafc;
+                                  padding: 20px;
+                                  border-radius: 8px;
+                                  min-width: 300px;
+                                }
+                                
+                                .total-line {
+                                  display: flex;
+                                  justify-content: space-between;
+                                  margin-bottom: 8px;
+                                  font-size: 13px;
+                                }
+                                
+                                .total-line:last-child {
+                                  margin-bottom: 0;
+                                }
+                                
+                                .total-line span:first-child {
+                                  color: #4a5568;
+                                }
+                                
+                                .total-line span:last-child {
+                                  font-weight: 500;
+                                  color: #2d3748;
+                                }
+                                
+                                .grand-total {
+                                  border-top: 2px solid #e2e8f0;
+                                  margin-top: 10px;
+                                  padding-top: 10px;
+                                  font-size: 16px;
+                                  font-weight: 700;
+                                  color: #2d3748;
+                                }
+                                
+                                .balance {
+                                  font-weight: 600;
+                                  font-size: 14px;
+                                }
+                                
+                                .balance.positive { color: #e53e3e; }
+                                .balance.negative { color: #38a169; }
+                                
+                                .bottom-section {
+                                  display: grid;
+                                  grid-template-columns: 2fr 1fr;
+                                  gap: 25px;
+                                }
+                                
+                                .terms-section {
+                                  background: #f7fafc;
+                                  padding: 15px;
+                                  border-radius: 8px;
+                                }
+                                
+                                .terms-section h3 {
+                                  color: #2d3748;
+                                  font-size: 14px;
+                                  font-weight: 600;
+                                  margin-bottom: 8px;
+                                }
+                                
+                                .terms-section p {
+                                  color: #4a5568;
+                                  font-size: 11px;
+                                  line-height: 1.4;
+                                  margin-bottom: 4px;
+                                }
+                                
+                                .signature-section {
+                                  text-align: center;
+                                  padding: 15px;
+                                }
+                                
+                                .signature-line {
+                                  border-top: 2px solid #2d3748;
+                                  width: 120px;
+                                  margin: 25px auto 8px;
+                                }
+                                
+                                .signature-text {
+                                  color: #4a5568;
+                                  font-size: 12px;
+                                  font-weight: 500;
+                                }
+                                
+                                .footer-wave {
+                                  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+                                  height: 60px;
+                                  position: relative;
+                                  margin-top: 30px;
+                                }
+                                
+                                .footer-wave::before {
+                                  content: '';
+                                  position: absolute;
+                                  top: -30px;
+                                  left: 0;
+                                  width: 100%;
+                                  height: 60px;
+                                  background: white;
+                                  border-radius: 0 0 50% 50% / 0 0 100% 100%;
+                                }
+                                
+                                @media print {
+                                  body { 
+                                    background: white;
+                                    padding: 0;
+                                  }
+                                  .invoice-container {
+                                    box-shadow: none;
+                                    border-radius: 0;
+                                    page-break-inside: avoid;
+                                  }
+                                }
+                              </style>
+                            </head>
+                            <body>
+                              <div class="invoice-container">
+                                <!-- Header Wave Section -->
+                                <div class="header-wave">
+                                  <div class="header-content">
+                                    <div class="logo-section">
+                                      <div class="logo-placeholder">
+                                        ${invoiceData.shop.name.charAt(0)}
+                                      </div>
+                                      <div class="company-info">
+                                        <h1>${invoiceData.shop.name}</h1>
+                                        <div class="company-tagline">${invoiceData.shop.tagline}</div>
+                                        ${invoiceData.shop.gstNo ? `<div class="company-tagline">GST: ${invoiceData.shop.gstNo}</div>` : ''}
+                                        ${invoiceData.shop.phone ? `<div class="company-tagline">Phone: ${invoiceData.shop.phone}</div>` : ''}
+                                      </div>
+                                    </div>
+                                    <div class="invoice-title">
+                                      <div class="invoice-meta">
+                                        <div><strong>Date:</strong> ${new Date(invoiceData.invoiceDate).toLocaleDateString()}</div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <!-- Content Section -->
+                                <div class="content-section">
+                                  <!-- Bill To Section -->
+                                  <div class="bill-to-section">
+                                    <div class="info-block">
+                                      <h3>Invoice To:</h3>
+                                      <p class="customer-name">${invoiceData.customer.name}</p>
+                                      <p>📍 ${invoiceData.customer.place}</p>
+                                      <p>📞 ${invoiceData.customer.phone}</p>
+                                    </div>
+                                    <div class="info-block">
+                                      <h3>Payment Info:</h3>
+                                      <p><strong>Status:</strong> ${invoiceData.paymentDetails.paymentStatus}</p>
+                                      <p><strong>Mode:</strong> ${invoiceData.paymentDetails.paymentMode}</p>
+                                    </div>
+                                  </div>
+
+                                  <!-- Items Table -->
+                                  <table class="items-table">
+                                    <thead>
+                                      <tr>
+                                        <th class="text-left">Item Description</th>
+                                        <th class="text-center">Qty.</th>
+                                        <th class="text-right">Price</th>
+                                        <th class="text-right">Discount</th>
+                                        <th class="text-right">CGST (9%)</th>
+                                        <th class="text-right">SGST (9%)</th>
+                                        <th class="text-right">Total</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      ${invoiceData.items.map((item, index) => `
+                                        <tr>
+                                          <td class="text-left">
+                                            <div style="font-weight: 600; color: #2d3748;">${item?.product?.name || 'N/A'}</div>
+                                          </td>
+                                          <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
+                                          <td class="text-right">₹${item?.unitPrice?.toFixed(2) || '0.00'}</td>
+                                          <td class="text-right">₹${item?.discountAmount?.toFixed(2) || '0.00'}</td>
+                                          <td class="text-right">₹${(item?.cgstAmount || 0).toFixed(2)}</td>
+                                          <td class="text-right">₹${(item?.sgstAmount || 0).toFixed(2)}</td>
+                                          <td class="text-right" style="font-weight: 600; color: #2d3748;">₹${item?.totalPrice?.toFixed(2) || '0.00'}</td>
+                                        </tr>
+                                      `).join('')}
+                                    </tbody>
+                                  </table>
+
+                                  <!-- Totals Section -->
+                                  <div class="totals-section">
+                                    <div class="totals-box">
+                                      <div class="total-line">
+                                        <span>Sub Total:</span>
+                                        <span>₹${invoiceData.totals.subtotal.toFixed(2)}</span>
+                                      </div>
+                                      <div class="total-line">
+                                        <span>Total Discount:</span>
+                                        <span>- ₹${(invoiceData.totals.itemDiscounts + (invoiceData.totals.additionalDiscountAmount || 0)).toFixed(2)}</span>
+                                      </div>
+                                      <div class="total-line">
+                                        <span>Total CGST (9%):</span>
+                                        <span>₹${((invoiceData.totals.totalTax || 0) / 2).toFixed(2)}</span>
+                                      </div>
+                                      <div class="total-line">
+                                        <span>Total SGST (9%):</span>
+                                        <span>₹${((invoiceData.totals.totalTax || 0) / 2).toFixed(2)}</span>
+                                      </div>
+                                      <div class="total-line grand-total">
+                                        <span>Grand Total:</span>
+                                        <span>₹${invoiceData.totals.grandTotal.toFixed(2)}</span>
+                                      </div>
+                                      <div class="total-line">
+                                        <span>Amount Paid:</span>
+                                        <span>₹${invoiceData.amountPaid.toFixed(2)}</span>
+                                      </div>
+                                      <div class="total-line balance ${(invoiceData.totals.grandTotal - invoiceData.amountPaid) > 0 ? 'positive' : 'negative'}">
+                                        <span>Balance:</span>
+                                        <span>₹${(invoiceData.totals.grandTotal - invoiceData.amountPaid).toFixed(2)}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <!-- Bottom Section -->
+                                  <div class="bottom-section">
+                                    <div class="terms-section">
+                                      <h3>Terms & Conditions</h3>
+                                      <p>1. Payment is due within 30 days of invoice date.</p>
+                                      <p>2. Late payments may incur additional charges.</p>
+                                      <p>3. Goods once sold cannot be returned without prior approval.</p>
+                                      <p>4. Any disputes must be resolved within 7 days of delivery.</p>
+                                      ${invoiceData.remark ? `
+                                        <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #e2e8f0;">
+                                          <strong>Remarks:</strong><br>
+                                          ${invoiceData.remark}
+                                        </div>
+                                      ` : ''}
+                                    </div>
+
+                                  </div>
+                                </div>
+
+
+                              </div>
+                              
+                              <script>
+                                window.onload = function() {
+                                  window.print();
+                                  setTimeout(function() { window.close(); }, 1000);
+                                }
+                              </script>
+                            </body>
+                          </html>
+                        `);
+                        
+                        printWindow.document.close();
+                      }}
+                      disabled={!selectedCustomer || !selectedShop}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download PDF
+                    </Button>
+                    <Button 
+                      onClick={() => form.handleSubmit(onSubmit)()}
+                      disabled={isEditMode ? updateInvoiceMutation.isPending : createInvoiceMutation.isPending}
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      {isEditMode 
+                        ? (updateInvoiceMutation.isPending ? "Updating..." : "Update Invoice")
+                        : (createInvoiceMutation.isPending ? "Creating..." : "Create Invoice")
+                      }
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -1141,21 +3605,53 @@ export default function CreateInvoice() {
           </DialogContent>
         </Dialog>
 
-        {/* Product Search Dialog */}
-        <ProductSearchDialog
-          isOpen={isProductSearchDialogOpen}
-          onClose={() => setIsProductSearchDialogOpen(false)}
-          onSelect={handleProductSelect}
-          products={products}
-        />
+        {/* Back Warning Dialog */}
+        <AlertDialog open={showBackWarning} onOpenChange={setShowBackWarning}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+              <AlertDialogDescription>
+                You have unsaved changes. Are you sure you want to leave this page?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Stay on Page</AlertDialogCancel>
+              <AlertDialogAction onClick={() => setLocation("/dashboard")}>
+                Leave Page
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* Customer Search Dialog */}
-        <CustomerSearchDialog
-          isOpen={isCustomerSearchDialogOpen}
-          onClose={() => setIsCustomerSearchDialogOpen(false)}
-          onSelect={handleCustomerSelect}
-          customers={customers}
-        />
+        <Dialog open={isCustomerSearchDialogOpen} onOpenChange={setIsCustomerSearchDialogOpen}>
+          <DialogContent className="sm:max-w-[700px] max-h-[600px]">
+            <DialogHeader>
+              <DialogTitle>Select Customer</DialogTitle>
+            </DialogHeader>
+            <div className="max-h-[400px] overflow-y-auto">
+              <div className="space-y-2">
+                {customers.map((customer) => (
+                  <div 
+                    key={customer.customerId} 
+                    className="flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-gray-50"
+                    onClick={() => {
+                      handleSelectCustomer(customer);
+                      setIsCustomerSearchDialogOpen(false);
+                    }}
+                  >
+                    <div>
+                      <h3 className="font-medium">{customer.name}</h3>
+                      <p className="text-sm text-gray-500">{customer.place}</p>
+                      <p className="text-sm text-gray-500">{customer.phone}</p>
+                    </div>
+                    <Button size="sm">Select</Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Add Customer Dialog */}
         <Dialog open={isAddCustomerDialogOpen} onOpenChange={setIsAddCustomerDialogOpen}>

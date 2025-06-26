@@ -97,7 +97,6 @@ This is a React-based billing dashboard application built for managing invoices,
 
 ## Changelog
 
-- June 26, 2025: Removed preview and download buttons from bottom of create invoice page (only "Create Invoice" button remains); fixed additional discount calculation logic to properly subtract from subtotal before adding tax; updated PDF to combine item discounts and additional discounts into single "Total Discount" line
 - June 26, 2025: Fixed critical JavaScript crashes in create invoice page by adding null safety checks to all .toFixed() operations on potentially undefined values (totals.additionalDiscountAmount, previewData.totals.subtotal, previewData.totals.grandTotal, previewData.amountPaid, previewData.totals.itemDiscounts)
 - June 26, 2025: Added additional discount input field to create invoice page with percentage/amount options; business logic combines item-level discounts with additional overall discount for comprehensive discount handling; updated PDF generation and preview to display both discount types separately in totals section
 - June 26, 2025: Fixed invoice number display consistency across all PDF functionality - removed auto-generated invoice IDs from create invoice page preview/download; invoice numbers only show when they exist from backend (All Invoices section) or during edit mode with existing invoices
