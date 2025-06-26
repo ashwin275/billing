@@ -2812,12 +2812,6 @@ export default function CreateInvoice() {
                       <span>Subtotal (After Item Discounts):</span>
                       <span>₹{totals.subtotal.toFixed(2)}</span>
                     </div>
-                    {totals.additionalDiscountAmount > 0 && (
-                      <div className="flex justify-between text-gray-600">
-                        <span>Additional Discount:</span>
-                        <span>- ₹{totals.additionalDiscountAmount.toFixed(2)}</span>
-                      </div>
-                    )}
                     <div className="flex justify-between text-gray-600">
                       <span>Total CGST:</span>
                       <span>₹{totals.items.reduce((sum, item) => sum + (item?.cgstAmount || 0), 0).toFixed(2)}</span>
