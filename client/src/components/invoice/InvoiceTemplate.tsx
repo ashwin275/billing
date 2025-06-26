@@ -125,6 +125,13 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
           margin: 0 0 5px 0;
           text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
+        
+        .print-mode .company-details h1 {
+          color: #000000 !important;
+          font-weight: 900 !important;
+          font-size: 32px !important;
+          text-shadow: 2px 2px 4px rgba(0,0,0,0.8) !important;
+        }
 
         .company-tagline {
           font-size: 14px;
@@ -142,6 +149,13 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
           letter-spacing: 2px;
           margin: 0 0 10px 0;
           text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .print-mode .invoice-meta h2 {
+          color: #000000 !important;
+          font-weight: 900 !important;
+          font-size: 40px !important;
+          text-shadow: 2px 2px 4px rgba(0,0,0,0.8) !important;
         }
 
         .invoice-number {
@@ -226,11 +240,13 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
         }
         
         .print-mode .items-table th {
-          color: #000000 !important;
+          background: #000000 !important;
+          color: #ffffff !important;
           font-weight: 900 !important;
-          background: #f8f9fa !important;
-          border: 2px solid #000000 !important;
-          font-size: 15px !important;
+          border: 3px solid #000000 !important;
+          font-size: 16px !important;
+          text-shadow: none !important;
+          padding: 18px 15px !important;
         }
 
         .items-table th.text-right {
@@ -262,6 +278,12 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
         .product-name {
           font-weight: 600;
           color: #2d3748;
+        }
+        
+        .print-mode .product-name {
+          color: #000000 !important;
+          font-weight: 800 !important;
+          font-size: 15px !important;
         }
 
         .totals-section {
