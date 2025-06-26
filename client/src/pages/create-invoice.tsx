@@ -522,7 +522,6 @@ export default function CreateInvoice() {
     const { customer, shop, totals, formData } = createdInvoiceData;
     
     const previewData = {
-      invoiceNo: `INV-${Date.now().toString().slice(-6)}`,
       invoiceDate: new Date().toISOString(),
       shop: {
         name: shop.name,
@@ -976,7 +975,6 @@ export default function CreateInvoice() {
                 
                 const formData = form.getValues();
                 const previewData = {
-                  invoiceNo: `INV-${Date.now().toString().slice(-6)}`,
                   invoiceDate: new Date().toISOString(),
                   shop: {
                     name: selectedShop.name,
@@ -1449,10 +1447,8 @@ export default function CreateInvoice() {
               variant="outline"
               onClick={() => {
                 const formData = form.getValues();
-                const invoiceNo = `INV-${Date.now().toString().slice(-6)}`;
                 
                 const invoiceData = {
-                  invoiceNo,
                   invoiceDate: new Date().toISOString(),
                   shop: {
                     name: selectedShop?.name || "Shop Name",

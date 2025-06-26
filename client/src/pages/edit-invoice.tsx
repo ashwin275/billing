@@ -490,7 +490,7 @@ export default function EditInvoice() {
                 
                 const formData = form.getValues();
                 const previewData = {
-                  invoiceNo: invoice?.invoiceNo || `INV-${Date.now().toString().slice(-6)}`,
+                  invoiceNo: invoice?.invoiceNo,
                   invoiceDate: invoice?.invoiceDate || new Date().toISOString(),
                   shop: {
                     name: selectedShop.name,
@@ -969,7 +969,7 @@ export default function EditInvoice() {
                 const formData = form.getValues();
                 
                 const invoiceData = {
-                  invoiceNo: invoice?.invoiceNo || `INV-${Date.now().toString().slice(-6)}`,
+                  invoiceNo: invoice?.invoiceNo,
                   invoiceDate: invoice?.invoiceDate || new Date().toISOString(),
                   shop: {
                     name: selectedShop?.name || "Shop Name",

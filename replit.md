@@ -97,7 +97,7 @@ This is a React-based billing dashboard application built for managing invoices,
 
 ## Changelog
 
-- June 26, 2025: Added conditional invoice number display to PDF preview and download functionality - shows invoice numbers only when they exist (All Invoices section) but hides them during invoice creation when no invoice number is available yet
+- June 26, 2025: Fixed invoice number display consistency across all PDF functionality - removed auto-generated invoice IDs from create invoice page preview/download; invoice numbers only show when they exist from backend (All Invoices section) or during edit mode with existing invoices
 - June 25, 2025: Added totalSpend column to Customers Management with proper null handling and currency formatting
 - June 25, 2025: Added pagination to All Invoices and Staff Management sections with 10 items per page, navigation controls, and item count display
 - June 25, 2025: Added role-based access control to hide "Add User" functionality from non-admin users in Dashboard Overview
