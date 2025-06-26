@@ -449,7 +449,6 @@ export default function InvoiceManagementClean() {
                   <h3>Payment Details</h3>
                   <p><strong>Status:</strong> ${invoiceData.paymentStatus}</p>
                   <p><strong>Mode:</strong> ${invoiceData.paymentMode}</p>
-                  <p><strong>Type:</strong> ${invoiceData.billType} ${invoiceData.saleType}</p>
                   ${invoiceData.dueDate ? `<p><strong>Due Date:</strong> ${new Date(invoiceData.dueDate).toLocaleDateString('en-IN')}</p>` : ''}
                   ${invoiceData.transactionId ? `<p><strong>Transaction ID:</strong> ${invoiceData.transactionId}</p>` : ''}
                 </div>
