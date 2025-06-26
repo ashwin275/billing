@@ -57,6 +57,13 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
           min-height: 297mm;
           padding: 0;
           box-shadow: none;
+          color: #000000 !important;
+          font-weight: 600 !important;
+        }
+        
+        .print-mode * {
+          color: #000000 !important;
+          font-weight: 600 !important;
         }
 
         .preview-mode {
@@ -118,6 +125,13 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
           margin: 0 0 5px 0;
           text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
+        
+        .print-mode .company-details h1 {
+          color: #000000 !important;
+          font-weight: 900 !important;
+          font-size: 32px !important;
+          text-shadow: 2px 2px 4px rgba(0,0,0,0.8) !important;
+        }
 
         .company-tagline {
           font-size: 14px;
@@ -135,6 +149,13 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
           letter-spacing: 2px;
           margin: 0 0 10px 0;
           text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .print-mode .invoice-meta h2 {
+          color: #000000 !important;
+          font-weight: 900 !important;
+          font-size: 40px !important;
+          text-shadow: 2px 2px 4px rgba(0,0,0,0.8) !important;
         }
 
         .invoice-number {
@@ -168,11 +189,24 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
           padding-bottom: 8px;
           border-bottom: 2px solid #e2e8f0;
         }
+        
+        .print-mode .billing-block h3 {
+          color: #000000 !important;
+          font-weight: 800 !important;
+          font-size: 17px !important;
+          border-bottom: 2px solid #000000 !important;
+        }
 
         .billing-block p {
           color: #4a5568;
           margin: 5px 0;
           font-size: 14px;
+        }
+        
+        .print-mode .billing-block p {
+          color: #000000 !important;
+          font-weight: 600 !important;
+          font-size: 15px !important;
         }
 
         .customer-name {
@@ -196,11 +230,23 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
 
         .items-table th {
           color: white;
-          font-weight: 600;
+          font-weight: 800;
           padding: 15px 12px;
           text-align: left;
-          font-size: 13px;
+          font-size: 14px;
           letter-spacing: 0.5px;
+          text-transform: uppercase;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        .print-mode .items-table th {
+          background: #000000 !important;
+          color: #ffffff !important;
+          font-weight: 900 !important;
+          border: 3px solid #000000 !important;
+          font-size: 16px !important;
+          text-shadow: none !important;
+          padding: 18px 15px !important;
         }
 
         .items-table th.text-right {
@@ -212,6 +258,13 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
           border-bottom: 1px solid #e2e8f0;
           color: #4a5568;
           font-size: 13px;
+        }
+        
+        .print-mode .items-table td {
+          color: #000000 !important;
+          font-weight: 700 !important;
+          font-size: 14px !important;
+          border: 1px solid #000000 !important;
         }
 
         .items-table td.text-right {
@@ -225,6 +278,12 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
         .product-name {
           font-weight: 600;
           color: #2d3748;
+        }
+        
+        .print-mode .product-name {
+          color: #000000 !important;
+          font-weight: 800 !important;
+          font-size: 15px !important;
         }
 
         .totals-section {
@@ -244,6 +303,12 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
           color: #4a5568;
           font-size: 14px;
         }
+        
+        .print-mode .total-row {
+          color: #000000 !important;
+          font-weight: 700 !important;
+          font-size: 15px !important;
+        }
 
         .total-row.grand-total {
           border-top: 2px solid #e2e8f0;
@@ -252,6 +317,13 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
           font-size: 18px;
           font-weight: 700;
           color: #2d3748;
+        }
+        
+        .print-mode .total-row.grand-total {
+          color: #000000 !important;
+          font-weight: 900 !important;
+          font-size: 20px !important;
+          border-top: 3px solid #000000 !important;
         }
 
         .total-row.balance {
@@ -283,12 +355,24 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
           font-weight: 600;
           margin: 0 0 15px 0;
         }
+        
+        .print-mode .terms-section h3 {
+          color: #000000 !important;
+          font-weight: 800 !important;
+          font-size: 17px !important;
+        }
 
         .terms-section p {
           color: #4a5568;
           font-size: 13px;
           margin: 8px 0;
           line-height: 1.5;
+        }
+        
+        .print-mode .terms-section p {
+          color: #000000 !important;
+          font-weight: 600 !important;
+          font-size: 14px !important;
         }
 
         .remarks-section {

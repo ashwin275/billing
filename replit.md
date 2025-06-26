@@ -97,6 +97,7 @@ This is a React-based billing dashboard application built for managing invoices,
 
 ## Changelog
 
+- June 26, 2025: Fixed critical invoice creation API payload to send only additional discount amount in discount field instead of combined total (backend handles combining item discounts + additional discount); enhanced PDF text styling with ultra-bold headers (font-weight 900), black background for column headers with white text, and enhanced all text elements for better print visibility without background colors
 - June 26, 2025: Fixed CGST/SGST calculation to use actual backend values instead of default 9% - now shows 0 when no tax values provided from backend; removed hardcoded "(9%)" labels from all table headers and totals sections; additional discount field now uses same input pattern as item discounts for consistent user experience
 - June 26, 2025: Removed Preview and Download PDF buttons from bottom of create invoice page while keeping Download PDF button in success dialog; fixed button design consistency between top and bottom sections; enhanced PDF text visibility by making all text bold (font-weight: 600-700) and dark black (#000000) for better printing without background colors
 - June 26, 2025: Fixed critical JavaScript crashes in create invoice page by adding null safety checks to all .toFixed() operations on potentially undefined values (totals.additionalDiscountAmount, previewData.totals.subtotal, previewData.totals.grandTotal, previewData.amountPaid, previewData.totals.itemDiscounts)
