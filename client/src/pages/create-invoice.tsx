@@ -368,8 +368,7 @@ export default function CreateInvoice() {
     const printWindow = window.open('', '_blank', 'width=800,height=1000');
     if (!printWindow) return;
 
-    printWindow.document.write(`
-      <!DOCTYPE html>
+    const htmlContent = `<!DOCTYPE html>
       <html>
         <head>
           <title>Invoice</title>
@@ -447,8 +446,8 @@ export default function CreateInvoice() {
                 </tr>
               </thead>
               <tbody>
-                ${invoiceData.items.map(item => `
-                  <tr>
+                ${invoiceData.items.map(item => 
+                  `<tr>
                     <td>
                       <div>
                         <div style="font-weight: 500; color: #1f2937;">${item.productName}</div>
@@ -461,8 +460,8 @@ export default function CreateInvoice() {
                     <td class="text-right">₹${(item?.cgstAmount || 0).toFixed(2)}</td>
                     <td class="text-right">₹${(item?.sgstAmount || 0).toFixed(2)}</td>
                     <td class="text-right" style="font-weight: 600; color: #2d3748;">₹${(item?.totalPrice || 0).toFixed(2)}</td>
-                  </tr>
-                `).join('')}
+                  </tr>`
+                ).join('')}
               </tbody>
             </table>
 
@@ -511,9 +510,9 @@ export default function CreateInvoice() {
             }
           </script>
         </body>
-      </html>
-    `);
+      </html>`;
     
+    printWindow.document.write(htmlContent);
     printWindow.document.close();
   };
 
