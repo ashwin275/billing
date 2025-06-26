@@ -421,7 +421,7 @@ export default function InvoiceManagementClean() {
                 </div>
                 <div class="invoice-meta">
                   <h2>INVOICE</h2>
-                  <div class="invoice-number">#${invoiceData.invoiceNo}</div>
+                  ${invoiceData.invoiceNo ? `<div class="invoice-number">#${invoiceData.invoiceNo}</div>` : ''}
                   <div class="invoice-date">
                     ${new Date(invoiceData.invoiceDate).toLocaleDateString('en-IN', {
                       year: 'numeric',
