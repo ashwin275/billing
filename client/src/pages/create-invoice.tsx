@@ -392,7 +392,7 @@ export default function CreateInvoice() {
     const invoiceInput: InvoiceInput = {
       customerId: data.customerId,
       shopId: data.shopId,
-      discount: data.discount,
+      discount: totals.totalDiscount, // Use total combined discount (item discounts + additional discount)
       amountPaid: data.amountPaid,
       paymentMode: data.paymentMode,
       paymentStatus: data.paymentStatus,
