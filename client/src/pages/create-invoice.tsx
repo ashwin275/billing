@@ -1867,12 +1867,13 @@ export default function CreateInvoice() {
                               </div>
                               <div class="total-line">
                                 <span>Item Discounts:</span>
-                              ${(previewData.totals.additionalDiscountAmount || 0) > 0 ? `
+                                <span>- ₹${invoiceData.totals.itemDiscounts.toFixed(2)}</span>
+                              </div>
+                              ${(invoiceData.totals.additionalDiscountAmount || 0) > 0 ? `
                               <div class="total-line">
                                 <span>Additional Discount:</span>
-                                <span>- ₹${previewData.totals.additionalDiscountAmount.toFixed(2)}</span>
-                              </div>` : ""}
-                                <span>- ₹${invoiceData.totals.totalDiscount.toFixed(2)}</span>
+                                <span>- ₹${invoiceData.totals.additionalDiscountAmount.toFixed(2)}</span>
+                              </div>` : ''}
                               </div>
                               <div class="total-line">
                                 <span>Total CGST (9%):</span>
@@ -2799,13 +2800,14 @@ export default function CreateInvoice() {
                     </div>
                     <div className="flex justify-between text-gray-600">
                       <span>Item Discounts:</span>
-                              ${(previewData.totals.additionalDiscountAmount || 0) > 0 ? `
-                              <div class="total-line">
-                                <span>Additional Discount:</span>
-                                <span>- ₹${previewData.totals.additionalDiscountAmount.toFixed(2)}</span>
-                              </div>` : ""}
                       <span>- ₹{totals.itemDiscounts.toFixed(2)}</span>
                     </div>
+                    {totals.additionalDiscountAmount > 0 && (
+                      <div className="flex justify-between text-gray-600">
+                        <span>Additional Discount:</span>
+                        <span>- ₹{totals.additionalDiscountAmount.toFixed(2)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-black">
                       <span>Subtotal (After Item Discounts):</span>
                       <span>₹{totals.subtotal.toFixed(2)}</span>
