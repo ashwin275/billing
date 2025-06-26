@@ -1402,6 +1402,8 @@ export default function CreateInvoice() {
                                 <span>₹${(previewData.totals.subtotal || 0).toFixed(2)}</span>
                               </div>
                               <div class="total-line">
+                                <span>Total Discount:</span>
+                                <span>- ₹${((previewData.totals.itemDiscounts || 0) + (previewData.totals.additionalDiscountAmount || 0)).toFixed(2)}</span>
                               </div>
                               <div class="total-line">
                                 <span>Total CGST (9%):</span>
