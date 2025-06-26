@@ -41,8 +41,8 @@ const invoiceSchema = z.object({
   shopId: z.number().min(1, "Shop is required"),
   discount: z.number().min(0, "Discount cannot be negative").default(0),
   discountType: z.enum(["PERCENTAGE", "AMOUNT"]).default("PERCENTAGE"),
-  additionalDiscount: z.number().min(0, "Additional discount cannot be negative").default(0),
-  additionalDiscountType: z.enum(["PERCENTAGE", "AMOUNT"]).default("AMOUNT"),
+  additionalDiscountValue: z.number().min(0, "Additional discount cannot be negative").default(0),
+  additionalDiscountType: z.enum(["percentage", "amount"]).default("amount"),
   amountPaid: z.number().min(0, "Amount paid cannot be negative").default(0),
   paymentMode: z.enum(["CASH", "CARD", "UPI", "CHEQUE", "BANK_TRANSFER"]).default("CASH"),
   paymentStatus: z.enum(["PAID", "PENDING", "OVERDUE"]).default("PAID"),
@@ -120,8 +120,8 @@ export default function CreateInvoice() {
       customerId: 0,
       shopId: 0,
       discount: 0,
-      additionalDiscount: 0,
-      additionalDiscountType: "AMOUNT",
+      additionalDiscountValue: 0,
+      additionalDiscountType: "amount",
       discountType: "AMOUNT",
       amountPaid: 0,
       paymentMode: "CASH",
@@ -351,11 +351,11 @@ export default function CreateInvoice() {
     
     // Calculate additional discount
     let additionalDiscountAmount = 0;
-    if (formData.additionalDiscount > 0) {
-      if (formData.additionalDiscountType === "PERCENTAGE") {
-        additionalDiscountAmount = (subtotal * formData.additionalDiscount) / 100;
+    if (formData.additionalDiscountValue > 0) {
+      if (formData.additionalDiscountType === "percentage") {
+        additionalDiscountAmount = (subtotal * formData.additionalDiscountValue) / 100;
       } else {
-        additionalDiscountAmount = formData.additionalDiscount;
+        additionalDiscountAmount = formData.additionalDiscountValue;
       }
     }
     
