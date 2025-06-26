@@ -1867,11 +1867,6 @@ export default function CreateInvoice() {
                               </div>
                               <div class="total-line">
                                 <span>Item Discounts:</span>
-                              ${(previewData.totals.additionalDiscountAmount || 0) > 0 ? `
-                              <div class="total-line">
-                                <span>Additional Discount:</span>
-                                <span>- ₹${previewData.totals.additionalDiscountAmount.toFixed(2)}</span>
-                              </div>` : ""}
                                 <span>- ₹${invoiceData.totals.totalDiscount.toFixed(2)}</span>
                               </div>
                               <div class="total-line">
@@ -2793,11 +2788,6 @@ export default function CreateInvoice() {
                     </div>
                     <div className="flex justify-between text-gray-600">
                       <span>Item Discounts:</span>
-                              ${(previewData.totals.additionalDiscountAmount || 0) > 0 ? `
-                              <div class="total-line">
-                                <span>Additional Discount:</span>
-                                <span>- ₹${previewData.totals.additionalDiscountAmount.toFixed(2)}</span>
-                              </div>` : ""}
                       <span>- ₹{totals.itemDiscounts.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-black">
