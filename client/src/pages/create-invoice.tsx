@@ -2542,13 +2542,14 @@ export default function CreateInvoice() {
                       </div>
                       <div className="flex justify-between text-gray-600">
                         <span>Item Discounts:</span>
-                              ${(previewData.totals.additionalDiscountAmount || 0) > 0 ? `
-                              <div class="total-line">
-                                <span>Additional Discount:</span>
-                                <span>- ₹${previewData.totals.additionalDiscountAmount.toFixed(2)}</span>
-                              </div>` : ""}
                         <span>-₹{totals.itemDiscounts.toFixed(2)}</span>
                       </div>
+                      {totals.additionalDiscountAmount > 0 && (
+                        <div className="flex justify-between text-gray-600">
+                          <span>Additional Discount:</span>
+                          <span>-₹{totals.additionalDiscountAmount.toFixed(2)}</span>
+                        </div>
+                      )}
                       <div className="flex justify-between">
                         <span>Subtotal (After Discount):</span>
                         <span className="font-semibold">₹{totals.subtotal.toFixed(2)}</span>
