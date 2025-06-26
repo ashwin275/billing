@@ -681,7 +681,7 @@ export default function CreateInvoice() {
                         }
                         
                         .info-block h3 {
-                          color: #2d3748;
+                          color: #000000; font-weight: 700;
                           font-size: 14px;
                           font-weight: 600;
                           margin-bottom: 10px;
@@ -698,7 +698,7 @@ export default function CreateInvoice() {
                         
                         .customer-name {
                           font-weight: 600;
-                          color: #2d3748;
+                          color: #000000; font-weight: 700;
                           font-size: 15px;
                         }
                         
@@ -765,7 +765,7 @@ export default function CreateInvoice() {
                           padding-top: 10px;
                           font-size: 16px;
                           font-weight: 700;
-                          color: #2d3748;
+                          color: #000000; font-weight: 700;
                         }
                         
                         .balance {
@@ -789,7 +789,7 @@ export default function CreateInvoice() {
                         }
                         
                         .terms-section h3 {
-                          color: #2d3748;
+                          color: #000000; font-weight: 700;
                           font-size: 14px;
                           font-weight: 600;
                           margin-bottom: 8px;
@@ -816,7 +816,7 @@ export default function CreateInvoice() {
                         .signature-text {
                           color: #4a5568;
                           font-size: 12px;
-                          font-weight: 500;
+                          font-weight: 700;
                         }
                         
                         @media print {
@@ -883,14 +883,14 @@ export default function CreateInvoice() {
                               ${previewData.items.map((item, index) => `
                                 <tr>
                                   <td class="text-left">
-                                    <div style="font-weight: 600; color: #2d3748;">${item?.product?.name || 'N/A'}</div>
+                                    <div style="font-weight: 600; color: #000000; font-weight: 700;">${item?.product?.name || 'N/A'}</div>
                                   </td>
                                   <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
                                   <td class="text-right">₹${item?.unitPrice?.toFixed(2) || '0.00'}</td>
                                   <td class="text-right">₹${item?.discountAmount?.toFixed(2) || '0.00'}</td>
                                   <td class="text-right">₹${(item?.cgstAmount || 0).toFixed(2)}</td>
                                   <td class="text-right">₹${(item?.sgstAmount || 0).toFixed(2)}</td>
-                                  <td class="text-right" style="font-weight: 600; color: #2d3748;">₹${item?.totalPrice?.toFixed(2) || '0.00'}</td>
+                                  <td class="text-right" style="font-weight: 600; color: #000000; font-weight: 700;">₹${item?.totalPrice?.toFixed(2) || '0.00'}</td>
                                 </tr>
                               `).join('')}
                             </tbody>
@@ -1134,7 +1134,7 @@ export default function CreateInvoice() {
                         }
                         
                         .info-block h3 {
-                          color: #2d3748;
+                          color: #000000; font-weight: 700;
                           font-size: 14px;
                           font-weight: 600;
                           margin-bottom: 10px;
@@ -1151,7 +1151,7 @@ export default function CreateInvoice() {
                         
                         .customer-name {
                           font-weight: 600;
-                          color: #2d3748;
+                          color: #000000; font-weight: 700;
                           font-size: 15px;
                         }
                         
@@ -1218,7 +1218,7 @@ export default function CreateInvoice() {
                           padding-top: 10px;
                           font-size: 16px;
                           font-weight: 700;
-                          color: #2d3748;
+                          color: #000000; font-weight: 700;
                         }
                         
                         .balance {
@@ -1242,7 +1242,7 @@ export default function CreateInvoice() {
                         }
                         
                         .terms-section h3 {
-                          color: #2d3748;
+                          color: #000000; font-weight: 700;
                           font-size: 14px;
                           font-weight: 600;
                           margin-bottom: 8px;
@@ -1269,7 +1269,7 @@ export default function CreateInvoice() {
                         .signature-text {
                           color: #4a5568;
                           font-size: 12px;
-                          font-weight: 500;
+                          font-weight: 700;
                         }
                         
                         .preview-controls {
@@ -1289,7 +1289,7 @@ export default function CreateInvoice() {
                           border: none;
                           border-radius: 4px;
                           cursor: pointer;
-                          font-weight: 500;
+                          font-weight: 700;
                           font-size: 13px;
                         }
                         
@@ -1381,14 +1381,14 @@ export default function CreateInvoice() {
                               ${previewData.items.map((item, index) => `
                                 <tr>
                                   <td class="text-left">
-                                    <div style="font-weight: 600; color: #2d3748;">${item?.product?.name || 'N/A'}</div>
+                                    <div style="font-weight: 600; color: #000000; font-weight: 700;">${item?.product?.name || 'N/A'}</div>
                                   </td>
                                   <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
                                   <td class="text-right">₹${item?.unitPrice?.toFixed(2) || '0.00'}</td>
                                   <td class="text-right">₹${item?.discountAmount?.toFixed(2) || '0.00'}</td>
                                   <td class="text-right">₹${(item?.cgstAmount || 0).toFixed(2)}</td>
                                   <td class="text-right">₹${(item?.sgstAmount || 0).toFixed(2)}</td>
-                                  <td class="text-right" style="font-weight: 600; color: #2d3748;">₹${item?.totalPrice?.toFixed(2) || '0.00'}</td>
+                                  <td class="text-right" style="font-weight: 600; color: #000000; font-weight: 700;">₹${item?.totalPrice?.toFixed(2) || '0.00'}</td>
                                 </tr>
                               `).join('')}
                             </tbody>
@@ -1608,7 +1608,7 @@ export default function CreateInvoice() {
                         }
                         
                         .info-block h3 {
-                          color: #2d3748;
+                          color: #000000; font-weight: 700;
                           font-size: 14px;
                           font-weight: 600;
                           margin-bottom: 10px;
@@ -1625,7 +1625,7 @@ export default function CreateInvoice() {
                         
                         .customer-name {
                           font-weight: 600;
-                          color: #2d3748;
+                          color: #000000; font-weight: 700;
                           font-size: 15px;
                         }
                         
@@ -1692,7 +1692,7 @@ export default function CreateInvoice() {
                           padding-top: 10px;
                           font-size: 16px;
                           font-weight: 700;
-                          color: #2d3748;
+                          color: #000000; font-weight: 700;
                         }
                         
                         .balance {
@@ -1716,7 +1716,7 @@ export default function CreateInvoice() {
                         }
                         
                         .terms-section h3 {
-                          color: #2d3748;
+                          color: #000000; font-weight: 700;
                           font-size: 14px;
                           font-weight: 600;
                           margin-bottom: 8px;
@@ -1743,7 +1743,7 @@ export default function CreateInvoice() {
                         .signature-text {
                           color: #4a5568;
                           font-size: 12px;
-                          font-weight: 500;
+                          font-weight: 700;
                         }
                         
                         .footer-wave {
@@ -1835,14 +1835,14 @@ export default function CreateInvoice() {
                               ${invoiceData.items.map((item, index) => `
                                 <tr>
                                   <td class="text-left">
-                                    <div style="font-weight: 600; color: #2d3748;">${item?.product?.name || 'N/A'}</div>
+                                    <div style="font-weight: 600; color: #000000; font-weight: 700;">${item?.product?.name || 'N/A'}</div>
                                   </td>
                                   <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
                                   <td class="text-right">₹${item?.unitPrice?.toFixed(2) || '0.00'}</td>
                                   <td class="text-right">₹${item?.discountAmount?.toFixed(2) || '0.00'}</td>
                                   <td class="text-right">₹${(item?.cgstAmount || 0).toFixed(2)}</td>
                                   <td class="text-right">₹${(item?.sgstAmount || 0).toFixed(2)}</td>
-                                  <td class="text-right" style="font-weight: 600; color: #2d3748;">₹${item?.totalPrice?.toFixed(2) || '0.00'}</td>
+                                  <td class="text-right" style="font-weight: 600; color: #000000; font-weight: 700;">₹${item?.totalPrice?.toFixed(2) || '0.00'}</td>
                                 </tr>
                               `).join('')}
                             </tbody>
@@ -2761,7 +2761,7 @@ export default function CreateInvoice() {
                                 .customer-name {
                                   font-weight: 600;
                                   font-size: 16px;
-                                  color: #2d3748;
+                                  color: #000000; font-weight: 700;
                                   margin-bottom: 4px;
                                 }
                                 
@@ -2797,7 +2797,7 @@ export default function CreateInvoice() {
                                   padding: 15px;
                                   border-bottom: 1px solid #e2e8f0;
                                   font-size: 13px;
-                                  color: #2d3748;
+                                  color: #000000; font-weight: 700;
                                 }
                                 
                                 .items-table tr:last-child td {
@@ -2841,8 +2841,8 @@ export default function CreateInvoice() {
                                 }
                                 
                                 .total-line span:last-child {
-                                  font-weight: 500;
-                                  color: #2d3748;
+                                  font-weight: 700;
+                                  color: #000000; font-weight: 700;
                                 }
                                 
                                 .grand-total {
@@ -2851,7 +2851,7 @@ export default function CreateInvoice() {
                                   padding-top: 10px;
                                   font-size: 16px;
                                   font-weight: 700;
-                                  color: #2d3748;
+                                  color: #000000; font-weight: 700;
                                 }
                                 
                                 .balance {
@@ -2875,7 +2875,7 @@ export default function CreateInvoice() {
                                 }
                                 
                                 .terms-section h3 {
-                                  color: #2d3748;
+                                  color: #000000; font-weight: 700;
                                   font-size: 14px;
                                   font-weight: 600;
                                   margin-bottom: 8px;
@@ -2902,7 +2902,7 @@ export default function CreateInvoice() {
                                 .signature-text {
                                   color: #4a5568;
                                   font-size: 12px;
-                                  font-weight: 500;
+                                  font-weight: 700;
                                 }
                                 
                                 .footer-wave {
@@ -2992,14 +2992,14 @@ export default function CreateInvoice() {
                                       ${previewData.items.map((item, index) => `
                                         <tr>
                                           <td class="text-left">
-                                            <div style="font-weight: 600; color: #2d3748;">${item?.product?.name || 'N/A'}</div>
+                                            <div style="font-weight: 600; color: #000000; font-weight: 700;">${item?.product?.name || 'N/A'}</div>
                                           </td>
                                           <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
                                           <td class="text-right">₹${item?.unitPrice?.toFixed(2) || '0.00'}</td>
                                           <td class="text-right">₹${item?.discountAmount?.toFixed(2) || '0.00'}</td>
                                           <td class="text-right">₹${(item?.cgstAmount || 0).toFixed(2)}</td>
                                           <td class="text-right">₹${(item?.sgstAmount || 0).toFixed(2)}</td>
-                                          <td class="text-right" style="font-weight: 600; color: #2d3748;">₹${item?.totalPrice?.toFixed(2) || '0.00'}</td>
+                                          <td class="text-right" style="font-weight: 600; color: #000000; font-weight: 700;">₹${item?.totalPrice?.toFixed(2) || '0.00'}</td>
                                         </tr>
                                       `).join('')}
                                     </tbody>
@@ -3239,7 +3239,7 @@ export default function CreateInvoice() {
                                 .customer-name {
                                   font-weight: 600;
                                   font-size: 16px;
-                                  color: #2d3748;
+                                  color: #000000; font-weight: 700;
                                   margin-bottom: 4px;
                                 }
                                 
@@ -3275,7 +3275,7 @@ export default function CreateInvoice() {
                                   padding: 15px;
                                   border-bottom: 1px solid #e2e8f0;
                                   font-size: 13px;
-                                  color: #2d3748;
+                                  color: #000000; font-weight: 700;
                                 }
                                 
                                 .items-table tr:last-child td {
@@ -3319,8 +3319,8 @@ export default function CreateInvoice() {
                                 }
                                 
                                 .total-line span:last-child {
-                                  font-weight: 500;
-                                  color: #2d3748;
+                                  font-weight: 700;
+                                  color: #000000; font-weight: 700;
                                 }
                                 
                                 .grand-total {
@@ -3329,7 +3329,7 @@ export default function CreateInvoice() {
                                   padding-top: 10px;
                                   font-size: 16px;
                                   font-weight: 700;
-                                  color: #2d3748;
+                                  color: #000000; font-weight: 700;
                                 }
                                 
                                 .balance {
@@ -3353,7 +3353,7 @@ export default function CreateInvoice() {
                                 }
                                 
                                 .terms-section h3 {
-                                  color: #2d3748;
+                                  color: #000000; font-weight: 700;
                                   font-size: 14px;
                                   font-weight: 600;
                                   margin-bottom: 8px;
@@ -3380,7 +3380,7 @@ export default function CreateInvoice() {
                                 .signature-text {
                                   color: #4a5568;
                                   font-size: 12px;
-                                  font-weight: 500;
+                                  font-weight: 700;
                                 }
                                 
                                 .footer-wave {
@@ -3472,14 +3472,14 @@ export default function CreateInvoice() {
                                       ${invoiceData.items.map((item, index) => `
                                         <tr>
                                           <td class="text-left">
-                                            <div style="font-weight: 600; color: #2d3748;">${item?.product?.name || 'N/A'}</div>
+                                            <div style="font-weight: 600; color: #000000; font-weight: 700;">${item?.product?.name || 'N/A'}</div>
                                           </td>
                                           <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
                                           <td class="text-right">₹${item?.unitPrice?.toFixed(2) || '0.00'}</td>
                                           <td class="text-right">₹${item?.discountAmount?.toFixed(2) || '0.00'}</td>
                                           <td class="text-right">₹${(item?.cgstAmount || 0).toFixed(2)}</td>
                                           <td class="text-right">₹${(item?.sgstAmount || 0).toFixed(2)}</td>
-                                          <td class="text-right" style="font-weight: 600; color: #2d3748;">₹${item?.totalPrice?.toFixed(2) || '0.00'}</td>
+                                          <td class="text-right" style="font-weight: 600; color: #000000; font-weight: 700;">₹${item?.totalPrice?.toFixed(2) || '0.00'}</td>
                                         </tr>
                                       `).join('')}
                                     </tbody>
@@ -3587,8 +3587,8 @@ export default function CreateInvoice() {
               <p className="text-gray-600">Your invoice has been created and saved.</p>
               <div className="flex justify-center space-x-3">
                 <Button 
+                  variant="outline"
                   onClick={downloadInvoicePDF}
-                  className="bg-blue-600 hover:bg-blue-700"
                 >
                   <Download className="h-4 w-4 mr-2" />
                   Download PDF
