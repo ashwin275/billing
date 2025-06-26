@@ -193,7 +193,7 @@ export default function CreateInvoice() {
                 <span className="text-white font-medium">PAID</span>
               </div>
               <span className="text-green-200">•</span>
-              <span className="font-medium text-white">₹{currentTotals.grandTotal.toFixed(2)}</span>
+              <span className="font-medium text-white">₹{(currentTotals.grandTotal || 0).toFixed(2)}</span>
             </div>
           </div>
         ),
@@ -901,11 +901,11 @@ export default function CreateInvoice() {
                             <div class="totals-box">
                               <div class="total-line">
                                 <span>Sub Total:</span>
-                                <span>₹${previewData.totals.subtotal.toFixed(2)}</span>
+                                <span>₹${(previewData.totals.subtotal || 0).toFixed(2)}</span>
                               </div>
                               <div class="total-line">
                                 <span>Total Discount:</span>
-                                <span>- ₹${(previewData.totals.itemDiscounts + (previewData.totals.additionalDiscountAmount || 0)).toFixed(2)}</span>
+                                <span>- ₹${((previewData.totals.itemDiscounts || 0) + (previewData.totals.additionalDiscountAmount || 0)).toFixed(2)}</span>
                               </div>
                               <div class="total-line">
                                 <span>Total CGST (9%):</span>
@@ -917,11 +917,11 @@ export default function CreateInvoice() {
                               </div>
                               <div class="total-line grand-total">
                                 <span>Grand Total:</span>
-                                <span>₹${previewData.totals.grandTotal.toFixed(2)}</span>
+                                <span>₹${(previewData.totals.grandTotal || 0).toFixed(2)}</span>
                               </div>
                               <div class="total-line">
                                 <span>Amount Paid:</span>
-                                <span>₹${previewData.amountPaid.toFixed(2)}</span>
+                                <span>₹${(previewData.amountPaid || 0).toFixed(2)}</span>
                               </div>
                               <div class="total-line balance ${(previewData.totals.grandTotal - previewData.amountPaid) > 0 ? 'positive' : 'negative'}">
                                 <span>Balance:</span>
@@ -1399,7 +1399,7 @@ export default function CreateInvoice() {
                             <div class="totals-box">
                               <div class="total-line">
                                 <span>Sub Total:</span>
-                                <span>₹${previewData.totals.subtotal.toFixed(2)}</span>
+                                <span>₹${(previewData.totals.subtotal || 0).toFixed(2)}</span>
                               </div>
                               <div class="total-line">
                               </div>
@@ -1413,11 +1413,11 @@ export default function CreateInvoice() {
                               </div>
                               <div class="total-line grand-total">
                                 <span>Grand Total:</span>
-                                <span>₹${previewData.totals.grandTotal.toFixed(2)}</span>
+                                <span>₹${(previewData.totals.grandTotal || 0).toFixed(2)}</span>
                               </div>
                               <div class="total-line">
                                 <span>Amount Paid:</span>
-                                <span>₹${previewData.amountPaid.toFixed(2)}</span>
+                                <span>₹${(previewData.amountPaid || 0).toFixed(2)}</span>
                               </div>
                               <div class="total-line balance ${(previewData.totals.grandTotal - previewData.amountPaid) > 0 ? 'positive' : 'negative'}">
                                 <span>Balance:</span>
@@ -2592,7 +2592,7 @@ export default function CreateInvoice() {
                       <div className="text-sm text-gray-600 space-y-1">
                         <div className="flex justify-between">
                           <span>Additional Discount Amount:</span>
-                          <span>₹{totals.additionalDiscountAmount.toFixed(2)}</span>
+                          <span>₹{(totals.additionalDiscountAmount || 0).toFixed(2)}</span>
                         </div>
                       </div>
                     </div>
@@ -3010,11 +3010,11 @@ export default function CreateInvoice() {
                                     <div class="totals-box">
                                       <div class="total-line">
                                         <span>Sub Total:</span>
-                                        <span>₹${previewData.totals.subtotal.toFixed(2)}</span>
+                                        <span>₹${(previewData.totals.subtotal || 0).toFixed(2)}</span>
                                       </div>
                                       <div class="total-line">
                                         <span>Total Discount:</span>
-                                        <span>- ₹${(previewData.totals.itemDiscounts + (previewData.totals.additionalDiscountAmount || 0)).toFixed(2)}</span>
+                                        <span>- ₹${((previewData.totals.itemDiscounts || 0) + (previewData.totals.additionalDiscountAmount || 0)).toFixed(2)}</span>
                                       </div>
                                       <div class="total-line">
                                         <span>Total CGST (9%):</span>
@@ -3026,11 +3026,11 @@ export default function CreateInvoice() {
                                       </div>
                                       <div class="total-line grand-total">
                                         <span>Grand Total:</span>
-                                        <span>₹${previewData.totals.grandTotal.toFixed(2)}</span>
+                                        <span>₹${(previewData.totals.grandTotal || 0).toFixed(2)}</span>
                                       </div>
                                       <div class="total-line">
                                         <span>Amount Paid:</span>
-                                        <span>₹${previewData.amountPaid.toFixed(2)}</span>
+                                        <span>₹${(previewData.amountPaid || 0).toFixed(2)}</span>
                                       </div>
                                       <div class="total-line balance ${(previewData.totals.grandTotal - previewData.amountPaid) > 0 ? 'positive' : 'negative'}">
                                         <span>Balance:</span>
