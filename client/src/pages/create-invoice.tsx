@@ -1,10 +1,11 @@
-// Create invoice page with invoice creation functionality
+// Invoice creation page with direct editing layout
+// @ts-nocheck
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowLeft, Plus, Trash2, Save, User, MapPin, Phone, Eye, Download } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save, Eye, Download, FileText, User, Building2, Calendar, CreditCard, Percent, Hash, Phone, MapPin, Package } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
 import { Button } from "@/components/ui/button";
@@ -12,11 +13,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { ProductSearchDialog } from "@/components/ui/product-search-dialog";
+import { CustomerSearchDialog } from "@/components/ui/customer-search-dialog";
 
 import { useToast } from "@/hooks/use-toast";
 
@@ -37,6 +41,8 @@ const invoiceSchema = z.object({
   shopId: z.number().min(1, "Shop is required"),
   discount: z.number().min(0, "Discount cannot be negative").default(0),
   discountType: z.enum(["PERCENTAGE", "AMOUNT"]).default("PERCENTAGE"),
+  additionalDiscount: z.number().min(0, "Additional discount cannot be negative").default(0),
+  additionalDiscountType: z.enum(["PERCENTAGE", "AMOUNT"]).default("AMOUNT"),
   amountPaid: z.number().min(0, "Amount paid cannot be negative").default(0),
   paymentMode: z.enum(["CASH", "CARD", "UPI", "CHEQUE", "BANK_TRANSFER"]).default("CASH"),
   paymentStatus: z.enum(["PAID", "PENDING", "OVERDUE"]).default("PAID"),
@@ -47,23 +53,31 @@ const invoiceSchema = z.object({
   transactionId: z.string().min(1, "Transaction ID is required"),
   signature: z.string().optional(),
   saleItems: z.array(saleItemSchema).min(0, "No items required for validation"),
+  termsAndConditions: z.string().optional(),
+  useCustomBillingAddress: z.boolean().default(false),
+  customBillingAddress: z.string().optional(),
 });
+
+type InvoiceFormData = z.infer<typeof invoiceSchema>;
 
 const customerSchema = z.object({
   name: z.string().min(1, "Name is required"),
   place: z.string().min(1, "Place is required"),
   phone: z.string().min(10, "Phone number must be at least 10 digits"),
-  customerType: z.string().default("RETAIL"),
   shopId: z.number().min(1, "Shop is required"),
 });
 
-type InvoiceFormData = z.infer<typeof invoiceSchema>;
 type CustomerFormData = z.infer<typeof customerSchema>;
 
 export default function CreateInvoice() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Check if we're in edit mode
+  const searchParams = new URLSearchParams(window.location.search);
+  const editInvoiceId = searchParams.get('edit');
+  const isEditMode = !!editInvoiceId;
   
   const [isAddCustomerDialogOpen, setIsAddCustomerDialogOpen] = useState(false);
   const [isCustomerSearchDialogOpen, setIsCustomerSearchDialogOpen] = useState(false);
@@ -88,18 +102,27 @@ export default function CreateInvoice() {
   });
 
   const { data: shops = [] } = useQuery({
-    queryKey: ["/api/shops/all"],
+    queryKey: ["/shop/all"],
     queryFn: () => shopsApi.getAllShops(),
   });
 
-  // Form setup
+  // Fetch invoice data if in edit mode
+  const { data: editInvoice } = useQuery({
+    queryKey: ["/api/invoices", editInvoiceId],
+    queryFn: () => invoicesApi.getInvoiceById(parseInt(editInvoiceId!)),
+    enabled: isEditMode && !!editInvoiceId,
+  });
+
+  // Main invoice form
   const form = useForm<InvoiceFormData>({
     resolver: zodResolver(invoiceSchema),
     defaultValues: {
       customerId: 0,
       shopId: 0,
       discount: 0,
-      discountType: "PERCENTAGE",
+      additionalDiscount: 0,
+      additionalDiscountType: "AMOUNT",
+      discountType: "AMOUNT",
       amountPaid: 0,
       paymentMode: "CASH",
       paymentStatus: "PAID",
@@ -108,7 +131,11 @@ export default function CreateInvoice() {
       billType: "GST",
       saleType: "RETAIL",
       transactionId: `TXN${Date.now()}`,
-      saleItems: [{ productId: 0, quantity: 1, discount: 0, discountType: "PERCENTAGE", unitPrice: 0 }],
+      saleItems: [{ productId: 0, quantity: 1, discount: 0, discountType: "PERCENTAGE" }],
+      termsAndConditions: "",
+      signature: "",
+      useCustomBillingAddress: false,
+      customBillingAddress: "",
     },
   });
 
@@ -119,10 +146,10 @@ export default function CreateInvoice() {
 
   // Prevent default items from being added
   useEffect(() => {
-    if (fields.length > 0 && form.getValues('saleItems').some(item => item.productId === 0)) {
+    if (!isEditMode && fields.length > 0 && form.getValues('saleItems').some(item => item.productId === 0)) {
       form.setValue('saleItems', []);
     }
-  }, [fields, form]);
+  }, [fields, form, isEditMode]);
 
   // Auto-select shop if only one is available
   useEffect(() => {
@@ -140,95 +167,105 @@ export default function CreateInvoice() {
       name: "",
       place: "",
       phone: "",
-      customerType: "RETAIL",
       shopId: 1,
     },
   });
 
-  // Calculate totals with combined discount logic
-  const calculateTotals = () => {
-    const formData = form.getValues();
-    
-    const items = formData.saleItems.map(item => {
-      const product = Array.isArray(products) ? products.find(p => p.productId === item.productId) : null;
-      
-      if (!product || !item.quantity || !item.unitPrice) {
-        return null;
-      }
-
-      const itemTotal = item.quantity * item.unitPrice;
-      let itemDiscount = 0;
-      
-      if (item.discountType === "PERCENTAGE") {
-        itemDiscount = (itemTotal * item.discount) / 100;
-      } else {
-        itemDiscount = item.discount;
-      }
-
-      const itemAfterDiscount = itemTotal - itemDiscount;
-
-      return {
-        ...item,
-        product,
-        itemTotal,
-        itemDiscount,
-        itemAfterDiscount,
-      };
-    }).filter(Boolean);
-
-    const subtotal = items.reduce((sum, item) => sum + (item?.itemTotal || 0), 0);
-    const totalItemDiscounts = items.reduce((sum, item) => sum + (item?.itemDiscount || 0), 0);
-    
-    // Calculate additional discount from form
-    let additionalDiscount = 0;
-    if (formData.discountType === "PERCENTAGE") {
-      additionalDiscount = (subtotal * formData.discount) / 100;
-    } else {
-      additionalDiscount = formData.discount;
-    }
-
-    const totalDiscount = totalItemDiscounts + additionalDiscount;
-    const grandTotal = subtotal - totalDiscount;
-
-    return {
-      items,
-      subtotal,
-      totalItemDiscounts,
-      additionalDiscount,
-      totalDiscount,
-      grandTotal,
-    };
-  };
-
   // Create invoice mutation
   const createInvoiceMutation = useMutation({
-    mutationFn: (data: any) => invoicesApi.addInvoice(data),
-    onSuccess: (invoice, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+    mutationFn: async (invoiceData: InvoiceInput) => {
+      const response = await invoicesApi.addInvoice(invoiceData);
+      return response;
+    },
+    onSuccess: (data, variables) => {
+      const invoiceNumber = variables.transactionId;
+      const customerName = selectedCustomer?.name || "Customer";
+      const currentTotals = calculateTotals();
       
+      toast({
+        title: "Invoice Created Successfully!",
+        description: (
+          <div className="space-y-2">
+            <p className="text-sm text-green-100">Customer: {customerName}</p>
+            <div className="flex items-center gap-3 text-sm">
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-white rounded-full"></div>
+                <span className="text-white font-medium">PAID</span>
+              </div>
+              <span className="text-green-200">•</span>
+              <span className="font-medium text-white">₹{currentTotals.grandTotal.toFixed(2)}</span>
+            </div>
+          </div>
+        ),
+        className: "bg-green-600 border-green-600 text-white [&>div]:text-white",
+        duration: 4000,
+      });
+      
+      // Store created invoice data for the popup
       setCreatedInvoiceData({
-        ...variables,
-        invoiceId: invoice?.invoiceId || Math.floor(Math.random() * 10000),
-        invoiceNo: invoice?.invoiceNo || `INV${Date.now()}`,
+        invoiceNumber: variables.transactionId,
         customer: selectedCustomer,
         shop: selectedShop,
-        ...calculateTotals(),
+        totals: currentTotals,
+        formData: variables
       });
       
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices/all"] });
+      
+      // Show success dialog instead of navigating
       setShowSuccessDialog(true);
-      setHasUnsavedChanges(false);
-      
-      toast({
-        title: "Invoice Created Successfully",
-        description: "Your invoice has been created and saved.",
-        variant: "default",
-      });
     },
     onError: (error: any) => {
-      console.error("Invoice creation error:", error);
       toast({
         title: "Failed to Create Invoice",
-        description: error?.message || "An error occurred while creating the invoice.",
+        description: (
+          <div className="space-y-2">
+            <p className="text-sm text-red-600">{error?.detail || error?.message || "An unexpected error occurred while creating the invoice."}</p>
+            <div className="flex gap-2 pt-2">
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => {
+                  // Retry with current form data
+                  const formData = form.getValues();
+                  const totals = calculateTotals();
+                  const invoiceInput = {
+                    ...formData,
+                    totalAmount: totals.grandTotal,
+                    tax: totals.totalTax,
+                  };
+                  createInvoiceMutation.mutate(invoiceInput);
+                }}
+                className="h-8 px-3 text-xs"
+              >
+                Try Again
+              </Button>
+            </div>
+          </div>
+        ),
+        variant: "destructive",
+        duration: 10000,
+      });
+    },
+  });
+
+  // Update invoice mutation
+  const updateInvoiceMutation = useMutation({
+    mutationFn: async (invoiceData: InvoiceInput) => {
+      await invoicesApi.updateInvoice(parseInt(editInvoiceId!), invoiceData);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Invoice updated successfully",
+        description: "The invoice has been updated.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices/all"] });
+      setLocation("/dashboard?tab=invoices");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to update invoice",
+        description: error?.detail || error?.message || "Failed to update invoice.",
         variant: "destructive",
       });
     },
@@ -236,775 +273,2657 @@ export default function CreateInvoice() {
 
   // Add customer mutation
   const addCustomerMutation = useMutation({
-    mutationFn: (data: CustomerFormData) => customersApi.addCustomer(data),
-    onSuccess: (newCustomer: any) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
-      setSelectedCustomer(newCustomer);
-      form.setValue('customerId', newCustomer.customerId);
+    mutationFn: async (customerData: any) => {
+      await customersApi.addCustomer(customerData);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Customer added",
+        description: "Customer has been successfully added.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/customers/all"] });
       setIsAddCustomerDialogOpen(false);
       customerForm.reset();
-      toast({
-        title: "Customer Added",
-        description: "New customer has been added successfully.",
-      });
     },
     onError: (error: any) => {
-      console.error("Customer creation error:", error);
       toast({
-        title: "Failed to Add Customer",
-        description: error?.message || "An error occurred while adding the customer.",
+        title: "Failed to add customer",
+        description: error?.detail || error?.message || "Failed to add customer.",
         variant: "destructive",
       });
     },
   });
 
-  // Form submission
-  const onSubmit = (data: InvoiceFormData) => {
-    if (!data.saleItems || data.saleItems.length === 0) {
-      toast({
-        title: "No Items Added",
-        description: "Please add at least one item to create an invoice.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Check if customer and shop are selected
-    if (!selectedCustomer || !selectedShop) {
-      toast({
-        title: "Missing Information",
-        description: "Please select both customer and shop.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const totals = calculateTotals();
+  // Calculate totals with reactivity
+  const calculateTotals = () => {
+    const formData = form.watch();
     
-    const invoiceData = {
-      ...data,
-      totalAmount: totals.grandTotal,
-      taxAmount: 0, // Calculate if needed
-      saleItems: data.saleItems.map(item => ({
-        ...item,
-        rate: item.unitPrice,
-        amount: item.quantity * item.unitPrice,
-      })),
-    };
+    if (!selectedCustomer || !selectedShop) return { subtotal: 0, totalTax: 0, totalDiscount: 0, overallDiscountAmount: 0, grandTotal: 0, items: [], itemDiscounts: 0, itemsBeforeDiscount: 0 };
 
-    createInvoiceMutation.mutate(invoiceData);
-  };
+    const items = formData.saleItems.map(item => {
+      const product = Array.isArray(products) ? products.find(p => p.productId === item.productId) : null;
+      if (!product) return null;
 
-  const onAddCustomer = (data: CustomerFormData) => {
-    const customerData = {
-      ...data,
-      shopId: form.getValues('shopId') || 1,
-    };
-    addCustomerMutation.mutate(customerData);
-  };
+      const unitPrice = formData.saleType === 'RETAIL' ? product.retailRate : product.wholesaleRate;
+      const itemSubtotal = unitPrice * item.quantity;
+      
+      let discountAmount = 0;
+      if (item.discountType === 'PERCENTAGE') {
+        discountAmount = (itemSubtotal * item.discount) / 100;
+      } else {
+        discountAmount = item.discount; // Apply discount to total product value
+      }
+      
+      const lineTotal = itemSubtotal - discountAmount;
+      
+      const cgstRate = formData.billType === 'GST' ? (product.cgst || 9) : 0;
+      const sgstRate = formData.billType === 'GST' ? (product.sgst || 9) : 0;
+      
+      const cgstAmount = (lineTotal * cgstRate) / 100;
+      const sgstAmount = (lineTotal * sgstRate) / 100;
+      const taxAmount = cgstAmount + sgstAmount;
+      const totalPrice = lineTotal; // Tax shown separately, not added to total
 
-  // Add new item
-  const addNewItem = () => {
-    append({ productId: 0, quantity: 1, discount: 0, discountType: "PERCENTAGE", unitPrice: 0 });
-  };
+      return {
+        product,
+        quantity: item.quantity,
+        discount: item.discount,
+        discountType: item.discountType,
+        discountAmount,
+        unitPrice,
+        itemSubtotal,
+        lineTotal,
+        cgst: cgstRate,
+        sgst: sgstRate,
+        cgstAmount,
+        sgstAmount,
+        taxAmount,
+        totalPrice,
+      };
+    }).filter(Boolean);
 
-  // Select customer
-  const selectCustomer = (customer: Customer) => {
-    setSelectedCustomer(customer);
-    form.setValue('customerId', customer.customerId);
-    setIsCustomerSearchDialogOpen(false);
-  };
-
-  // Select shop
-  const selectShop = (shop: Shop) => {
-    setSelectedShop(shop);
-    form.setValue('shopId', shop.shopId);
-    customerForm.setValue('shopId', shop.shopId);
-  };
-
-  // Select product for item
-  const selectProduct = (product: Product, itemIndex: number) => {
-    form.setValue(`saleItems.${itemIndex}.productId`, product.productId);
-    form.setValue(`saleItems.${itemIndex}.unitPrice`, product.retailPrice || 0);
-    setIsProductDialogOpen(false);
-  };
-
-  // Generate PDF function
-  const generatePDF = () => {
-    if (!selectedCustomer || !selectedShop) {
-      toast({
-        title: "Missing Information",
-        description: "Customer and shop information is required for PDF generation.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const totals = calculateTotals();
+    const subtotal = items.reduce((sum, item) => sum + (item?.lineTotal || 0), 0);
+    const totalTax = items.reduce((sum, item) => sum + (item?.taxAmount || 0), 0);
     
-    if (!totals.items || totals.items.length === 0) {
-      toast({
-        title: "No Items",
-        description: "Please add items to generate PDF.",
-        variant: "destructive",
-      });
-      return;
+    // Calculate totals before and after discounts
+    const itemsBeforeDiscount = items.reduce((sum, item) => sum + (item?.itemSubtotal || 0), 0);
+    const itemDiscounts = items.reduce((sum, item) => sum + (item?.discountAmount || 0), 0);
+    
+    // Calculate additional discount
+    let additionalDiscountAmount = 0;
+    if (formData.additionalDiscount > 0) {
+      if (formData.additionalDiscountType === "PERCENTAGE") {
+        additionalDiscountAmount = (subtotal * formData.additionalDiscount) / 100;
+      } else {
+        additionalDiscountAmount = formData.additionalDiscount;
+      }
     }
+    
+    // Grand total is subtotal minus all discounts (item-level + additional)
+    const grandTotal = subtotal - additionalDiscountAmount;
 
-    const invoiceData = {
-      invoiceNo: `PREVIEW-${Date.now()}`,
-      invoiceDate: new Date().toLocaleDateString(),
-      customer: selectedCustomer,
-      shop: selectedShop,
-      ...totals,
-      transactionId: form.getValues('transactionId'),
-      paymentStatus: form.getValues('paymentStatus'),
-      remark: form.getValues('remark'),
+    console.log('Tax calculation debug:', { 
+      subtotal, 
+      totalTax, 
+      itemsCount: items.length,
+      billType: formData.billType,
+      items: items.map(item => ({ name: item?.product?.name, cgst: item?.cgst, sgst: item?.sgst, taxAmount: item?.taxAmount }))
+    });
+    
+    return { 
+      subtotal, 
+      totalTax, 
+      totalDiscount: itemDiscounts + additionalDiscountAmount, 
+      overallDiscountAmount: itemDiscounts + additionalDiscountAmount, 
+      grandTotal, 
+      items, 
+      itemDiscounts,
+      additionalDiscountAmount,
+      itemsBeforeDiscount 
     };
-
-    // Generate PDF HTML content
-    const pdfContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <title>Invoice - ${invoiceData.invoiceNo}</title>
-        <style>
-          body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
-          .invoice-header { text-align: center; margin-bottom: 30px; }
-          .invoice-details { display: flex; justify-content: space-between; margin-bottom: 20px; }
-          .customer-details, .shop-details { width: 48%; }
-          .items-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-          .items-table th, .items-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-          .items-table th { background-color: #f5f5f5; }
-          .totals { text-align: right; margin-top: 20px; }
-          .total-row { margin: 5px 0; }
-          .grand-total { font-weight: bold; font-size: 1.2em; border-top: 2px solid #333; padding-top: 10px; }
-        </style>
-      </head>
-      <body>
-        <div class="invoice-header">
-          <h1>INVOICE</h1>
-          <p>Date: ${invoiceData.invoiceDate}</p>
-          <p>Transaction ID: ${invoiceData.transactionId}</p>
-        </div>
-        
-        <div class="invoice-details">
-          <div class="shop-details">
-            <h3>From:</h3>
-            <p><strong>${invoiceData.shop.name}</strong></p>
-            <p>${invoiceData.shop.place}</p>
-            <p>Phone: ${invoiceData.shop.phone}</p>
-            <p>GST No: ${invoiceData.shop.gstNo}</p>
-          </div>
-          
-          <div class="customer-details">
-            <h3>To:</h3>
-            <p><strong>${invoiceData.customer.name}</strong></p>
-            <p>${invoiceData.customer.place}</p>
-            <p>Phone: ${invoiceData.customer.phone}</p>
-          </div>
-        </div>
-        
-        <table class="items-table">
-          <thead>
-            <tr>
-              <th>Item</th>
-              <th>Qty</th>
-              <th>Rate</th>
-              <th>Amount</th>
-              <th>Discount</th>
-              <th>Final Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${invoiceData.items.map((item: any) => `
-              <tr>
-                <td>${item.product.name}</td>
-                <td>${item.quantity}</td>
-                <td>₹${item.unitPrice.toFixed(2)}</td>
-                <td>₹${item.itemTotal.toFixed(2)}</td>
-                <td>₹${item.itemDiscount.toFixed(2)}</td>
-                <td>₹${item.itemAfterDiscount.toFixed(2)}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-        
-        <div class="totals">
-          <div class="total-row">Subtotal: ₹${invoiceData.subtotal.toFixed(2)}</div>
-          <div class="total-row">Total Discount: ₹${invoiceData.totalDiscount.toFixed(2)}</div>
-          <div class="total-row grand-total">Grand Total: ₹${invoiceData.grandTotal.toFixed(2)}</div>
-        </div>
-        
-        <div style="margin-top: 30px;">
-          <p><strong>Payment Status:</strong> ${invoiceData.paymentStatus}</p>
-          ${invoiceData.remark ? `<p><strong>Remarks:</strong> ${invoiceData.remark}</p>` : ''}
-        </div>
-      </body>
-      </html>
-    `;
-
-    // Create and download PDF
-    const blob = new Blob([pdfContent], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `invoice-${invoiceData.invoiceNo}.html`;
-    link.click();
-    URL.revokeObjectURL(url);
   };
 
   const totals = calculateTotals();
 
+  // Handle form submission
+  const onSubmit = (data: InvoiceFormData) => {
+    const totals = calculateTotals();
+    
+    const invoiceInput: InvoiceInput = {
+      customerId: data.customerId,
+      shopId: data.shopId,
+      discount: data.discount,
+      amountPaid: data.amountPaid,
+      paymentMode: data.paymentMode,
+      paymentStatus: data.paymentStatus,
+      remark: data.remark,
+      dueDate: data.dueDate,
+      billType: data.billType,
+      saleType: data.saleType,
+      transactionId: data.transactionId,
+      totalAmount: totals.grandTotal,
+      tax: totals.totalTax,
+      saleItems: data.saleItems.map(item => ({
+        productId: item.productId,
+        quantity: item.quantity,
+        discount: item.discount,
+      })),
+    };
+
+    if (isEditMode) {
+      updateInvoiceMutation.mutate(invoiceInput);
+    } else {
+      createInvoiceMutation.mutate(invoiceInput);
+    }
+  };
+
+  // Handle add customer
+  const onAddCustomer = (data: CustomerFormData) => {
+    const customerInput = {
+      name: data.name,
+      place: data.place,
+      phone: data.phone,
+      shopId: data.shopId,
+    };
+    addCustomerMutation.mutate(customerInput);
+  };
+
+  // Update selected customer when form changes
+  useEffect(() => {
+    const customerId = form.watch("customerId");
+    const customer = Array.isArray(customers) ? customers.find(c => c.customerId === customerId) : null;
+    setSelectedCustomer(customer || null);
+  }, [form.watch("customerId"), customers]);
+
+  // Update selected shop when form changes
+  useEffect(() => {
+    const shopId = form.watch("shopId");
+    const shop = Array.isArray(shops) ? shops.find(s => s.shopId === shopId) : null;
+    setSelectedShop(shop || null);
+  }, [form.watch("shopId"), shops]);
+
+  // Populate form with edit data
+  useEffect(() => {
+    if (isEditMode && editInvoice) {
+      form.reset({
+        customerId: editInvoice.customerId,
+        shopId: editInvoice.shopId,
+        discount: editInvoice.discount || 0,
+        discountType: "AMOUNT",
+        amountPaid: editInvoice.amountPaid || 0,
+        paymentMode: editInvoice.paymentMode,
+        paymentStatus: editInvoice.paymentStatus,
+        remark: editInvoice.remark || "",
+        dueDate: editInvoice.dueDate ? editInvoice.dueDate.split('T')[0] : null,
+        billType: editInvoice.billType || "GST",
+        saleType: editInvoice.saleType || "RETAIL",
+        transactionId: editInvoice.transactionId || `TXN${Date.now()}`,
+        saleItems: editInvoice.saleItems && editInvoice.saleItems.length > 0 
+          ? editInvoice.saleItems.map(item => ({
+              productId: item.product?.productId || 0,
+              quantity: item.quantity,
+              discount: item.discount,
+              discountType: "AMOUNT" as const,
+              unitPrice: item.unitPrice || 0
+            }))
+          : [],
+      });
+    }
+  }, [isEditMode, editInvoice, form]);
+
+  // Auto-update amount paid to match grand total for new invoices
+  useEffect(() => {
+    if (!isEditMode && totals.grandTotal > 0) {
+      // Always update amount paid to match grand total for new invoices
+      form.setValue('amountPaid', totals.grandTotal);
+    }
+  }, [totals.grandTotal, isEditMode, form]);
+
+  // Track form changes to detect unsaved data
+  useEffect(() => {
+    const subscription = form.watch(() => {
+      setHasUnsavedChanges(true);
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
+
+  // Reset unsaved changes flag when form is submitted
+  const handleFormSubmit = (data: InvoiceFormData) => {
+    setHasUnsavedChanges(false);
+    if (isEditMode) {
+      const totals = calculateTotals();
+      updateInvoiceMutation.mutate({
+        ...data,
+        totalAmount: totals.grandTotal,
+        tax: totals.totalTax,
+      });
+    } else {
+      const totals = calculateTotals();
+      createInvoiceMutation.mutate({
+        ...data,
+        totalAmount: totals.grandTotal,
+        tax: totals.totalTax,
+      });
+    }
+  };
+
+  // Handle back button with warning
+  const handleBackClick = () => {
+    if (hasUnsavedChanges) {
+      setShowBackWarning(true);
+    } else {
+      setLocation("/dashboard");
+    }
+  };
+
+  // Confirm navigation away
+  const handleConfirmNavigation = () => {
+    setShowBackWarning(false);
+    setHasUnsavedChanges(false);
+    setLocation("/dashboard");
+  };
+
+  // Handle customer selection
+  const handleSelectCustomer = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    form.setValue('customerId', customer.customerId);
+  };
+
+  // @ts-ignore
+  // Download PDF function - using exact same design as preview
+  const downloadInvoicePDF = () => {
+    if (!createdInvoiceData) return;
+    
+    const { customer, shop, totals, formData } = createdInvoiceData;
+    
+    const previewData = {
+      invoiceDate: new Date().toISOString(),
+      shop: {
+        name: shop.name,
+        place: shop.place,
+        tagline: "Quality Products & Services"
+      },
+      customer: {
+        name: customer.name,
+        place: customer.place,
+        phone: customer.phone
+      },
+      paymentDetails: {
+        paymentStatus: formData.paymentStatus,
+        paymentMode: formData.paymentMode,
+        billType: formData.billType,
+        saleType: formData.saleType
+      },
+      items: totals.items.filter((item: any) => item),
+      totals,
+      amountPaid: formData.amountPaid || 0,
+      remark: formData.remark
+    };
+
+    // Create PDF window with EXACT same template as existing preview function
+    const pdfWindow = window.open('', '_blank', 'width=900,height=700,scrollbars=yes');
+    if (!pdfWindow) return;
+
+    pdfWindow.document.write(`
+                  <!DOCTYPE html>
+                  <html>
+                    <head>
+                      <title>Invoice Preview - ${previewData.invoiceNo}</title>
+                      <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+                        
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+                        
+                        body { 
+                          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+                          background: #f8fafc;
+                          padding: 20px;
+                          line-height: 1.4;
+                        }
+                        
+                        .invoice-container {
+                          max-width: 800px;
+                          margin: 0 auto;
+                          background: white;
+                          border-radius: 12px;
+                          overflow: hidden;
+                          box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+                          position: relative;
+                          page-break-inside: avoid;
+                        }
+                        
+                        .header-wave {
+                          background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+                          height: 120px;
+                          position: relative;
+                          overflow: hidden;
+                        }
+                        
+                        .header-wave::after {
+                          content: '';
+                          position: absolute;
+                          bottom: -30px;
+                          left: 0;
+                          width: 100%;
+                          height: 60px;
+                          background: white;
+                          border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+                        }
+                        
+                        .header-content {
+                          position: relative;
+                          z-index: 2;
+                          color: white;
+                          padding: 25px 40px;
+                          display: flex;
+                          justify-content: space-between;
+                          align-items: flex-start;
+                        }
+                        
+                        .logo-section {
+                          display: flex;
+                          align-items: center;
+                          gap: 15px;
+                        }
+                        
+                        .logo-placeholder {
+                          width: 50px;
+                          height: 50px;
+                          background: rgba(255,255,255,0.2);
+                          border-radius: 10px;
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                          font-size: 20px;
+                          font-weight: bold;
+                          border: 2px solid rgba(255,255,255,0.3);
+                        }
+                        
+                        .company-info h1 {
+                          font-size: 26px;
+                          font-weight: 700;
+                          margin-bottom: 5px;
+                          text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                        }
+                        
+                        .company-tagline {
+                          font-size: 13px;
+                          opacity: 0.9;
+                          font-weight: 300;
+                        }
+                        
+                        .invoice-title {
+                          text-align: right;
+                        }
+                        
+                        .invoice-title h2 {
+                          font-size: 34px;
+                          font-weight: 300;
+                          letter-spacing: 2px;
+                          margin-bottom: 5px;
+                          text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                        }
+                        
+                        .invoice-meta {
+                          font-size: 13px;
+                          opacity: 0.9;
+                        }
+                        
+                        .content-section {
+                          padding: 40px 40px 30px;
+                        }
+                        
+                        .bill-to-section {
+                          display: grid;
+                          grid-template-columns: 1fr 1fr;
+                          gap: 40px;
+                          margin-bottom: 30px;
+                        }
+                        
+                        .info-block h3 {
+                          color: #2d3748;
+                          font-size: 14px;
+                          font-weight: 600;
+                          margin-bottom: 10px;
+                          padding-bottom: 5px;
+                          border-bottom: 2px solid #e2e8f0;
+                        }
+                        
+                        .info-block p {
+                          color: #4a5568;
+                          line-height: 1.5;
+                          margin-bottom: 3px;
+                          font-size: 13px;
+                        }
+                        
+                        .customer-name {
+                          font-weight: 600;
+                          color: #2d3748;
+                          font-size: 15px;
+                        }
+                        
+                        .items-table {
+                          width: 100%;
+                          border-collapse: collapse;
+                          margin-bottom: 25px;
+                          border-radius: 8px;
+                          overflow: hidden;
+                          box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                        }
+                        
+                        .items-table thead tr {
+                          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                          color: white;
+                        }
+                        
+                        .items-table th {
+                          padding: 12px 10px;
+                          font-weight: 600;
+                          font-size: 12px;
+                          letter-spacing: 0.5px;
+                        }
+                        
+                        .items-table td {
+                          padding: 10px;
+                          border-bottom: 1px solid #e2e8f0;
+                          color: #4a5568;
+                          font-size: 12px;
+                        }
+                        
+                        .items-table tbody tr:last-child td {
+                          border-bottom: none;
+                        }
+                        
+                        .text-right { text-align: right; }
+                        .text-center { text-align: center; }
+                        .text-left { text-align: left; }
+                        
+                        .totals-section {
+                          display: flex;
+                          justify-content: flex-end;
+                          margin-bottom: 25px;
+                        }
+                        
+                        .totals-box {
+                          background: #f7fafc;
+                          padding: 20px;
+                          border-radius: 8px;
+                          min-width: 280px;
+                        }
+                        
+                        .total-line {
+                          display: flex;
+                          justify-content: space-between;
+                          padding: 4px 0;
+                          color: #4a5568;
+                          font-size: 13px;
+                        }
+                        
+                        .grand-total {
+                          border-top: 2px solid #e2e8f0;
+                          margin-top: 10px;
+                          padding-top: 10px;
+                          font-size: 16px;
+                          font-weight: 700;
+                          color: #2d3748;
+                        }
+                        
+                        .balance {
+                          font-weight: 600;
+                          font-size: 14px;
+                        }
+                        
+                        .balance.positive { color: #e53e3e; }
+                        .balance.negative { color: #38a169; }
+                        
+                        .bottom-section {
+                          display: grid;
+                          grid-template-columns: 2fr 1fr;
+                          gap: 25px;
+                        }
+                        
+                        .terms-section {
+                          background: #f7fafc;
+                          padding: 15px;
+                          border-radius: 8px;
+                        }
+                        
+                        .terms-section h3 {
+                          color: #2d3748;
+                          font-size: 14px;
+                          font-weight: 600;
+                          margin-bottom: 8px;
+                        }
+                        
+                        .terms-section p {
+                          color: #4a5568;
+                          font-size: 11px;
+                          line-height: 1.4;
+                          margin-bottom: 4px;
+                        }
+                        
+                        .signature-section {
+                          text-align: center;
+                          padding: 15px;
+                        }
+                        
+                        .signature-line {
+                          border-top: 2px solid #2d3748;
+                          width: 120px;
+                          margin: 25px auto 8px;
+                        }
+                        
+                        .signature-text {
+                          color: #4a5568;
+                          font-size: 12px;
+                          font-weight: 500;
+                        }
+                        
+                        @media print {
+                          body { padding: 0; background: white; }
+                          .invoice-container { box-shadow: none; }
+                          .header-wave::after { display: none; }
+                        }
+                      </style>
+                    </head>
+                    <body>
+                      <div class="invoice-container">
+                        <!-- Header Section -->
+                        <div class="header-wave">
+                          <div class="header-content">
+                            <div class="logo-section">
+                              <div class="logo-placeholder">
+                                ${previewData.shop.name.charAt(0)}
+                              </div>
+                              <div class="company-info">
+                                <h1>${previewData.shop.name}</h1>
+                                <div class="company-tagline">${previewData.shop.tagline}</div>
+                              </div>
+                            </div>
+                            <div class="invoice-title">
+                              <h2>INVOICE</h2>
+                              <div class="invoice-meta">
+                                <div>${new Date(previewData.invoiceDate).toLocaleDateString('en-GB')}</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Content Section -->
+                        <div class="content-section">
+                          <!-- Bill To Section -->
+                          <div class="bill-to-section">
+                            <div class="info-block">
+                              <h3>Invoice To:</h3>
+                              <p class="customer-name">${previewData.customer.name}</p>
+                              <p>📍 ${previewData.customer.place}</p>
+                              <p>📞 ${previewData.customer.phone}</p>
+                            </div>
+                            <div class="info-block">
+                              <h3>Payment Info:</h3>
+                              <p><strong>Status:</strong> ${previewData.paymentDetails.paymentStatus}</p>
+                              <p><strong>Mode:</strong> ${previewData.paymentDetails.paymentMode}</p>
+                            </div>
+                          </div>
+
+                          <!-- Items Table -->
+                          <table class="items-table">
+                            <thead>
+                              <tr>
+                                <th class="text-left">Item Description</th>
+                                <th class="text-center">Qty.</th>
+                                <th class="text-right">Price</th>
+                                <th class="text-right">Discount</th>
+                                <th class="text-right">CGST (9%)</th>
+                                <th class="text-right">SGST (9%)</th>
+                                <th class="text-right">Total</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              ${previewData.items.map((item, index) => `
+                                <tr>
+                                  <td class="text-left">
+                                    <div style="font-weight: 600; color: #2d3748;">${item?.product?.name || 'N/A'}</div>
+                                  </td>
+                                  <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
+                                  <td class="text-right">₹${item?.unitPrice?.toFixed(2) || '0.00'}</td>
+                                  <td class="text-right">₹${item?.discountAmount?.toFixed(2) || '0.00'}</td>
+                                  <td class="text-right">₹${(item?.cgstAmount || 0).toFixed(2)}</td>
+                                  <td class="text-right">₹${(item?.sgstAmount || 0).toFixed(2)}</td>
+                                  <td class="text-right" style="font-weight: 600; color: #2d3748;">₹${item?.totalPrice?.toFixed(2) || '0.00'}</td>
+                                </tr>
+                              `).join('')}
+                            </tbody>
+                          </table>
+
+                          <!-- Totals Section -->
+                          <div class="totals-section">
+                            <div class="totals-box">
+                              <div class="total-line">
+                                <span>Sub Total:</span>
+                                <span>₹${previewData.totals.subtotal.toFixed(2)}</span>
+                              </div>
+                              <div class="total-line">
+                                <span>Item Discounts:</span>
+                              ${(previewData.totals.additionalDiscountAmount || 0) > 0 ? `
+                              <div class="total-line">
+                                <span>Additional Discount:</span>
+                                <span>- ₹${previewData.totals.additionalDiscountAmount.toFixed(2)}</span>
+                              </div>` : ""}
+                                <span>- ₹${previewData.totals.itemDiscounts.toFixed(2)}</span>
+                              </div>
+                              <div class="total-line">
+                                <span>Total CGST (9%):</span>
+                                <span>₹${((previewData.totals.totalTax || 0) / 2).toFixed(2)}</span>
+                              </div>
+                              <div class="total-line">
+                                <span>Total SGST (9%):</span>
+                                <span>₹${((previewData.totals.totalTax || 0) / 2).toFixed(2)}</span>
+                              </div>
+                              <div class="total-line grand-total">
+                                <span>Grand Total:</span>
+                                <span>₹${previewData.totals.grandTotal.toFixed(2)}</span>
+                              </div>
+                              <div class="total-line">
+                                <span>Amount Paid:</span>
+                                <span>₹${previewData.amountPaid.toFixed(2)}</span>
+                              </div>
+                              <div class="total-line balance ${(previewData.totals.grandTotal - previewData.amountPaid) > 0 ? 'positive' : 'negative'}">
+                                <span>Balance:</span>
+                                <span>₹${(previewData.totals.grandTotal - previewData.amountPaid).toFixed(2)}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <!-- Bottom Section -->
+                          <div class="bottom-section">
+                            <div class="terms-section">
+                              <h3>Terms & Conditions</h3>
+                              <p>1. Payment is due within 30 days of invoice date.</p>
+                              <p>2. Late payments may incur additional charges.</p>
+                              <p>3. Goods once sold cannot be returned without prior approval.</p>
+                              <p>4. Any disputes must be resolved within 7 days of delivery.</p>
+                              ${previewData.remark ? `
+                                <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #e2e8f0;">
+                                  <strong>Remarks:</strong><br>
+                                  ${previewData.remark}
+                                </div>
+                              ` : ''}
+                            </div>
+
+                            <div class="signature-section">
+                              <div class="signature-line"></div>
+                              <p class="signature-text">Authorized Signature</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <script>
+                        window.onload = function() {
+                          setTimeout(() => {
+                            window.print();
+                          }, 500);
+                        }
+                      </script>
+                    </body>
+                  </html>
+                `);
+    
+    pdfWindow.document.close();
+  };
+
   return (
-    <div className="container mx-auto p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-4">
-          <Link href="/dashboard">
-            <Button variant="ghost" size="sm">
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="max-w-5xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-4">
+            <Button variant="outline" size="sm" onClick={handleBackClick}>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
+              Back to Dashboard
             </Button>
-          </Link>
-          <h1 className="text-2xl font-bold">Create Invoice</h1>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {isEditMode ? "Edit Invoice" : "Create Invoice"}
+            </h1>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button 
+              variant="outline"
+              onClick={() => {
+                if (!selectedCustomer || !selectedShop) return;
+                
+                const formData = form.getValues();
+                const previewData = {
+                  invoiceDate: new Date().toISOString(),
+                  shop: {
+                    name: selectedShop.name,
+                    place: selectedShop.place,
+                    tagline: "Quality Products & Services"
+                  },
+                  customer: {
+                    name: selectedCustomer.name,
+                    place: selectedCustomer.place,
+                    phone: selectedCustomer.phone
+                  },
+                  paymentDetails: {
+                    paymentStatus: formData.paymentStatus,
+                    paymentMode: formData.paymentMode,
+                    billType: formData.billType,
+                    saleType: formData.saleType
+                  },
+                  items: totals.items.filter(item => item),
+                  totals,
+                  amountPaid: formData.amountPaid || 0,
+                  remark: formData.remark
+                };
+                
+                // Create preview window with modern compact design
+                const previewWindow = window.open('', '_blank', 'width=900,height=700,scrollbars=yes');
+                if (!previewWindow) return;
+
+                previewWindow.document.write(`
+                  <!DOCTYPE html>
+                  <html>
+                    <head>
+                      <title>Invoice Preview - ${previewData.invoiceNo}</title>
+                      <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+                        
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+                        
+                        body { 
+                          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+                          background: #f8fafc;
+                          padding: 20px;
+                          line-height: 1.4;
+                        }
+                        
+                        .invoice-container {
+                          max-width: 800px;
+                          margin: 0 auto;
+                          background: white;
+                          border-radius: 12px;
+                          overflow: hidden;
+                          box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+                          position: relative;
+                          page-break-inside: avoid;
+                        }
+                        
+                        .header-wave {
+                          background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+                          height: 120px;
+                          position: relative;
+                          overflow: hidden;
+                        }
+                        
+                        .header-wave::after {
+                          content: '';
+                          position: absolute;
+                          bottom: -30px;
+                          left: 0;
+                          width: 100%;
+                          height: 60px;
+                          background: white;
+                          border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+                        }
+                        
+                        .header-content {
+                          position: relative;
+                          z-index: 2;
+                          color: white;
+                          padding: 25px 40px;
+                          display: flex;
+                          justify-content: space-between;
+                          align-items: flex-start;
+                        }
+                        
+                        .logo-section {
+                          display: flex;
+                          align-items: center;
+                          gap: 12px;
+                        }
+                        
+                        .logo-placeholder {
+                          width: 45px;
+                          height: 45px;
+                          background: rgba(255,255,255,0.2);
+                          border-radius: 8px;
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                          font-size: 18px;
+                          font-weight: bold;
+                          border: 2px solid rgba(255,255,255,0.3);
+                        }
+                        
+                        .company-info h1 {
+                          font-size: 24px;
+                          font-weight: 700;
+                          margin-bottom: 3px;
+                          text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                        }
+                        
+                        .company-tagline {
+                          font-size: 12px;
+                          opacity: 0.9;
+                          font-weight: 300;
+                        }
+                        
+                        .invoice-title {
+                          text-align: right;
+                        }
+                        
+                        .invoice-title h2 {
+                          font-size: 32px;
+                          font-weight: 300;
+                          letter-spacing: 2px;
+                          margin-bottom: 5px;
+                          text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                        }
+                        
+                        .invoice-meta {
+                          font-size: 12px;
+                          opacity: 0.9;
+                        }
+                        
+                        .content-section {
+                          padding: 40px 40px 30px;
+                        }
+                        
+                        .bill-to-section {
+                          display: grid;
+                          grid-template-columns: 1fr 1fr;
+                          gap: 40px;
+                          margin-bottom: 30px;
+                        }
+                        
+                        .info-block h3 {
+                          color: #2d3748;
+                          font-size: 14px;
+                          font-weight: 600;
+                          margin-bottom: 10px;
+                          padding-bottom: 5px;
+                          border-bottom: 2px solid #e2e8f0;
+                        }
+                        
+                        .info-block p {
+                          color: #4a5568;
+                          line-height: 1.5;
+                          margin-bottom: 3px;
+                          font-size: 13px;
+                        }
+                        
+                        .customer-name {
+                          font-weight: 600;
+                          color: #2d3748;
+                          font-size: 15px;
+                        }
+                        
+                        .items-table {
+                          width: 100%;
+                          border-collapse: collapse;
+                          margin-bottom: 25px;
+                          border-radius: 8px;
+                          overflow: hidden;
+                          box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                        }
+                        
+                        .items-table thead tr {
+                          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                          color: white;
+                        }
+                        
+                        .items-table th {
+                          padding: 12px 10px;
+                          font-weight: 600;
+                          font-size: 12px;
+                          letter-spacing: 0.5px;
+                        }
+                        
+                        .items-table td {
+                          padding: 10px;
+                          border-bottom: 1px solid #e2e8f0;
+                          color: #4a5568;
+                          font-size: 12px;
+                        }
+                        
+                        .items-table tbody tr:last-child td {
+                          border-bottom: none;
+                        }
+                        
+                        .text-right { text-align: right; }
+                        .text-center { text-align: center; }
+                        .text-left { text-align: left; }
+                        
+                        .totals-section {
+                          display: flex;
+                          justify-content: flex-end;
+                          margin-bottom: 25px;
+                        }
+                        
+                        .totals-box {
+                          background: #f7fafc;
+                          padding: 20px;
+                          border-radius: 8px;
+                          min-width: 280px;
+                        }
+                        
+                        .total-line {
+                          display: flex;
+                          justify-content: space-between;
+                          padding: 4px 0;
+                          color: #4a5568;
+                          font-size: 13px;
+                        }
+                        
+                        .grand-total {
+                          border-top: 2px solid #e2e8f0;
+                          margin-top: 10px;
+                          padding-top: 10px;
+                          font-size: 16px;
+                          font-weight: 700;
+                          color: #2d3748;
+                        }
+                        
+                        .balance {
+                          font-weight: 600;
+                          font-size: 14px;
+                        }
+                        
+                        .balance.positive { color: #e53e3e; }
+                        .balance.negative { color: #38a169; }
+                        
+                        .bottom-section {
+                          display: grid;
+                          grid-template-columns: 2fr 1fr;
+                          gap: 25px;
+                        }
+                        
+                        .terms-section {
+                          background: #f7fafc;
+                          padding: 15px;
+                          border-radius: 8px;
+                        }
+                        
+                        .terms-section h3 {
+                          color: #2d3748;
+                          font-size: 14px;
+                          font-weight: 600;
+                          margin-bottom: 8px;
+                        }
+                        
+                        .terms-section p {
+                          color: #4a5568;
+                          font-size: 11px;
+                          line-height: 1.4;
+                          margin-bottom: 4px;
+                        }
+                        
+                        .signature-section {
+                          text-align: center;
+                          padding: 15px;
+                        }
+                        
+                        .signature-line {
+                          border-top: 2px solid #2d3748;
+                          width: 120px;
+                          margin: 25px auto 8px;
+                        }
+                        
+                        .signature-text {
+                          color: #4a5568;
+                          font-size: 12px;
+                          font-weight: 500;
+                        }
+                        
+                        .preview-controls {
+                          position: fixed;
+                          top: 20px;
+                          right: 20px;
+                          background: white;
+                          padding: 12px;
+                          border-radius: 6px;
+                          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                          z-index: 1000;
+                        }
+                        
+                        .preview-controls button {
+                          margin-left: 8px;
+                          padding: 6px 12px;
+                          border: none;
+                          border-radius: 4px;
+                          cursor: pointer;
+                          font-weight: 500;
+                          font-size: 13px;
+                        }
+                        
+                        .btn-close {
+                          background: #e53e3e;
+                          color: white;
+                        }
+                        
+                        .btn-print {
+                          background: #4299e1;
+                          color: white;
+                        }
+                        
+                        @media print {
+                          body { 
+                            background: white;
+                            padding: 0;
+                          }
+                          .invoice-container {
+                            box-shadow: none;
+                            border-radius: 0;
+                            page-break-inside: avoid;
+                          }
+                          .preview-controls {
+                            display: none;
+                          }
+                        }
+                      </style>
+                    </head>
+                    <body>
+                      <div class="preview-controls">
+                        <button class="btn-print" onclick="window.print()">Print</button>
+                        <button class="btn-close" onclick="window.close()">Close</button>
+                      </div>
+                      
+                      <div class="invoice-container">
+                        <!-- Header Wave Section -->
+                        <div class="header-wave">
+                          <div class="header-content">
+                            <div class="logo-section">
+                              <div class="logo-placeholder">
+                                ${previewData.shop.name.charAt(0)}
+                              </div>
+                              <div class="company-info">
+                                <h1>${previewData.shop.name}</h1>
+                                <div class="company-tagline">${previewData.shop.tagline}</div>
+                              </div>
+                            </div>
+                            <div class="invoice-title">
+                              <h2>INVOICE</h2>
+                              <div class="invoice-meta">
+                                <div><strong>Date:</strong> ${new Date(previewData.invoiceDate).toLocaleDateString()}</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Content Section -->
+                        <div class="content-section">
+                          <!-- Bill To Section -->
+                          <div class="bill-to-section">
+                            <div class="info-block">
+                              <h3>Invoice To:</h3>
+                              <p class="customer-name">${previewData.customer.name}</p>
+                              <p>📍 ${previewData.customer.place}</p>
+                              <p>📞 ${previewData.customer.phone}</p>
+                            </div>
+                            <div class="info-block">
+                              <h3>Payment Info:</h3>
+                              <p><strong>Status:</strong> ${previewData.paymentDetails.paymentStatus}</p>
+                              <p><strong>Mode:</strong> ${previewData.paymentDetails.paymentMode}</p>
+                            </div>
+                          </div>
+
+                          <!-- Items Table -->
+                          <table class="items-table">
+                            <thead>
+                              <tr>
+                                <th class="text-left">Item Description</th>
+                                <th class="text-center">Qty.</th>
+                                <th class="text-right">Price</th>
+                                <th class="text-right">Discount</th>
+                                <th class="text-right">CGST (9%)</th>
+                                <th class="text-right">SGST (9%)</th>
+                                <th class="text-right">Total</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              ${previewData.items.map((item, index) => `
+                                <tr>
+                                  <td class="text-left">
+                                    <div style="font-weight: 600; color: #2d3748;">${item?.product?.name || 'N/A'}</div>
+                                  </td>
+                                  <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
+                                  <td class="text-right">₹${item?.unitPrice?.toFixed(2) || '0.00'}</td>
+                                  <td class="text-right">₹${item?.discountAmount?.toFixed(2) || '0.00'}</td>
+                                  <td class="text-right">₹${(item?.cgstAmount || 0).toFixed(2)}</td>
+                                  <td class="text-right">₹${(item?.sgstAmount || 0).toFixed(2)}</td>
+                                  <td class="text-right" style="font-weight: 600; color: #2d3748;">₹${item?.totalPrice?.toFixed(2) || '0.00'}</td>
+                                </tr>
+                              `).join('')}
+                            </tbody>
+                          </table>
+
+                          <!-- Totals Section -->
+                          <div class="totals-section">
+                            <div class="totals-box">
+                              <div class="total-line">
+                                <span>Sub Total:</span>
+                                <span>₹${previewData.totals.subtotal.toFixed(2)}</span>
+                              </div>
+                              <div class="total-line">
+                                <span>Item Discounts:</span>
+                              ${(previewData.totals.additionalDiscountAmount || 0) > 0 ? `
+                              <div class="total-line">
+                                <span>Additional Discount:</span>
+                                <span>- ₹${previewData.totals.additionalDiscountAmount.toFixed(2)}</span>
+                              </div>` : ""}
+                                <span>- ₹${previewData.totals.itemDiscounts.toFixed(2)}</span>
+                              </div>
+                              <div class="total-line">
+                                <span>Total CGST (9%):</span>
+                                <span>₹${((previewData.totals.totalTax || 0) / 2).toFixed(2)}</span>
+                              </div>
+                              <div class="total-line">
+                                <span>Total SGST (9%):</span>
+                                <span>₹${((previewData.totals.totalTax || 0) / 2).toFixed(2)}</span>
+                              </div>
+                              <div class="total-line grand-total">
+                                <span>Grand Total:</span>
+                                <span>₹${previewData.totals.grandTotal.toFixed(2)}</span>
+                              </div>
+                              <div class="total-line">
+                                <span>Amount Paid:</span>
+                                <span>₹${previewData.amountPaid.toFixed(2)}</span>
+                              </div>
+                              <div class="total-line balance ${(previewData.totals.grandTotal - previewData.amountPaid) > 0 ? 'positive' : 'negative'}">
+                                <span>Balance:</span>
+                                <span>₹${(previewData.totals.grandTotal - previewData.amountPaid).toFixed(2)}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <!-- Bottom Section -->
+                          <div class="bottom-section">
+                            <div class="terms-section">
+                              <h3>Terms & Conditions</h3>
+                              <p>1. Payment is due within 30 days of invoice date.</p>
+                              <p>2. Late payments may incur additional charges.</p>
+                              <p>3. Goods once sold cannot be returned without prior approval.</p>
+                              <p>4. Any disputes must be resolved within 7 days of delivery.</p>
+                              ${previewData.remark ? `
+                                <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #e2e8f0;">
+                                  <strong>Remarks:</strong><br>
+                                  ${previewData.remark}
+                                </div>
+                              ` : ''}
+                            </div>
+
+                          </div>
+                        </div>
+                      </div>
+                    </body>
+                  </html>
+                `);
+                
+                previewWindow.document.close();
+              }}
+              disabled={!selectedCustomer || !selectedShop}
+            >
+              <Eye className="h-4 w-4 mr-2" />
+              Preview
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => {
+                const formData = form.getValues();
+                
+                const invoiceData = {
+                  invoiceDate: new Date().toISOString(),
+                  shop: {
+                    name: selectedShop?.name || "Shop Name",
+                    place: selectedShop?.place || "Shop Address",
+                    gstNo: selectedShop?.gstNo || "",
+                    phone: selectedShop?.phone || "",
+                    tagline: "Quality Products & Services"
+                  },
+                  customer: {
+                    name: selectedCustomer?.name || "Customer",
+                    place: selectedCustomer?.place || "Address",
+                    phone: selectedCustomer?.phone?.toString() || "Phone"
+                  },
+                  paymentDetails: {
+                    paymentStatus: formData.paymentStatus,
+                    paymentMode: formData.paymentMode,
+                    billType: formData.billType,
+                    saleType: formData.saleType
+                  },
+                  items: totals.items.filter(item => item),
+                  totals,
+                  amountPaid: formData.amountPaid || 0,
+                  remark: formData.remark
+                };
+
+                // Create a new window for PDF generation
+                const printWindow = window.open('', '_blank');
+                if (!printWindow) return;
+
+                printWindow.document.write(`
+                  <!DOCTYPE html>
+                  <html>
+                    <head>
+                      <title>Invoice ${invoiceNo}</title>
+                      <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+                        
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+                        
+                        body { 
+                          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+                          background: white;
+                          padding: 0;
+                          line-height: 1.4;
+                        }
+                        
+                        .invoice-container {
+                          max-width: 800px;
+                          margin: 0 auto;
+                          background: white;
+                          position: relative;
+                          page-break-inside: avoid;
+                        }
+                        
+                        .header-wave {
+                          background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+                          height: 120px;
+                          position: relative;
+                          overflow: hidden;
+                        }
+                        
+                        .header-wave::after {
+                          content: '';
+                          position: absolute;
+                          bottom: -30px;
+                          left: 0;
+                          width: 100%;
+                          height: 60px;
+                          background: white;
+                          border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+                        }
+                        
+                        .header-content {
+                          position: relative;
+                          z-index: 2;
+                          color: white;
+                          padding: 25px 40px;
+                          display: flex;
+                          justify-content: space-between;
+                          align-items: flex-start;
+                        }
+                        
+                        .logo-section {
+                          display: flex;
+                          align-items: center;
+                          gap: 12px;
+                        }
+                        
+                        .logo-placeholder {
+                          width: 45px;
+                          height: 45px;
+                          background: rgba(255,255,255,0.2);
+                          border-radius: 8px;
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                          font-size: 18px;
+                          font-weight: bold;
+                          border: 2px solid rgba(255,255,255,0.3);
+                        }
+                        
+                        .company-info h1 {
+                          font-size: 24px;
+                          font-weight: 700;
+                          margin-bottom: 3px;
+                          text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                        }
+                        
+                        .company-tagline {
+                          font-size: 12px;
+                          opacity: 0.9;
+                          font-weight: 300;
+                        }
+                        
+                        .invoice-title {
+                          text-align: right;
+                        }
+                        
+                        .invoice-title h2 {
+                          font-size: 32px;
+                          font-weight: 300;
+                          letter-spacing: 2px;
+                          margin-bottom: 5px;
+                          text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                        }
+                        
+                        .invoice-meta {
+                          font-size: 12px;
+                          opacity: 0.9;
+                        }
+                        
+                        .content-section {
+                          padding: 40px 40px 30px;
+                        }
+                        
+                        .bill-to-section {
+                          display: grid;
+                          grid-template-columns: 1fr 1fr;
+                          gap: 40px;
+                          margin-bottom: 30px;
+                        }
+                        
+                        .info-block h3 {
+                          color: #2d3748;
+                          font-size: 14px;
+                          font-weight: 600;
+                          margin-bottom: 10px;
+                          padding-bottom: 5px;
+                          border-bottom: 2px solid #e2e8f0;
+                        }
+                        
+                        .info-block p {
+                          color: #4a5568;
+                          line-height: 1.5;
+                          margin-bottom: 3px;
+                          font-size: 13px;
+                        }
+                        
+                        .customer-name {
+                          font-weight: 600;
+                          color: #2d3748;
+                          font-size: 15px;
+                        }
+                        
+                        .items-table {
+                          width: 100%;
+                          border-collapse: collapse;
+                          margin-bottom: 25px;
+                          border-radius: 8px;
+                          overflow: hidden;
+                          box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                        }
+                        
+                        .items-table thead tr {
+                          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                          color: white;
+                        }
+                        
+                        .items-table th {
+                          padding: 12px 10px;
+                          font-weight: 600;
+                          font-size: 12px;
+                          letter-spacing: 0.5px;
+                        }
+                        
+                        .items-table td {
+                          padding: 10px;
+                          border-bottom: 1px solid #e2e8f0;
+                          color: #4a5568;
+                          font-size: 12px;
+                        }
+                        
+                        .items-table tbody tr:last-child td {
+                          border-bottom: none;
+                        }
+                        
+                        .text-right { text-align: right; }
+                        .text-center { text-align: center; }
+                        .text-left { text-align: left; }
+                        
+                        .totals-section {
+                          display: flex;
+                          justify-content: flex-end;
+                          margin-bottom: 25px;
+                        }
+                        
+                        .totals-box {
+                          background: #f7fafc;
+                          padding: 20px;
+                          border-radius: 8px;
+                          min-width: 280px;
+                        }
+                        
+                        .total-line {
+                          display: flex;
+                          justify-content: space-between;
+                          padding: 4px 0;
+                          color: #4a5568;
+                          font-size: 13px;
+                        }
+                        
+                        .grand-total {
+                          border-top: 2px solid #e2e8f0;
+                          margin-top: 10px;
+                          padding-top: 10px;
+                          font-size: 16px;
+                          font-weight: 700;
+                          color: #2d3748;
+                        }
+                        
+                        .balance {
+                          font-weight: 600;
+                          font-size: 14px;
+                        }
+                        
+                        .balance.positive { color: #e53e3e; }
+                        .balance.negative { color: #38a169; }
+                        
+                        .bottom-section {
+                          display: grid;
+                          grid-template-columns: 2fr 1fr;
+                          gap: 25px;
+                        }
+                        
+                        .terms-section {
+                          background: #f7fafc;
+                          padding: 15px;
+                          border-radius: 8px;
+                        }
+                        
+                        .terms-section h3 {
+                          color: #2d3748;
+                          font-size: 14px;
+                          font-weight: 600;
+                          margin-bottom: 8px;
+                        }
+                        
+                        .terms-section p {
+                          color: #4a5568;
+                          font-size: 11px;
+                          line-height: 1.4;
+                          margin-bottom: 4px;
+                        }
+                        
+                        .signature-section {
+                          text-align: center;
+                          padding: 15px;
+                        }
+                        
+                        .signature-line {
+                          border-top: 2px solid #2d3748;
+                          width: 120px;
+                          margin: 25px auto 8px;
+                        }
+                        
+                        .signature-text {
+                          color: #4a5568;
+                          font-size: 12px;
+                          font-weight: 500;
+                        }
+                        
+                        .footer-wave {
+                          background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+                          height: 60px;
+                          position: relative;
+                          margin-top: 30px;
+                        }
+                        
+                        .footer-wave::before {
+                          content: '';
+                          position: absolute;
+                          top: -30px;
+                          left: 0;
+                          width: 100%;
+                          height: 60px;
+                          background: white;
+                          border-radius: 0 0 50% 50% / 0 0 100% 100%;
+                        }
+                        
+                        @media print {
+                          body { 
+                            background: white;
+                            padding: 0;
+                          }
+                          .invoice-container {
+                            box-shadow: none;
+                            border-radius: 0;
+                            page-break-inside: avoid;
+                          }
+                        }
+                      </style>
+                    </head>
+                    <body>
+                      <div class="invoice-container">
+                        <!-- Header Wave Section -->
+                        <div class="header-wave">
+                          <div class="header-content">
+                            <div class="logo-section">
+                              <div class="logo-placeholder">
+                                ${invoiceData.shop.name.charAt(0)}
+                              </div>
+                              <div class="company-info">
+                                <h1>${invoiceData.shop.name}</h1>
+                                <div class="company-tagline">${invoiceData.shop.tagline}</div>
+                                ${invoiceData.shop.gstNo ? `<div class="company-tagline">GST: ${invoiceData.shop.gstNo}</div>` : ''}
+                                ${invoiceData.shop.phone ? `<div class="company-tagline">Phone: ${invoiceData.shop.phone}</div>` : ''}
+                              </div>
+                            </div>
+                            <div class="invoice-title">
+                              <div class="invoice-meta">
+                                <div><strong>Invoice #:</strong> ${invoiceData.invoiceNo}</div>
+                                <div><strong>Date:</strong> ${new Date(invoiceData.invoiceDate).toLocaleDateString()}</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Content Section -->
+                        <div class="content-section">
+                          <!-- Bill To Section -->
+                          <div class="bill-to-section">
+                            <div class="info-block">
+                              <h3>Invoice To:</h3>
+                              <p class="customer-name">${invoiceData.customer.name}</p>
+                              <p>📍 ${invoiceData.customer.place}</p>
+                              <p>📞 ${invoiceData.customer.phone}</p>
+                            </div>
+                            <div class="info-block">
+                              <h3>Payment Info:</h3>
+                              <p><strong>Status:</strong> ${invoiceData.paymentDetails.paymentStatus}</p>
+                              <p><strong>Mode:</strong> ${invoiceData.paymentDetails.paymentMode}</p>
+                            </div>
+                          </div>
+
+                          <!-- Items Table -->
+                          <table class="items-table">
+                            <thead>
+                              <tr>
+                                <th class="text-left">Item Description</th>
+                                <th class="text-center">Qty.</th>
+                                <th class="text-right">Price</th>
+                                <th class="text-right">Discount</th>
+                                <th class="text-right">CGST (9%)</th>
+                                <th class="text-right">SGST (9%)</th>
+                                <th class="text-right">Total</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              ${invoiceData.items.map((item, index) => `
+                                <tr>
+                                  <td class="text-left">
+                                    <div style="font-weight: 600; color: #2d3748;">${item?.product?.name || 'N/A'}</div>
+                                  </td>
+                                  <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
+                                  <td class="text-right">₹${item?.unitPrice?.toFixed(2) || '0.00'}</td>
+                                  <td class="text-right">₹${item?.discountAmount?.toFixed(2) || '0.00'}</td>
+                                  <td class="text-right">₹${(item?.cgstAmount || 0).toFixed(2)}</td>
+                                  <td class="text-right">₹${(item?.sgstAmount || 0).toFixed(2)}</td>
+                                  <td class="text-right" style="font-weight: 600; color: #2d3748;">₹${item?.totalPrice?.toFixed(2) || '0.00'}</td>
+                                </tr>
+                              `).join('')}
+                            </tbody>
+                          </table>
+
+                          <!-- Totals Section -->
+                          <div class="totals-section">
+                            <div class="totals-box">
+                              <div class="total-line">
+                                <span>Sub Total:</span>
+                                <span>₹${invoiceData.totals.subtotal.toFixed(2)}</span>
+                              </div>
+                              <div class="total-line">
+                                <span>Item Discounts:</span>
+                                <span>- ₹${invoiceData.totals.totalDiscount.toFixed(2)}</span>
+                              </div>
+                              <div class="total-line">
+                                <span>Total CGST (9%):</span>
+                                <span>₹${((invoiceData.totals.totalTax || 0) / 2).toFixed(2)}</span>
+                              </div>
+                              <div class="total-line">
+                                <span>Total SGST (9%):</span>
+                                <span>₹${((invoiceData.totals.totalTax || 0) / 2).toFixed(2)}</span>
+                              </div>
+                              <div class="total-line grand-total">
+                                <span>Grand Total:</span>
+                                <span>₹${invoiceData.totals.grandTotal.toFixed(2)}</span>
+                              </div>
+                              <div class="total-line">
+                                <span>Amount Paid:</span>
+                                <span>₹${invoiceData.amountPaid.toFixed(2)}</span>
+                              </div>
+                              <div class="total-line balance ${(invoiceData.totals.grandTotal - invoiceData.amountPaid) > 0 ? 'positive' : 'negative'}">
+                                <span>Balance:</span>
+                                <span>₹${(invoiceData.totals.grandTotal - invoiceData.amountPaid).toFixed(2)}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <!-- Bottom Section -->
+                          <div class="bottom-section">
+                            <div class="terms-section">
+                              <h3>Terms & Conditions</h3>
+                              <p>1. Payment is due within 30 days of invoice date.</p>
+                              <p>2. Late payments may incur additional charges.</p>
+                              <p>3. Goods once sold cannot be returned without prior approval.</p>
+                              <p>4. Any disputes must be resolved within 7 days of delivery.</p>
+                              ${invoiceData.remark ? `
+                                <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #e2e8f0;">
+                                  <strong>Remarks:</strong><br>
+                                  ${invoiceData.remark}
+                                </div>
+                              ` : ''}
+                            </div>
+
+                          </div>
+                        </div>
+
+
+                      </div>
+                      
+                      <script>
+                        window.onload = function() {
+                          window.print();
+                          setTimeout(function() { window.close(); }, 1000);
+                        }
+                      </script>
+                    </body>
+                  </html>
+                `);
+                
+                printWindow.document.close();
+              }}
+              disabled={!selectedCustomer || !selectedShop}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download PDF
+            </Button>
+            <Button 
+              onClick={() => form.handleSubmit(onSubmit)()}
+              disabled={isEditMode ? updateInvoiceMutation.isPending : createInvoiceMutation.isPending}
+            >
+              <Save className="h-4 w-4 mr-2" />
+              {isEditMode 
+                ? (updateInvoiceMutation.isPending ? "Updating..." : "Update Invoice")
+                : (createInvoiceMutation.isPending ? "Creating..." : "Create Invoice")
+              }
+            </Button>
+          </div>
         </div>
-        <div className="flex space-x-2">
-          <Button onClick={generatePDF} variant="outline">
-            <Eye className="h-4 w-4 mr-2" />
-            Preview PDF
-          </Button>
-        </div>
-      </div>
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* Invoice Details Card */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div>
-                  <Label>Date</Label>
-                  <Input value={new Date().toLocaleDateString()} disabled />
-                </div>
-                <div>
-                  <Label>Transaction ID</Label>
-                  <FormField
-                    control={form.control}
-                    name="transactionId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <div>
-                  <Label>Payment Status</Label>
-                  <FormField
-                    control={form.control}
-                    name="paymentStatus"
-                    render={({ field }) => (
-                      <FormItem>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="PAID">Paid</SelectItem>
-                            <SelectItem value="PENDING">Pending</SelectItem>
-                            <SelectItem value="OVERDUE">Overdue</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Customer Selection */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">Customer Information</h3>
-                <div className="space-x-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsCustomerSearchDialogOpen(true)}
-                  >
-                    <User className="h-4 w-4 mr-2" />
-                    Select Customer
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsAddCustomerDialogOpen(true)}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Customer
-                  </Button>
-                </div>
-              </div>
-
-              {selectedCustomer && (
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-medium">{selectedCustomer.name}</h4>
-                  <p className="text-sm text-gray-600 flex items-center">
-                    <MapPin className="h-4 w-4 mr-1" />
-                    {selectedCustomer.place}
-                  </p>
-                  <p className="text-sm text-gray-600 flex items-center">
-                    <Phone className="h-4 w-4 mr-1" />
-                    {selectedCustomer.phone}
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Shop Selection */}
-          <Card>
-            <CardContent className="pt-6">
-              <h3 className="text-lg font-semibold mb-4">Shop Information</h3>
-              <FormField
-                control={form.control}
-                name="shopId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Select Shop</FormLabel>
-                    <Select onValueChange={(value) => {
-                      field.onChange(parseInt(value));
-                      const shop = shops.find(s => s.shopId === parseInt(value));
-                      if (shop) selectShop(shop);
-                    }} value={field.value?.toString()}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Choose a shop" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {Array.isArray(shops) && shops.map((shop: any) => (
-                          <SelectItem key={shop.shopId} value={shop.shopId.toString()}>
-                            {shop.name} - {shop.place}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {selectedShop && (
-                <div className="bg-gray-50 p-4 rounded-lg mt-4">
-                  <h4 className="font-medium">{selectedShop.name}</h4>
-                  <p className="text-sm text-gray-600">{selectedShop.place}</p>
-                  <p className="text-sm text-gray-600">Phone: {selectedShop.phone}</p>
-                  <p className="text-sm text-gray-600">GST No: {selectedShop.gstNo}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Items Section */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">Invoice Items</h3>
-                <Button type="button" onClick={addNewItem} variant="outline" size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Item
-                </Button>
-              </div>
-
-              <div className="space-y-4">
-                {fields.map((field, index) => (
-                  <div key={field.id} className="border p-4 rounded-lg">
-                    <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
-                      <div className="md:col-span-2">
-                        <Label>Product</Label>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="w-full justify-start"
-                          onClick={() => setIsProductDialogOpen(true)}
-                        >
-                          {(() => {
-                            const productId = form.getValues(`saleItems.${index}.productId`);
-                            const product = products.find((p: any) => p.productId === productId);
-                            return product ? product.name : "Select Product";
-                          })()}
-                        </Button>
-                      </div>
-
-                      <div>
-                        <Label>Quantity</Label>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
+            {/* Invoice Layout */}
+            <Card className="bg-white">
+              <CardContent className="p-8">
+                {/* Header Section */}
+                <div className="mb-8">
+                  <div className="flex justify-between items-start">
+                    {/* Shop Info */}
+                    <div className="flex-1">
+{Array.isArray(shops) && shops.length === 1 ? (
+                        // Show shop info directly when only one shop exists
+                        <div>
+                          <FormLabel className="text-sm text-gray-600">Shop</FormLabel>
+                          <div className="border border-gray-300 text-2xl font-bold text-gray-900 p-3 rounded-md bg-gray-50">
+                            {shops[0].name}
+                          </div>
+                        </div>
+                      ) : (
+                        // Show dropdown when multiple shops exist
                         <FormField
                           control={form.control}
-                          name={`saleItems.${index}.quantity`}
+                          name="shopId"
                           render={({ field }) => (
                             <FormItem>
-                              <FormControl>
-                                <Input type="number" min="1" {...field} onChange={(e) => field.onChange(parseFloat(e.target.value) || 1)} />
-                              </FormControl>
+                              <FormLabel className="text-sm text-gray-600">Shop</FormLabel>
+                              <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                                <FormControl>
+                                  <SelectTrigger className="border border-gray-300 text-2xl font-bold text-gray-900 p-3 h-auto rounded-md">
+                                    <SelectValue placeholder="Select Shop" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {Array.isArray(shops) ? shops.map((shop) => (
+                                    <SelectItem key={shop.shopId} value={shop.shopId.toString()}>
+                                      {shop.name}
+                                    </SelectItem>
+                                  )) : null}
+                                </SelectContent>
+                              </Select>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
-                      </div>
-
-                      <div>
-                        <Label>Rate</Label>
-                        <FormField
-                          control={form.control}
-                          name={`saleItems.${index}.unitPrice`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <Input type="number" step="0.01" min="0" {...field} onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
+                      )}
+                      {selectedShop && (
+                        <div className="mt-2">
+                          <FormField
+                            control={form.control}
+                            name="useCustomBillingAddress"
+                            render={({ field }) => (
+                              <div className="flex items-center space-x-2">
+                                <input
+                                  type="checkbox"
+                                  checked={field.value}
+                                  onChange={field.onChange}
+                                  className="rounded"
+                                />
+                                <label className="text-sm">Use custom billing address</label>
+                              </div>
+                            )}
+                          />
+                          {form.watch("useCustomBillingAddress") ? (
+                            <FormField
+                              control={form.control}
+                              name="customBillingAddress"
+                              render={({ field }) => (
+                                <Textarea
+                                  {...field}
+                                  placeholder="Enter custom billing address"
+                                  className="mt-2 text-gray-600"
+                                />
+                              )}
+                            />
+                          ) : (
+                            <p className="text-gray-600 mt-1">{selectedShop.place}</p>
                           )}
-                        />
-                      </div>
+                        </div>
+                      )}
+                    </div>
 
-                      <div>
-                        <Label>Discount</Label>
-                        <FormField
-                          control={form.control}
-                          name={`saleItems.${index}.discount`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <Input type="number" step="0.01" min="0" {...field} onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      <div className="flex items-end">
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => remove(index)}
-                          disabled={fields.length === 1}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                    {/* Invoice Details */}
+                    <div className="text-right">
+                      <h2 className="text-3xl font-bold text-gray-900 mb-4">INVOICE</h2>
+                      <div className="space-y-2">
+                        <div>
+                          <Label className="text-sm text-gray-600">Date</Label>
+                          <p className="font-semibold">{new Date().toLocaleDateString()}</p>
+                        </div>
+                        <div>
+                          <Label className="text-sm text-gray-600">Transaction ID</Label>
+                          <FormField
+                            control={form.control}
+                            name="transactionId"
+                            render={({ field }) => (
+                              <Input {...field} className="text-right border-none p-0 font-semibold" />
+                            )}
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Additional Discount */}
-          <Card>
-            <CardContent className="pt-6">
-              <h3 className="text-lg font-semibold mb-4">Additional Discount</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="discountType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Discount Type</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="PERCENTAGE">Percentage (%)</SelectItem>
-                          <SelectItem value="AMOUNT">Amount (₹)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="discount"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Discount Value</FormLabel>
-                      <FormControl>
-                        <Input type="number" step="0.01" min="0" {...field} onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Totals Summary */}
-          <Card>
-            <CardContent className="pt-6">
-              <h3 className="text-lg font-semibold mb-4">Invoice Summary</h3>
-              <div className="space-y-2 text-right">
-                <div className="flex justify-between">
-                  <span>Subtotal:</span>
-                  <span>₹{totals.subtotal.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>Total Discount:</span>
-                  <span>₹{totals.totalDiscount.toFixed(2)}</span>
+
+                <Separator className="my-8" />
+
+                {/* Customer and Settings Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                  {/* Bill To */}
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-gray-900">Bill To:</h3>
+                      <Dialog open={isAddCustomerDialogOpen} onOpenChange={setIsAddCustomerDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Button size="sm" className="bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white border-0">
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Customer
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Add New Customer</DialogTitle>
+                          </DialogHeader>
+                          <Form {...customerForm}>
+                            <form onSubmit={customerForm.handleSubmit(onAddCustomer)} className="space-y-4">
+                              <FormField
+                                control={customerForm.control}
+                                name="name"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Customer Name</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} placeholder="Enter customer name" />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={customerForm.control}
+                                name="place"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Place</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} placeholder="Enter place" />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={customerForm.control}
+                                name="phone"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Phone</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} placeholder="Enter phone number" />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={customerForm.control}
+                                name="shopId"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Shop</FormLabel>
+                                    <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                                      <FormControl>
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Select shop" />
+                                        </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                        {Array.isArray(shops) ? shops.map((shop) => (
+                                          <SelectItem key={shop.shopId} value={shop.shopId.toString()}>
+                                            {shop.name} - {shop.place}
+                                          </SelectItem>
+                                        )) : null}
+                                      </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <div className="flex justify-end space-x-2">
+                                <Button type="button" variant="outline" onClick={() => setIsAddCustomerDialogOpen(false)}>
+                                  Cancel
+                                </Button>
+                                <Button type="submit" disabled={addCustomerMutation.isPending}>
+                                  {addCustomerMutation.isPending ? "Adding..." : "Add Customer"}
+                                </Button>
+                              </div>
+                            </form>
+                          </Form>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full justify-start text-left h-12 border-dashed border-2"
+                        onClick={() => setIsCustomerSearchDialogOpen(true)}
+                      >
+                        <User className="h-4 w-4 mr-2" />
+                        {selectedCustomer ? (
+                          <div className="flex flex-col items-start">
+                            <span className="font-medium">{selectedCustomer.name} - {selectedCustomer.place}</span>
+                            <span className="text-xs text-gray-500">{selectedCustomer.phone}</span>
+                          </div>
+                        ) : (
+                          <span className="text-gray-500">Select Customer</span>
+                        )}
+                      </Button>
+                    </div>
+                    
+                    {selectedCustomer && (
+                      <div className="mt-4 p-4 bg-gray-50 rounded border">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <User className="h-4 w-4 text-gray-600" />
+                          <span className="font-medium">{selectedCustomer.name}</span>
+                        </div>
+                        <div className="flex items-center space-x-2 mb-2">
+                          <MapPin className="h-4 w-4 text-gray-600" />
+                          <span className="text-gray-600">{selectedCustomer.place}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Phone className="h-4 w-4 text-gray-600" />
+                          <span className="text-gray-600">{selectedCustomer.phone}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Invoice Settings */}
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="billType"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Bill Type</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="GST">GST Bill</SelectItem>
+                                <SelectItem value="NON_GST">Non-GST Bill</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="saleType"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Sale Type</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="RETAIL">Retail</SelectItem>
+                                <SelectItem value="WHOLESALE">Wholesale</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="paymentMode"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Payment Mode</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="CASH">Cash</SelectItem>
+                                <SelectItem value="CARD">Card</SelectItem>
+                                <SelectItem value="UPI">UPI</SelectItem>
+                                <SelectItem value="CHEQUE">Cheque</SelectItem>
+                                <SelectItem value="BANK_TRANSFER">Bank Transfer</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="paymentStatus"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Payment Status</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="PAID">Paid</SelectItem>
+                                <SelectItem value="PENDING">Pending</SelectItem>
+                                <SelectItem value="OVERDUE">Overdue</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="dueDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Due Date (Optional)</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="date" value={field.value || ""} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
-                <Separator />
-                <div className="flex justify-between text-lg font-bold">
-                  <span>Grand Total:</span>
-                  <span>₹{totals.grandTotal.toFixed(2)}</span>
+
+                <Separator className="my-8" />
+
+                {/* Items Section */}
+                <div className="mb-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Items</h3>
+                    <ProductSearchDialog
+                      products={Array.isArray(products) ? products : []}
+                      saleType={form.watch("saleType")}
+                      existingItems={fields.map((field, index) => {
+                        const productId = form.watch(`saleItems.${index}.productId`);
+                        const product = Array.isArray(products) ? products.find(p => p.productId === productId) : null;
+                        if (!product) return null;
+                        return {
+                          ...product,
+                          quantity: form.watch(`saleItems.${index}.quantity`) || 1,
+                          discountAmount: form.watch(`saleItems.${index}.discount`) || 0
+                        };
+                      }).filter((item): item is NonNullable<typeof item> => item !== null)}
+                      onSelect={(selectedProducts) => {
+                        // Replace all items with new selection
+                        form.setValue('saleItems', []);
+                        selectedProducts.forEach((product) => {
+                          const rate = form.watch("saleType") === 'RETAIL' ? product.retailRate : product.wholesaleRate;
+                          append({
+                            productId: product.productId,
+                            quantity: product.quantity,
+                            unitPrice: rate,
+                            discount: product.discountAmount || 0,
+                            discountType: "AMOUNT"
+                          });
+                        });
+                      }}
+                      trigger={
+                        <Button size="sm" className="bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white border-0">
+                          <Plus className="mr-2 h-4 w-4" />
+                          Add Items
+                        </Button>
+                      }
+                    />
+                  </div>
+
+                  <div className="border rounded-lg overflow-hidden">
+                    <div className="grid grid-cols-12 gap-4 p-4 bg-gray-50 font-semibold text-sm">
+                      <div className="col-span-3">Product</div>
+                      <div className="col-span-1">HSN</div>
+                      <div className="col-span-1">Qty</div>
+                      <div className="col-span-1">Rate</div>
+                      <div className="col-span-2">Discount</div>
+                      <div className="col-span-1">CGST</div>
+                      <div className="col-span-1">SGST</div>
+                      <div className="col-span-1">Total</div>
+                      <div className="col-span-1">Action</div>
+                    </div>
+
+                    {fields.length === 0 ? (
+                      <div className="p-8 text-center text-gray-500">
+                        <Package className="mx-auto h-12 w-12 mb-4 text-gray-400" />
+                        <p>No items added yet. Click "Add Items" to get started.</p>
+                      </div>
+                    ) : fields.map((field, index) => {
+                      const selectedProduct = Array.isArray(products) ? products.find(p => p.productId === form.watch(`saleItems.${index}.productId`)) : null;
+                      const quantity = form.watch(`saleItems.${index}.quantity`) || 0;
+                      const discount = form.watch(`saleItems.${index}.discount`) || 0;
+                      const discountType = form.watch(`saleItems.${index}.discountType`) || "AMOUNT";
+                      
+                      let itemTotal = 0;
+                      let cgstAmount = 0;
+                      let sgstAmount = 0;
+                      
+                      if (selectedProduct) {
+                        const saleType = form.watch("saleType");
+                        const unitPrice = saleType === 'RETAIL' ? selectedProduct.retailRate : selectedProduct.wholesaleRate;
+                        
+                        const baseAmount = unitPrice * quantity;
+                        let discountAmount = 0;
+                        
+                        if (discountType === 'PERCENTAGE') {
+                          discountAmount = (baseAmount * discount) / 100;
+                        } else {
+                          discountAmount = discount;
+                        }
+                        
+                        itemTotal = baseAmount - discountAmount;
+                        
+                        // Calculate CGST/SGST for display only (not added to total)
+                        cgstAmount = (itemTotal * (selectedProduct.cgst || 0)) / 100;
+                        sgstAmount = (itemTotal * (selectedProduct.sgst || 0)) / 100;
+                      }
+
+                      return (
+                        <div key={field.id} className="grid grid-cols-12 gap-4 p-4 border-b items-center">
+                          <div className="col-span-3">
+                            <div className="text-sm font-medium">
+                              {selectedProduct ? selectedProduct.name : 'Unknown Product'}
+                            </div>
+                          </div>
+                          
+                          <div className="col-span-1 text-sm text-gray-600">
+                            {selectedProduct?.hsn || '-'}
+                          </div>
+                          
+                          <div className="col-span-1">
+                            <FormField
+                              control={form.control}
+                              name={`saleItems.${index}.quantity`}
+                              render={({ field }) => (
+                                <Input
+                                  type="text"
+                                  value={field.value || ''}
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    // Allow empty string or valid numbers
+                                    if (value === '' || /^\d+$/.test(value)) {
+                                      const qty = value === '' ? '' : parseInt(value);
+                                      field.onChange(qty);
+                                    }
+                                  }}
+                                  onBlur={(e) => {
+                                    // Ensure minimum value on blur
+                                    const value = e.target.value;
+                                    if (value === '' || parseInt(value) < 1) {
+                                      field.onChange(1);
+                                    }
+                                  }}
+                                  className="text-center h-8"
+                                />
+                              )}
+                            />
+                          </div>
+                          
+                          <div className="col-span-1">
+                            <div className="text-sm text-center">
+                              ₹{selectedProduct ? (form.watch("saleType") === 'RETAIL' ? selectedProduct.retailRate : selectedProduct.wholesaleRate).toFixed(2) : '0.00'}
+                            </div>
+                          </div>
+                          
+                          <div className="col-span-2">
+                            <div className="flex space-x-1">
+                              <FormField
+                                control={form.control}
+                                name={`saleItems.${index}.discount`}
+                                render={({ field }) => (
+                                  <Input
+                                    type="text"
+                                    value={field.value || ''}
+                                    onChange={(e) => {
+                                      const value = e.target.value;
+                                      // Allow empty string or valid decimal numbers
+                                      if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                                        const discount = value === '' ? '' : parseFloat(value) || 0;
+                                        field.onChange(discount);
+                                      }
+                                    }}
+                                    onBlur={(e) => {
+                                      // Ensure minimum value on blur
+                                      const value = e.target.value;
+                                      if (value === '') {
+                                        field.onChange(0);
+                                      }
+                                    }}
+                                    className="flex-1 h-8"
+                                  />
+                                )}
+                              />
+                              <FormField
+                                control={form.control}
+                                name={`saleItems.${index}.discountType`}
+                                render={({ field }) => (
+                                  <Select onValueChange={field.onChange} value={field.value}>
+                                    <SelectTrigger className="w-16">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="PERCENTAGE">%</SelectItem>
+                                      <SelectItem value="AMOUNT">₹</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                )}
+                              />
+                            </div>
+                          </div>
+                          
+                          <div className="col-span-1 text-sm text-gray-600">
+                            {form.watch("billType") === 'GST' && selectedProduct ? (
+                              <div>
+                                <div>{selectedProduct.cgst || 0}%</div>
+                                <div className="text-xs">₹{cgstAmount.toFixed(2)}</div>
+                              </div>
+                            ) : '-'}
+                          </div>
+                          
+                          <div className="col-span-1 text-sm text-gray-600">
+                            {form.watch("billType") === 'GST' && selectedProduct ? (
+                              <div>
+                                <div>{selectedProduct.sgst || 0}%</div>
+                                <div className="text-xs">₹{sgstAmount.toFixed(2)}</div>
+                              </div>
+                            ) : '-'}
+                          </div>
+                          
+                          <div className="col-span-1 font-semibold">
+                            ₹{itemTotal.toFixed(2)}
+                          </div>
+                          
+                          <div className="col-span-1">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => remove(index)}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
+                            >
+                              <Trash2 className="h-4 w-4 text-red-600" />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <Separator className="my-8" />
+
+                {/* Totals Section */}
+                <div className="flex justify-end">
+                  <div className="w-96 space-y-4">
+                    {/* Overall Discount - Display Only */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600">Overall Discount:</span>
+                      <span className="font-semibold text-gray-900">₹{totals.itemDiscounts.toFixed(2)}</span>
+                    </div>
+
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span>Total (Before Discount):</span>
+                        <span className="font-semibold">₹{totals.itemsBeforeDiscount.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-gray-600">
+                        <span>Item Discounts:</span>
+                        <span>-₹{totals.itemDiscounts.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Subtotal (After Discount):</span>
+                        <span className="font-semibold">₹{totals.subtotal.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-gray-600">
+                        <span>Total CGST:</span>
+                        <span>₹{totals.items.reduce((sum, item) => sum + (item?.cgstAmount || 0), 0).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-gray-600">
+                        <span>Total SGST:</span>
+                        <span>₹{totals.items.reduce((sum, item) => sum + (item?.sgstAmount || 0), 0).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-gray-600">
+                        <span>Total Tax (Not included):</span>
+                        <span>₹{totals.totalTax.toFixed(2)}</span>
+                      </div>
+                    </div>
+
+                    <Separator />
+                    
+                    {/* Additional Discount Section */}
+                    <div className="space-y-3 p-3 bg-gray-50 rounded-lg">
+                      <label className="text-sm font-medium text-gray-700">Additional Discount</label>
+                      <div className="flex items-center space-x-2">
+                        <FormField
+                          control={form.control}
+                          name="additionalDiscount"
+                          render={({ field }) => (
+                            <Input
+                              type="text"
+                              value={field.value === 0 ? '' : field.value.toString()}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                                  const discount = value === '' ? 0 : parseFloat(value) || 0;
+                                  field.onChange(discount);
+                                }
+                              }}
+                              onBlur={(e) => {
+                                const value = e.target.value;
+                                if (value === '') {
+                                  field.onChange(0);
+                                }
+                              }}
+                              placeholder="0.00"
+                              className="flex-1"
+                            />
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="additionalDiscountType"
+                          render={({ field }) => (
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <SelectTrigger className="w-20">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="PERCENTAGE">%</SelectItem>
+                                <SelectItem value="AMOUNT">₹</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
+                      </div>
+                      {totals.additionalDiscountAmount > 0 && (
+                        <div className="flex justify-between text-sm text-gray-600">
+                          <span>Additional Discount Amount:</span>
+                          <span>- ₹{totals.additionalDiscountAmount.toFixed(2)}</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex justify-between text-xl font-bold">
+                      <span>Grand Total:</span>
+                      <span>₹{totals.grandTotal.toFixed(2)}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600">Amount Paid:</span>
+                      <FormField
+                        control={form.control}
+                        name="amountPaid"
+                        render={({ field }) => (
+                          <Input
+                            type="text"
+                            value={field.value === 0 ? '' : field.value.toString()}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              // Allow empty string or valid decimal numbers
+                              if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                                const amount = value === '' ? 0 : parseFloat(value) || 0;
+                                field.onChange(amount);
+                              }
+                            }}
+                            onBlur={(e) => {
+                              const value = e.target.value;
+                              if (value === '') {
+                                field.onChange(0);
+                              }
+                            }}
+                            className="w-32 text-right"
+                          />
+                        )}
+                      />
+                    </div>
+                    
+                    <div className="flex justify-between text-lg font-semibold">
+                      <span>Balance:</span>
+                      <span className={totals.grandTotal - (form.watch("amountPaid") || 0) > 0 ? "text-red-600" : "text-green-600"}>
+                        ₹{(totals.grandTotal - (form.watch("amountPaid") || 0)).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator className="my-8" />
+
+                {/* Additional Fields */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  <div>
+                    <FormField
+                      control={form.control}
+                      name="remark"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Remarks (Optional)</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} placeholder="Enter any remarks..." />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div>
+                    <FormField
+                      control={form.control}
+                      name="termsAndConditions"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Terms and Conditions (Optional)</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} placeholder="Enter terms and conditions..." />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                {/* Bottom Action Buttons */}
+                <div className="flex justify-end pt-8 border-t">
+                  <Button 
+                    type="submit"
+                    disabled={!selectedCustomer || !selectedShop || fields.length === 0 || createInvoiceMutation.isPending || updateInvoiceMutation.isPending}
+                    className="bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white border-0"
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    {isEditMode ? (updateInvoiceMutation.isPending ? "Updating..." : "Update Invoice") : (createInvoiceMutation.isPending ? "Creating..." : "Create Invoice")}
+                  </Button>
+                </div>
+
+              </CardContent>
+            </Card>
+          </form>
+        </Form>
+
+        {/* Preview Dialog */}
+        <Dialog open={isPreviewDialogOpen} onOpenChange={setIsPreviewDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Invoice Preview</DialogTitle>
+            </DialogHeader>
+            
+            {selectedCustomer && selectedShop && (
+              <div className="space-y-6 p-6 bg-white text-black">
+                {/* Invoice Header */}
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h2 className="text-2xl font-bold text-black">{selectedShop.name}</h2>
+                    <p className="text-gray-600">{selectedShop.place}</p>
+                    {selectedShop.gstNo && <p className="text-gray-600">GST: {selectedShop.gstNo}</p>}
+                    {selectedShop.phone && <p className="text-gray-600">Phone: {selectedShop.phone}</p>}
+                  </div>
+                  <div className="text-right">
+                    <h3 className="text-xl font-bold text-black">INVOICE</h3>
+                    <p className="text-gray-600">{new Date().toLocaleDateString()}</p>
+                  </div>
+                </div>
+
+                <Separator className="border-black" />
+
+                {/* Invoice Details */}
+                <div className="grid grid-cols-2 gap-8">
+                  <div>
+                    <h4 className="font-semibold text-black mb-2">Bill To:</h4>
+                    <p className="text-gray-600">{selectedCustomer.name}</p>
+                    <p className="text-gray-600">{selectedCustomer.place}</p>
+                    <p className="text-gray-600">{selectedCustomer.phone}</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-black mb-2">Payment Details:</h4>
+                    <p className="text-gray-600">Status: {form.watch("paymentStatus")}</p>
+                    <p className="text-gray-600">Mode: {form.watch("paymentMode")}</p>
+                    <p className="text-gray-600">Type: {form.watch("billType")} {form.watch("saleType")}</p>
+                  </div>
+                </div>
+
+                {/* Items Table */}
+                <div>
+                  <h4 className="font-semibold text-black mb-4">Items:</h4>
+                  <div className="border border-black">
+                    <table className="w-full">
+                      <thead className="bg-gray-100">
+                        <tr>
+                          <th className="border-b border-black p-2 text-left text-black">Product</th>
+                          <th className="border-b border-black p-2 text-right text-black">Qty</th>
+                          <th className="border-b border-black p-2 text-right text-black">Rate</th>
+                          <th className="border-b border-black p-2 text-right text-black">Discount</th>
+                          <th className="border-b border-black p-2 text-right text-black">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {totals.items.map((item, index) => (
+                          <tr key={index}>
+                            <td className="border-b border-black p-2 text-black">{item?.product?.name || 'Product'}</td>
+                            <td className="border-b border-black p-2 text-right text-black">{item?.quantity}</td>
+                            <td className="border-b border-black p-2 text-right text-black">₹{item?.unitPrice?.toFixed(2)}</td>
+                            <td className="border-b border-black p-2 text-right text-black">₹{(item?.discountAmount || 0).toFixed(2)}</td>
+                            <td className="border-b border-black p-2 text-right text-black">₹{item?.totalPrice?.toFixed(2)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Totals */}
+                <div className="flex justify-end">
+                  <div className="w-64 space-y-2">
+                    <div className="flex justify-between text-black">
+                      <span>Total (Before Discount):</span>
+                      <span>₹{totals.itemsBeforeDiscount.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-gray-600">
+                      <span>Item Discounts:</span>
+                      <span>- ₹{totals.itemDiscounts.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-black">
+                      <span>Subtotal (After Item Discounts):</span>
+                      <span>₹{totals.subtotal.toFixed(2)}</span>
+                    </div>
+                    {totals.additionalDiscountAmount > 0 && (
+                      <div className="flex justify-between text-gray-600">
+                        <span>Additional Discount:</span>
+                        <span>- ₹{totals.additionalDiscountAmount.toFixed(2)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-gray-600">
+                      <span>Total CGST:</span>
+                      <span>₹{totals.items.reduce((sum, item) => sum + (item?.cgstAmount || 0), 0).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-gray-600">
+                      <span>Total SGST:</span>
+                      <span>₹{totals.items.reduce((sum, item) => sum + (item?.sgstAmount || 0), 0).toFixed(2)}</span>
+                    </div>
+                    <Separator className="border-black" />
+                    <div className="flex justify-between font-bold text-lg text-black">
+                      <span>Grand Total:</span>
+                      <span>₹{totals.grandTotal.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-black">
+                      <span>Amount Paid:</span>
+                      <span>₹{(form.watch("amountPaid") || 0).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between font-semibold text-black">
+                      <span>Balance:</span>
+                      <span>₹{(totals.grandTotal - (form.watch("amountPaid") || 0)).toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Remarks */}
+                {form.watch("remark") && (
+                  <div>
+                    <h4 className="font-semibold text-black mb-2">Remarks:</h4>
+                    <p className="text-gray-600">{form.watch("remark")}</p>
+                  </div>
+                )}
+
+                {/* Terms and Conditions */}
+                <div className="mt-8">
+                  <h4 className="font-semibold text-black mb-2">Terms and Conditions:</h4>
+                  <div className="text-sm text-gray-600 space-y-1">
+                    <p>1. Payment is due within 30 days of invoice date.</p>
+                    <p>2. Late payments may incur additional charges.</p>
+                    <p>3. Goods once sold cannot be returned without prior approval.</p>
+                    <p>4. Any disputes must be resolved within 7 days of delivery.</p>
+                  </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            )}
+          </DialogContent>
+        </Dialog>
 
-          {/* Payment Information */}
-          <Card>
-            <CardContent className="pt-6">
-              <h3 className="text-lg font-semibold mb-4">Payment Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="paymentMode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Payment Mode</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="CASH">Cash</SelectItem>
-                          <SelectItem value="CARD">Card</SelectItem>
-                          <SelectItem value="UPI">UPI</SelectItem>
-                          <SelectItem value="CHEQUE">Cheque</SelectItem>
-                          <SelectItem value="BANK_TRANSFER">Bank Transfer</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+        {/* Back Warning Dialog */}
+        <AlertDialog open={showBackWarning} onOpenChange={setShowBackWarning}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+              <AlertDialogDescription>
+                You have unsaved changes that will be lost if you leave this page. Are you sure you want to continue?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setShowBackWarning(false)}>
+                Stay on Page
+              </AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirmNavigation} className="bg-red-600 hover:bg-red-700">
+                Leave Page
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
-                <FormField
-                  control={form.control}
-                  name="amountPaid"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Amount Paid</FormLabel>
-                      <FormControl>
-                        <Input type="number" step="0.01" min="0" {...field} onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+        {/* Customer Search Dialog */}
+        <CustomerSearchDialog
+          open={isCustomerSearchDialogOpen}
+          onOpenChange={setIsCustomerSearchDialogOpen}
+          customers={Array.isArray(customers) ? customers : []}
+          selectedCustomer={selectedCustomer}
+          onSelectCustomer={handleSelectCustomer}
+        />
+
+        {/* Success Dialog */}
+        <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-center text-green-600 text-xl font-semibold">
+                Invoice Created Successfully!
+              </DialogTitle>
+            </DialogHeader>
+            
+            {createdInvoiceData && (
+              <div className="space-y-6 py-4">
+                <div className="text-center space-y-2">
+                  <p className="text-gray-600">Customer: {createdInvoiceData.customer?.name}</p>
+                  <p className="text-lg font-semibold">₹{createdInvoiceData.totals?.grandTotal.toFixed(2)}</p>
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-green-600 font-medium">PAID</span>
+                  </div>
+                </div>
+                
+                <div className="flex flex-col gap-3">
+                  <Button 
+                    onClick={() => {
+                      downloadInvoicePDF();
+                      setShowSuccessDialog(false);
+                    }}
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download Invoice
+                  </Button>
+                  
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      setShowSuccessDialog(false);
+                      setLocation("/dashboard?tab=invoices");
+                    }}
+                    className="w-full"
+                  >
+                    Go to Dashboard
+                  </Button>
+                </div>
               </div>
-
-              <FormField
-                control={form.control}
-                name="remark"
-                render={({ field }) => (
-                  <FormItem className="mt-4">
-                    <FormLabel>Remarks (Optional)</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} rows={3} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          {/* Action Buttons */}
-          <div className="flex justify-end space-x-4">
-            <Link href="/dashboard">
-              <Button type="button" variant="outline">
-                Cancel
-              </Button>
-            </Link>
-            <Button type="submit" disabled={createInvoiceMutation.isPending}>
-              {createInvoiceMutation.isPending ? (
-                "Creating..."
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Create Invoice
-                </>
-              )}
-            </Button>
-          </div>
-        </form>
-      </Form>
-
-      {/* Customer Search Dialog */}
-      <Dialog open={isCustomerSearchDialogOpen} onOpenChange={setIsCustomerSearchDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Select Customer</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 max-h-96 overflow-y-auto">
-            {Array.isArray(customers) && customers.map((customer: any) => (
-              <div
-                key={customer.customerId}
-                className="border rounded-lg p-4 cursor-pointer hover:bg-gray-50"
-                onClick={() => selectCustomer(customer)}
-              >
-                <h4 className="font-medium">{customer.name}</h4>
-                <p className="text-sm text-gray-600">{customer.place}</p>
-                <p className="text-sm text-gray-600">{customer.phone}</p>
-              </div>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Add Customer Dialog */}
-      <Dialog open={isAddCustomerDialogOpen} onOpenChange={setIsAddCustomerDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add New Customer</DialogTitle>
-          </DialogHeader>
-          <Form {...customerForm}>
-            <form onSubmit={customerForm.handleSubmit(onAddCustomer)} className="space-y-4">
-              <FormField
-                control={customerForm.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={customerForm.control}
-                name="place"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Place</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={customerForm.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex justify-end space-x-2">
-                <Button type="button" variant="outline" onClick={() => setIsAddCustomerDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={addCustomerMutation.isPending}>
-                  {addCustomerMutation.isPending ? "Adding..." : "Add Customer"}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Product Search Dialog */}
-      <Dialog open={isProductDialogOpen} onOpenChange={setIsProductDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Select Product</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 max-h-96 overflow-y-auto">
-            {Array.isArray(products) && products.map((product: any) => (
-              <div
-                key={product.productId}
-                className="border rounded-lg p-4 cursor-pointer hover:bg-gray-50"
-                onClick={() => {
-                  const currentIndex = fields.findIndex(f => f.id === fields[fields.length - 1].id);
-                  selectProduct(product, currentIndex);
-                }}
-              >
-                <h4 className="font-medium">{product.name}</h4>
-                <p className="text-sm text-gray-600">HSN: {product.hsn}</p>
-                <p className="text-sm text-gray-600">Retail Price: ₹{product.retailPrice}</p>
-                <p className="text-sm text-gray-600">Wholesale Price: ₹{product.wholesalePrice}</p>
-              </div>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Success Dialog */}
-      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Invoice Created Successfully!</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <p>Your invoice has been created and saved successfully.</p>
-            <div className="flex justify-end space-x-2">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  generatePDF();
-                  setShowSuccessDialog(false);
-                }}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Download PDF
-              </Button>
-              <Button
-                onClick={() => {
-                  setShowSuccessDialog(false);
-                  setLocation("/dashboard");
-                }}
-              >
-                Go to Dashboard
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+            )}
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 }
