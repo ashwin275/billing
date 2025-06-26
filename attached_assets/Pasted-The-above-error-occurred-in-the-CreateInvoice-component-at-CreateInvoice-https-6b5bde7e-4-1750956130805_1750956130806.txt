@@ -1,0 +1,26 @@
+The above error occurred in the <CreateInvoice> component:
+
+    at CreateInvoice (https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.dev/src/pages/create-invoice.tsx:74:27)
+    at ProtectedRoute (https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.dev/src/components/auth/protected-route.tsx:19:42)
+    at Route (https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=1930ed40:323:16)
+    at Switch (https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=1930ed40:379:17)
+    at Router (https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.dev/src/App.tsx:36:37)
+    at Provider (https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-JCDXHMNF.js?v=1930ed40:38:15)
+    at TooltipProvider (https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=1930ed40:60:5)
+    at QueryClientProvider (https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=1930ed40:2805:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ chunk-WERSD76P.js?v=1930ed40:14032Understand this error
+chunk-WERSD76P.js?v=1930ed40:9129 Uncaught TypeError: Cannot read properties of undefined (reading 'toFixed')
+    at CreateInvoice (create-invoice.tsx:2595:67)
+    at renderWithHooks (chunk-WERSD76P.js?v=1930ed40:11548:26)
+    at mountIndeterminateComponent (chunk-WERSD76P.js?v=1930ed40:14926:21)
+    at beginWork (chunk-WERSD76P.js?v=1930ed40:15914:22)
+    at beginWork$1 (chunk-WERSD76P.js?v=1930ed40:19753:22)
+    at performUnitOfWork (chunk-WERSD76P.js?v=1930ed40:19198:20)
+    at workLoopSync (chunk-WERSD76P.js?v=1930ed40:19137:13)
+    at renderRootSync (chunk-WERSD76P.js?v=1930ed40:19116:15)
+    at recoverFromConcurrentError (chunk-WERSD76P.js?v=1930ed40:18736:28)
+    at performSyncWorkOnRoot (chunk-WERSD76P.js?v=1930ed40:18879:28)
