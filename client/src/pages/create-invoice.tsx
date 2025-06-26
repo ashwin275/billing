@@ -1471,21 +1471,24 @@ export default function CreateInvoice() {
             <Button 
               variant="outline"
               onClick={() => {
+                if (!selectedCustomer || !selectedShop) return;
+                
                 const formData = form.getValues();
+                const totals = calculateTotals();
                 
                 const invoiceData = {
                   invoiceDate: new Date().toISOString(),
                   shop: {
-                    name: selectedShop?.name || "Shop Name",
-                    place: selectedShop?.place || "Shop Address",
-                    gstNo: selectedShop?.gstNo || "",
-                    phone: selectedShop?.phone || "",
+                    name: selectedShop.name,
+                    place: selectedShop.place,
+                    gstNo: selectedShop.gstNo || "",
+                    phone: selectedShop.phone || "",
                     tagline: "Quality Products & Services"
                   },
                   customer: {
-                    name: selectedCustomer?.name || "Customer",
-                    place: selectedCustomer?.place || "Address",
-                    phone: selectedCustomer?.phone?.toString() || "Phone"
+                    name: selectedCustomer.name,
+                    place: selectedCustomer.place,
+                    phone: selectedCustomer.phone?.toString() || ""
                   },
                   paymentDetails: {
                     paymentStatus: formData.paymentStatus,
@@ -1507,7 +1510,7 @@ export default function CreateInvoice() {
                   <!DOCTYPE html>
                   <html>
                     <head>
-                      <title>Invoice ${invoiceNo}</title>
+                      <title>Invoice Preview</title>
                       <style>
                         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
                         
@@ -1804,7 +1807,6 @@ export default function CreateInvoice() {
                             </div>
                             <div class="invoice-title">
                               <div class="invoice-meta">
-                                <div><strong>Invoice #:</strong> ${invoiceData.invoiceNo}</div>
                                 <div><strong>Date:</strong> ${new Date(invoiceData.invoiceDate).toLocaleDateString()}</div>
                               </div>
                             </div>
