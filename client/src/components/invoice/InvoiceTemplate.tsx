@@ -337,6 +337,9 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
           </div>
           <div className="invoice-meta">
             <h2>INVOICE</h2>
+            {invoice.invoiceNo && (
+              <div className="invoice-number">#{invoice.invoiceNo}</div>
+            )}
             <div className="invoice-date">
               {new Date(invoice.invoiceDate).toLocaleDateString('en-IN', {
                 year: 'numeric',
