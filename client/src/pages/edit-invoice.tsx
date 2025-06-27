@@ -577,7 +577,7 @@ export default function EditInvoice() {
                         .header-content {
                           position: relative;
                           z-index: 2;
-                          color: white;
+                          color: #000000;
                           padding: 25px 40px;
                           display: flex;
                           justify-content: space-between;
@@ -677,7 +677,7 @@ export default function EditInvoice() {
                         
                         .items-table thead tr {
                           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                          color: white;
+                          color: #000000;
                         }
                         
                         .items-table th {
@@ -806,12 +806,12 @@ export default function EditInvoice() {
                         
                         .btn-close {
                           background: #e53e3e;
-                          color: white;
+                          color: #000000;
                         }
                         
                         .btn-print {
                           background: #4299e1;
-                          color: white;
+                          color: #000000;
                         }
                         
                         @media print {
@@ -1053,7 +1053,7 @@ export default function EditInvoice() {
                         .header-content {
                           position: relative;
                           z-index: 2;
-                          color: white;
+                          color: #000000;
                           padding: 25px 40px;
                           display: flex;
                           justify-content: space-between;
@@ -1153,7 +1153,7 @@ export default function EditInvoice() {
                         
                         .items-table thead tr {
                           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                          color: white;
+                          color: #000000;
                         }
                         
                         .items-table th {
