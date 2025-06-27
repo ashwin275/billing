@@ -33,10 +33,15 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
     }, 0) || 0;
   };
 
+  const calculateTotalItemDiscounts = () => {
+    return invoice.saleItems?.reduce((sum, item) => sum + (item.discount || 0), 0) || 0;
+  };
+
   const subtotal = calculateSubtotal();
   const totalTax = calculateTotalTax();
   const totalCGST = calculateTotalCGST();
   const totalSGST = calculateTotalSGST();
+  const totalItemDiscounts = calculateTotalItemDiscounts();
   const grandTotal = invoice.totalAmount || 0;
   const balance = grandTotal - (invoice.amountPaid || 0);
 
@@ -557,7 +562,11 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
               <span>₹{subtotal.toFixed(2)}</span>
             </div>
             <div className="total-row">
-              <span>Discount:</span>
+              <span>Total discount:</span>
+              <span>- ₹{totalItemDiscounts.toFixed(2)}</span>
+            </div>
+            <div className="total-row">
+              <span>Round off:</span>
               <span>- ₹{(invoice.discount || 0).toFixed(2)}</span>
             </div>
             <div className="total-row">
