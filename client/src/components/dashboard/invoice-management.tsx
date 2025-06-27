@@ -417,6 +417,8 @@ export default function InvoiceManagementClean() {
                   <div class="company-details">
                     <h1>${invoiceData.shop?.name || 'Shop Name'}</h1>
                     <p class="company-tagline">Quality Products & Services</p>
+                    ${invoiceData.shop?.gstNo ? `<p style="font-size: 10px; margin-top: 3px;">GST: ${invoiceData.shop.gstNo}</p>` : ''}
+                    ${invoiceData.shop?.phone ? `<p style="font-size: 10px; margin-top: 2px;">📞 ${invoiceData.shop.phone}</p>` : ''}
                   </div>
                 </div>
                 <div class="invoice-meta">

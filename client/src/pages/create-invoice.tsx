@@ -544,6 +544,8 @@ export default function CreateInvoice() {
       shop: {
         name: shop.name,
         place: shop.place,
+        gstNo: shop.gstNo || "",
+        phone: shop.phone || "",
         tagline: "Quality Products & Services"
       },
       customer: {
@@ -841,6 +843,8 @@ export default function CreateInvoice() {
                               <div class="company-info">
                                 <h1>${previewData.shop.name}</h1>
                                 <div class="company-tagline">${previewData.shop.tagline}</div>
+                                ${previewData.shop.gstNo ? `<div style="font-size: 11px; margin-top: 3px; opacity: 0.9;">GST: ${previewData.shop.gstNo}</div>` : ''}
+                                ${previewData.shop.phone ? `<div style="font-size: 11px; margin-top: 2px; opacity: 0.9;">📞 ${previewData.shop.phone}</div>` : ''}
                               </div>
                             </div>
                             <div class="invoice-title">
@@ -1002,6 +1006,8 @@ export default function CreateInvoice() {
                   shop: {
                     name: selectedShop.name,
                     place: selectedShop.place,
+                    gstNo: selectedShop.gstNo || "",
+                    phone: selectedShop.phone || "",
                     tagline: "Quality Products & Services"
                   },
                   customer: {
@@ -1344,6 +1350,8 @@ export default function CreateInvoice() {
                               <div class="company-info">
                                 <h1>${previewData.shop.name}</h1>
                                 <div class="company-tagline">${previewData.shop.tagline}</div>
+                                ${previewData.shop.gstNo ? `<div style="font-size: 11px; margin-top: 3px; opacity: 0.9;">GST: ${previewData.shop.gstNo}</div>` : ''}
+                                ${previewData.shop.phone ? `<div style="font-size: 11px; margin-top: 2px; opacity: 0.9;">📞 ${previewData.shop.phone}</div>` : ''}
                               </div>
                             </div>
                             <div class="invoice-title">
