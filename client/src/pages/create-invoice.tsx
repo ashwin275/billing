@@ -2684,34 +2684,13 @@ export default function CreateInvoice() {
         </AlertDialog>
 
         {/* Customer Search Dialog */}
-        <Dialog open={isCustomerSearchDialogOpen} onOpenChange={setIsCustomerSearchDialogOpen}>
-          <DialogContent className="sm:max-w-[700px] max-h-[600px]">
-            <DialogHeader>
-              <DialogTitle>Select Customer</DialogTitle>
-            </DialogHeader>
-            <div className="max-h-[400px] overflow-y-auto">
-              <div className="space-y-2">
-                {customers.map((customer) => (
-                  <div 
-                    key={customer.customerId} 
-                    className="flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-gray-50"
-                    onClick={() => {
-                      handleSelectCustomer(customer);
-                      setIsCustomerSearchDialogOpen(false);
-                    }}
-                  >
-                    <div>
-                      <h3 className="font-medium">{customer.name}</h3>
-                      <p className="text-sm text-gray-500">{customer.place}</p>
-                      <p className="text-sm text-gray-500">{customer.phone}</p>
-                    </div>
-                    <Button size="sm">Select</Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <CustomerSearchDialog
+          open={isCustomerSearchDialogOpen}
+          onOpenChange={setIsCustomerSearchDialogOpen}
+          customers={customers}
+          selectedCustomer={selectedCustomer}
+          onSelectCustomer={handleSelectCustomer}
+        />
 
         {/* Add Customer Dialog */}
         <Dialog open={isAddCustomerDialogOpen} onOpenChange={setIsAddCustomerDialogOpen}>
