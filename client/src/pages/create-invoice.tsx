@@ -2519,7 +2519,7 @@ export default function CreateInvoice() {
                     {/* Overall Discount - Display Only */}
                     <div className="flex items-center justify-between">
                       <span className="text-gray-600">Overall Discount:</span>
-                      <span className="font-semibold text-gray-900">₹{totals.itemDiscounts.toFixed(2)}</span>
+                      <span className="font-semibold text-gray-900">₹{(totals.itemDiscounts + (totals.additionalDiscountAmount || 0)).toFixed(2)}</span>
                     </div>
 
                     <div className="space-y-2 text-sm">
@@ -2605,10 +2605,10 @@ export default function CreateInvoice() {
                           )}
                         />
                       </div>
-                      <div className="text-sm text-gray-600 space-y-1">
-                        <div className="flex justify-between">
-                          <span>Additional Discount Amount:</span>
-                          <span>₹{(totals.additionalDiscountAmount || 0).toFixed(2)}</span>
+                      <div className="text-sm text-gray-600 space-y-1 mt-4">
+                        <div className="flex justify-between border-b border-gray-300 pb-1">
+                          <span className="underline">Additional Discount Amount:</span>
+                          <span className="underline">₹{(totals.additionalDiscountAmount || 0).toFixed(2)}</span>
                         </div>
                       </div>
                     </div>
