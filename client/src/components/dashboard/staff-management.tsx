@@ -59,19 +59,43 @@ interface Shop {
 const staffApi = {
   async getAllStaffs(): Promise<Staff[]> {
     const token = getAuthToken();
-    const response = await fetch("https://billing-backend.serins.in/api/users/shop/getstaff", {
-      method: "GET",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
+    try {
+      const response = await fetch("https://billing-backend.serins.in/api/users/shop/getstaff", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      });
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          // No staff found - return empty array
+          return [];
+        }
+        throw new Error(`Failed to fetch staff data (Status: ${response.status})`);
       }
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      
+      const text = await response.text();
+      if (!text || text.trim() === '') {
+        // Empty response - return empty array
+        return [];
+      }
+      
+      try {
+        const data = JSON.parse(text);
+        return Array.isArray(data) ? data : [];
+      } catch (jsonError) {
+        console.error('Failed to parse staff data:', jsonError);
+        return [];
+      }
+    } catch (error) {
+      console.error('Staff API error:', error);
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error('Unable to connect to server. Please check your internet connection.');
+      }
+      throw error;
     }
-    
-    return response.json();
   },
   
   async addStaff(staffData: StaffFormData): Promise<void> {
@@ -282,9 +306,18 @@ export default function StaffManagement() {
   if (error) {
     return (
       <div className="flex justify-center p-8">
-        <div className="text-center">
-          <h2 className="text-lg font-bold text-red-600 mb-2">Error Loading Staff</h2>
-          <p className="text-gray-600">Failed to load staff data: {error?.message || 'Unknown error'}</p>
+        <div className="text-center space-y-4">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-red-700 mb-2">Unable to Load Staff</h2>
+            <p className="text-red-600 mb-4">{error?.message || 'Failed to connect to the server'}</p>
+            <Button 
+              variant="outline" 
+              onClick={() => window.location.reload()}
+              className="border-red-300 text-red-700 hover:bg-red-50"
+            >
+              Try Again
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -580,8 +613,21 @@ export default function StaffManagement() {
               <TableBody>
                 {paginatedStaffs.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                      {searchTerm ? "No staff members found matching your search" : "No staff members found"}
+                    <TableCell colSpan={5} className="text-center py-12">
+                      <div className="flex flex-col items-center space-y-3">
+                        <Users className="h-12 w-12 text-gray-400" />
+                        {searchTerm ? (
+                          <div className="text-center">
+                            <p className="text-gray-600 font-medium">No staff members found</p>
+                            <p className="text-sm text-gray-500">Try adjusting your search term</p>
+                          </div>
+                        ) : (
+                          <div className="text-center">
+                            <p className="text-gray-600 font-medium">No staff members yet</p>
+                            <p className="text-sm text-gray-500">Add your first staff member to get started</p>
+                          </div>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : (
