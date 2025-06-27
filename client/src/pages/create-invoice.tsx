@@ -2607,8 +2607,8 @@ export default function CreateInvoice() {
                       </div>
                       <div className="text-sm text-gray-600 space-y-1 mt-4">
                         <div className="flex justify-between border-b border-gray-300 pb-1">
-                          <span className="underline">Additional Discount Amount:</span>
-                          <span className="underline">₹{(totals.additionalDiscountAmount || 0).toFixed(2)}</span>
+                          <span>Additional Discount Amount:</span>
+                          <span>₹{(totals.additionalDiscountAmount || 0).toFixed(2)}</span>
                         </div>
                       </div>
                     </div>
