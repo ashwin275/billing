@@ -2519,7 +2519,7 @@ export default function CreateInvoice() {
                     {/* Overall Discount - Display Only */}
                     <div className="flex items-center justify-between">
                       <span className="text-gray-600">Overall Discount:</span>
-                      <span className="font-semibold text-gray-900">₹{totals.itemDiscounts.toFixed(2)}</span>
+                      <span className="font-semibold text-gray-900">₹{(totals.itemDiscounts + (totals.additionalDiscountAmount || 0)).toFixed(2)}</span>
                     </div>
 
                     <div className="space-y-2 text-sm">
@@ -2605,8 +2605,8 @@ export default function CreateInvoice() {
                           )}
                         />
                       </div>
-                      <div className="text-sm text-gray-600 space-y-1">
-                        <div className="flex justify-between">
+                      <div className="text-sm text-gray-600 space-y-1 mt-4">
+                        <div className="flex justify-between border-b border-gray-300 pb-1">
                           <span>Additional Discount Amount:</span>
                           <span>₹{(totals.additionalDiscountAmount || 0).toFixed(2)}</span>
                         </div>
@@ -2684,34 +2684,13 @@ export default function CreateInvoice() {
         </AlertDialog>
 
         {/* Customer Search Dialog */}
-        <Dialog open={isCustomerSearchDialogOpen} onOpenChange={setIsCustomerSearchDialogOpen}>
-          <DialogContent className="sm:max-w-[700px] max-h-[600px]">
-            <DialogHeader>
-              <DialogTitle>Select Customer</DialogTitle>
-            </DialogHeader>
-            <div className="max-h-[400px] overflow-y-auto">
-              <div className="space-y-2">
-                {customers.map((customer) => (
-                  <div 
-                    key={customer.customerId} 
-                    className="flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-gray-50"
-                    onClick={() => {
-                      handleSelectCustomer(customer);
-                      setIsCustomerSearchDialogOpen(false);
-                    }}
-                  >
-                    <div>
-                      <h3 className="font-medium">{customer.name}</h3>
-                      <p className="text-sm text-gray-500">{customer.place}</p>
-                      <p className="text-sm text-gray-500">{customer.phone}</p>
-                    </div>
-                    <Button size="sm">Select</Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <CustomerSearchDialog
+          open={isCustomerSearchDialogOpen}
+          onOpenChange={setIsCustomerSearchDialogOpen}
+          customers={customers}
+          selectedCustomer={selectedCustomer}
+          onSelectCustomer={handleSelectCustomer}
+        />
 
         {/* Add Customer Dialog */}
         <Dialog open={isAddCustomerDialogOpen} onOpenChange={setIsAddCustomerDialogOpen}>
