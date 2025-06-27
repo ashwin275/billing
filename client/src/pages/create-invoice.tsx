@@ -1410,8 +1410,12 @@ export default function CreateInvoice() {
                                 <span>₹${(previewData.totals.subtotal || 0).toFixed(2)}</span>
                               </div>
                               <div class="total-line">
-                                <span>Total Discount:</span>
-                                <span>- ₹${((previewData.totals.itemDiscounts || 0) + (previewData.totals.additionalDiscountAmount || 0)).toFixed(2)}</span>
+                                <span>Total discount:</span>
+                                <span>- ₹${(previewData.totals.itemDiscounts || 0).toFixed(2)}</span>
+                              </div>
+                              <div class="total-line">
+                                <span>Round off:</span>
+                                <span>- ₹${(previewData.totals.additionalDiscountAmount || 0).toFixed(2)}</span>
                               </div>
                               <div class="total-line">
                                 <span>Total CGST:</span>
@@ -1866,8 +1870,12 @@ export default function CreateInvoice() {
                                 <span>₹${invoiceData.totals.subtotal.toFixed(2)}</span>
                               </div>
                               <div class="total-line">
-                                <span>Total Discount:</span>
-                                <span>- ₹${(invoiceData.totals.itemDiscounts + (invoiceData.totals.additionalDiscountAmount || 0)).toFixed(2)}</span>
+                                <span>Total discount:</span>
+                                <span>- ₹${invoiceData.totals.itemDiscounts.toFixed(2)}</span>
+                              </div>
+                              <div class="total-line">
+                                <span>Round off:</span>
+                                <span>- ₹${(invoiceData.totals.additionalDiscountAmount || 0).toFixed(2)}</span>
                               </div>
                               <div class="total-line">
                                 <span>Total CGST:</span>

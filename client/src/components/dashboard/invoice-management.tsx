@@ -501,8 +501,13 @@ export default function InvoiceManagementClean() {
                     <span>₹${(invoiceData.tax || 0).toFixed(2)}</span>
                   </div>
                   <div class="total-row">
-                    <span>Discount:</span>
-                    <span>₹${(invoiceData.discount || 0).toFixed(2)}</span>
+                    <span>Total discount:</span>
+                    <span>- ₹${(invoiceData.saleItems && invoiceData.saleItems.length > 0 ? 
+                      invoiceData.saleItems.reduce((total, item) => total + (item.discount || 0), 0) : 0).toFixed(2)}</span>
+                  </div>
+                  <div class="total-row">
+                    <span>Round off:</span>
+                    <span>- ₹${(invoiceData.discount || 0).toFixed(2)}</span>
                   </div>
                   <div class="total-row grand-total">
                     <span>Total Amount:</span>

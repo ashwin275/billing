@@ -97,6 +97,7 @@ This is a React-based billing dashboard application built for managing invoices,
 
 ## Changelog
 
+- June 27, 2025: Updated discount display logic across all PDF functions - Invoice Management (backend data) now shows "Total discount:" as sum of item discounts and "Round off:" as discount field from backend; Create invoice preview (before creation) shows "Total discount:" as sum of item discounts and "Round off:" as Additional Discount Amount; fixed discount labels in downloadInvoicePDF, invoice-management.tsx, invoice-management-clean.tsx, and create invoice preview functions
 - June 27, 2025: Updated Products Management to use purchasePrice field from API response instead of ourPrice for displaying purchase price data; changed all "Our Price" labels to "Purchase Price" throughout the interface
 - June 27, 2025: Added customer search functionality to both create and edit invoice pages - replaced basic customer dropdown with advanced search dialog that allows searching by customer name, phone number, and location with pagination (5 customers per page) and real-time filtering
 - June 26, 2025: Removed "Type" field from all PDF downloads including All Invoices page by fixing both invoice-management.tsx and invoice-management-clean.tsx components; enhanced PDF styling for maximum print contrast by removing gray backgrounds, using white backgrounds with thick black borders (4-5px), Arial Black fonts for all headings, and ultra-bold font weights (900) throughout for professional black and white printing
