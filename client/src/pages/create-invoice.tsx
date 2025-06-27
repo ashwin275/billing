@@ -201,8 +201,9 @@ export default function CreateInvoice() {
         duration: 4000,
       });
       
-      // Store created invoice data for the popup
+      // Store created invoice data with backend response
       setCreatedInvoiceData({
+        invoiceResponse: data, // Full backend response including invoiceId, invoiceNo
         invoiceNumber: variables.transactionId,
         customer: selectedCustomer,
         shop: selectedShop,
@@ -530,13 +531,15 @@ export default function CreateInvoice() {
   };
 
   // @ts-ignore
-  // Download PDF function - using exact same design as preview
+  // Download PDF function - using exact same design as preview  
   const downloadInvoicePDF = () => {
     if (!createdInvoiceData) return;
     
-    const { customer, shop, totals, formData } = createdInvoiceData;
+    const { customer, shop, totals, formData, invoiceResponse } = createdInvoiceData;
     
     const previewData = {
+      invoiceId: invoiceResponse?.invoiceId || null,
+      invoiceNo: invoiceResponse?.invoiceNo || null,
       invoiceDate: new Date().toISOString(),
       shop: {
         name: shop.name,
@@ -568,7 +571,7 @@ export default function CreateInvoice() {
                   <!DOCTYPE html>
                   <html>
                     <head>
-                      <title>Invoice Preview - ${previewData.invoiceNo}</title>
+                      <title>Invoice ${previewData.invoiceNo || previewData.invoiceId ? `- ${previewData.invoiceNo || previewData.invoiceId}` : ''}</title>
                       <style>
                         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
                         
@@ -843,6 +846,7 @@ export default function CreateInvoice() {
                             <div class="invoice-title">
                               <h2>INVOICE</h2>
                               <div class="invoice-meta">
+                                ${previewData.invoiceNo ? `<div style="font-weight: 600; margin-bottom: 3px;">${previewData.invoiceNo}</div>` : ''}
                                 <div>${new Date(previewData.invoiceDate).toLocaleDateString('en-GB')}</div>
                               </div>
                             </div>
@@ -904,8 +908,12 @@ export default function CreateInvoice() {
                                 <span>₹${(previewData.totals.subtotal || 0).toFixed(2)}</span>
                               </div>
                               <div class="total-line">
-                                <span>Total Discount:</span>
-                                <span>- ₹${((previewData.totals.itemDiscounts || 0) + (previewData.totals.additionalDiscountAmount || 0)).toFixed(2)}</span>
+                                <span>Total discount:</span>
+                                <span>- ₹${(previewData.totals.itemDiscounts || 0).toFixed(2)}</span>
+                              </div>
+                              <div class="total-line">
+                                <span>Round off:</span>
+                                <span>- ₹${(previewData.totals.additionalDiscountAmount || 0).toFixed(2)}</span>
                               </div>
                               <div class="total-line">
                                 <span>Total CGST:</span>
