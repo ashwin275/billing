@@ -157,11 +157,12 @@ export default function InvoiceManagementClean() {
             
             .invoice-header {
               background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-              color: white;
-              padding: 30px;
+              color: #000000;
+              padding: 40px 30px;
               position: relative;
               overflow: hidden;
               flex-shrink: 0;
+              min-height: 140px;
             }
             
             .invoice-header::after {
@@ -288,7 +289,7 @@ export default function InvoiceManagementClean() {
             }
             
             .items-table th {
-              color: white;
+              color: #000000;
               font-weight: 600;
               padding: 10px 8px;
               text-align: left;
@@ -417,6 +418,8 @@ export default function InvoiceManagementClean() {
                   <div class="company-details">
                     <h1>${invoiceData.shop?.name || 'Shop Name'}</h1>
                     <p class="company-tagline">Quality Products & Services</p>
+                    ${invoiceData.shop?.gstNo ? `<p style="font-size: 10px; margin-top: 3px;">GST: ${invoiceData.shop.gstNo}</p>` : ''}
+                    ${invoiceData.shop?.phone ? `<p style="font-size: 10px; margin-top: 2px;">📞 ${invoiceData.shop.phone}</p>` : ''}
                   </div>
                 </div>
                 <div class="invoice-meta">
@@ -501,8 +504,13 @@ export default function InvoiceManagementClean() {
                     <span>₹${(invoiceData.tax || 0).toFixed(2)}</span>
                   </div>
                   <div class="total-row">
-                    <span>Discount:</span>
-                    <span>₹${(invoiceData.discount || 0).toFixed(2)}</span>
+                    <span>Total discount:</span>
+                    <span>- ₹${(invoiceData.saleItems && invoiceData.saleItems.length > 0 ? 
+                      invoiceData.saleItems.reduce((total, item) => total + (item.discount || 0), 0) : 0).toFixed(2)}</span>
+                  </div>
+                  <div class="total-row">
+                    <span>Round off:</span>
+                    <span>- ₹${(invoiceData.discount || 0).toFixed(2)}</span>
                   </div>
                   <div class="total-row grand-total">
                     <span>Total Amount:</span>

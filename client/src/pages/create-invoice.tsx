@@ -201,8 +201,9 @@ export default function CreateInvoice() {
         duration: 4000,
       });
       
-      // Store created invoice data for the popup
+      // Store created invoice data with backend response
       setCreatedInvoiceData({
+        invoiceResponse: data, // Full backend response including invoiceId, invoiceNo
         invoiceNumber: variables.transactionId,
         customer: selectedCustomer,
         shop: selectedShop,
@@ -530,17 +531,21 @@ export default function CreateInvoice() {
   };
 
   // @ts-ignore
-  // Download PDF function - using exact same design as preview
+  // Download PDF function - using exact same design as preview  
   const downloadInvoicePDF = () => {
     if (!createdInvoiceData) return;
     
-    const { customer, shop, totals, formData } = createdInvoiceData;
+    const { customer, shop, totals, formData, invoiceResponse } = createdInvoiceData;
     
     const previewData = {
+      invoiceId: invoiceResponse?.invoiceId || null,
+      invoiceNo: invoiceResponse?.invoiceNo || null,
       invoiceDate: new Date().toISOString(),
       shop: {
         name: shop.name,
         place: shop.place,
+        gstNo: shop.gstNo || "",
+        phone: shop.phone || "",
         tagline: "Quality Products & Services"
       },
       customer: {
@@ -568,7 +573,7 @@ export default function CreateInvoice() {
                   <!DOCTYPE html>
                   <html>
                     <head>
-                      <title>Invoice Preview - ${previewData.invoiceNo}</title>
+                      <title>Invoice ${previewData.invoiceNo || previewData.invoiceId ? `- ${previewData.invoiceNo || previewData.invoiceId}` : ''}</title>
                       <style>
                         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
                         
@@ -594,7 +599,7 @@ export default function CreateInvoice() {
                         
                         .header-wave {
                           background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-                          height: 120px;
+                          height: 140px;
                           position: relative;
                           overflow: hidden;
                         }
@@ -613,7 +618,7 @@ export default function CreateInvoice() {
                         .header-content {
                           position: relative;
                           z-index: 2;
-                          color: white;
+                          color: #000000;
                           padding: 25px 40px;
                           display: flex;
                           justify-content: space-between;
@@ -713,7 +718,7 @@ export default function CreateInvoice() {
                         
                         .items-table thead tr {
                           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                          color: white;
+                          color: #000000;
                         }
                         
                         .items-table th {
@@ -838,11 +843,14 @@ export default function CreateInvoice() {
                               <div class="company-info">
                                 <h1>${previewData.shop.name}</h1>
                                 <div class="company-tagline">${previewData.shop.tagline}</div>
+                                ${previewData.shop.gstNo ? `<div style="font-size: 11px; margin-top: 3px; opacity: 0.9;">GST: ${previewData.shop.gstNo}</div>` : ''}
+                                ${previewData.shop.phone ? `<div style="font-size: 11px; margin-top: 2px; opacity: 0.9;">📞 ${previewData.shop.phone}</div>` : ''}
                               </div>
                             </div>
                             <div class="invoice-title">
                               <h2>INVOICE</h2>
                               <div class="invoice-meta">
+                                ${previewData.invoiceNo ? `<div style="font-weight: 600; margin-bottom: 3px;">${previewData.invoiceNo}</div>` : ''}
                                 <div>${new Date(previewData.invoiceDate).toLocaleDateString('en-GB')}</div>
                               </div>
                             </div>
@@ -871,6 +879,7 @@ export default function CreateInvoice() {
                             <thead>
                               <tr>
                                 <th class="text-left">Item Description</th>
+                                <th class="text-center">HSN</th>
                                 <th class="text-center">Qty.</th>
                                 <th class="text-right">Price</th>
                                 <th class="text-right">Discount</th>
@@ -885,6 +894,7 @@ export default function CreateInvoice() {
                                   <td class="text-left">
                                     <div style="font-weight: 600; color: #000000; font-weight: 700;">${item?.product?.name || 'N/A'}</div>
                                   </td>
+                                  <td class="text-center">${item?.product?.hsn || 'N/A'}</td>
                                   <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
                                   <td class="text-right">₹${item?.unitPrice?.toFixed(2) || '0.00'}</td>
                                   <td class="text-right">₹${item?.discountAmount?.toFixed(2) || '0.00'}</td>
@@ -904,8 +914,12 @@ export default function CreateInvoice() {
                                 <span>₹${(previewData.totals.subtotal || 0).toFixed(2)}</span>
                               </div>
                               <div class="total-line">
-                                <span>Total Discount:</span>
-                                <span>- ₹${((previewData.totals.itemDiscounts || 0) + (previewData.totals.additionalDiscountAmount || 0)).toFixed(2)}</span>
+                                <span>Total discount:</span>
+                                <span>- ₹${(previewData.totals.itemDiscounts || 0).toFixed(2)}</span>
+                              </div>
+                              <div class="total-line">
+                                <span>Round off:</span>
+                                <span>- ₹${(previewData.totals.additionalDiscountAmount || 0).toFixed(2)}</span>
                               </div>
                               <div class="total-line">
                                 <span>Total CGST:</span>
@@ -994,6 +1008,8 @@ export default function CreateInvoice() {
                   shop: {
                     name: selectedShop.name,
                     place: selectedShop.place,
+                    gstNo: selectedShop.gstNo || "",
+                    phone: selectedShop.phone || "",
                     tagline: "Quality Products & Services"
                   },
                   customer: {
@@ -1047,7 +1063,7 @@ export default function CreateInvoice() {
                         
                         .header-wave {
                           background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-                          height: 120px;
+                          height: 140px;
                           position: relative;
                           overflow: hidden;
                         }
@@ -1066,7 +1082,7 @@ export default function CreateInvoice() {
                         .header-content {
                           position: relative;
                           z-index: 2;
-                          color: white;
+                          color: #000000;
                           padding: 25px 40px;
                           display: flex;
                           justify-content: space-between;
@@ -1166,7 +1182,7 @@ export default function CreateInvoice() {
                         
                         .items-table thead tr {
                           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                          color: white;
+                          color: #000000;
                         }
                         
                         .items-table th {
@@ -1295,12 +1311,12 @@ export default function CreateInvoice() {
                         
                         .btn-close {
                           background: #e53e3e;
-                          color: white;
+                          color: #000000;
                         }
                         
                         .btn-print {
                           background: #4299e1;
-                          color: white;
+                          color: #000000;
                         }
                         
                         @media print {
@@ -1336,6 +1352,8 @@ export default function CreateInvoice() {
                               <div class="company-info">
                                 <h1>${previewData.shop.name}</h1>
                                 <div class="company-tagline">${previewData.shop.tagline}</div>
+                                ${previewData.shop.gstNo ? `<div style="font-size: 11px; margin-top: 3px; opacity: 0.9;">GST: ${previewData.shop.gstNo}</div>` : ''}
+                                ${previewData.shop.phone ? `<div style="font-size: 11px; margin-top: 2px; opacity: 0.9;">📞 ${previewData.shop.phone}</div>` : ''}
                               </div>
                             </div>
                             <div class="invoice-title">
@@ -1369,6 +1387,7 @@ export default function CreateInvoice() {
                             <thead>
                               <tr>
                                 <th class="text-left">Item Description</th>
+                                <th class="text-center">HSN</th>
                                 <th class="text-center">Qty.</th>
                                 <th class="text-right">Price</th>
                                 <th class="text-right">Discount</th>
@@ -1383,6 +1402,7 @@ export default function CreateInvoice() {
                                   <td class="text-left">
                                     <div style="font-weight: 600; color: #000000; font-weight: 700;">${item?.product?.name || 'N/A'}</div>
                                   </td>
+                                  <td class="text-center">${item?.product?.hsn || 'N/A'}</td>
                                   <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
                                   <td class="text-right">₹${item?.unitPrice?.toFixed(2) || '0.00'}</td>
                                   <td class="text-right">₹${item?.discountAmount?.toFixed(2) || '0.00'}</td>
@@ -1402,8 +1422,12 @@ export default function CreateInvoice() {
                                 <span>₹${(previewData.totals.subtotal || 0).toFixed(2)}</span>
                               </div>
                               <div class="total-line">
-                                <span>Total Discount:</span>
-                                <span>- ₹${((previewData.totals.itemDiscounts || 0) + (previewData.totals.additionalDiscountAmount || 0)).toFixed(2)}</span>
+                                <span>Total discount:</span>
+                                <span>- ₹${(previewData.totals.itemDiscounts || 0).toFixed(2)}</span>
+                              </div>
+                              <div class="total-line">
+                                <span>Round off:</span>
+                                <span>- ₹${(previewData.totals.additionalDiscountAmount || 0).toFixed(2)}</span>
                               </div>
                               <div class="total-line">
                                 <span>Total CGST:</span>
@@ -1523,7 +1547,7 @@ export default function CreateInvoice() {
                         
                         .header-wave {
                           background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-                          height: 120px;
+                          height: 140px;
                           position: relative;
                           overflow: hidden;
                         }
@@ -1542,7 +1566,7 @@ export default function CreateInvoice() {
                         .header-content {
                           position: relative;
                           z-index: 2;
-                          color: white;
+                          color: #000000;
                           padding: 25px 40px;
                           display: flex;
                           justify-content: space-between;
@@ -1642,7 +1666,7 @@ export default function CreateInvoice() {
                         
                         .items-table thead tr {
                           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                          color: white;
+                          color: #000000;
                         }
                         
                         .items-table th {
@@ -1825,6 +1849,7 @@ export default function CreateInvoice() {
                             <thead>
                               <tr>
                                 <th class="text-left">Item Description</th>
+                                <th class="text-center">HSN</th>
                                 <th class="text-center">Qty.</th>
                                 <th class="text-right">Price</th>
                                 <th class="text-right">Discount</th>
@@ -1839,6 +1864,7 @@ export default function CreateInvoice() {
                                   <td class="text-left">
                                     <div style="font-weight: 600; color: #000000; font-weight: 700;">${item?.product?.name || 'N/A'}</div>
                                   </td>
+                                  <td class="text-center">${item?.product?.hsn || 'N/A'}</td>
                                   <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
                                   <td class="text-right">₹${item?.unitPrice?.toFixed(2) || '0.00'}</td>
                                   <td class="text-right">₹${item?.discountAmount?.toFixed(2) || '0.00'}</td>
@@ -1858,8 +1884,12 @@ export default function CreateInvoice() {
                                 <span>₹${invoiceData.totals.subtotal.toFixed(2)}</span>
                               </div>
                               <div class="total-line">
-                                <span>Total Discount:</span>
-                                <span>- ₹${(invoiceData.totals.itemDiscounts + (invoiceData.totals.additionalDiscountAmount || 0)).toFixed(2)}</span>
+                                <span>Total discount:</span>
+                                <span>- ₹${invoiceData.totals.itemDiscounts.toFixed(2)}</span>
+                              </div>
+                              <div class="total-line">
+                                <span>Round off:</span>
+                                <span>- ₹${(invoiceData.totals.additionalDiscountAmount || 0).toFixed(2)}</span>
                               </div>
                               <div class="total-line">
                                 <span>Total CGST:</span>

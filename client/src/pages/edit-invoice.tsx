@@ -558,7 +558,7 @@ export default function EditInvoice() {
                         
                         .header-wave {
                           background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-                          height: 120px;
+                          height: 140px;
                           position: relative;
                           overflow: hidden;
                         }
@@ -577,7 +577,7 @@ export default function EditInvoice() {
                         .header-content {
                           position: relative;
                           z-index: 2;
-                          color: white;
+                          color: #000000;
                           padding: 25px 40px;
                           display: flex;
                           justify-content: space-between;
@@ -677,7 +677,7 @@ export default function EditInvoice() {
                         
                         .items-table thead tr {
                           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                          color: white;
+                          color: #000000;
                         }
                         
                         .items-table th {
@@ -806,12 +806,12 @@ export default function EditInvoice() {
                         
                         .btn-close {
                           background: #e53e3e;
-                          color: white;
+                          color: #000000;
                         }
                         
                         .btn-print {
                           background: #4299e1;
-                          color: white;
+                          color: #000000;
                         }
                         
                         @media print {
@@ -882,6 +882,7 @@ export default function EditInvoice() {
                             <thead>
                               <tr>
                                 <th class="text-left">Item Description</th>
+                                <th class="text-center">HSN</th>
                                 <th class="text-center">Qty.</th>
                                 <th class="text-right">Price</th>
                                 <th class="text-right">Discount</th>
@@ -897,6 +898,7 @@ export default function EditInvoice() {
                                     <div style="font-weight: 600; color: #2d3748;">${item?.product?.name || 'N/A'}</div>
                                   </td>
                                   <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
+                                  <td class="text-center">${item?.product?.hsn || 'N/A'}</td>
                                   <td class="text-right">₹${item?.unitPrice?.toFixed(2) || '0.00'}</td>
                                   <td class="text-right">₹${item?.discountAmount?.toFixed(2) || '0.00'}</td>
                                   <td class="text-right">₹${(item?.cgstAmount || 0).toFixed(2)}</td>
@@ -1034,7 +1036,7 @@ export default function EditInvoice() {
                         
                         .header-wave {
                           background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-                          height: 120px;
+                          height: 140px;
                           position: relative;
                           overflow: hidden;
                         }
@@ -1053,7 +1055,7 @@ export default function EditInvoice() {
                         .header-content {
                           position: relative;
                           z-index: 2;
-                          color: white;
+                          color: #000000;
                           padding: 25px 40px;
                           display: flex;
                           justify-content: space-between;
@@ -1153,7 +1155,7 @@ export default function EditInvoice() {
                         
                         .items-table thead tr {
                           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                          color: white;
+                          color: #000000;
                         }
                         
                         .items-table th {
@@ -1352,6 +1354,7 @@ export default function EditInvoice() {
                                     <div style="font-weight: 600; color: #2d3748;">${item?.product?.name || 'N/A'}</div>
                                   </td>
                                   <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
+                                  <td class="text-center">${item?.product?.hsn || 'N/A'}</td>
                                   <td class="text-right">₹${item?.unitPrice?.toFixed(2) || '0.00'}</td>
                                   <td class="text-right">₹${item?.discountAmount?.toFixed(2) || '0.00'}</td>
                                   <td class="text-right">₹${(item?.cgstAmount || 0).toFixed(2)}</td>

@@ -33,10 +33,15 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
     }, 0) || 0;
   };
 
+  const calculateTotalItemDiscounts = () => {
+    return invoice.saleItems?.reduce((sum, item) => sum + (item.discount || 0), 0) || 0;
+  };
+
   const subtotal = calculateSubtotal();
   const totalTax = calculateTotalTax();
   const totalCGST = calculateTotalCGST();
   const totalSGST = calculateTotalSGST();
+  const totalItemDiscounts = calculateTotalItemDiscounts();
   const grandTotal = invoice.totalAmount || 0;
   const balance = grandTotal - (invoice.amountPaid || 0);
 
@@ -75,10 +80,11 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
 
         .invoice-header {
           background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-          color: white;
-          padding: 40px;
+          color: #000000;
+          padding: 50px 40px;
           position: relative;
           overflow: hidden;
+          min-height: 140px;
         }
 
         .invoice-header::after {
@@ -246,7 +252,17 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
           border-radius: 8px;
           overflow: hidden;
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          table-layout: fixed;
         }
+        
+        .items-table th:nth-child(1) { width: 30%; } /* Product */
+        .items-table th:nth-child(2) { width: 10%; } /* HSN */
+        .items-table th:nth-child(3) { width: 8%; }  /* Qty */
+        .items-table th:nth-child(4) { width: 12%; } /* Rate */
+        .items-table th:nth-child(5) { width: 12%; } /* Discount */
+        .items-table th:nth-child(6) { width: 9%; }  /* CGST */
+        .items-table th:nth-child(7) { width: 9%; }  /* SGST */
+        .items-table th:nth-child(8) { width: 10%; } /* Total */
 
         .items-table thead {
           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -460,6 +476,8 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
             <div className="company-details">
               <h1>{invoice.shop?.name || 'Shop Name'}</h1>
               <p className="company-tagline">Quality Products & Services</p>
+              {invoice.shop?.gstNo && <p style={{fontSize: '10px', marginTop: '3px'}}>GST: {invoice.shop.gstNo}</p>}
+              {invoice.shop?.phone && <p style={{fontSize: '10px', marginTop: '2px'}}>📞 {invoice.shop.phone}</p>}
             </div>
           </div>
           <div className="invoice-meta">
@@ -508,7 +526,7 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
           <thead>
             <tr>
               <th>Product</th>
-              <th>HSN</th>
+              <th style={{ textAlign: 'center' }}>HSN</th>
               <th className="text-right">Qty</th>
               <th className="text-right">Rate</th>
               <th className="text-right">Discount</th>
@@ -527,7 +545,7 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
                       {item.product?.description || ''}
                     </div>
                   </td>
-                  <td>{item.product?.hsn || 'N/A'}</td>
+                  <td style={{ textAlign: 'center' }}>{item.product?.hsn || 'N/A'}</td>
                   <td className="text-right">{item.quantity}</td>
                   <td className="text-right">₹{item.price?.toFixed(2) || '0.00'}</td>
                   <td className="text-right">₹{item.discount?.toFixed(2) || '0.00'}</td>
@@ -554,7 +572,11 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
               <span>₹{subtotal.toFixed(2)}</span>
             </div>
             <div className="total-row">
-              <span>Discount:</span>
+              <span>Total discount:</span>
+              <span>- ₹{totalItemDiscounts.toFixed(2)}</span>
+            </div>
+            <div className="total-row">
+              <span>Round off:</span>
               <span>- ₹{(invoice.discount || 0).toFixed(2)}</span>
             </div>
             <div className="total-row">
