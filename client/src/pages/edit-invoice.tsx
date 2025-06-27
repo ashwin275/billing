@@ -17,6 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { ProductSearchDialog } from "@/components/ui/product-search-dialog";
+import { CustomerSearchDialog } from "@/components/ui/customer-search-dialog";
 
 import { useToast } from "@/hooks/use-toast";
 
@@ -67,6 +68,7 @@ export default function EditInvoice() {
   const queryClient = useQueryClient();
   
   const [isAddCustomerDialogOpen, setIsAddCustomerDialogOpen] = useState(false);
+  const [isCustomerSearchDialogOpen, setIsCustomerSearchDialogOpen] = useState(false);
   const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [selectedShop, setSelectedShop] = useState<Shop | null>(null);
@@ -388,6 +390,12 @@ export default function EditInvoice() {
     console.log('Using UI totals:', { grandTotal: uiTotals.grandTotal, totalTax: uiTotals.totalTax });
 
     updateInvoiceMutation.mutate(invoiceInput);
+  };
+
+  // Handle customer selection
+  const handleSelectCustomer = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    form.setValue('customerId', customer.customerId);
   };
 
   // Handle add customer
@@ -1612,29 +1620,24 @@ export default function EditInvoice() {
                       </Dialog>
                     </div>
                     
-                    <FormField
-                      control={form.control}
-                      name="customerId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
-                            <FormControl>
-                              <SelectTrigger className="border-dashed border-2">
-                                <SelectValue placeholder="Select Customer" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {Array.isArray(customers) ? customers.map((customer) => (
-                                <SelectItem key={customer.customerId} value={customer.customerId.toString()}>
-                                  {customer.name} - {customer.place}
-                                </SelectItem>
-                              )) : null}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <div className="space-y-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full justify-start text-left h-12 border-dashed border-2"
+                        onClick={() => setIsCustomerSearchDialogOpen(true)}
+                      >
+                        <User className="h-4 w-4 mr-2" />
+                        {selectedCustomer ? (
+                          <div className="flex flex-col items-start">
+                            <span className="font-medium">{selectedCustomer.name} - {selectedCustomer.place}</span>
+                            <span className="text-xs text-gray-500">{selectedCustomer.phone}</span>
+                          </div>
+                        ) : (
+                          <span className="text-gray-500">Select Customer</span>
+                        )}
+                      </Button>
+                    </div>
                     
                     {selectedCustomer && (
                       <div className="mt-4 p-4 bg-gray-50 rounded border">
@@ -2250,6 +2253,15 @@ export default function EditInvoice() {
             )}
           </DialogContent>
         </Dialog>
+
+        {/* Customer Search Dialog */}
+        <CustomerSearchDialog
+          open={isCustomerSearchDialogOpen}
+          onOpenChange={setIsCustomerSearchDialogOpen}
+          customers={customers}
+          selectedCustomer={selectedCustomer}
+          onSelectCustomer={handleSelectCustomer}
+        />
       </div>
     </div>
   );
