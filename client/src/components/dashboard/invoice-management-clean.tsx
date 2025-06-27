@@ -157,7 +157,7 @@ export default function InvoiceManagementClean() {
             
             .invoice-header {
               background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-              color: white;
+              color: #000000;
               padding: 30px;
               position: relative;
               overflow: hidden;
@@ -288,7 +288,7 @@ export default function InvoiceManagementClean() {
             }
             
             .items-table th {
-              color: white;
+              color: #000000;
               font-weight: 600;
               padding: 10px 8px;
               text-align: left;
