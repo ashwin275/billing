@@ -942,7 +942,7 @@ export default function ProductsManagement() {
                           Wholesale: {formatCurrency(product.wholesaleRate || 0)}
                         </div>
                         <div className="text-xs text-slate-500">
-                          Our Price: {formatCurrency(product.ourPrice || 0)}
+                          Purchase Price: {formatCurrency(product.ourPrice || 0)}
                         </div>
                       </div>
                     </TableCell>
