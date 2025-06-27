@@ -75,10 +75,11 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
 
         .invoice-header {
           background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-          color: white;
-          padding: 40px;
+          color: #000000;
+          padding: 50px 40px;
           position: relative;
           overflow: hidden;
+          min-height: 140px;
         }
 
         .invoice-header::after {
@@ -460,6 +461,8 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
             <div className="company-details">
               <h1>{invoice.shop?.name || 'Shop Name'}</h1>
               <p className="company-tagline">Quality Products & Services</p>
+              {invoice.shop?.gstNo && <p style={{fontSize: '10px', marginTop: '3px'}}>GST: {invoice.shop.gstNo}</p>}
+              {invoice.shop?.phone && <p style={{fontSize: '10px', marginTop: '2px'}}>📞 {invoice.shop.phone}</p>}
             </div>
           </div>
           <div className="invoice-meta">

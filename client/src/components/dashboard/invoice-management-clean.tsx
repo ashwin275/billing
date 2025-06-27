@@ -158,10 +158,11 @@ export default function InvoiceManagementClean() {
             .invoice-header {
               background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
               color: #000000;
-              padding: 30px;
+              padding: 40px 30px;
               position: relative;
               overflow: hidden;
               flex-shrink: 0;
+              min-height: 140px;
             }
             
             .invoice-header::after {
