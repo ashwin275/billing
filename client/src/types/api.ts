@@ -150,6 +150,8 @@ export interface Invoice {
   remark: string;
   signature?: string;
   customerName?: string; // Added for compatibility
+  customerPhone?: string; // Customer phone number
+  customerLocation?: string; // Customer location
   shop: Shop;
   sales: {
     saleId: number | null;
