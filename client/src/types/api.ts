@@ -60,6 +60,7 @@ export interface Shop {
 export interface Product {
   productId: number;
   productNumber: string;
+  partNumber: string;
   hsn: number | string;
   name: string;
   description: string;
@@ -84,6 +85,7 @@ export interface Product {
 export interface ProductInput {
   name: string;
   productNumber: string;
+  partNumber: string;
   hsn: string;
   description: string;
   quantity: number;
