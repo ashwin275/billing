@@ -2090,7 +2090,7 @@ export default function CreateInvoice() {
                       <h3 className="text-lg font-semibold text-gray-900">Bill To:</h3>
                       <Dialog open={isAddCustomerDialogOpen} onOpenChange={setIsAddCustomerDialogOpen}>
                         <DialogTrigger asChild>
-                          <Button size="sm" className="bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white border-0">
+                          <Button type="button" size="sm" className="bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white border-0">
                             <Plus className="h-4 w-4 mr-2" />
                             Add Customer
                           </Button>
