@@ -61,10 +61,11 @@ const invoiceSchema = z.object({
 type InvoiceFormData = z.infer<typeof invoiceSchema>;
 
 const customerSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  place: z.string().min(1, "Place is required"),
-  phone: z.string().min(10, "Phone number must be at least 10 digits"),
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  place: z.string().min(2, "Place must be at least 2 characters"),
+  phone: z.string().min(10, "Phone number must be at least 10 digits").regex(/^\d+$/, "Phone number must contain only digits"),
   shopId: z.number().min(1, "Shop is required"),
+  customerType: z.string().min(1, "Please select a customer type"),
 });
 
 type CustomerFormData = z.infer<typeof customerSchema>;
@@ -167,9 +168,17 @@ export default function CreateInvoice() {
       name: "",
       place: "",
       phone: "",
-      shopId: 1,
+      shopId: 0,
+      customerType: "",
     },
   });
+
+  // Auto-select shop in customer form if only one is available
+  useEffect(() => {
+    if (Array.isArray(shops) && shops.length === 1 && !customerForm.getValues('shopId')) {
+      customerForm.setValue('shopId', shops[0].shopId);
+    }
+  }, [shops, customerForm]);
 
   // Create invoice mutation
   const createInvoiceMutation = useMutation({
@@ -425,6 +434,7 @@ export default function CreateInvoice() {
       place: data.place,
       phone: data.phone,
       shopId: data.shopId,
+      customerType: data.customerType,
     };
     addCustomerMutation.mutate(customerInput);
   };
@@ -2080,7 +2090,7 @@ export default function CreateInvoice() {
                       <h3 className="text-lg font-semibold text-gray-900">Bill To:</h3>
                       <Dialog open={isAddCustomerDialogOpen} onOpenChange={setIsAddCustomerDialogOpen}>
                         <DialogTrigger asChild>
-                          <Button size="sm" className="bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white border-0">
+                          <Button type="button" size="sm" className="bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white border-0">
                             <Plus className="h-4 w-4 mr-2" />
                             Add Customer
                           </Button>
@@ -2090,7 +2100,11 @@ export default function CreateInvoice() {
                             <DialogTitle>Add New Customer</DialogTitle>
                           </DialogHeader>
                           <Form {...customerForm}>
-                            <form onSubmit={customerForm.handleSubmit(onAddCustomer)} className="space-y-4">
+                            <form onSubmit={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              customerForm.handleSubmit(onAddCustomer)(e);
+                            }} className="space-y-4">
                               <FormField
                                 control={customerForm.control}
                                 name="name"
@@ -2126,6 +2140,29 @@ export default function CreateInvoice() {
                                     <FormControl>
                                       <Input {...field} placeholder="Enter phone number" />
                                     </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={customerForm.control}
+                                name="customerType"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Customer Type</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value}>
+                                      <FormControl>
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Select customer type" />
+                                        </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                        <SelectItem value="CUSTOMER">Customer</SelectItem>
+                                        <SelectItem value="DEALER">Dealer</SelectItem>
+                                        <SelectItem value="CREDIT">Credit</SelectItem>
+                                        <SelectItem value="SUBSCRIPTION">Subscription</SelectItem>
+                                      </SelectContent>
+                                    </Select>
                                     <FormMessage />
                                   </FormItem>
                                 )}
@@ -2722,77 +2759,6 @@ export default function CreateInvoice() {
           onSelectCustomer={handleSelectCustomer}
         />
 
-        {/* Add Customer Dialog */}
-        <Dialog open={isAddCustomerDialogOpen} onOpenChange={setIsAddCustomerDialogOpen}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Add New Customer</DialogTitle>
-            </DialogHeader>
-            <Form {...customerForm}>
-              <form onSubmit={customerForm.handleSubmit(onAddCustomer)} className="space-y-4">
-                <FormField
-                  control={customerForm.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Customer Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter customer name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={customerForm.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Phone Number</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="tel" 
-                          placeholder="Enter phone number" 
-                          {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={customerForm.control}
-                  name="place"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Address</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter address" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="flex justify-end space-x-2">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => setIsAddCustomerDialogOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    type="submit"
-                    disabled={addCustomerMutation.isPending}
-                  >
-                    {addCustomerMutation.isPending ? "Adding..." : "Add Customer"}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );
