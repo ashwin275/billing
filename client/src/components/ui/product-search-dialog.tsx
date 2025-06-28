@@ -51,6 +51,7 @@ export function ProductSearchDialog({
     return products.filter(product => {
       const matchesSearch = product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (product.productNumber && String(product.productNumber).toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (product.partNumber && String(product.partNumber).toLowerCase().includes(searchTerm.toLowerCase())) ||
         (product.barcode && String(product.barcode).toLowerCase().includes(searchTerm.toLowerCase())) ||
         (product.hsn && String(product.hsn).toLowerCase().includes(searchTerm.toLowerCase())) ||
         (product.category && product.category.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -201,7 +202,7 @@ export function ProductSearchDialog({
               <div className="relative flex-1">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search by name, product number, barcode..."
+                  placeholder="Search by name, product number, part number..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-8"

@@ -71,6 +71,7 @@ import { getAuthToken, decodeToken } from "@/lib/auth";
 // Form validation schema for products
 const productSchema = z.object({
   name: z.string().min(2, "Product name must be at least 2 characters"),
+  partNumber: z.string().min(1, "Part number is required"),
   hsn: z.string().min(1, "HSN code is required"),
   description: z.string().min(5, "Description must be at least 5 characters"),
   quantity: z.number().min(0, "Quantity must be 0 or greater"),
@@ -128,6 +129,7 @@ export default function ProductsManagement() {
     resolver: zodResolver(productSchema),
     defaultValues: {
       name: "",
+      partNumber: "",
       hsn: "",
       description: "",
       quantity: 0,
@@ -302,6 +304,7 @@ export default function ProductsManagement() {
     const productUpdate = {
       productId: productToEdit.productId,
       productNumber: productToEdit.productNumber,
+      partNumber: data.partNumber,
       hsn: typeof data.hsn === 'string' ? parseInt(data.hsn) : data.hsn,
       name: data.name,
       description: data.description,
@@ -341,6 +344,7 @@ export default function ProductsManagement() {
     setProductToEdit(product);
     editForm.reset({
       name: product.name,
+      partNumber: product.partNumber || "",
       hsn: product.hsn.toString(),
       description: product.description,
       quantity: product.quantity,
@@ -517,6 +521,20 @@ export default function ProductsManagement() {
                     {addForm.formState.errors.name && (
                       <p className="text-sm text-destructive">
                         {addForm.formState.errors.name.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="add-partNumber">Part Number</Label>
+                    <Input
+                      id="add-partNumber"
+                      {...addForm.register("partNumber")}
+                      placeholder="SGS24-128GB-BLK"
+                    />
+                    {addForm.formState.errors.partNumber && (
+                      <p className="text-sm text-destructive">
+                        {addForm.formState.errors.partNumber.message}
                       </p>
                     )}
                   </div>
@@ -1088,6 +1106,20 @@ export default function ProductsManagement() {
                 {editForm.formState.errors.name && (
                   <p className="text-sm text-destructive">
                     {editForm.formState.errors.name.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-partNumber">Part Number</Label>
+                <Input
+                  id="edit-partNumber"
+                  {...editForm.register("partNumber")}
+                  placeholder="SGS24-128GB-BLK"
+                />
+                {editForm.formState.errors.partNumber && (
+                  <p className="text-sm text-destructive">
+                    {editForm.formState.errors.partNumber.message}
                   </p>
                 )}
               </div>
