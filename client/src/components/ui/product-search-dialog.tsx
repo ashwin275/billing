@@ -227,7 +227,7 @@ export function ProductSearchDialog({
                   <TableRow>
                     <TableHead>Item Name</TableHead>
                     <TableHead>Item Code</TableHead>
-                    <TableHead>Sales Price</TableHead>
+                    <TableHead>Category</TableHead>
                     <TableHead>Purchase Price</TableHead>
                     <TableHead>Current Stock</TableHead>
                     <TableHead>Quantity</TableHead>
@@ -241,19 +241,20 @@ export function ProductSearchDialog({
                     return (
                       <TableRow key={product.productId}>
                         <TableCell>
-                          <div>
-                            <div className="font-medium">{product.name}</div>
-                            {product.category && (
-                              <Badge variant="secondary" className="text-xs mt-1">
-                                {product.category}
-                              </Badge>
-                            )}
-                          </div>
+                          <div className="font-medium">{product.name}</div>
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {product.hsn}
                         </TableCell>
-                        <TableCell>₹{rate}</TableCell>
+                        <TableCell>
+                          {product.category ? (
+                            <Badge variant="secondary" className="text-xs">
+                              {product.category}
+                            </Badge>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </TableCell>
                         <TableCell>₹{product.retailRate}</TableCell>
                         <TableCell>
                           <span className={`px-2 py-1 rounded text-xs ${
