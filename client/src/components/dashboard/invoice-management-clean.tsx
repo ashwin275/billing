@@ -443,10 +443,10 @@ export default function InvoiceManagementClean() {
                 <div class="billing-block">
                   <h3>Bill To</h3>
                   <div class="customer-name">
-                    ${invoiceData.sales?.customerId ? 'Customer Name' : 'Walk-in Customer'}
+                    ${invoiceData.customerName || 'Walk-in Customer'}
                   </div>
-                  <p>Phone: ${invoiceData.sales?.customerId || 'N/A'}</p>
-                  <p>Location: ${invoiceData.shop?.place || 'Shop Location'}</p>
+                  <p>Phone: ${invoiceData.customerPhone || 'N/A'}</p>
+                  <p>Location: ${invoiceData.customerLocation || 'N/A'}</p>
                 </div>
                 <div class="billing-block">
                   <h3>Payment Details</h3>
