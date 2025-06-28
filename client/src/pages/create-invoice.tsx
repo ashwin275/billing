@@ -2712,8 +2712,8 @@ export default function CreateInvoice() {
                     >
                       <Save className="h-4 w-4 mr-2" />
                       {isEditMode 
-                        ? (updateInvoiceMutation.isPending ? "Updating..." : "Update Invoice")
-                        : (createInvoiceMutation.isPending ? "Creating..." : "Create Invoice")
+                        ? (updateInvoiceMutation.isPending ? "Saving..." : "Save")
+                        : (createInvoiceMutation.isPending ? "Saving..." : "Save")
                       }
                     </Button>
                   </div>
