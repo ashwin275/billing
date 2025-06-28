@@ -2100,7 +2100,11 @@ export default function CreateInvoice() {
                             <DialogTitle>Add New Customer</DialogTitle>
                           </DialogHeader>
                           <Form {...customerForm}>
-                            <form onSubmit={customerForm.handleSubmit(onAddCustomer)} className="space-y-4">
+                            <form onSubmit={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              customerForm.handleSubmit(onAddCustomer)(e);
+                            }} className="space-y-4">
                               <FormField
                                 control={customerForm.control}
                                 name="name"
