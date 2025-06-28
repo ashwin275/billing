@@ -443,9 +443,9 @@ export default function InvoiceManagementClean() {
                 <div class="billing-block">
                   <h3>Bill To</h3>
                   <div class="customer-name">
-                    ${invoiceData.sales?.customerId ? 'Customer Name' : 'Walk-in Customer'}
+                    ${invoiceData.customerName || 'Walk-in Customer'}
                   </div>
-                  <p>Phone: ${invoiceData.sales?.customerId || 'N/A'}</p>
+                  <p>Phone: ${invoiceData.shop?.owner?.phone || 'N/A'}</p>
                   <p>Location: ${invoiceData.shop?.place || 'Shop Location'}</p>
                 </div>
                 <div class="billing-block">
