@@ -633,7 +633,7 @@ export default function ProductsManagement() {
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="add-retailRate">Retail Rate</Label>
+                    <Label htmlFor="add-retailRate">Sales Price</Label>
                     <Input
                       id="add-retailRate"
                       type="number"
@@ -1218,7 +1218,7 @@ export default function ProductsManagement() {
                 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-retailRate">Retail Rate</Label>
+                <Label htmlFor="edit-retailRate">Sales Price</Label>
                 <Input
                   id="edit-retailRate"
                   type="number"
