@@ -229,9 +229,10 @@ export function ProductSearchDialog({
                 <TableHeader className="sticky top-0 bg-white">
                   <TableRow>
                     <TableHead>Item Name</TableHead>
-                    <TableHead>Item Code</TableHead>
+                    <TableHead>Product Number</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead>Purchase Price</TableHead>
+                    <TableHead>Sales Price</TableHead>
                     <TableHead>Current Stock</TableHead>
                     <TableHead>Quantity</TableHead>
                   </TableRow>
@@ -247,7 +248,7 @@ export function ProductSearchDialog({
                           <div className="font-medium">{product.name}</div>
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
-                          {product.hsn}
+                          {product.productNumber}
                         </TableCell>
                         <TableCell>
                           {product.category ? (
@@ -258,7 +259,8 @@ export function ProductSearchDialog({
                             <span className="text-gray-400">-</span>
                           )}
                         </TableCell>
-                        <TableCell>₹{product.retailRate}</TableCell>
+                        <TableCell>₹{(product.purchasePrice || product.ourPrice || 0).toFixed(2)}</TableCell>
+                        <TableCell>₹{(product.retailRate || 0).toFixed(2)}</TableCell>
                         <TableCell>
                           <span className={`px-2 py-1 rounded text-xs ${
                             (product.quantity || 0) <= 5 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
