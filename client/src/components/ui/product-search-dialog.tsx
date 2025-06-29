@@ -50,6 +50,9 @@ export function ProductSearchDialog({
     
     return products.filter(product => {
       const matchesSearch = product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (product.productNumber && String(product.productNumber).toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (product.partNumber && String(product.partNumber).toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (product.barcode && String(product.barcode).toLowerCase().includes(searchTerm.toLowerCase())) ||
         (product.hsn && String(product.hsn).toLowerCase().includes(searchTerm.toLowerCase())) ||
         (product.category && product.category.toLowerCase().includes(searchTerm.toLowerCase()));
       
@@ -184,7 +187,7 @@ export function ProductSearchDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="w-[90vw] h-[90vh] max-w-[1200px] flex flex-col" aria-describedby="dialog-description">
+      <DialogContent className="w-[95vw] h-[90vh] max-w-[1600px] flex flex-col" aria-describedby="dialog-description">
         <DialogHeader>
           <DialogTitle>Add Items</DialogTitle>
           <DialogDescription id="dialog-description">
@@ -199,7 +202,7 @@ export function ProductSearchDialog({
               <div className="relative flex-1">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search Items"
+                  placeholder="Search by name, product number, part number..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-8"
@@ -226,9 +229,10 @@ export function ProductSearchDialog({
                 <TableHeader className="sticky top-0 bg-white">
                   <TableRow>
                     <TableHead>Item Name</TableHead>
-                    <TableHead>Item Code</TableHead>
-                    <TableHead>Sales Price</TableHead>
+                    <TableHead>Product Number</TableHead>
+                    <TableHead>Category</TableHead>
                     <TableHead>Purchase Price</TableHead>
+                    <TableHead>Sales Price</TableHead>
                     <TableHead>Current Stock</TableHead>
                     <TableHead>Quantity</TableHead>
                   </TableRow>
@@ -241,20 +245,22 @@ export function ProductSearchDialog({
                     return (
                       <TableRow key={product.productId}>
                         <TableCell>
-                          <div>
-                            <div className="font-medium">{product.name}</div>
-                            {product.category && (
-                              <Badge variant="secondary" className="text-xs mt-1">
-                                {product.category}
-                              </Badge>
-                            )}
-                          </div>
+                          <div className="font-medium">{product.name}</div>
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
-                          {product.hsn}
+                          {product.productNumber}
                         </TableCell>
-                        <TableCell>₹{rate}</TableCell>
-                        <TableCell>₹{product.retailRate}</TableCell>
+                        <TableCell>
+                          {product.category ? (
+                            <Badge variant="secondary" className="text-xs">
+                              {product.category}
+                            </Badge>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell>₹{(product.purchasePrice || product.ourPrice || 0).toFixed(2)}</TableCell>
+                        <TableCell>₹{(product.retailRate || 0).toFixed(2)}</TableCell>
                         <TableCell>
                           <span className={`px-2 py-1 rounded text-xs ${
                             (product.quantity || 0) <= 5 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'

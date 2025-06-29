@@ -16,6 +16,7 @@ import {
   MapPin,
   UserCircle,
   Shield,
+  AlertTriangle,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -98,16 +99,32 @@ export default function ProfileManagement() {
   const userId = decodedToken?.userId;
 
   // Fetch user profile
-  const { data: userProfile, isLoading: profileLoading } = useQuery({
+  const { data: userProfile, isLoading: profileLoading, error: profileError, isError: profileIsError } = useQuery({
     queryKey: ["user-profile", userId],
     queryFn: () => profileApi.getUserProfile(userId!),
     enabled: !!userId,
+    retry: (failureCount, error: any) => {
+      // Don't retry on 403 (Forbidden) errors
+      if (error?.response?.status === 403) {
+        return false;
+      }
+      // Retry up to 2 times for other errors
+      return failureCount < 2;
+    },
   });
 
   // Fetch countries for dropdown
-  const { data: countries = [] } = useQuery({
+  const { data: countries = [], error: countriesError, isError: countriesIsError } = useQuery({
     queryKey: ["countries"],
     queryFn: authApi.getCountries,
+    retry: (failureCount, error: any) => {
+      // Don't retry on 403 (Forbidden) errors
+      if (error?.response?.status === 403) {
+        return false;
+      }
+      // Retry up to 2 times for other errors
+      return failureCount < 2;
+    },
   });
 
   // Profile form
@@ -146,10 +163,24 @@ export default function ProfileManagement() {
       });
       queryClient.invalidateQueries({ queryKey: ["user-profile"] });
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
+      let errorMessage = "An unexpected error occurred while updating your profile.";
+      
+      if (error?.response?.status === 403) {
+        errorMessage = "Access denied. You don't have permission to update this profile.";
+      } else if (error?.response?.status === 401) {
+        errorMessage = "Session expired. Please log in again.";
+      } else if (error?.response?.status === 400) {
+        errorMessage = "Invalid profile data. Please check your information and try again.";
+      } else if (error?.response?.status === 500) {
+        errorMessage = "Server error. Please try again later.";
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+
       toast({
-        title: "Update Failed",
-        description: error.message,
+        title: "Profile Update Failed",
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -166,10 +197,24 @@ export default function ProfileManagement() {
       });
       passwordForm.reset();
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
+      let errorMessage = "An unexpected error occurred while changing your password.";
+      
+      if (error?.response?.status === 403) {
+        errorMessage = "Access denied. You don't have permission to change this password.";
+      } else if (error?.response?.status === 401) {
+        errorMessage = "Current password is incorrect. Please try again.";
+      } else if (error?.response?.status === 400) {
+        errorMessage = "Invalid password format. Please check the requirements and try again.";
+      } else if (error?.response?.status === 500) {
+        errorMessage = "Server error. Please try again later.";
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+
       toast({
         title: "Password Change Failed",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -209,14 +254,109 @@ export default function ProfileManagement() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <span className="ml-2 text-slate-600">Loading profile...</span>
       </div>
     );
   }
 
-  if (!userProfile) {
+  // Handle specific error cases
+  if (profileIsError && profileError) {
+    const errorStatus = (profileError as any)?.response?.status;
+    
+    if (errorStatus === 403) {
+      return (
+        <div className="text-center py-12">
+          <div className="mx-auto h-16 w-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+            <Shield className="h-8 w-8 text-red-600" />
+          </div>
+          <h3 className="text-lg font-semibold text-slate-900 mb-2">Access Denied</h3>
+          <p className="text-slate-600 mb-4">
+            You don't have permission to view this profile. Please contact an administrator.
+          </p>
+          <Button 
+            onClick={() => window.location.href = '/dashboard'}
+            variant="outline"
+          >
+            Return to Dashboard
+          </Button>
+        </div>
+      );
+    }
+
+    if (errorStatus === 401) {
+      return (
+        <div className="text-center py-12">
+          <div className="mx-auto h-16 w-16 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
+            <User className="h-8 w-8 text-yellow-600" />
+          </div>
+          <h3 className="text-lg font-semibold text-slate-900 mb-2">Session Expired</h3>
+          <p className="text-slate-600 mb-4">
+            Your session has expired. Please log in again to access your profile.
+          </p>
+          <Button 
+            onClick={() => window.location.href = '/auth/signin'}
+            variant="outline"
+          >
+            Sign In Again
+          </Button>
+        </div>
+      );
+    }
+
     return (
-      <div className="text-center py-8">
-        <p className="text-slate-600">Failed to load profile information.</p>
+      <div className="text-center py-12">
+        <div className="mx-auto h-16 w-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+          <AlertTriangle className="h-8 w-8 text-red-600" />
+        </div>
+        <h3 className="text-lg font-semibold text-slate-900 mb-2">Error Loading Profile</h3>
+        <p className="text-slate-600 mb-4">
+          {errorStatus === 500 
+            ? "Server error occurred. Please try again later." 
+            : "Failed to load profile information. Please try again."}
+        </p>
+        <div className="space-x-2">
+          <Button 
+            onClick={() => window.location.reload()}
+            variant="outline"
+          >
+            Retry
+          </Button>
+          <Button 
+            onClick={() => window.location.href = '/dashboard'}
+            variant="outline"
+          >
+            Return to Dashboard
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle empty response (profile exists but no data)
+  if (!userProfile || Object.keys(userProfile).length === 0) {
+    return (
+      <div className="text-center py-12">
+        <div className="mx-auto h-16 w-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+          <User className="h-8 w-8 text-blue-600" />
+        </div>
+        <h3 className="text-lg font-semibold text-slate-900 mb-2">Profile Not Found</h3>
+        <p className="text-slate-600 mb-4">
+          No profile information is available. This might be a new account or there was an issue retrieving your data.
+        </p>
+        <div className="space-x-2">
+          <Button 
+            onClick={() => window.location.reload()}
+            variant="outline"
+          >
+            Refresh Page
+          </Button>
+          <Button 
+            onClick={() => window.location.href = '/dashboard'}
+            variant="outline"
+          >
+            Return to Dashboard
+          </Button>
+        </div>
       </div>
     );
   }
@@ -373,14 +513,24 @@ export default function ProfileManagement() {
                         <SelectValue placeholder="Select country" />
                       </SelectTrigger>
                       <SelectContent>
-                        {countries.map((country: Country) => (
-                          <SelectItem
-                            key={country.countryId}
-                            value={country.countryId.toString()}
-                          >
-                            {country.country}
+                        {countriesIsError ? (
+                          <SelectItem value="error" disabled>
+                            Failed to load countries
                           </SelectItem>
-                        ))}
+                        ) : countries.length === 0 ? (
+                          <SelectItem value="loading" disabled>
+                            Loading countries...
+                          </SelectItem>
+                        ) : (
+                          countries.map((country: Country) => (
+                            <SelectItem
+                              key={country.countryId}
+                              value={country.countryId.toString()}
+                            >
+                              {country.country}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                     {profileForm.formState.errors.countryId && (

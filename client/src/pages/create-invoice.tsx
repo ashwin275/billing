@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -90,6 +91,7 @@ export default function CreateInvoice() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [selectedShop, setSelectedShop] = useState<Shop | null>(null);
+  const [autoRoundOff, setAutoRoundOff] = useState(false);
 
   // Fetch data
   const { data: products = [] } = useQuery({
@@ -370,7 +372,12 @@ export default function CreateInvoice() {
     }
     
     // Grand total is subtotal minus all discounts (item-level + additional)
-    const grandTotal = subtotal - additionalDiscountAmount;
+    let grandTotal = subtotal - additionalDiscountAmount;
+    
+    // Apply auto round-off if enabled
+    if (autoRoundOff) {
+      grandTotal = Math.round(grandTotal);
+    }
 
     console.log('Tax calculation debug:', { 
       subtotal, 
@@ -1969,8 +1976,8 @@ export default function CreateInvoice() {
             >
               <Save className="h-4 w-4 mr-2" />
               {isEditMode 
-                ? (updateInvoiceMutation.isPending ? "Updating..." : "Update Invoice")
-                : (createInvoiceMutation.isPending ? "Creating..." : "Create Invoice")
+                ? (updateInvoiceMutation.isPending ? "Saving..." : "Save")
+                : (createInvoiceMutation.isPending ? "Saving..." : "Save")
               }
             </Button>
           </div>
@@ -2614,6 +2621,20 @@ export default function CreateInvoice() {
                         <span className="font-semibold">Grand Total:</span>
                         <span className="font-semibold text-lg">₹{totals.grandTotal.toFixed(2)}</span>
                       </div>
+                      
+                      {/* Auto Round Off Toggle */}
+                      <div className="flex items-center justify-between pt-2 border-t">
+                        <span className="text-sm font-medium text-gray-700">Auto Round Off</span>
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            checked={autoRoundOff}
+                            onCheckedChange={setAutoRoundOff}
+                          />
+                          <span className="text-xs text-gray-500">
+                            {autoRoundOff ? 'ON' : 'OFF'}
+                          </span>
+                        </div>
+                      </div>
                     </div>
 
                     {/* Additional Discount Section */}
@@ -2691,8 +2712,8 @@ export default function CreateInvoice() {
                     >
                       <Save className="h-4 w-4 mr-2" />
                       {isEditMode 
-                        ? (updateInvoiceMutation.isPending ? "Updating..." : "Update Invoice")
-                        : (createInvoiceMutation.isPending ? "Creating..." : "Create Invoice")
+                        ? (updateInvoiceMutation.isPending ? "Saving..." : "Save")
+                        : (createInvoiceMutation.isPending ? "Saving..." : "Save")
                       }
                     </Button>
                   </div>

@@ -503,10 +503,10 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
           <div className="billing-block">
             <h3>Bill To</h3>
             <div className="customer-name">
-              {invoice.sales?.customerId ? 'Customer Name' : 'Walk-in Customer'}
+              {invoice.customerName || 'Walk-in Customer'}
             </div>
-            <p>Phone: {invoice.sales?.customerId || 'N/A'}</p>
-            <p>Location: {invoice.shop?.place || 'Shop Location'}</p>
+            <p>Phone: {invoice.customerPhone || 'N/A'}</p>
+            <p>Location: {invoice.customerLocation || 'N/A'}</p>
           </div>
           <div className="billing-block">
             <h3>Payment Details</h3>
