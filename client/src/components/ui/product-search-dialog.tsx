@@ -187,7 +187,7 @@ export function ProductSearchDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="w-[90vw] h-[90vh] max-w-[1200px] flex flex-col" aria-describedby="dialog-description">
+      <DialogContent className="w-[95vw] h-[90vh] max-w-[1600px] flex flex-col" aria-describedby="dialog-description">
         <DialogHeader>
           <DialogTitle>Add Items</DialogTitle>
           <DialogDescription id="dialog-description">
