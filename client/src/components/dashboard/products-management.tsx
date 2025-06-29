@@ -354,7 +354,7 @@ export default function ProductsManagement() {
     setProductToEdit(product);
     editForm.reset({
       name: product.name,
-      partNumber: product.partNumber || "",
+      partNumber: product.productNumber || "", // Map productNumber to partNumber for UI
       hsn: product.hsn.toString(),
       description: product.description,
       quantity: product.quantity,
