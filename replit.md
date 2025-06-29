@@ -97,6 +97,7 @@ This is a React-based billing dashboard application built for managing invoices,
 
 ## Changelog
 
+- June 29, 2025: Updated backend API calls to use productNumber instead of partNumber while maintaining partNumber in UI - modified ProductInput interface to remove partNumber field; updated add and edit product functions to map partNumber from UI to productNumber for API calls; maintained partNumber display and search functionality in frontend components
 - June 29, 2025: Changed "Retail Rate" label to "Sales Price" in Products Management add and edit product dialogs for consistent terminology across the application
 - June 28, 2025: Enhanced Profile Settings page with comprehensive error handling for 403 and empty responses - added specific error states for 403 (Access Denied), 401 (Session Expired), 500 (Server Error), and empty responses; implemented user-friendly error messages with action buttons for retry/navigation; enhanced mutation error handling with detailed status-specific messages; added countries dropdown error handling for failed API calls; improved loading states with descriptive text
 - June 28, 2025: Updated customer information display in invoices to use dedicated customer fields - added customerPhone and customerLocation fields to Invoice type definition; changed all invoice templates to display actual customer phone and location instead of shop owner data; updated InvoiceTemplate, invoice-management.tsx and invoice-management-clean.tsx components; now properly separates customer information from shop information in PDF generation

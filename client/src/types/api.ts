@@ -84,8 +84,7 @@ export interface Product {
 
 export interface ProductInput {
   name: string;
-  productNumber: string;
-  partNumber: string;
+  productNumber: string; // Backend expects productNumber instead of partNumber
   hsn: string;
   description: string;
   quantity: number;
