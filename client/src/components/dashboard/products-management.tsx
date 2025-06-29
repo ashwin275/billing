@@ -271,11 +271,22 @@ export default function ProductsManagement() {
     }
 
     const productInput: ProductInput = {
-      ...data,
-      productNumber: `P${Date.now()}`, // Auto-generate product number
-      purchasePrice: data.ourPrice, // Map ourPrice to purchasePrice for API
+      name: data.name,
+      productNumber: data.partNumber, // Map partNumber to productNumber for API
       hsn: data.hsn.toString(),
+      description: data.description,
+      quantity: data.quantity,
+      ourPrice: data.ourPrice,
+      purchasePrice: data.ourPrice, // Map ourPrice to purchasePrice for API
+      wholesaleRate: data.wholesaleRate,
+      retailRate: data.retailRate,
       taxRate: data.cgst + data.sgst, // Calculate tax rate from CGST + SGST
+      cgst: data.cgst,
+      sgst: data.sgst,
+      category: data.category,
+      imageUrl: data.imageUrl,
+      expiry: data.expiry,
+      barcode: data.barcode,
       shopId: shopId, // Use shopId from token
     };
     
@@ -303,8 +314,7 @@ export default function ProductsManagement() {
     
     const productUpdate = {
       productId: productToEdit.productId,
-      productNumber: productToEdit.productNumber,
-      partNumber: data.partNumber,
+      productNumber: data.partNumber, // Map partNumber to productNumber for API
       hsn: typeof data.hsn === 'string' ? parseInt(data.hsn) : data.hsn,
       name: data.name,
       description: data.description,
@@ -633,7 +643,7 @@ export default function ProductsManagement() {
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="add-retailRate">Retail Rate</Label>
+                    <Label htmlFor="add-retailRate">Sales Price</Label>
                     <Input
                       id="add-retailRate"
                       type="number"
@@ -1218,7 +1228,7 @@ export default function ProductsManagement() {
                 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-retailRate">Retail Rate</Label>
+                <Label htmlFor="edit-retailRate">Sales Price</Label>
                 <Input
                   id="edit-retailRate"
                   type="number"
