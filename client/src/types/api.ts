@@ -84,21 +84,21 @@ export interface Product {
 
 export interface ProductInput {
   name: string;
-  productNumber: string; // Backend expects productNumber instead of partNumber
-  hsn: string;
-  description: string;
-  quantity: number;
-  ourPrice: number;
-  purchasePrice: number;
-  wholesaleRate: number;
-  retailRate: number;
-  taxRate: number;
-  cgst: number;
-  sgst: number;
-  category: string;
-  imageUrl: string;
-  expiry: string;
-  barcode: string;
+  productNumber?: string; // Backend expects productNumber instead of partNumber
+  hsn?: string;
+  description?: string;
+  quantity?: number;
+  ourPrice?: number;
+  purchasePrice?: number;
+  wholesaleRate?: number;
+  retailRate?: number;
+  taxRate?: number;
+  cgst?: number;
+  sgst?: number;
+  category?: string;
+  imageUrl?: string;
+  expiry?: string;
+  barcode?: string;
   shopId: number;
 }
 
