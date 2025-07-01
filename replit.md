@@ -97,6 +97,7 @@ This is a React-based billing dashboard application built for managing invoices,
 
 ## Changelog
 
+- June 29, 2025: Updated Products Management forms to make only product name mandatory - modified productSchema to make all fields optional except name; updated ProductInput interface to support optional fields; enhanced add and edit product functions with default value handling; maintained comprehensive backend error response display in UI
 - June 29, 2025: Fixed Part Number auto-filling in Products Management edit form - updated handleEditProduct to map productNumber from backend to partNumber field in UI form for proper data display
 - June 29, 2025: Increased product dialogue width in create invoice page from 90vw/1200px to 95vw/1600px for better table visibility and user experience
 - June 29, 2025: Enhanced product dialogue in create invoice page with sales price column - added "Sales Price" column displaying retailRate; changed "Item Code" to "Product Number" showing productNumber; updated table headers and data display; maintained search functionality by productNumber, name, and part number
