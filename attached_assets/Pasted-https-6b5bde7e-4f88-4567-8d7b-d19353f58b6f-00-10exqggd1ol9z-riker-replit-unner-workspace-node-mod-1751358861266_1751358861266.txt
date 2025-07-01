@@ -1,0 +1,62 @@
+https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.…unner/workspace/node_modules/.vite/deps/chunk-5P3VKGX5.js?v=296de5ab:39:15
+    at https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.…kspace/node_modules/.vite/deps/@radix-ui_react-select.js?v=296de5ab:757:13
+    at div
+    at https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.…unner/workspace/node_modules/.vite/deps/chunk-LXTJ4TFU.js?v=296de5ab:79:13
+    at https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.…unner/workspace/node_modules/.vite/deps/chunk-LXTJ4TFU.js?v=296de5ab:56:13
+    at https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.…unner/workspace/node_modules/.vite/deps/chunk-5P3VKGX5.js?v=296de5ab:39:15
+    at Provider (https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.…unner/workspace/node_modules/.vite/deps/chunk-VJRUVGTI.js?v=296de5ab:38:15)
+    at https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.…kspace/node_modules/.vite/deps/@radix-ui_react-select.js?v=296de5ab:300:58
+    at https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.…unner/workspace/node_modules/.vite/deps/chunk-LXTJ4TFU.js?v=296de5ab:79:13
+    at https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.…unner/workspace/node_modules/.vite/deps/chunk-LXTJ4TFU.js?v=296de5ab:56:13
+    at https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.…unner/workspace/node_modules/.vite/deps/chunk-PCKAHLT2.js?v=296de5ab:42:13
+    at https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.…nner/workspace/node_modules/.vite/deps/chunk-YXJ3LHOT.js?v=296de5ab:260:22
+    at SelectPortal
+    at _c7 (https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.dev/src/components/ui/select.tsx:117:12)
+    at Provider (https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.…unner/workspace/node_modules/.vite/deps/chunk-VJRUVGTI.js?v=296de5ab:38:15)
+    at Provider (https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.…unner/workspace/node_modules/.vite/deps/chunk-VJRUVGTI.js?v=296de5ab:38:15)
+    at CollectionProvider (https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.…unner/workspace/node_modules/.vite/deps/chunk-5P3VKGX5.js?v=296de5ab:29:13)
+    at Provider (https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.…unner/workspace/node_modules/.vite/deps/chunk-VJRUVGTI.js?v=296de5ab:38:15)
+    at Provider (https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.…unner/workspace/node_modules/.vite/deps/chunk-VJRUVGTI.js?v=296de5ab:38:15)
+    at Popper (https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.…ner/workspace/node_modules/.vite/deps/chunk-X6JSXVQQ.js?v=296de5ab:1919:11)
+    at Select (https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.…orkspace/node_modules/.vite/deps/@radix-ui_react-select.js?v=296de5ab:88:5)
+    at div
+    at div
+    at div
+    at div
+    at _c3 (https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.dev/src/components/ui/card.tsx:43:12)
+    at div
+    at _c (https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.dev/src/components/ui/card.tsx:20:11)
+    at div
+    at ProductsManagement (https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.dev/src/components/dashboard/products-management.tsx:113:21)
+    at div
+    at main
+    at div
+    at div
+    at div
+    at DashboardLayout (https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.dev/src/components/layout/dashboard-layout.tsx:18:43)
+    at Dashboard (https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.dev/src/pages/dashboard/dashboard.tsx:891:45)
+    at ProtectedRoute (https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.dev/src/components/auth/protected-route.tsx:19:42)
+    at Route (https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.…/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=296de5ab:323:16)
+    at Switch (https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.…/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=296de5ab:379:17)
+    at Router (https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.dev/src/App.tsx:36:37)
+    at Provider (https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.…unner/workspace/node_modules/.vite/deps/chunk-VJRUVGTI.js?v=296de5ab:38:15)
+    at TooltipProvider (https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.…rkspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=296de5ab:61:5)
+    at QueryClientProvider (https://6b5bde7e-4f88-4567-8d7b-d19353f58b6f-00-10exqggd1ol9z.riker.replit.…rkspace/node_modules/.vite/deps/@tanstack_react-query.js?v=296de5ab:2805:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+
+chunk-WERSD76P.js?v=296de5ab:9129 Uncaught Error: A <Select.Item /> must have a value prop that is not an empty string. This is because the Select value can be set to an empty string to clear the selection and show the placeholder.
+    at @radix-ui_react-sele…s?v=296de5ab:873:13
+    at renderWithHooks (chunk-WERSD76P.js?v=296de5ab:11548:26)
+    at updateForwardRef (chunk-WERSD76P.js?v=296de5ab:14325:28)
+    at beginWork (chunk-WERSD76P.js?v=296de5ab:15946:22)
+    at beginWork$1 (chunk-WERSD76P.js?v=296de5ab:19753:22)
+    at performUnitOfWork (chunk-WERSD76P.js?v=296de5ab:19198:20)
+    at workLoopSync (chunk-WERSD76P.js?v=296de5ab:19137:13)
+    at renderRootSync (chunk-WERSD76P.js?v=296de5ab:19116:15)
+    at recoverFromConcurrentError (chunk-WERSD76P.js?v=296de5ab:18736:28)
+    at performSyncWorkOnRoot (chunk-WERSD76P.js?v=296de5ab:18879:28)
+﻿
+

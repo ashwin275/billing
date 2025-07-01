@@ -415,7 +415,7 @@ export default function ProductsManagement() {
 
   // Get unique categories for filter dropdown
   const categories = Array.isArray(products) ? 
-    [...new Set(products.map(product => product.category))].sort() : [];
+    [...new Set(products.map(product => product.category).filter(category => category && category.trim() !== ''))].sort() : [];
 
   // Filter and sort products
   const filteredProducts = Array.isArray(products) ? products.filter(product => {
