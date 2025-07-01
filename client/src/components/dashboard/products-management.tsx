@@ -353,20 +353,20 @@ export default function ProductsManagement() {
   const handleEditProduct = (product: Product) => {
     setProductToEdit(product);
     editForm.reset({
-      name: product.name,
+      name: product.name || "",
       partNumber: product.productNumber || "", // Map productNumber to partNumber for UI
-      hsn: product.hsn.toString(),
-      description: product.description,
-      quantity: product.quantity,
+      hsn: product.hsn ? product.hsn.toString() : "",
+      description: product.description || "",
+      quantity: product.quantity || 0,
       ourPrice: product.purchasePrice || product.ourPrice || 0, // Map purchasePrice to ourPrice
       wholesaleRate: product.wholesaleRate || 0,
       retailRate: product.retailRate || 0,
       cgst: product.cgst || 9,
       sgst: product.sgst || 9,
-      category: product.category,
-      imageUrl: product.imageUrl,
-      expiry: product.expiry.split('T')[0], // Convert to date format
-      barcode: product.barcode,
+      category: product.category || "",
+      imageUrl: product.imageUrl || "",
+      expiry: product.expiry ? product.expiry.split('T')[0] : "", // Convert to date format with null safety
+      barcode: product.barcode || "",
     });
     setIsEditDialogOpen(true);
   };
@@ -384,8 +384,13 @@ export default function ProductsManagement() {
   /**
    * Format date for display
    */
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-IN');
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return "N/A";
+    try {
+      return new Date(dateString).toLocaleDateString('en-IN');
+    } catch (error) {
+      return "N/A";
+    }
   };
 
   /**
@@ -419,12 +424,12 @@ export default function ProductsManagement() {
 
   // Filter and sort products
   const filteredProducts = Array.isArray(products) ? products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.productNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.hsn.toString().includes(searchTerm) ||
-      product.barcode.includes(searchTerm);
+    const matchesSearch = (product.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (product.productNumber || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (product.description || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (product.category || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (product.hsn ? product.hsn.toString() : "").includes(searchTerm) ||
+      (product.barcode || "").includes(searchTerm);
     
     const matchesCategory = selectedCategory === "all" || product.category === selectedCategory;
     
