@@ -71,19 +71,19 @@ import { getAuthToken, decodeToken } from "@/lib/auth";
 // Form validation schema for products
 const productSchema = z.object({
   name: z.string().min(2, "Product name must be at least 2 characters"),
-  partNumber: z.string().min(1, "Part number is required"),
-  hsn: z.string().min(1, "HSN code is required"),
-  description: z.string().min(5, "Description must be at least 5 characters"),
-  quantity: z.number().min(0, "Quantity must be 0 or greater"),
-  ourPrice: z.number().min(0, "Purchase price must be 0 or greater"),
-  wholesaleRate: z.number().min(0, "Wholesale rate must be 0 or greater"),
-  retailRate: z.number().min(0, "Retail rate must be 0 or greater"),
-  cgst: z.number().min(0, "CGST must be 0 or greater").max(50, "CGST cannot exceed 50%"),
-  sgst: z.number().min(0, "SGST must be 0 or greater").max(50, "SGST cannot exceed 50%"),
-  category: z.string().min(2, "Category must be at least 2 characters"),
-  imageUrl: z.string().url("Must be a valid URL"),
-  expiry: z.string().min(1, "Expiry date is required"),
-  barcode: z.string().min(1, "Barcode is required"),
+  partNumber: z.string().optional(),
+  hsn: z.string().optional(),
+  description: z.string().optional(),
+  quantity: z.number().min(0, "Quantity must be 0 or greater").optional(),
+  ourPrice: z.number().min(0, "Purchase price must be 0 or greater").optional(),
+  wholesaleRate: z.number().min(0, "Wholesale rate must be 0 or greater").optional(),
+  retailRate: z.number().min(0, "Retail rate must be 0 or greater").optional(),
+  cgst: z.number().min(0, "CGST must be 0 or greater").max(50, "CGST cannot exceed 50%").optional(),
+  sgst: z.number().min(0, "SGST must be 0 or greater").max(50, "SGST cannot exceed 50%").optional(),
+  category: z.string().optional(),
+  imageUrl: z.string().url("Must be a valid URL").optional(),
+  expiry: z.string().optional(),
+  barcode: z.string().optional(),
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
@@ -272,21 +272,21 @@ export default function ProductsManagement() {
 
     const productInput: ProductInput = {
       name: data.name,
-      productNumber: data.partNumber, // Map partNumber to productNumber for API
-      hsn: data.hsn.toString(),
-      description: data.description,
-      quantity: data.quantity,
-      ourPrice: data.ourPrice,
-      purchasePrice: data.ourPrice, // Map ourPrice to purchasePrice for API
-      wholesaleRate: data.wholesaleRate,
-      retailRate: data.retailRate,
-      taxRate: data.cgst + data.sgst, // Calculate tax rate from CGST + SGST
-      cgst: data.cgst,
-      sgst: data.sgst,
-      category: data.category,
-      imageUrl: data.imageUrl,
-      expiry: data.expiry,
-      barcode: data.barcode,
+      productNumber: data.partNumber || `P${Date.now()}`, // Map partNumber to productNumber for API, auto-generate if empty
+      hsn: data.hsn || "",
+      description: data.description || "",
+      quantity: data.quantity || 0,
+      ourPrice: data.ourPrice || 0,
+      purchasePrice: data.ourPrice || 0, // Map ourPrice to purchasePrice for API
+      wholesaleRate: data.wholesaleRate || 0,
+      retailRate: data.retailRate || 0,
+      taxRate: (data.cgst || 0) + (data.sgst || 0), // Calculate tax rate from CGST + SGST
+      cgst: data.cgst || 0,
+      sgst: data.sgst || 0,
+      category: data.category || "",
+      imageUrl: data.imageUrl || "https://example.com/product.jpg",
+      expiry: data.expiry || "2025-12-31",
+      barcode: data.barcode || "",
       shopId: shopId, // Use shopId from token
     };
     
@@ -314,22 +314,22 @@ export default function ProductsManagement() {
     
     const productUpdate = {
       productId: productToEdit.productId,
-      productNumber: data.partNumber, // Map partNumber to productNumber for API
-      hsn: typeof data.hsn === 'string' ? parseInt(data.hsn) : data.hsn,
+      productNumber: data.partNumber || productToEdit.productNumber, // Map partNumber to productNumber for API
+      hsn: typeof data.hsn === 'string' ? parseInt(data.hsn) : (data.hsn || 0),
       name: data.name,
-      description: data.description,
-      quantity: data.quantity,
-      purchasePrice: data.ourPrice,
-      wholesaleRate: data.wholesaleRate,
-      retailRate: data.retailRate,
-      taxRate: data.cgst + data.sgst,
-      category: data.category,
-      imageUrl: data.imageUrl,
-      expiry: data.expiry,
-      barcode: data.barcode,
+      description: data.description || "",
+      quantity: data.quantity || 0,
+      purchasePrice: data.ourPrice || 0,
+      wholesaleRate: data.wholesaleRate || 0,
+      retailRate: data.retailRate || 0,
+      taxRate: (data.cgst || 0) + (data.sgst || 0),
+      category: data.category || "",
+      imageUrl: data.imageUrl || "https://example.com/product.jpg",
+      expiry: data.expiry || "2025-12-31",
+      barcode: data.barcode || "",
       shopId: shopId,
-      CGST: data.cgst,
-      SGST: data.sgst
+      CGST: data.cgst || 0,
+      SGST: data.sgst || 0
     };
     
     updateProductMutation.mutate({
