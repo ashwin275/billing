@@ -97,6 +97,7 @@ This is a React-based billing dashboard application built for managing invoices,
 
 ## Changelog
 
+- June 29, 2025: Changed CGST/SGST default values from 9% to 0% - updated all hardcoded tax defaults across products management and invoice editing to use 0 instead of 9 when tax values are not provided or null; ensures accurate tax calculations without assumptions
 - June 29, 2025: Fixed edit button functionality for products with minimal data - added null safety checks to handleEditProduct function for hsn, expiry, and all string fields; enhanced search functionality with null-safe string operations; improved formatDate function to handle null/undefined dates; resolved SelectItem crash by filtering empty category values
 - June 29, 2025: Updated Products Management forms to make only product name mandatory - modified productSchema to make all fields optional except name; updated ProductInput interface to support optional fields; enhanced add and edit product functions with default value handling; maintained comprehensive backend error response display in UI
 - June 29, 2025: Fixed Part Number auto-filling in Products Management edit form - updated handleEditProduct to map productNumber from backend to partNumber field in UI form for proper data display

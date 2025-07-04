@@ -136,8 +136,8 @@ export default function ProductsManagement() {
       ourPrice: 0,
       wholesaleRate: 0,
       retailRate: 0,
-      cgst: 9,
-      sgst: 9,
+      cgst: 0,
+      sgst: 0,
       category: "",
       imageUrl: "https://example.com/product.jpg",
       expiry: "2025-12-31",
@@ -361,8 +361,8 @@ export default function ProductsManagement() {
       ourPrice: product.purchasePrice || product.ourPrice || 0, // Map purchasePrice to ourPrice
       wholesaleRate: product.wholesaleRate || 0,
       retailRate: product.retailRate || 0,
-      cgst: product.cgst || 9,
-      sgst: product.sgst || 9,
+      cgst: product.cgst || 0,
+      sgst: product.sgst || 0,
       category: product.category || "",
       imageUrl: product.imageUrl || "",
       expiry: product.expiry ? product.expiry.split('T')[0] : "", // Convert to date format with null safety

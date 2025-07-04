@@ -309,8 +309,8 @@ export default function EditInvoice() {
       const discountedPrice = unitPrice - discountAmount;
       const lineTotal = discountedPrice * item.quantity;
       
-      const cgstRate = formData.billType === 'GST' ? (product.cgst || 9) : 0;
-      const sgstRate = formData.billType === 'GST' ? (product.sgst || 9) : 0;
+      const cgstRate = formData.billType === 'GST' ? (product.cgst || 0) : 0;
+      const sgstRate = formData.billType === 'GST' ? (product.sgst || 0) : 0;
       
       const cgstAmount = (lineTotal * cgstRate) / 100;
       const sgstAmount = (lineTotal * sgstRate) / 100;
