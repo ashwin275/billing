@@ -299,19 +299,6 @@ export default function ProductsManagement() {
   const onEditProduct = (data: ProductFormData) => {
     if (!productToEdit) return;
     
-    // Get shopId from JWT token
-    const token = getAuthToken();
-    let shopId = productToEdit.shopId; // Keep existing shopId as fallback
-    
-    if (token) {
-      try {
-        const decoded = decodeToken(token);
-        shopId = decoded.shopId || productToEdit.shopId;
-      } catch (error) {
-        console.warn('Failed to decode token:', error);
-      }
-    }
-    
     const productUpdate = {
       productId: productToEdit.productId,
       productNumber: data.partNumber || productToEdit.productNumber, // Map partNumber to productNumber for API
@@ -327,9 +314,8 @@ export default function ProductsManagement() {
       imageUrl: data.imageUrl || "https://example.com/product.jpg",
       expiry: data.expiry || "2025-12-31",
       barcode: data.barcode || "",
-      shopId: shopId,
-      CGST: data.cgst || 0,
-      SGST: data.sgst || 0
+      cgst: data.cgst || 0,
+      sgst: data.sgst || 0
     };
     
     updateProductMutation.mutate({
