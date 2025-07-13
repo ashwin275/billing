@@ -162,7 +162,7 @@ export default function InvoiceManagementClean() {
               position: relative;
               overflow: hidden;
               flex-shrink: 0;
-              min-height: 140px;
+              min-height: 180px;
             }
             
             .invoice-header::after {
@@ -418,7 +418,9 @@ export default function InvoiceManagementClean() {
                   <div class="company-details">
                     <h1>${invoiceData.shop?.name || 'Shop Name'}</h1>
                     <p class="company-tagline">Quality Products & Services</p>
-                    ${invoiceData.shop?.gstNo ? `<p style="font-size: 10px; margin-top: 3px;">GST: ${invoiceData.shop.gstNo}</p>` : ''}
+                    ${invoiceData.shop?.address ? `<p style="font-size: 10px; margin-top: 3px;">${invoiceData.shop.address}</p>` : ''}
+                    ${invoiceData.shop?.place ? `<p style="font-size: 10px; margin-top: 2px;">📍 ${invoiceData.shop.place}</p>` : ''}
+                    ${invoiceData.shop?.gstNo ? `<p style="font-size: 10px; margin-top: 2px;">GST: ${invoiceData.shop.gstNo}</p>` : ''}
                     ${invoiceData.shop?.phone ? `<p style="font-size: 10px; margin-top: 2px;">📞 ${invoiceData.shop.phone}</p>` : ''}
                   </div>
                 </div>
@@ -443,10 +445,10 @@ export default function InvoiceManagementClean() {
                 <div class="billing-block">
                   <h3>Bill To</h3>
                   <div class="customer-name">
-                    ${invoiceData.customerName || 'Walk-in Customer'}
+                    ${invoiceData.customerName || invoiceData.customer?.name || 'Walk-in Customer'}
                   </div>
-                  <p>Phone: ${invoiceData.customerPhone || 'N/A'}</p>
-                  <p>Location: ${invoiceData.customerLocation || 'N/A'}</p>
+                  <p>Phone: ${invoiceData.customerPhone || invoiceData.customer?.phone || 'N/A'}</p>
+                  <p>Location: ${invoiceData.customerLocation || invoiceData.customer?.place || 'N/A'}</p>
                 </div>
                 <div class="billing-block">
                   <h3>Payment Details</h3>
@@ -462,6 +464,7 @@ export default function InvoiceManagementClean() {
                 <thead>
                   <tr>
                     <th>Product</th>
+                    <th>Product Number</th>
                     <th>HSN</th>
                     <th class="text-right">Qty</th>
                     <th class="text-right">Rate</th>
@@ -479,6 +482,7 @@ export default function InvoiceManagementClean() {
                           <div class="product-name">${item.product?.name || 'Product'}</div>
                           ${item.product?.description ? `<div style="font-size: 10px; color: #718096;">${item.product.description}</div>` : ''}
                         </td>
+                        <td>${item.product?.productNumber || 'N/A'}</td>
                         <td>${item.product?.hsn || 'N/A'}</td>
                         <td class="text-right">${item.quantity}</td>
                         <td class="text-right">₹${item.price?.toFixed(2) || '0.00'}</td>
@@ -766,7 +770,7 @@ export default function InvoiceManagementClean() {
 
       {/* Preview Dialog */}
       <Dialog open={isPreviewDialogOpen} onOpenChange={setIsPreviewDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Invoice Preview</DialogTitle>
           </DialogHeader>

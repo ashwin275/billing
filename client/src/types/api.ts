@@ -46,6 +46,7 @@ export interface Shop {
   shopId: number;
   name: string;
   place: string;
+  address?: string;
   phone: string;
   gstNo: string;
   status: 'CREATED' | 'ACTIVE' | 'INACTIVE';
@@ -84,21 +85,21 @@ export interface Product {
 
 export interface ProductInput {
   name: string;
-  productNumber: string; // Backend expects productNumber instead of partNumber
-  hsn: string;
-  description: string;
-  quantity: number;
-  ourPrice: number;
-  purchasePrice: number;
-  wholesaleRate: number;
-  retailRate: number;
-  taxRate: number;
-  cgst: number;
-  sgst: number;
-  category: string;
-  imageUrl: string;
-  expiry: string;
-  barcode: string;
+  productNumber?: string; // Backend expects productNumber instead of partNumber
+  hsn?: string;
+  description?: string;
+  quantity?: number;
+  ourPrice?: number;
+  purchasePrice?: number;
+  wholesaleRate?: number;
+  retailRate?: number;
+  taxRate?: number;
+  cgst?: number;
+  sgst?: number;
+  category?: string;
+  imageUrl?: string;
+  expiry?: string;
+  barcode?: string;
   shopId: number;
 }
 
@@ -151,6 +152,7 @@ export interface Invoice {
   customerName?: string; // Added for compatibility
   customerPhone?: string; // Customer phone number
   customerLocation?: string; // Customer location
+  customer?: Customer; // Customer object with full details
   shop: Shop;
   sales: {
     saleId: number | null;

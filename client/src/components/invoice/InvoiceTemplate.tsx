@@ -50,7 +50,7 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
       <style dangerouslySetInnerHTML={{__html: `
         .invoice-template {
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-          max-width: 210mm;
+          max-width: 280mm;
           margin: 0 auto;
           background: white;
           color: #000;
@@ -58,7 +58,7 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
         }
 
         .print-mode {
-          width: 210mm;
+          width: 280mm;
           min-height: 297mm;
           padding: 0;
           box-shadow: none;
@@ -84,7 +84,7 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
           padding: 50px 40px;
           position: relative;
           overflow: hidden;
-          min-height: 140px;
+          min-height: 180px;
         }
 
         .invoice-header::after {
@@ -255,14 +255,15 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
           table-layout: fixed;
         }
         
-        .items-table th:nth-child(1) { width: 30%; } /* Product */
-        .items-table th:nth-child(2) { width: 10%; } /* HSN */
-        .items-table th:nth-child(3) { width: 8%; }  /* Qty */
-        .items-table th:nth-child(4) { width: 12%; } /* Rate */
-        .items-table th:nth-child(5) { width: 12%; } /* Discount */
-        .items-table th:nth-child(6) { width: 9%; }  /* CGST */
-        .items-table th:nth-child(7) { width: 9%; }  /* SGST */
-        .items-table th:nth-child(8) { width: 10%; } /* Total */
+        .items-table th:nth-child(1) { width: 25%; } /* Product */
+        .items-table th:nth-child(2) { width: 12%; } /* Product Number */
+        .items-table th:nth-child(3) { width: 8%; }  /* HSN */
+        .items-table th:nth-child(4) { width: 7%; }  /* Qty */
+        .items-table th:nth-child(5) { width: 10%; } /* Rate */
+        .items-table th:nth-child(6) { width: 10%; } /* Discount */
+        .items-table th:nth-child(7) { width: 9%; }  /* CGST */
+        .items-table th:nth-child(8) { width: 9%; }  /* SGST */
+        .items-table th:nth-child(9) { width: 10%; } /* Total */
 
         .items-table thead {
           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -271,12 +272,15 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
         .items-table th {
           color: white;
           font-weight: 800;
-          padding: 15px 12px;
+          padding: 12px 8px;
           text-align: left;
-          font-size: 14px;
-          letter-spacing: 0.5px;
+          font-size: 12px;
+          letter-spacing: 0.3px;
           text-transform: uppercase;
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
         
         .print-mode .items-table th {
@@ -476,7 +480,9 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
             <div className="company-details">
               <h1>{invoice.shop?.name || 'Shop Name'}</h1>
               <p className="company-tagline">Quality Products & Services</p>
-              {invoice.shop?.gstNo && <p style={{fontSize: '10px', marginTop: '3px'}}>GST: {invoice.shop.gstNo}</p>}
+              {invoice.shop?.address && <p style={{fontSize: '10px', marginTop: '3px'}}>{invoice.shop.address}</p>}
+              {invoice.shop?.place && <p style={{fontSize: '10px', marginTop: '2px'}}>📍 {invoice.shop.place}</p>}
+              {invoice.shop?.gstNo && <p style={{fontSize: '10px', marginTop: '2px'}}>GST: {invoice.shop.gstNo}</p>}
               {invoice.shop?.phone && <p style={{fontSize: '10px', marginTop: '2px'}}>📞 {invoice.shop.phone}</p>}
             </div>
           </div>
@@ -503,10 +509,10 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
           <div className="billing-block">
             <h3>Bill To</h3>
             <div className="customer-name">
-              {invoice.customerName || 'Walk-in Customer'}
+              {invoice.customer?.name || invoice.customerName || 'Walk-in Customer'}
             </div>
-            <p>Phone: {invoice.customerPhone || 'N/A'}</p>
-            <p>Location: {invoice.customerLocation || 'N/A'}</p>
+            <p>Phone: {invoice.customer?.phone || invoice.customerPhone || 'N/A'}</p>
+            <p>Location: {invoice.customer?.place || invoice.customerLocation || 'N/A'}</p>
           </div>
           <div className="billing-block">
             <h3>Payment Details</h3>
@@ -526,6 +532,7 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
           <thead>
             <tr>
               <th>Product</th>
+              <th style={{ textAlign: 'center' }}>Product No.</th>
               <th style={{ textAlign: 'center' }}>HSN</th>
               <th className="text-right">Qty</th>
               <th className="text-right">Rate</th>
@@ -545,6 +552,7 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
                       {item.product?.description || ''}
                     </div>
                   </td>
+                  <td style={{ textAlign: 'center' }}>{item.product?.productNumber || 'N/A'}</td>
                   <td style={{ textAlign: 'center' }}>{item.product?.hsn || 'N/A'}</td>
                   <td className="text-right">{item.quantity}</td>
                   <td className="text-right">₹{item.price?.toFixed(2) || '0.00'}</td>

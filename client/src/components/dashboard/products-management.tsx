@@ -7,7 +7,7 @@ import { z } from "zod";
 import { 
   Package, Plus, Edit2, Trash2, AlertTriangle, DollarSign, 
   Calendar, Tag, BarChart3, ShoppingCart, X, Search, ArrowUpDown, ArrowUp, ArrowDown,
-  Store, User, MapPin, Info
+  Store, User, MapPin, Info, Hash
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -71,19 +71,19 @@ import { getAuthToken, decodeToken } from "@/lib/auth";
 // Form validation schema for products
 const productSchema = z.object({
   name: z.string().min(2, "Product name must be at least 2 characters"),
-  partNumber: z.string().min(1, "Part number is required"),
-  hsn: z.string().min(1, "HSN code is required"),
-  description: z.string().min(5, "Description must be at least 5 characters"),
-  quantity: z.number().min(0, "Quantity must be 0 or greater"),
-  ourPrice: z.number().min(0, "Purchase price must be 0 or greater"),
-  wholesaleRate: z.number().min(0, "Wholesale rate must be 0 or greater"),
-  retailRate: z.number().min(0, "Retail rate must be 0 or greater"),
-  cgst: z.number().min(0, "CGST must be 0 or greater").max(50, "CGST cannot exceed 50%"),
-  sgst: z.number().min(0, "SGST must be 0 or greater").max(50, "SGST cannot exceed 50%"),
-  category: z.string().min(2, "Category must be at least 2 characters"),
-  imageUrl: z.string().url("Must be a valid URL"),
-  expiry: z.string().min(1, "Expiry date is required"),
-  barcode: z.string().min(1, "Barcode is required"),
+  partNumber: z.string().optional(),
+  hsn: z.string().optional(),
+  description: z.string().optional(),
+  quantity: z.number().min(0, "Quantity must be 0 or greater").optional(),
+  ourPrice: z.number().min(0, "Purchase price must be 0 or greater").optional(),
+  wholesaleRate: z.number().min(0, "Wholesale rate must be 0 or greater").optional(),
+  retailRate: z.number().min(0, "Retail rate must be 0 or greater").optional(),
+  cgst: z.number().min(0, "CGST must be 0 or greater").max(50, "CGST cannot exceed 50%").optional(),
+  sgst: z.number().min(0, "SGST must be 0 or greater").max(50, "SGST cannot exceed 50%").optional(),
+  category: z.string().optional(),
+  imageUrl: z.string().url("Must be a valid URL").optional(),
+  expiry: z.string().optional(),
+  barcode: z.string().optional(),
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
@@ -136,8 +136,8 @@ export default function ProductsManagement() {
       ourPrice: 0,
       wholesaleRate: 0,
       retailRate: 0,
-      cgst: 9,
-      sgst: 9,
+      cgst: 0,
+      sgst: 0,
       category: "",
       imageUrl: "https://example.com/product.jpg",
       expiry: "2025-12-31",
@@ -272,21 +272,21 @@ export default function ProductsManagement() {
 
     const productInput: ProductInput = {
       name: data.name,
-      productNumber: data.partNumber, // Map partNumber to productNumber for API
-      hsn: data.hsn.toString(),
-      description: data.description,
-      quantity: data.quantity,
-      ourPrice: data.ourPrice,
-      purchasePrice: data.ourPrice, // Map ourPrice to purchasePrice for API
-      wholesaleRate: data.wholesaleRate,
-      retailRate: data.retailRate,
-      taxRate: data.cgst + data.sgst, // Calculate tax rate from CGST + SGST
-      cgst: data.cgst,
-      sgst: data.sgst,
-      category: data.category,
-      imageUrl: data.imageUrl,
-      expiry: data.expiry,
-      barcode: data.barcode,
+      productNumber: data.partNumber || `P${Date.now()}`, // Map partNumber to productNumber for API, auto-generate if empty
+      hsn: data.hsn || "",
+      description: data.description || "",
+      quantity: data.quantity || 0,
+      ourPrice: data.ourPrice || 0,
+      purchasePrice: data.ourPrice || 0, // Map ourPrice to purchasePrice for API
+      wholesaleRate: data.wholesaleRate || 0,
+      retailRate: data.retailRate || 0,
+      taxRate: (data.cgst || 0) + (data.sgst || 0), // Calculate tax rate from CGST + SGST
+      cgst: data.cgst || 0,
+      sgst: data.sgst || 0,
+      category: data.category || "",
+      imageUrl: data.imageUrl || "https://example.com/product.jpg",
+      expiry: data.expiry || "2025-12-31",
+      barcode: data.barcode || "",
       shopId: shopId, // Use shopId from token
     };
     
@@ -299,37 +299,23 @@ export default function ProductsManagement() {
   const onEditProduct = (data: ProductFormData) => {
     if (!productToEdit) return;
     
-    // Get shopId from JWT token
-    const token = getAuthToken();
-    let shopId = productToEdit.shopId; // Keep existing shopId as fallback
-    
-    if (token) {
-      try {
-        const decoded = decodeToken(token);
-        shopId = decoded.shopId || productToEdit.shopId;
-      } catch (error) {
-        console.warn('Failed to decode token:', error);
-      }
-    }
-    
     const productUpdate = {
       productId: productToEdit.productId,
-      productNumber: data.partNumber, // Map partNumber to productNumber for API
-      hsn: typeof data.hsn === 'string' ? parseInt(data.hsn) : data.hsn,
+      productNumber: data.partNumber || productToEdit.productNumber, // Map partNumber to productNumber for API
+      hsn: typeof data.hsn === 'string' ? parseInt(data.hsn) : (data.hsn || 0),
       name: data.name,
-      description: data.description,
-      quantity: data.quantity,
-      purchasePrice: data.ourPrice,
-      wholesaleRate: data.wholesaleRate,
-      retailRate: data.retailRate,
-      taxRate: data.cgst + data.sgst,
-      category: data.category,
-      imageUrl: data.imageUrl,
-      expiry: data.expiry,
-      barcode: data.barcode,
-      shopId: shopId,
-      CGST: data.cgst,
-      SGST: data.sgst
+      description: data.description || "",
+      quantity: data.quantity || 0,
+      purchasePrice: data.ourPrice || 0,
+      wholesaleRate: data.wholesaleRate || 0,
+      retailRate: data.retailRate || 0,
+      taxRate: (data.cgst || 0) + (data.sgst || 0),
+      category: data.category || "",
+      imageUrl: data.imageUrl || "https://example.com/product.jpg",
+      expiry: data.expiry || "2025-12-31",
+      barcode: data.barcode || "",
+      cgst: data.cgst || 0,
+      sgst: data.sgst || 0
     };
     
     updateProductMutation.mutate({
@@ -353,20 +339,20 @@ export default function ProductsManagement() {
   const handleEditProduct = (product: Product) => {
     setProductToEdit(product);
     editForm.reset({
-      name: product.name,
+      name: product.name || "",
       partNumber: product.productNumber || "", // Map productNumber to partNumber for UI
-      hsn: product.hsn.toString(),
-      description: product.description,
-      quantity: product.quantity,
+      hsn: product.hsn ? product.hsn.toString() : "",
+      description: product.description || "",
+      quantity: product.quantity || 0,
       ourPrice: product.purchasePrice || product.ourPrice || 0, // Map purchasePrice to ourPrice
       wholesaleRate: product.wholesaleRate || 0,
       retailRate: product.retailRate || 0,
-      cgst: product.cgst || 9,
-      sgst: product.sgst || 9,
-      category: product.category,
-      imageUrl: product.imageUrl,
-      expiry: product.expiry.split('T')[0], // Convert to date format
-      barcode: product.barcode,
+      cgst: product.cgst || 0,
+      sgst: product.sgst || 0,
+      category: product.category || "",
+      imageUrl: product.imageUrl || "",
+      expiry: product.expiry ? product.expiry.split('T')[0] : "", // Convert to date format with null safety
+      barcode: product.barcode || "",
     });
     setIsEditDialogOpen(true);
   };
@@ -384,8 +370,13 @@ export default function ProductsManagement() {
   /**
    * Format date for display
    */
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-IN');
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return "N/A";
+    try {
+      return new Date(dateString).toLocaleDateString('en-IN');
+    } catch (error) {
+      return "N/A";
+    }
   };
 
   /**
@@ -415,16 +406,16 @@ export default function ProductsManagement() {
 
   // Get unique categories for filter dropdown
   const categories = Array.isArray(products) ? 
-    [...new Set(products.map(product => product.category))].sort() : [];
+    [...new Set(products.map(product => product.category).filter(category => category && category.trim() !== ''))].sort() : [];
 
   // Filter and sort products
   const filteredProducts = Array.isArray(products) ? products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.productNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.hsn.toString().includes(searchTerm) ||
-      product.barcode.includes(searchTerm);
+    const matchesSearch = (product.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (product.productNumber || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (product.description || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (product.category || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (product.hsn ? product.hsn.toString() : "").includes(searchTerm) ||
+      (product.barcode || "").includes(searchTerm);
     
     const matchesCategory = selectedCategory === "all" || product.category === selectedCategory;
     
@@ -832,6 +823,16 @@ export default function ProductsManagement() {
                       {getSortIcon("name")}
                     </Button>
                   </TableHead>
+                  <TableHead className="hidden sm:table-cell">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort("productNumber")}
+                      className="h-auto p-0 font-semibold hover:bg-transparent"
+                    >
+                      Part Number
+                      {getSortIcon("productNumber")}
+                    </Button>
+                  </TableHead>
                   <TableHead className="hidden md:table-cell">
                     <Button
                       variant="ghost"
@@ -959,6 +960,14 @@ export default function ProductsManagement() {
                       </div>
                     </TableCell>
 
+                    {/* Part Number - Hidden on small screens */}
+                    <TableCell className="hidden sm:table-cell">
+                      <div className="flex items-center space-x-2">
+                        <Hash className="h-3 w-3 text-slate-400" />
+                        <span className="text-sm font-medium text-slate-700">{product.productNumber}</span>
+                      </div>
+                    </TableCell>
+
                     {/* Pricing - Hidden on mobile */}
                     <TableCell className="hidden md:table-cell">
                       <div className="space-y-1">
@@ -1030,7 +1039,7 @@ export default function ProductsManagement() {
                   </TableRow>
                 )) : (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-12">
+                    <TableCell colSpan={8} className="text-center py-12">
                       <div className="flex flex-col items-center space-y-3 text-slate-500">
                         <Package className="h-12 w-12" />
                         <div className="space-y-1">

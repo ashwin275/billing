@@ -309,8 +309,8 @@ export default function EditInvoice() {
       const discountedPrice = unitPrice - discountAmount;
       const lineTotal = discountedPrice * item.quantity;
       
-      const cgstRate = formData.billType === 'GST' ? (product.cgst || 9) : 0;
-      const sgstRate = formData.billType === 'GST' ? (product.sgst || 9) : 0;
+      const cgstRate = formData.billType === 'GST' ? (product.cgst || 0) : 0;
+      const sgstRate = formData.billType === 'GST' ? (product.sgst || 0) : 0;
       
       const cgstAmount = (lineTotal * cgstRate) / 100;
       const sgstAmount = (lineTotal * sgstRate) / 100;
@@ -513,6 +513,7 @@ export default function EditInvoice() {
                   shop: {
                     name: selectedShop.name,
                     place: selectedShop.place,
+                    address: selectedShop.address || "",
                     gstNo: selectedShop.gstNo || "",
                     phone: selectedShop.phone || "",
                     tagline: "Quality Products & Services"
@@ -568,7 +569,7 @@ export default function EditInvoice() {
                         
                         .header-wave {
                           background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-                          height: 140px;
+                          height: 180px;
                           position: relative;
                           overflow: hidden;
                         }
@@ -857,6 +858,8 @@ export default function EditInvoice() {
                               <div class="company-info">
                                 <h1>${previewData.shop.name}</h1>
                                 <div class="company-tagline">${previewData.shop.tagline}</div>
+                                ${previewData.shop.address ? `<div class="company-tagline">${previewData.shop.address}</div>` : ''}
+                                ${previewData.shop.place ? `<div class="company-tagline">📍 ${previewData.shop.place}</div>` : ''}
                                 ${previewData.shop.gstNo ? `<div class="company-tagline">GST: ${previewData.shop.gstNo}</div>` : ''}
                                 ${previewData.shop.phone ? `<div class="company-tagline">Phone: ${previewData.shop.phone}</div>` : ''}
                               </div>
@@ -892,6 +895,7 @@ export default function EditInvoice() {
                             <thead>
                               <tr>
                                 <th class="text-left">Item Description</th>
+                                <th class="text-center">Product Number</th>
                                 <th class="text-center">HSN</th>
                                 <th class="text-center">Qty.</th>
                                 <th class="text-right">Price</th>
@@ -907,8 +911,9 @@ export default function EditInvoice() {
                                   <td class="text-left">
                                     <div style="font-weight: 600; color: #2d3748;">${item?.product?.name || 'N/A'}</div>
                                   </td>
-                                  <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
+                                  <td class="text-center">${item?.product?.productNumber || 'N/A'}</td>
                                   <td class="text-center">${item?.product?.hsn || 'N/A'}</td>
+                                  <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
                                   <td class="text-right">₹${item?.unitPrice?.toFixed(2) || '0.00'}</td>
                                   <td class="text-right">₹${item?.discountAmount?.toFixed(2) || '0.00'}</td>
                                   <td class="text-right">₹${(item?.cgstAmount || 0).toFixed(2)}</td>
@@ -994,6 +999,7 @@ export default function EditInvoice() {
                   shop: {
                     name: selectedShop?.name || "Shop Name",
                     place: selectedShop?.place || "Shop Address",
+                    address: selectedShop?.address || "",
                     gstNo: selectedShop?.gstNo || "",
                     phone: selectedShop?.phone || "",
                     tagline: "Quality Products & Services"
@@ -1046,7 +1052,7 @@ export default function EditInvoice() {
                         
                         .header-wave {
                           background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-                          height: 140px;
+                          height: 180px;
                           position: relative;
                           overflow: hidden;
                         }
@@ -1314,6 +1320,8 @@ export default function EditInvoice() {
                               <div class="company-info">
                                 <h1>${invoiceData.shop.name}</h1>
                                 <div class="company-tagline">${invoiceData.shop.tagline}</div>
+                                ${invoiceData.shop.address ? `<div class="company-tagline">${invoiceData.shop.address}</div>` : ''}
+                                ${invoiceData.shop.place ? `<div class="company-tagline">📍 ${invoiceData.shop.place}</div>` : ''}
                                 ${invoiceData.shop.gstNo ? `<div class="company-tagline">GST: ${invoiceData.shop.gstNo}</div>` : ''}
                                 ${invoiceData.shop.phone ? `<div class="company-tagline">Phone: ${invoiceData.shop.phone}</div>` : ''}
                               </div>
@@ -1349,6 +1357,8 @@ export default function EditInvoice() {
                             <thead>
                               <tr>
                                 <th class="text-left">Item Description</th>
+                                <th class="text-center">Product Number</th>
+                                <th class="text-center">HSN</th>
                                 <th class="text-center">Qty.</th>
                                 <th class="text-right">Price</th>
                                 <th class="text-right">Discount</th>
@@ -1363,8 +1373,9 @@ export default function EditInvoice() {
                                   <td class="text-left">
                                     <div style="font-weight: 600; color: #2d3748;">${item?.product?.name || 'N/A'}</div>
                                   </td>
-                                  <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
+                                  <td class="text-center">${item?.product?.productNumber || 'N/A'}</td>
                                   <td class="text-center">${item?.product?.hsn || 'N/A'}</td>
+                                  <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
                                   <td class="text-right">₹${item?.unitPrice?.toFixed(2) || '0.00'}</td>
                                   <td class="text-right">₹${item?.discountAmount?.toFixed(2) || '0.00'}</td>
                                   <td class="text-right">₹${(item?.cgstAmount || 0).toFixed(2)}</td>
@@ -2215,6 +2226,8 @@ export default function EditInvoice() {
                       <thead className="bg-gray-100">
                         <tr>
                           <th className="border-b border-black p-2 text-left text-black">Product</th>
+                          <th className="border-b border-black p-2 text-center text-black">Product Number</th>
+                          <th className="border-b border-black p-2 text-center text-black">HSN</th>
                           <th className="border-b border-black p-2 text-right text-black">Qty</th>
                           <th className="border-b border-black p-2 text-right text-black">Rate</th>
                           <th className="border-b border-black p-2 text-right text-black">Discount</th>
@@ -2225,6 +2238,8 @@ export default function EditInvoice() {
                         {totals.items.map((item, index) => (
                           <tr key={index}>
                             <td className="border-b border-black p-2 text-black">{item?.product?.name || 'Product'}</td>
+                            <td className="border-b border-black p-2 text-center text-black">{item?.product?.productNumber || 'N/A'}</td>
+                            <td className="border-b border-black p-2 text-center text-black">{item?.product?.hsn || 'N/A'}</td>
                             <td className="border-b border-black p-2 text-right text-black">{item?.quantity}</td>
                             <td className="border-b border-black p-2 text-right text-black">₹{item?.unitPrice?.toFixed(2)}</td>
                             <td className="border-b border-black p-2 text-right text-black">₹{item?.discountAmount?.toFixed(2)}</td>
