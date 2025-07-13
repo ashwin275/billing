@@ -857,6 +857,8 @@ export default function EditInvoice() {
                               <div class="company-info">
                                 <h1>${previewData.shop.name}</h1>
                                 <div class="company-tagline">${previewData.shop.tagline}</div>
+                                ${previewData.shop.address ? `<div class="company-tagline">${previewData.shop.address}</div>` : ''}
+                                ${previewData.shop.place ? `<div class="company-tagline">📍 ${previewData.shop.place}</div>` : ''}
                                 ${previewData.shop.gstNo ? `<div class="company-tagline">GST: ${previewData.shop.gstNo}</div>` : ''}
                                 ${previewData.shop.phone ? `<div class="company-tagline">Phone: ${previewData.shop.phone}</div>` : ''}
                               </div>
@@ -1316,6 +1318,8 @@ export default function EditInvoice() {
                               <div class="company-info">
                                 <h1>${invoiceData.shop.name}</h1>
                                 <div class="company-tagline">${invoiceData.shop.tagline}</div>
+                                ${invoiceData.shop.address ? `<div class="company-tagline">${invoiceData.shop.address}</div>` : ''}
+                                ${invoiceData.shop.place ? `<div class="company-tagline">📍 ${invoiceData.shop.place}</div>` : ''}
                                 ${invoiceData.shop.gstNo ? `<div class="company-tagline">GST: ${invoiceData.shop.gstNo}</div>` : ''}
                                 ${invoiceData.shop.phone ? `<div class="company-tagline">Phone: ${invoiceData.shop.phone}</div>` : ''}
                               </div>
