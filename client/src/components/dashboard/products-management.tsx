@@ -7,7 +7,7 @@ import { z } from "zod";
 import { 
   Package, Plus, Edit2, Trash2, AlertTriangle, DollarSign, 
   Calendar, Tag, BarChart3, ShoppingCart, X, Search, ArrowUpDown, ArrowUp, ArrowDown,
-  Store, User, MapPin, Info
+  Store, User, MapPin, Info, Hash
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -823,6 +823,16 @@ export default function ProductsManagement() {
                       {getSortIcon("name")}
                     </Button>
                   </TableHead>
+                  <TableHead className="hidden sm:table-cell">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort("productNumber")}
+                      className="h-auto p-0 font-semibold hover:bg-transparent"
+                    >
+                      Part Number
+                      {getSortIcon("productNumber")}
+                    </Button>
+                  </TableHead>
                   <TableHead className="hidden md:table-cell">
                     <Button
                       variant="ghost"
@@ -950,6 +960,14 @@ export default function ProductsManagement() {
                       </div>
                     </TableCell>
 
+                    {/* Part Number - Hidden on small screens */}
+                    <TableCell className="hidden sm:table-cell">
+                      <div className="flex items-center space-x-2">
+                        <Hash className="h-3 w-3 text-slate-400" />
+                        <span className="text-sm font-medium text-slate-700">{product.productNumber}</span>
+                      </div>
+                    </TableCell>
+
                     {/* Pricing - Hidden on mobile */}
                     <TableCell className="hidden md:table-cell">
                       <div className="space-y-1">
@@ -1021,7 +1039,7 @@ export default function ProductsManagement() {
                   </TableRow>
                 )) : (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-12">
+                    <TableCell colSpan={8} className="text-center py-12">
                       <div className="flex flex-col items-center space-y-3 text-slate-500">
                         <Package className="h-12 w-12" />
                         <div className="space-y-1">
