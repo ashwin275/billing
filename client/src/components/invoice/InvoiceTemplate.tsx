@@ -526,6 +526,7 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
           <thead>
             <tr>
               <th>Product</th>
+              <th style={{ textAlign: 'center' }}>Product Number</th>
               <th style={{ textAlign: 'center' }}>HSN</th>
               <th className="text-right">Qty</th>
               <th className="text-right">Rate</th>
@@ -545,6 +546,7 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
                       {item.product?.description || ''}
                     </div>
                   </td>
+                  <td style={{ textAlign: 'center' }}>{item.product?.productNumber || 'N/A'}</td>
                   <td style={{ textAlign: 'center' }}>{item.product?.hsn || 'N/A'}</td>
                   <td className="text-right">{item.quantity}</td>
                   <td className="text-right">₹{item.price?.toFixed(2) || '0.00'}</td>

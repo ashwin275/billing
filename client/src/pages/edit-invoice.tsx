@@ -892,6 +892,7 @@ export default function EditInvoice() {
                             <thead>
                               <tr>
                                 <th class="text-left">Item Description</th>
+                                <th class="text-center">Product Number</th>
                                 <th class="text-center">HSN</th>
                                 <th class="text-center">Qty.</th>
                                 <th class="text-right">Price</th>
@@ -907,8 +908,9 @@ export default function EditInvoice() {
                                   <td class="text-left">
                                     <div style="font-weight: 600; color: #2d3748;">${item?.product?.name || 'N/A'}</div>
                                   </td>
-                                  <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
+                                  <td class="text-center">${item?.product?.productNumber || 'N/A'}</td>
                                   <td class="text-center">${item?.product?.hsn || 'N/A'}</td>
+                                  <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
                                   <td class="text-right">₹${item?.unitPrice?.toFixed(2) || '0.00'}</td>
                                   <td class="text-right">₹${item?.discountAmount?.toFixed(2) || '0.00'}</td>
                                   <td class="text-right">₹${(item?.cgstAmount || 0).toFixed(2)}</td>
@@ -1349,6 +1351,8 @@ export default function EditInvoice() {
                             <thead>
                               <tr>
                                 <th class="text-left">Item Description</th>
+                                <th class="text-center">Product Number</th>
+                                <th class="text-center">HSN</th>
                                 <th class="text-center">Qty.</th>
                                 <th class="text-right">Price</th>
                                 <th class="text-right">Discount</th>
@@ -1363,8 +1367,9 @@ export default function EditInvoice() {
                                   <td class="text-left">
                                     <div style="font-weight: 600; color: #2d3748;">${item?.product?.name || 'N/A'}</div>
                                   </td>
-                                  <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
+                                  <td class="text-center">${item?.product?.productNumber || 'N/A'}</td>
                                   <td class="text-center">${item?.product?.hsn || 'N/A'}</td>
+                                  <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
                                   <td class="text-right">₹${item?.unitPrice?.toFixed(2) || '0.00'}</td>
                                   <td class="text-right">₹${item?.discountAmount?.toFixed(2) || '0.00'}</td>
                                   <td class="text-right">₹${(item?.cgstAmount || 0).toFixed(2)}</td>
@@ -2215,6 +2220,8 @@ export default function EditInvoice() {
                       <thead className="bg-gray-100">
                         <tr>
                           <th className="border-b border-black p-2 text-left text-black">Product</th>
+                          <th className="border-b border-black p-2 text-center text-black">Product Number</th>
+                          <th className="border-b border-black p-2 text-center text-black">HSN</th>
                           <th className="border-b border-black p-2 text-right text-black">Qty</th>
                           <th className="border-b border-black p-2 text-right text-black">Rate</th>
                           <th className="border-b border-black p-2 text-right text-black">Discount</th>
@@ -2225,6 +2232,8 @@ export default function EditInvoice() {
                         {totals.items.map((item, index) => (
                           <tr key={index}>
                             <td className="border-b border-black p-2 text-black">{item?.product?.name || 'Product'}</td>
+                            <td className="border-b border-black p-2 text-center text-black">{item?.product?.productNumber || 'N/A'}</td>
+                            <td className="border-b border-black p-2 text-center text-black">{item?.product?.hsn || 'N/A'}</td>
                             <td className="border-b border-black p-2 text-right text-black">{item?.quantity}</td>
                             <td className="border-b border-black p-2 text-right text-black">₹{item?.unitPrice?.toFixed(2)}</td>
                             <td className="border-b border-black p-2 text-right text-black">₹{item?.discountAmount?.toFixed(2)}</td>
