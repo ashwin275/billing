@@ -50,7 +50,7 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
       <style dangerouslySetInnerHTML={{__html: `
         .invoice-template {
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-          max-width: 210mm;
+          max-width: 280mm;
           margin: 0 auto;
           background: white;
           color: #000;
@@ -58,7 +58,7 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
         }
 
         .print-mode {
-          width: 210mm;
+          width: 280mm;
           min-height: 297mm;
           padding: 0;
           box-shadow: none;
