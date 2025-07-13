@@ -568,7 +568,7 @@ export default function EditInvoice() {
                         
                         .header-wave {
                           background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-                          height: 140px;
+                          height: 180px;
                           position: relative;
                           overflow: hidden;
                         }
@@ -1050,7 +1050,7 @@ export default function EditInvoice() {
                         
                         .header-wave {
                           background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-                          height: 140px;
+                          height: 180px;
                           position: relative;
                           overflow: hidden;
                         }

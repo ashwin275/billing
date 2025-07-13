@@ -162,7 +162,7 @@ export default function InvoiceManagementClean() {
               position: relative;
               overflow: hidden;
               flex-shrink: 0;
-              min-height: 140px;
+              min-height: 180px;
             }
             
             .invoice-header::after {
