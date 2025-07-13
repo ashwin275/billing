@@ -162,7 +162,7 @@ export default function InvoiceManagementClean() {
               position: relative;
               overflow: hidden;
               flex-shrink: 0;
-              min-height: 140px;
+              min-height: 180px;
             }
             
             .invoice-header::after {
@@ -418,7 +418,9 @@ export default function InvoiceManagementClean() {
                   <div class="company-details">
                     <h1>${invoiceData.shop?.name || 'Shop Name'}</h1>
                     <p class="company-tagline">Quality Products & Services</p>
-                    ${invoiceData.shop?.gstNo ? `<p style="font-size: 10px; margin-top: 3px;">GST: ${invoiceData.shop.gstNo}</p>` : ''}
+                    ${invoiceData.shop?.address ? `<p style="font-size: 10px; margin-top: 3px;">${invoiceData.shop.address}</p>` : ''}
+                    ${invoiceData.shop?.place ? `<p style="font-size: 10px; margin-top: 2px;">📍 ${invoiceData.shop.place}</p>` : ''}
+                    ${invoiceData.shop?.gstNo ? `<p style="font-size: 10px; margin-top: 2px;">GST: ${invoiceData.shop.gstNo}</p>` : ''}
                     ${invoiceData.shop?.phone ? `<p style="font-size: 10px; margin-top: 2px;">📞 ${invoiceData.shop.phone}</p>` : ''}
                   </div>
                 </div>
@@ -443,10 +445,10 @@ export default function InvoiceManagementClean() {
                 <div class="billing-block">
                   <h3>Bill To</h3>
                   <div class="customer-name">
-                    ${invoiceData.customerName || 'Walk-in Customer'}
+                    ${invoiceData.customerName || invoiceData.customer?.name || 'Walk-in Customer'}
                   </div>
-                  <p>Phone: ${invoiceData.customerPhone || 'N/A'}</p>
-                  <p>Location: ${invoiceData.customerLocation || 'N/A'}</p>
+                  <p>Phone: ${invoiceData.customerPhone || invoiceData.customer?.phone || 'N/A'}</p>
+                  <p>Location: ${invoiceData.customerLocation || invoiceData.customer?.place || 'N/A'}</p>
                 </div>
                 <div class="billing-block">
                   <h3>Payment Details</h3>
