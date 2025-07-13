@@ -84,7 +84,7 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
           padding: 50px 40px;
           position: relative;
           overflow: hidden;
-          min-height: 140px;
+          min-height: 180px;
         }
 
         .invoice-header::after {
