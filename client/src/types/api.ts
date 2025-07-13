@@ -46,6 +46,7 @@ export interface Shop {
   shopId: number;
   name: string;
   place: string;
+  address?: string;
   phone: string;
   gstNo: string;
   status: 'CREATED' | 'ACTIVE' | 'INACTIVE';

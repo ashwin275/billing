@@ -513,6 +513,7 @@ export default function EditInvoice() {
                   shop: {
                     name: selectedShop.name,
                     place: selectedShop.place,
+                    address: selectedShop.address || "",
                     gstNo: selectedShop.gstNo || "",
                     phone: selectedShop.phone || "",
                     tagline: "Quality Products & Services"
@@ -998,6 +999,7 @@ export default function EditInvoice() {
                   shop: {
                     name: selectedShop?.name || "Shop Name",
                     place: selectedShop?.place || "Shop Address",
+                    address: selectedShop?.address || "",
                     gstNo: selectedShop?.gstNo || "",
                     phone: selectedShop?.phone || "",
                     tagline: "Quality Products & Services"
