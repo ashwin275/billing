@@ -462,6 +462,7 @@ export default function InvoiceManagementClean() {
                 <thead>
                   <tr>
                     <th>Product</th>
+                    <th>Product Number</th>
                     <th>HSN</th>
                     <th class="text-right">Qty</th>
                     <th class="text-right">Rate</th>
@@ -479,6 +480,7 @@ export default function InvoiceManagementClean() {
                           <div class="product-name">${item.product?.name || 'Product'}</div>
                           ${item.product?.description ? `<div style="font-size: 10px; color: #718096;">${item.product.description}</div>` : ''}
                         </td>
+                        <td>${item.product?.productNumber || 'N/A'}</td>
                         <td>${item.product?.hsn || 'N/A'}</td>
                         <td class="text-right">${item.quantity}</td>
                         <td class="text-right">₹${item.price?.toFixed(2) || '0.00'}</td>
