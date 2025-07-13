@@ -50,7 +50,7 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
       <style dangerouslySetInnerHTML={{__html: `
         .invoice-template {
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-          max-width: 210mm;
+          max-width: 280mm;
           margin: 0 auto;
           background: white;
           color: #000;
@@ -58,7 +58,7 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
         }
 
         .print-mode {
-          width: 210mm;
+          width: 280mm;
           min-height: 297mm;
           padding: 0;
           box-shadow: none;
@@ -255,14 +255,15 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
           table-layout: fixed;
         }
         
-        .items-table th:nth-child(1) { width: 30%; } /* Product */
-        .items-table th:nth-child(2) { width: 10%; } /* HSN */
-        .items-table th:nth-child(3) { width: 8%; }  /* Qty */
-        .items-table th:nth-child(4) { width: 12%; } /* Rate */
-        .items-table th:nth-child(5) { width: 12%; } /* Discount */
-        .items-table th:nth-child(6) { width: 9%; }  /* CGST */
-        .items-table th:nth-child(7) { width: 9%; }  /* SGST */
-        .items-table th:nth-child(8) { width: 10%; } /* Total */
+        .items-table th:nth-child(1) { width: 25%; } /* Product */
+        .items-table th:nth-child(2) { width: 12%; } /* Product Number */
+        .items-table th:nth-child(3) { width: 8%; }  /* HSN */
+        .items-table th:nth-child(4) { width: 7%; }  /* Qty */
+        .items-table th:nth-child(5) { width: 10%; } /* Rate */
+        .items-table th:nth-child(6) { width: 10%; } /* Discount */
+        .items-table th:nth-child(7) { width: 9%; }  /* CGST */
+        .items-table th:nth-child(8) { width: 9%; }  /* SGST */
+        .items-table th:nth-child(9) { width: 10%; } /* Total */
 
         .items-table thead {
           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -271,12 +272,15 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
         .items-table th {
           color: white;
           font-weight: 800;
-          padding: 15px 12px;
+          padding: 12px 8px;
           text-align: left;
-          font-size: 14px;
-          letter-spacing: 0.5px;
+          font-size: 12px;
+          letter-spacing: 0.3px;
           text-transform: uppercase;
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
         
         .print-mode .items-table th {
@@ -526,7 +530,7 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
           <thead>
             <tr>
               <th>Product</th>
-              <th style={{ textAlign: 'center' }}>Product Number</th>
+              <th style={{ textAlign: 'center' }}>Product No.</th>
               <th style={{ textAlign: 'center' }}>HSN</th>
               <th className="text-right">Qty</th>
               <th className="text-right">Rate</th>
