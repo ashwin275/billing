@@ -97,6 +97,7 @@ This is a React-based billing dashboard application built for managing invoices,
 
 ## Changelog
 
+- June 30, 2025: Added Product Number column to all invoice tables (preview and download) - added Product Number column displaying productNumber from backend to all invoice tables in create invoice page (3 tables), edit invoice page (3 tables), InvoiceTemplate component, and invoice management components; positioned between Item Description and HSN columns; ensures consistent product identification across all invoice-related PDFs and previews
 - June 30, 2025: Added Part Number column to Products Management table - created new sortable column displaying productNumber from backend; positioned between Product Info and Pricing columns; responsive design hides on small screens; includes Hash icon for visual identification
 - June 29, 2025: Removed shopId from product update API payload - eliminated shopId field from edit product function as backend doesn't require it for updates; simplified payload structure and removed unnecessary token decoding logic
 - June 29, 2025: Fixed product edit API payload to use correct field names - changed CGST/SGST from uppercase to lowercase (cgst/sgst) in edit product function to match backend API expectations; ensures proper tax field updates when editing products

@@ -896,6 +896,7 @@ export default function CreateInvoice() {
                             <thead>
                               <tr>
                                 <th class="text-left">Item Description</th>
+                                <th class="text-center">Product Number</th>
                                 <th class="text-center">HSN</th>
                                 <th class="text-center">Qty.</th>
                                 <th class="text-right">Price</th>
@@ -911,6 +912,7 @@ export default function CreateInvoice() {
                                   <td class="text-left">
                                     <div style="font-weight: 600; color: #000000; font-weight: 700;">${item?.product?.name || 'N/A'}</div>
                                   </td>
+                                  <td class="text-center">${item?.product?.productNumber || 'N/A'}</td>
                                   <td class="text-center">${item?.product?.hsn || 'N/A'}</td>
                                   <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
                                   <td class="text-right">₹${item?.unitPrice?.toFixed(2) || '0.00'}</td>
@@ -1404,6 +1406,7 @@ export default function CreateInvoice() {
                             <thead>
                               <tr>
                                 <th class="text-left">Item Description</th>
+                                <th class="text-center">Product Number</th>
                                 <th class="text-center">HSN</th>
                                 <th class="text-center">Qty.</th>
                                 <th class="text-right">Price</th>
@@ -1419,6 +1422,7 @@ export default function CreateInvoice() {
                                   <td class="text-left">
                                     <div style="font-weight: 600; color: #000000; font-weight: 700;">${item?.product?.name || 'N/A'}</div>
                                   </td>
+                                  <td class="text-center">${item?.product?.productNumber || 'N/A'}</td>
                                   <td class="text-center">${item?.product?.hsn || 'N/A'}</td>
                                   <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
                                   <td class="text-right">₹${item?.unitPrice?.toFixed(2) || '0.00'}</td>
@@ -1866,6 +1870,7 @@ export default function CreateInvoice() {
                             <thead>
                               <tr>
                                 <th class="text-left">Item Description</th>
+                                <th class="text-center">Product Number</th>
                                 <th class="text-center">HSN</th>
                                 <th class="text-center">Qty.</th>
                                 <th class="text-right">Price</th>
@@ -1881,6 +1886,7 @@ export default function CreateInvoice() {
                                   <td class="text-left">
                                     <div style="font-weight: 600; color: #000000; font-weight: 700;">${item?.product?.name || 'N/A'}</div>
                                   </td>
+                                  <td class="text-center">${item?.product?.productNumber || 'N/A'}</td>
                                   <td class="text-center">${item?.product?.hsn || 'N/A'}</td>
                                   <td class="text-center">${item?.quantity?.toString().padStart(2, '0') || '0'}</td>
                                   <td class="text-right">₹${item?.unitPrice?.toFixed(2) || '0.00'}</td>
