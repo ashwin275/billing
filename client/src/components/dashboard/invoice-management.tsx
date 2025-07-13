@@ -768,7 +768,7 @@ export default function InvoiceManagementClean() {
 
       {/* Preview Dialog */}
       <Dialog open={isPreviewDialogOpen} onOpenChange={setIsPreviewDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Invoice Preview</DialogTitle>
           </DialogHeader>
