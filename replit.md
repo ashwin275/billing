@@ -97,6 +97,7 @@ This is a React-based billing dashboard application built for managing invoices,
 
 ## Changelog
 
+- June 30, 2025: Increased invoice template width from 210mm to 280mm for better table display and column spacing
 - June 30, 2025: Fixed table layout in invoice preview to prevent text overlap - adjusted column widths for Product Number column, reduced font size and padding in headers, shortened "Product Number" to "Product No." for better fit
 - June 30, 2025: Increased Invoice Management preview dialog width from max-w-4xl to max-w-6xl for better table visibility with additional columns
 - June 30, 2025: Added Product Number column to all invoice tables (preview and download) - added Product Number column displaying productNumber from backend to all invoice tables in create invoice page (3 tables), edit invoice page (3 tables), InvoiceTemplate component, and invoice management components; positioned between Item Description and HSN columns; ensures consistent product identification across all invoice-related PDFs and previews
