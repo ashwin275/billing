@@ -480,7 +480,9 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
             <div className="company-details">
               <h1>{invoice.shop?.name || 'Shop Name'}</h1>
               <p className="company-tagline">Quality Products & Services</p>
-              {invoice.shop?.gstNo && <p style={{fontSize: '10px', marginTop: '3px'}}>GST: {invoice.shop.gstNo}</p>}
+              {invoice.shop?.address && <p style={{fontSize: '10px', marginTop: '3px'}}>{invoice.shop.address}</p>}
+              {invoice.shop?.place && <p style={{fontSize: '10px', marginTop: '2px'}}>📍 {invoice.shop.place}</p>}
+              {invoice.shop?.gstNo && <p style={{fontSize: '10px', marginTop: '2px'}}>GST: {invoice.shop.gstNo}</p>}
               {invoice.shop?.phone && <p style={{fontSize: '10px', marginTop: '2px'}}>📞 {invoice.shop.phone}</p>}
             </div>
           </div>
@@ -507,10 +509,10 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
           <div className="billing-block">
             <h3>Bill To</h3>
             <div className="customer-name">
-              {invoice.customerName || 'Walk-in Customer'}
+              {invoice.customer?.name || invoice.customerName || 'Walk-in Customer'}
             </div>
-            <p>Phone: {invoice.customerPhone || 'N/A'}</p>
-            <p>Location: {invoice.customerLocation || 'N/A'}</p>
+            <p>Phone: {invoice.customer?.phone || invoice.customerPhone || 'N/A'}</p>
+            <p>Location: {invoice.customer?.place || invoice.customerLocation || 'N/A'}</p>
           </div>
           <div className="billing-block">
             <h3>Payment Details</h3>

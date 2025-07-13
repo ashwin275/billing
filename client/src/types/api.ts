@@ -151,6 +151,7 @@ export interface Invoice {
   customerName?: string; // Added for compatibility
   customerPhone?: string; // Customer phone number
   customerLocation?: string; // Customer location
+  customer?: Customer; // Customer object with full details
   shop: Shop;
   sales: {
     saleId: number | null;
