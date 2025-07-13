@@ -97,6 +97,7 @@ This is a React-based billing dashboard application built for managing invoices,
 
 ## Changelog
 
+- June 30, 2025: Added Part Number column to Products Management table - created new sortable column displaying productNumber from backend; positioned between Product Info and Pricing columns; responsive design hides on small screens; includes Hash icon for visual identification
 - June 29, 2025: Removed shopId from product update API payload - eliminated shopId field from edit product function as backend doesn't require it for updates; simplified payload structure and removed unnecessary token decoding logic
 - June 29, 2025: Fixed product edit API payload to use correct field names - changed CGST/SGST from uppercase to lowercase (cgst/sgst) in edit product function to match backend API expectations; ensures proper tax field updates when editing products
 - June 29, 2025: Changed CGST/SGST default values from 9% to 0% - updated all hardcoded tax defaults across products management and invoice editing to use 0 instead of 9 when tax values are not provided or null; ensures accurate tax calculations without assumptions
