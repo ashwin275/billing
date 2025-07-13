@@ -97,6 +97,7 @@ This is a React-based billing dashboard application built for managing invoices,
 
 ## Changelog
 
+- June 30, 2025: Fixed customer information display in Invoice Management - updated InvoiceTemplate to use nested customer object data (customer.phone, customer.place) instead of direct properties; added shop address information to invoice header; now displays actual customer phone and location from backend instead of "N/A"
 - June 30, 2025: Increased invoice template width from 210mm to 280mm for better table display and column spacing
 - June 30, 2025: Fixed table layout in invoice preview to prevent text overlap - adjusted column widths for Product Number column, reduced font size and padding in headers, shortened "Product Number" to "Product No." for better fit
 - June 30, 2025: Increased Invoice Management preview dialog width from max-w-4xl to max-w-6xl for better table visibility with additional columns
