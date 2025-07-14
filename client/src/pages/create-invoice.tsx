@@ -2636,6 +2636,35 @@ export default function CreateInvoice() {
                         <span className="font-semibold">Grand Total:</span>
                         <span className="font-semibold text-lg">₹{totals.grandTotal.toFixed(2)}</span>
                       </div>
+
+                      {/* Amount Paid Section */}
+                      <div className="flex items-center justify-between pt-2">
+                        <span className="text-gray-600">Amount Paid:</span>
+                        <FormField
+                          control={form.control}
+                          name="amountPaid"
+                          render={({ field }) => (
+                            <Input
+                              {...field}
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={field.value || ''}
+                              onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                              className="w-32 text-right"
+                              placeholder={totals.grandTotal.toFixed(2)}
+                            />
+                          )}
+                        />
+                      </div>
+                      
+                      {/* Balance Calculation */}
+                      <div className="flex justify-between text-lg font-semibold">
+                        <span>Balance:</span>
+                        <span className={totals.grandTotal - (form.watch("amountPaid") || 0) > 0 ? "text-red-600" : "text-green-600"}>
+                          ₹{(totals.grandTotal - (form.watch("amountPaid") || 0)).toFixed(2)}
+                        </span>
+                      </div>
                       
                       {/* Auto Round Off Toggle */}
                       <div className="flex items-center justify-between pt-2 border-t">
