@@ -284,8 +284,8 @@ export default function ProductsManagement() {
       cgst: data.cgst || 0,
       sgst: data.sgst || 0,
       category: data.category || "",
-      imageUrl: data.imageUrl || "https://example.com/product.jpg",
-      expiry: data.expiry || "2025-12-31",
+      imageUrl: data.imageUrl || "",
+      expiry: data.expiry || "",
       barcode: data.barcode || "",
       shopId: shopId, // Use shopId from token
     };
@@ -299,6 +299,19 @@ export default function ProductsManagement() {
   const onEditProduct = (data: ProductFormData) => {
     if (!productToEdit) return;
     
+    // Get shopId from JWT token
+    const token = getAuthToken();
+    let shopId = 1; // Default fallback
+    
+    if (token) {
+      try {
+        const decoded = decodeToken(token);
+        shopId = decoded.shopId || 1;
+      } catch (error) {
+        console.warn('Failed to decode token for update product:', error);
+      }
+    }
+    
     const productUpdate = {
       productId: productToEdit.productId,
       productNumber: data.partNumber || productToEdit.productNumber, // Map partNumber to productNumber for API
@@ -311,11 +324,12 @@ export default function ProductsManagement() {
       retailRate: data.retailRate || 0,
       taxRate: (data.cgst || 0) + (data.sgst || 0),
       category: data.category || "",
-      imageUrl: data.imageUrl || "https://example.com/product.jpg",
-      expiry: data.expiry || "2025-12-31",
+      imageUrl: data.imageUrl || "",
+      expiry: data.expiry || "",
       barcode: data.barcode || "",
       cgst: data.cgst || 0,
-      sgst: data.sgst || 0
+      sgst: data.sgst || 0,
+      shopId: shopId // Add shopId from token
     };
     
     updateProductMutation.mutate({
