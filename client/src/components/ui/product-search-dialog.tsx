@@ -2,10 +2,19 @@ import React, { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Search, Package, Filter, Plus, Minus, X } from "lucide-react";
+import { Search, Package, Filter, Plus, Minus, X, Edit2 } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { productsApi } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
+import { getAuthToken, decodeToken } from "@/lib/auth";
 
 type Product = import("@/types/api").Product;
 
@@ -13,6 +22,26 @@ interface SelectedProduct extends Product {
   quantity: number;
   discountAmount?: number;
 }
+
+// Product edit form schema
+const productEditSchema = z.object({
+  name: z.string().min(1, "Product name is required"),
+  partNumber: z.string().optional(),
+  hsn: z.string().optional(),
+  description: z.string().optional(),
+  quantity: z.number().min(0).optional(),
+  ourPrice: z.number().min(0).optional(),
+  wholesaleRate: z.number().min(0).optional(),
+  retailRate: z.number().min(0).optional(),
+  cgst: z.number().min(0).max(100).optional(),
+  sgst: z.number().min(0).max(100).optional(),
+  category: z.string().optional(),
+  imageUrl: z.string().optional(),
+  expiry: z.string().optional(),
+  barcode: z.string().optional(),
+});
+
+type ProductEditFormData = z.infer<typeof productEditSchema>;
 
 interface ProductSearchDialogProps {
   products: Product[];
@@ -31,12 +60,37 @@ export function ProductSearchDialog({
   saleType = 'RETAIL',
   existingItems = []
 }: ProductSearchDialogProps) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>([]);
   const [quantityInputs, setQuantityInputs] = useState<Record<number, string>>({});
   const [discountInputs, setDiscountInputs] = useState<Record<number, string>>({});
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [productToEdit, setProductToEdit] = useState<Product | null>(null);
+
+  // Edit product form
+  const editForm = useForm<ProductEditFormData>({
+    resolver: zodResolver(productEditSchema),
+    defaultValues: {
+      name: "",
+      partNumber: "",
+      hsn: "",
+      description: "",
+      quantity: 0,
+      ourPrice: 0,
+      wholesaleRate: 0,
+      retailRate: 0,
+      cgst: 0,
+      sgst: 0,
+      category: "",
+      imageUrl: "",
+      expiry: "",
+      barcode: "",
+    },
+  });
 
   // Get unique categories
   const categories = useMemo(() => {
@@ -70,6 +124,107 @@ export function ProductSearchDialog({
       return total + (subtotal - discountAmount);
     }, 0);
   }, [selectedProducts, saleType]);
+
+  // Update product mutation
+  const updateProductMutation = useMutation({
+    mutationFn: ({ productId, product }: { productId: number; product: Product }) =>
+      productsApi.updateProduct(productId, product),
+    onSuccess: () => {
+      toast({
+        title: "Product updated",
+        description: "Product has been successfully updated.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/products/all"] });
+      setIsEditDialogOpen(false);
+      setProductToEdit(null);
+      editForm.reset();
+    },
+    onError: (error: any) => {
+      let errorMessage = "Failed to update product. Please try again.";
+      
+      if (error?.response?.data) {
+        const errorData = error.response.data;
+        errorMessage = errorData.detail || errorData.title || errorMessage;
+      } else if (error?.detail) {
+        errorMessage = error.detail;
+      } else if (error?.title) {
+        errorMessage = error.title;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
+      toast({
+        title: "Failed to update product",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handle edit product
+  const handleEditProduct = (product: Product) => {
+    setProductToEdit(product);
+    editForm.reset({
+      name: product.name || "",
+      partNumber: product.productNumber || "", // Map productNumber to partNumber for UI
+      hsn: product.hsn ? product.hsn.toString() : "",
+      description: product.description || "",
+      quantity: product.quantity || 0,
+      ourPrice: product.purchasePrice || product.ourPrice || 0, // Map purchasePrice to ourPrice
+      wholesaleRate: product.wholesaleRate || 0,
+      retailRate: product.retailRate || 0,
+      cgst: product.cgst || 0,
+      sgst: product.sgst || 0,
+      category: product.category || "",
+      imageUrl: product.imageUrl || "",
+      expiry: product.expiry ? product.expiry.split('T')[0] : "", // Convert to date format with null safety
+      barcode: product.barcode || "",
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  // Handle edit product form submission
+  const onEditProduct = (data: ProductEditFormData) => {
+    if (!productToEdit) return;
+    
+    // Get shopId from JWT token
+    const token = getAuthToken();
+    let shopId = 1; // Default fallback
+    
+    if (token) {
+      try {
+        const decoded = decodeToken(token);
+        shopId = decoded.shopId || 1;
+      } catch (error) {
+        console.warn('Failed to decode token for update product:', error);
+      }
+    }
+    
+    const productUpdate = {
+      productId: productToEdit.productId,
+      productNumber: data.partNumber || productToEdit.productNumber, // Map partNumber to productNumber for API
+      hsn: typeof data.hsn === 'string' ? parseInt(data.hsn) : (data.hsn || 0),
+      name: data.name,
+      description: data.description || "",
+      quantity: data.quantity || 0,
+      purchasePrice: data.ourPrice || 0,
+      wholesaleRate: data.wholesaleRate || 0,
+      retailRate: data.retailRate || 0,
+      taxRate: (data.cgst || 0) + (data.sgst || 0),
+      category: data.category || "",
+      imageUrl: data.imageUrl || "",
+      expiry: data.expiry || "",
+      barcode: data.barcode || "",
+      cgst: data.cgst || 0,
+      sgst: data.sgst || 0,
+      shopId: shopId // Add shopId from token
+    };
+    
+    updateProductMutation.mutate({
+      productId: productToEdit.productId,
+      product: productUpdate as unknown as Product,
+    });
+  };
 
   const handleAddProduct = (product: Product) => {
     const existingIndex = selectedProducts.findIndex(p => p.productId === product.productId);
@@ -178,16 +333,18 @@ export function ProductSearchDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button variant="outline" className="w-full justify-start border-dashed">
-            <Package className="mr-2 h-4 w-4" />
-            Add Items
-          </Button>
-        )}
-      </DialogTrigger>
-      <DialogContent className="w-[95vw] h-[90vh] max-w-[1600px] flex flex-col" aria-describedby="dialog-description">
+    <>
+      {/* Main Product Search Dialog */}
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogTrigger asChild>
+          {trigger || (
+            <Button variant="outline" className="w-full justify-start border-dashed">
+              <Package className="mr-2 h-4 w-4" />
+              Add Items
+            </Button>
+          )}
+        </DialogTrigger>
+        <DialogContent className="w-[95vw] h-[90vh] max-w-[1600px] flex flex-col" aria-describedby="dialog-description">
         <DialogHeader>
           <DialogTitle>Add Items</DialogTitle>
           <DialogDescription id="dialog-description">
@@ -235,6 +392,7 @@ export function ProductSearchDialog({
                     <TableHead>Sales Price</TableHead>
                     <TableHead>Current Stock</TableHead>
                     <TableHead>Quantity</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -313,6 +471,19 @@ export function ProductSearchDialog({
                               + Add
                             </Button>
                           )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 w-8 p-0 text-gray-600 hover:text-blue-600"
+                              onClick={() => handleEditProduct(product)}
+                              title="Edit Product"
+                            >
+                              <Edit2 className="h-3 w-3" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
@@ -436,6 +607,191 @@ export function ProductSearchDialog({
           </Button>
         </div>
       </DialogContent>
-    </Dialog>
+      </Dialog>
+      
+      {/* Edit Product Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Product</DialogTitle>
+            <DialogDescription>
+              Update the product details below.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={editForm.handleSubmit(onEditProduct)} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-name">Product Name *</Label>
+                <Input
+                  id="edit-name"
+                  {...editForm.register("name")}
+                  placeholder="Samsung Galaxy S24"
+                />
+                {editForm.formState.errors.name && (
+                  <p className="text-sm text-destructive">
+                    {editForm.formState.errors.name.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-partNumber">Part Number</Label>
+                <Input
+                  id="edit-partNumber"
+                  {...editForm.register("partNumber")}
+                  placeholder="SGS24-128GB-BLK"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-hsn">HSN Code</Label>
+                <Input
+                  id="edit-hsn"
+                  {...editForm.register("hsn")}
+                  placeholder="1234"
+                />
+              </div>
+            </div>
+                
+            <div className="space-y-2">
+              <Label htmlFor="edit-description">Description</Label>
+              <Textarea
+                id="edit-description"
+                {...editForm.register("description")}
+                placeholder="Product description"
+              />
+            </div>
+                
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-quantity">Quantity</Label>
+                <Input
+                  id="edit-quantity"
+                  type="number"
+                  {...editForm.register("quantity", { valueAsNumber: true })}
+                  placeholder="50"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-ourPrice">Purchase Price</Label>
+                <Input
+                  id="edit-ourPrice"
+                  type="number"
+                  step="0.01"
+                  {...editForm.register("ourPrice", { valueAsNumber: true })}
+                  placeholder="25000.00"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-retailRate">Sales Price</Label>
+                <Input
+                  id="edit-retailRate"
+                  type="number"
+                  step="0.01"
+                  {...editForm.register("retailRate", { valueAsNumber: true })}
+                  placeholder="30000.00"
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-wholesaleRate">Wholesale Rate</Label>
+                <Input
+                  id="edit-wholesaleRate"
+                  type="number"
+                  step="0.01"
+                  {...editForm.register("wholesaleRate", { valueAsNumber: true })}
+                  placeholder="28000.00"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-cgst">CGST (%)</Label>
+                <Input
+                  id="edit-cgst"
+                  type="number"
+                  step="0.01"
+                  {...editForm.register("cgst", { valueAsNumber: true })}
+                  placeholder="0"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-sgst">SGST (%)</Label>
+                <Input
+                  id="edit-sgst"
+                  type="number"
+                  step="0.01"
+                  {...editForm.register("sgst", { valueAsNumber: true })}
+                  placeholder="0"
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-category">Category</Label>
+                <Input
+                  id="edit-category"
+                  {...editForm.register("category")}
+                  placeholder="Electronics"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-barcode">Barcode</Label>
+                <Input
+                  id="edit-barcode"
+                  {...editForm.register("barcode")}
+                  placeholder="1234567890123"
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-imageUrl">Image URL</Label>
+                <Input
+                  id="edit-imageUrl"
+                  {...editForm.register("imageUrl")}
+                  placeholder="https://example.com/product-image.jpg"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-expiry">Expiry Date</Label>
+                <Input
+                  id="edit-expiry"
+                  type="date"
+                  {...editForm.register("expiry")}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={updateProductMutation.isPending}>
+                {updateProductMutation.isPending ? (
+                  <>
+                    <div className="mr-2 h-3 w-3 animate-spin rounded-full border-2 border-background border-t-transparent" />
+                    Updating...
+                  </>
+                ) : (
+                  <>
+                    <Edit2 className="mr-2 h-4 w-4" />
+                    Update Product
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
