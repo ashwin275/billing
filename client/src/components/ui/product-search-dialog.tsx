@@ -184,7 +184,7 @@ export function ProductSearchDialog({
   };
 
   // Handle edit product form submission
-  const onEditProduct = (data: ProductEditFormData) => {
+  const onEditProduct = async (data: ProductEditFormData) => {
     if (!productToEdit) return;
     
     // Get shopId from JWT token
@@ -626,11 +626,24 @@ export function ProductSearchDialog({
         </div>
 
         <div className="flex justify-between pt-4 border-t">
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setOpen(false);
+            }}
+          >
             Cancel
           </Button>
           <Button 
-            onClick={handleDone}
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleDone();
+            }}
             disabled={selectedProducts.length === 0}
           >
             Done
@@ -648,7 +661,7 @@ export function ProductSearchDialog({
               Update the product details below.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={editForm.handleSubmit(onEditProduct)} className="space-y-4">
+          <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-name">Product Name *</Label>
@@ -805,7 +818,15 @@ export function ProductSearchDialog({
               <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={updateProductMutation.isPending}>
+              <Button 
+                type="button" 
+                disabled={updateProductMutation.isPending}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  editForm.handleSubmit(onEditProduct)();
+                }}
+              >
                 {updateProductMutation.isPending ? (
                   <>
                     <div className="mr-2 h-3 w-3 animate-spin rounded-full border-2 border-background border-t-transparent" />
@@ -819,7 +840,7 @@ export function ProductSearchDialog({
                 )}
               </Button>
             </div>
-          </form>
+          </div>
         </DialogContent>
       </Dialog>
     </>
