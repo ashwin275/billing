@@ -284,8 +284,8 @@ export default function ProductsManagement() {
       cgst: data.cgst || 0,
       sgst: data.sgst || 0,
       category: data.category || "",
-      imageUrl: data.imageUrl || "https://example.com/product.jpg",
-      expiry: data.expiry || "2025-12-31",
+      imageUrl: data.imageUrl || "",
+      expiry: data.expiry || "",
       barcode: data.barcode || "",
       shopId: shopId, // Use shopId from token
     };
@@ -324,8 +324,8 @@ export default function ProductsManagement() {
       retailRate: data.retailRate || 0,
       taxRate: (data.cgst || 0) + (data.sgst || 0),
       category: data.category || "",
-      imageUrl: data.imageUrl || "https://example.com/product.jpg",
-      expiry: data.expiry || "2025-12-31",
+      imageUrl: data.imageUrl || "",
+      expiry: data.expiry || "",
       barcode: data.barcode || "",
       cgst: data.cgst || 0,
       sgst: data.sgst || 0,
