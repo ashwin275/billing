@@ -454,18 +454,28 @@ export function ProductSearchDialog({
                         <TableCell>
                           {selectedProduct ? (
                             <Button
+                              type="button"
                               size="sm"
                               variant="ghost"
                               className="h-8 w-8 p-0 text-red-500"
-                              onClick={() => handleRemoveProduct(product.productId)}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleRemoveProduct(product.productId);
+                              }}
                             >
                               <X className="h-3 w-3" />
                             </Button>
                           ) : (
                             <Button
+                              type="button"
                               size="sm"
                               variant="outline"
-                              onClick={() => handleAddProduct(product)}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleAddProduct(product);
+                              }}
                               className="text-blue-600"
                             >
                               + Add
@@ -475,10 +485,15 @@ export function ProductSearchDialog({
                         <TableCell>
                           <div className="flex gap-1">
                             <Button
+                              type="button"
                               size="sm"
                               variant="ghost"
                               className="h-8 w-8 p-0 text-gray-600 hover:text-blue-600"
-                              onClick={() => handleEditProduct(product)}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleEditProduct(product);
+                              }}
                               title="Edit Product"
                             >
                               <Edit2 className="h-3 w-3" />
@@ -517,10 +532,15 @@ export function ProductSearchDialog({
                           </div>
                         </div>
                         <Button
+                          type="button"
                           size="sm"
                           variant="ghost"
                           className="h-6 w-6 p-0"
-                          onClick={() => handleRemoveProduct(product.productId)}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleRemoveProduct(product.productId);
+                          }}
                         >
                           <X className="h-3 w-3" />
                         </Button>
@@ -528,10 +548,15 @@ export function ProductSearchDialog({
                       
                       <div className="flex items-center gap-2">
                         <Button
+                          type="button"
                           size="sm"
                           variant="outline"
                           className="h-6 w-6 p-0"
-                          onClick={() => handleQuantityChange(product.productId, product.quantity - 1)}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleQuantityChange(product.productId, product.quantity - 1);
+                          }}
                         >
                           <Minus className="h-3 w-3" />
                         </Button>
@@ -548,10 +573,15 @@ export function ProductSearchDialog({
                           }}
                         />
                         <Button
+                          type="button"
                           size="sm"
                           variant="outline"
                           className="h-6 w-6 p-0"
-                          onClick={() => handleQuantityChange(product.productId, product.quantity + 1)}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleQuantityChange(product.productId, product.quantity + 1);
+                          }}
                         >
                           <Plus className="h-3 w-3" />
                         </Button>
