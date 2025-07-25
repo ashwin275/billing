@@ -2095,7 +2095,8 @@ export default function CreateInvoice() {
                               <Input 
                                 type="date" 
                                 {...field} 
-                                className="text-right border-none p-0 font-semibold" 
+                                max={new Date().toISOString().split('T')[0]}
+                                className="text-right border-2 border-gray-300 p-2 font-semibold bg-white rounded-md cursor-pointer hover:border-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors" 
                               />
                             )}
                           />
