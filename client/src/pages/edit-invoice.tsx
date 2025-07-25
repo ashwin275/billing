@@ -36,6 +36,7 @@ const saleItemSchema = z.object({
 const invoiceSchema = z.object({
   customerId: z.number().min(1, "Customer is required"),
   shopId: z.number().min(1, "Shop is required"),
+  invoiceDate: z.string().min(1, "Invoice date is required"),
   discount: z.number().min(0, "Discount cannot be negative").default(0),
   discountType: z.enum(["PERCENTAGE", "AMOUNT"]).default("PERCENTAGE"),
   amountPaid: z.number().min(0, "Amount paid cannot be negative").default(0),
@@ -105,6 +106,7 @@ export default function EditInvoice() {
     defaultValues: {
       customerId: 0,
       shopId: 0,
+      invoiceDate: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
       discount: 0,
       discountType: "PERCENTAGE",
       amountPaid: 0,
@@ -258,6 +260,7 @@ export default function EditInvoice() {
       form.reset({
         customerId: invoice.customerId,
         shopId: invoice.shopId,
+        invoiceDate: invoice.invoiceDate ? invoice.invoiceDate.split('T')[0] : new Date().toISOString().split('T')[0],
         discount: invoice.discount || 0,
         discountType: "PERCENTAGE", // Default as this isn't in the invoice data
         amountPaid: invoice.amountPaid || 0,
@@ -377,6 +380,7 @@ export default function EditInvoice() {
     const invoiceInput: InvoiceInput = {
       customerId: data.customerId,
       shopId: data.shopId,
+      invoiceDate: data.invoiceDate,
       discount: data.discount,
       amountPaid: data.amountPaid,
       paymentMode: data.paymentMode,
