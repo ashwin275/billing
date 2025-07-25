@@ -1533,7 +1533,18 @@ export default function EditInvoice() {
                         </div>
                         <div>
                           <Label className="text-sm text-gray-600">Date</Label>
-                          <p className="font-semibold">{new Date(invoice.invoiceDate).toLocaleDateString()}</p>
+                          <FormField
+                            control={form.control}
+                            name="invoiceDate"
+                            render={({ field }) => (
+                              <Input 
+                                type="date" 
+                                {...field} 
+                                max={new Date().toISOString().split('T')[0]}
+                                className="text-right border-2 border-gray-300 p-2 font-semibold bg-white rounded-md cursor-pointer hover:border-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors" 
+                              />
+                            )}
+                          />
                         </div>
                         <div>
                           <Label className="text-sm text-gray-600">Transaction ID</Label>
