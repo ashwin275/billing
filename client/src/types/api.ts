@@ -194,6 +194,7 @@ export interface SaleItem {
 export interface InvoiceInput {
   customerId: number;
   shopId: number;
+  invoiceDate: string;
   discount: number;
   amountPaid: number;
   paymentMode: 'CASH' | 'CARD' | 'UPI' | 'CHEQUE' | 'BANK_TRANSFER';

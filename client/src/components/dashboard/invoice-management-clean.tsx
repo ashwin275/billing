@@ -667,7 +667,11 @@ export default function InvoiceManagementClean() {
                       {invoice.invoiceNo}
                     </TableCell>
                     <TableCell>
-                      {new Date(invoice.invoiceDate).toLocaleDateString()}
+                      {new Date(invoice.invoiceDate).toLocaleDateString('en-GB', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric'
+                      })}
                     </TableCell>
                     <TableCell>
                       <div>

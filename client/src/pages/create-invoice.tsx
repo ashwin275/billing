@@ -40,6 +40,7 @@ const saleItemSchema = z.object({
 const invoiceSchema = z.object({
   customerId: z.number().min(1, "Customer is required"),
   shopId: z.number().min(1, "Shop is required"),
+  invoiceDate: z.string().min(1, "Invoice date is required"),
   discount: z.number().min(0, "Discount cannot be negative").default(0),
   discountType: z.enum(["PERCENTAGE", "AMOUNT"]).default("PERCENTAGE"),
   additionalDiscountValue: z.number().min(0, "Additional discount cannot be negative").default(0),
@@ -122,6 +123,7 @@ export default function CreateInvoice() {
     defaultValues: {
       customerId: 0,
       shopId: 0,
+      invoiceDate: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
       discount: 0,
       additionalDiscountValue: 0,
       additionalDiscountType: "amount",
@@ -409,6 +411,7 @@ export default function CreateInvoice() {
     const invoiceInput: InvoiceInput = {
       customerId: data.customerId,
       shopId: data.shopId,
+      invoiceDate: data.invoiceDate,
       discount: totals.additionalDiscountAmount, // Send only additional discount value to backend
       amountPaid: data.amountPaid,
       paymentMode: data.paymentMode,
@@ -2085,7 +2088,18 @@ export default function CreateInvoice() {
                       <div className="space-y-2">
                         <div>
                           <Label className="text-sm text-gray-600">Date</Label>
-                          <p className="font-semibold">{new Date().toLocaleDateString()}</p>
+                          <FormField
+                            control={form.control}
+                            name="invoiceDate"
+                            render={({ field }) => (
+                              <Input 
+                                type="date" 
+                                {...field} 
+                                max={new Date().toISOString().split('T')[0]}
+                                className="text-right border-2 border-gray-300 p-2 font-semibold bg-white rounded-md cursor-pointer hover:border-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors" 
+                              />
+                            )}
+                          />
                         </div>
                         <div>
                           <Label className="text-sm text-gray-600">Transaction ID</Label>
