@@ -10,8 +10,7 @@ const __dirname = dirname(__filename);
 const viteProcess = spawn('npx', [
   'vite', 
   '--port', '5000', 
-  '--host', '0.0.0.0',
-  '--config', 'vite.config.frontend.ts'
+  '--host', '0.0.0.0'
 ], {
   cwd: resolve(__dirname, '..'),
   stdio: 'inherit'
