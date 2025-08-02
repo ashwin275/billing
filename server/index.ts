@@ -9,8 +9,7 @@ const __dirname = dirname(__filename);
 // Start Vite dev server for the frontend with allowed hosts
 const viteProcess = spawn('npx', [
   'vite', 
-  '--port', '5000', 
-  '--host', '0.0.0.0'
+  '--config', 'vite.config.dev.ts'
 ], {
   cwd: resolve(__dirname, '..'),
   stdio: 'inherit'
