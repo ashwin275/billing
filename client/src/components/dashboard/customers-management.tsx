@@ -754,46 +754,51 @@ export default function CustomersManagement() {
 
           {/* Pagination */}
           {totalCustomers > 0 && (
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 px-4 py-4 border-t">
-              <div className="text-xs sm:text-sm text-slate-700 text-center sm:text-left">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-4 border-t bg-white dark:bg-slate-950">
+              <div className="text-sm text-slate-700 dark:text-slate-300 order-2 sm:order-1">
                 Showing {startIndex + 1} to {Math.min(endIndex, totalCustomers)} of {totalCustomers} customers
               </div>
-              <Pagination>
-                <PaginationContent className="flex-wrap justify-center">
-                  <PaginationItem>
-                    <PaginationPrevious 
-                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                      className={cn(
-                        currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer",
-                        "text-xs sm:text-sm"
-                      )}
-                    />
-                  </PaginationItem>
-                  {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                    const page = i + Math.max(1, currentPage - 2);
-                    return page <= totalPages ? (
-                      <PaginationItem key={page}>
-                        <PaginationLink
-                          onClick={() => setCurrentPage(page)}
-                          isActive={currentPage === page}
-                          className="cursor-pointer text-xs sm:text-sm min-w-8 h-8"
-                        >
-                          {page}
-                        </PaginationLink>
-                      </PaginationItem>
-                    ) : null;
-                  })}
-                  <PaginationItem>
-                    <PaginationNext 
-                      onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                      className={cn(
-                        currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer",
-                        "text-xs sm:text-sm"
-                      )}
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
+              <div className="order-1 sm:order-2">
+                <Pagination>
+                  <PaginationContent className="gap-1">
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                        className={`${currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800"} transition-colors`}
+                      />
+                    </PaginationItem>
+                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                      let page;
+                      if (totalPages <= 5) {
+                        page = i + 1;
+                      } else if (currentPage <= 3) {
+                        page = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        page = totalPages - 4 + i;
+                      } else {
+                        page = currentPage - 2 + i;
+                      }
+                      return (
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            onClick={() => setCurrentPage(page)}
+                            isActive={currentPage === page}
+                            className="cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors min-w-[40px] justify-center"
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    })}
+                    <PaginationItem>
+                      <PaginationNext 
+                        onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                        className={`${currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800"} transition-colors`}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
             </div>
           )}
         </CardContent>
