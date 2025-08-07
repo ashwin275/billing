@@ -21,7 +21,7 @@ export default function InvoiceManagementClean() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [sortField, setSortField] = useState<keyof Invoice>("invoiceDate");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
@@ -735,52 +735,133 @@ export default function InvoiceManagementClean() {
             </Table>
           </div>
 
-          {/* Pagination */}
+          {/* Enhanced Pagination */}
           {sortedInvoices.length > 0 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-4 border-t bg-white dark:bg-slate-950">
-              <div className="text-sm text-slate-700 dark:text-slate-300 order-2 sm:order-1">
+            <div className="flex flex-col items-center gap-4 px-4 py-6 border-t bg-white dark:bg-slate-950">
+              {/* Results Info */}
+              <div className="text-sm text-slate-700 dark:text-slate-300">
                 Showing {startIndex + 1} to {Math.min(endIndex, sortedInvoices.length)} of {sortedInvoices.length} invoices
               </div>
-              <div className="order-1 sm:order-2">
+              
+              {/* Enhanced Pagination Controls */}
+              <div className="flex flex-col sm:flex-row items-center gap-4">
+                {/* Page Navigation */}
                 <Pagination>
                   <PaginationContent className="gap-1">
+                    {/* First Page */}
+                    <PaginationItem>
+                      <PaginationLink
+                        onClick={() => setCurrentPage(1)}
+                        className={`${currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800"} transition-colors px-3 py-2`}
+                        size="default"
+                      >
+                        First
+                      </PaginationLink>
+                    </PaginationItem>
+                    
+                    {/* Previous */}
                     <PaginationItem>
                       <PaginationPrevious 
                         onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                         className={`${currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800"} transition-colors`}
                       />
                     </PaginationItem>
-                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                      let page;
-                      if (totalPages <= 5) {
-                        page = i + 1;
-                      } else if (currentPage <= 3) {
-                        page = i + 1;
-                      } else if (currentPage >= totalPages - 2) {
-                        page = totalPages - 4 + i;
-                      } else {
-                        page = currentPage - 2 + i;
-                      }
-                      return (
-                        <PaginationItem key={page}>
-                          <PaginationLink
-                            onClick={() => setCurrentPage(page)}
-                            isActive={currentPage === page}
-                            className="cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors min-w-[40px] justify-center"
-                          >
-                            {page}
-                          </PaginationLink>
+                    
+                    {/* Page Numbers with Smart Display */}
+                    {(() => {
+                      const getVisiblePages = () => {
+                        if (totalPages <= 7) {
+                          return Array.from({ length: totalPages }, (_, i) => i + 1);
+                        }
+                        
+                        if (currentPage <= 4) {
+                          return [1, 2, 3, 4, 5, '...', totalPages];
+                        }
+                        
+                        if (currentPage >= totalPages - 3) {
+                          return [1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+                        }
+                        
+                        return [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
+                      };
+                      
+                      return getVisiblePages().map((page, index) => (
+                        <PaginationItem key={`${page}-${index}`}>
+                          {page === '...' ? (
+                            <span className="flex items-center justify-center w-10 h-10 text-slate-500">...</span>
+                          ) : (
+                            <PaginationLink
+                              onClick={() => setCurrentPage(Number(page))}
+                              isActive={currentPage === page}
+                              className="cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors min-w-[40px] justify-center"
+                            >
+                              {page}
+                            </PaginationLink>
+                          )}
                         </PaginationItem>
-                      );
-                    })}
+                      ));
+                    })()}
+                    
+                    {/* Next */}
                     <PaginationItem>
                       <PaginationNext 
                         onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                         className={`${currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800"} transition-colors`}
                       />
                     </PaginationItem>
+                    
+                    {/* Last Page */}
+                    <PaginationItem>
+                      <PaginationLink
+                        onClick={() => setCurrentPage(totalPages)}
+                        className={`${currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800"} transition-colors px-3 py-2`}
+                        size="default"
+                      >
+                        Last
+                      </PaginationLink>
+                    </PaginationItem>
                   </PaginationContent>
                 </Pagination>
+                
+                {/* Direct Page Jump */}
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-slate-600 dark:text-slate-400">Go to:</span>
+                  <Input
+                    type="number"
+                    min="1"
+                    max={totalPages}
+                    value={currentPage}
+                    onChange={(e) => {
+                      const page = parseInt(e.target.value);
+                      if (page >= 1 && page <= totalPages) {
+                        setCurrentPage(page);
+                      }
+                    }}
+                    className="w-16 h-8 text-center text-sm"
+                  />
+                  <span className="text-slate-600 dark:text-slate-400">of {totalPages}</span>
+                </div>
+                
+                {/* Items Per Page */}
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-slate-600 dark:text-slate-400">Show:</span>
+                  <Select value={itemsPerPage.toString()} onValueChange={(value) => {
+                    const newItemsPerPage = parseInt(value);
+                    setItemsPerPage(newItemsPerPage);
+                    setCurrentPage(1); // Reset to first page when changing items per page
+                  }}>
+                    <SelectTrigger className="w-16 h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5">5</SelectItem>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="25">25</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
           )}

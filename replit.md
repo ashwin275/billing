@@ -39,4 +39,5 @@ A React-based frontend-only invoice management dashboard that connects to extern
 - Fixed invoice subtotal calculation bug - subtotal now correctly sums base prices only (without CGST/SGST)
 - Updated both InvoiceTemplate component and PDF download functionality
 - Verified all calculation logic in create/edit invoice pages works correctly
+- Enhanced pagination system with First/Last buttons, smart page numbering, direct page jump input, and items per page selector
 - Application successfully running on Replit with all features functional
