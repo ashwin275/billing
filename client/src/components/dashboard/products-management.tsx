@@ -100,7 +100,7 @@ export default function ProductsManagement() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [sortField, setSortField] = useState<keyof Product>("name");
@@ -1072,52 +1072,157 @@ export default function ProductsManagement() {
             </Table>
           </div>
 
-          {/* Pagination */}
+          {/* Enhanced Pagination */}
           {totalProducts > 0 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-4 border-t bg-white dark:bg-slate-950">
-              <div className="text-sm text-slate-700 dark:text-slate-300 order-2 sm:order-1">
-                Showing {startIndex + 1} to {Math.min(endIndex, totalProducts)} of {totalProducts} products
+            <div className="flex flex-col gap-4 px-4 py-4 border-t bg-white dark:bg-slate-950">
+              {/* Results Info and Items Per Page */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="text-sm text-slate-700 dark:text-slate-300">
+                  Showing {startIndex + 1} to {Math.min(endIndex, totalProducts)} of {totalProducts} products
+                </div>
+                
+                {/* Items Per Page */}
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-slate-600 dark:text-slate-400">Show:</span>
+                  <Select value={itemsPerPage.toString()} onValueChange={(value) => {
+                    const newItemsPerPage = parseInt(value);
+                    setItemsPerPage(newItemsPerPage);
+                    setCurrentPage(1); // Reset to first page when changing items per page
+                  }}>
+                    <SelectTrigger className="w-20 h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5">5</SelectItem>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="25">25</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <span className="text-slate-600 dark:text-slate-400">per page</span>
+                </div>
               </div>
-              <div className="order-1 sm:order-2">
-                <Pagination>
-                  <PaginationContent className="gap-1">
-                    <PaginationItem>
-                      <PaginationPrevious 
-                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                        className={`${currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800"} transition-colors`}
-                      />
-                    </PaginationItem>
-                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                      let page;
-                      if (totalPages <= 5) {
-                        page = i + 1;
-                      } else if (currentPage <= 3) {
-                        page = i + 1;
-                      } else if (currentPage >= totalPages - 2) {
-                        page = totalPages - 4 + i;
-                      } else {
-                        page = currentPage - 2 + i;
+
+              {/* Navigation Controls */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                {/* Direct Page Jump */}
+                <div className="flex items-center gap-2 text-sm order-2 sm:order-1">
+                  <span className="text-slate-600 dark:text-slate-400">Go to page:</span>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={totalPages}
+                    value={currentPage}
+                    onChange={(e) => {
+                      const page = parseInt(e.target.value);
+                      if (page >= 1 && page <= totalPages) {
+                        setCurrentPage(page);
                       }
-                      return (
-                        <PaginationItem key={page}>
-                          <PaginationLink
-                            onClick={() => setCurrentPage(page)}
-                            isActive={currentPage === page}
-                            className="cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors min-w-[40px] justify-center"
-                          >
-                            {page}
-                          </PaginationLink>
-                        </PaginationItem>
-                      );
-                    })}
-                    <PaginationItem>
-                      <PaginationNext 
-                        onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                        className={`${currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800"} transition-colors`}
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
+                    }}
+                    className="w-16 h-8 text-center"
+                  />
+                  <span className="text-slate-600 dark:text-slate-400">of {totalPages}</span>
+                </div>
+
+                {/* Pagination Buttons */}
+                <div className="order-1 sm:order-2">
+                  <Pagination>
+                    <PaginationContent className="gap-1">
+                      {/* First Page */}
+                      <PaginationItem>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(1)}
+                          disabled={currentPage === 1}
+                          className="px-2"
+                        >
+                          First
+                        </Button>
+                      </PaginationItem>
+
+                      {/* Previous */}
+                      <PaginationItem>
+                        <PaginationPrevious 
+                          onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                          className={`${currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800"} transition-colors`}
+                        />
+                      </PaginationItem>
+
+                      {/* Smart Page Numbers */}
+                      {(() => {
+                        const pages = [];
+                        
+                        if (totalPages <= 7) {
+                          // Show all pages if total is 7 or less
+                          for (let i = 1; i <= totalPages; i++) {
+                            pages.push(i);
+                          }
+                        } else {
+                          // Smart pagination for many pages
+                          pages.push(1);
+                          
+                          if (currentPage > 4) {
+                            pages.push('...');
+                          }
+                          
+                          // Show pages around current page
+                          for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
+                            if (!pages.includes(i)) {
+                              pages.push(i);
+                            }
+                          }
+                          
+                          if (currentPage < totalPages - 3) {
+                            pages.push('...');
+                          }
+                          
+                          if (totalPages > 1) {
+                            pages.push(totalPages);
+                          }
+                        }
+                        
+                        return pages.map((page, index) => (
+                          <PaginationItem key={index}>
+                            {page === '...' ? (
+                              <span className="px-3 py-2 text-slate-500 dark:text-slate-400">...</span>
+                            ) : (
+                              <PaginationLink
+                                onClick={() => setCurrentPage(page as number)}
+                                isActive={currentPage === page}
+                                className="cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors min-w-[40px] justify-center"
+                              >
+                                {page}
+                              </PaginationLink>
+                            )}
+                          </PaginationItem>
+                        ));
+                      })()}
+
+                      {/* Next */}
+                      <PaginationItem>
+                        <PaginationNext 
+                          onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                          className={`${currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800"} transition-colors`}
+                        />
+                      </PaginationItem>
+
+                      {/* Last Page */}
+                      <PaginationItem>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(totalPages)}
+                          disabled={currentPage === totalPages}
+                          className="px-2"
+                        >
+                          Last
+                        </Button>
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
               </div>
             </div>
           )}
