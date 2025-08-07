@@ -330,6 +330,7 @@ export const invoicesApi = {
     // Send the complete invoice data instead of creating a minimal payload
     const updatePayload = {
       ...invoiceData, // Include all fields from the invoice data
+      invoiceId: invoiceId, // Explicitly add invoice ID to payload
       userId: userId, // Override/add userId from token
       dueDate: invoiceData.dueDate ? new Date(invoiceData.dueDate).toISOString() : new Date().toISOString(),
     };
