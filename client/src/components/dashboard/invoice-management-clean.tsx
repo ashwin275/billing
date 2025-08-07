@@ -502,7 +502,8 @@ export default function InvoiceManagementClean() {
                 <div class="totals-table">
                   <div class="total-row">
                     <span>Subtotal:</span>
-                    <span>₹${((invoiceData.totalAmount || 0) - (invoiceData.tax || 0)).toFixed(2)}</span>
+                    <span>₹${(invoiceData.saleItems && invoiceData.saleItems.length > 0 ? 
+                      invoiceData.saleItems.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 0)), 0) : 0).toFixed(2)}</span>
                   </div>
                   <div class="total-row">
                     <span>Tax:</span>
