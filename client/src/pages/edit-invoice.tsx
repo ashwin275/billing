@@ -1532,14 +1532,7 @@ export default function EditInvoice() {
               Download PDF
             </Button>
             <Button 
-              onClick={() => {
-                console.log('Save button clicked');
-                console.log('Form errors:', form.formState.errors);
-                console.log('Form values:', form.getValues());
-                console.log('Form isDirty:', form.formState.isDirty);
-                console.log('Form isValid:', form.formState.isValid);
-                form.handleSubmit(onSubmit)();
-              }}
+              onClick={() => form.handleSubmit(onSubmit)()}
               disabled={updateInvoiceMutation.isPending}
             >
               <Save className="h-4 w-4 mr-2" />
@@ -1608,18 +1601,7 @@ export default function EditInvoice() {
                         </div>
                         <div>
                           <Label className="text-sm text-gray-600">Date</Label>
-                          <FormField
-                            control={form.control}
-                            name="invoiceDate"
-                            render={({ field }) => (
-                              <Input 
-                                type="date" 
-                                {...field} 
-                                max={new Date().toISOString().split('T')[0]}
-                                className="text-right border-2 border-gray-300 p-2 font-semibold bg-white rounded-md cursor-pointer hover:border-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors" 
-                              />
-                            )}
-                          />
+                          <p className="font-semibold">{invoice?.invoiceDate ? new Date(invoice.invoiceDate).toLocaleDateString() : new Date().toLocaleDateString()}</p>
                         </div>
                         <div>
                           <Label className="text-sm text-gray-600">Transaction ID</Label>
@@ -1892,19 +1874,40 @@ export default function EditInvoice() {
                       />
                     </div>
 
-                    <FormField
-                      control={form.control}
-                      name="dueDate"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Due Date (Optional)</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="date" value={field.value || ""} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="invoiceDate"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Invoice Date</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="date" 
+                                {...field} 
+                                max={new Date().toISOString().split('T')[0]}
+                                className="border-2 border-gray-300 p-2 font-semibold bg-white rounded-md cursor-pointer hover:border-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors" 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="dueDate"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Due Date (Optional)</FormLabel>
+                            <FormControl>
+                              <Input {...field} type="date" value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                   </div>
                 </div>
 
