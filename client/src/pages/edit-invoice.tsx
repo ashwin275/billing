@@ -1533,7 +1533,7 @@ export default function EditInvoice() {
             </Button>
             <Button 
               onClick={() => form.handleSubmit(onSubmit)()}
-              disabled={updateInvoiceMutation.isPending || !form.formState.isDirty}
+              disabled={updateInvoiceMutation.isPending}
             >
               <Save className="h-4 w-4 mr-2" />
               {updateInvoiceMutation.isPending ? "Updating..." : "Update Invoice"}
