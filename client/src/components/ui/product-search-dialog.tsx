@@ -325,6 +325,9 @@ export function ProductSearchDialog({
 
   const handleDone = () => {
     onSelect(selectedProducts);
+    // Clear search state before closing
+    setSearchTerm("");
+    setSelectedCategory("all");
     setOpen(false);
   };
 
@@ -632,6 +635,9 @@ export function ProductSearchDialog({
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
+              // Clear search state when canceling
+              setSearchTerm("");
+              setSelectedCategory("all");
               setOpen(false);
             }}
           >
