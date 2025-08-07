@@ -8,7 +8,8 @@ interface InvoiceTemplateProps {
 
 export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPreview = false }) => {
   const calculateSubtotal = () => {
-    return invoice.saleItems?.reduce((sum, item) => sum + (item.total || 0), 0) || 0;
+    // Subtotal should be sum of (price * quantity) only, without taxes
+    return invoice.saleItems?.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 0)), 0) || 0;
   };
 
   const calculateTotalTax = () => {

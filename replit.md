@@ -35,6 +35,8 @@ A React-based frontend-only invoice management dashboard that connects to extern
 - React Hook Form + Zod
 
 ## Recent Changes
-- January 7, 2025: Started migration from Replit Agent to Replit environment
-- Identified frontend-only architecture connecting to external API
-- Analyzed existing structure and dependencies
+- January 8, 2025: Completed migration from Replit Agent to Replit environment
+- Fixed invoice subtotal calculation bug - subtotal now correctly sums base prices only (without CGST/SGST)
+- Updated both InvoiceTemplate component and PDF download functionality
+- Verified all calculation logic in create/edit invoice pages works correctly
+- Application successfully running on Replit with all features functional
