@@ -40,4 +40,5 @@ A React-based frontend-only invoice management dashboard that connects to extern
 - Updated both InvoiceTemplate component and PDF download functionality
 - Verified all calculation logic in create/edit invoice pages works correctly
 - Enhanced pagination system with First/Last buttons, smart page numbering, direct page jump input, and items per page selector
+- Fixed product search dialog search text persistence issue - search bar now clears when dialog is closed
 - Application successfully running on Replit with all features functional
