@@ -30,7 +30,7 @@ const saleItemSchema = z.object({
   quantity: z.number().min(1, "Quantity must be at least 1"),
   discount: z.number().min(0, "Discount cannot be negative"),
   discountType: z.enum(["PERCENTAGE", "AMOUNT"]).default("AMOUNT"),
-  unitPrice: z.number().min(0, "Unit price cannot be negative")
+  unitPrice: z.number().min(0, "Unit price cannot be negative").optional()
 });
 
 const invoiceSchema = z.object({
@@ -257,12 +257,12 @@ export default function EditInvoice() {
   // Populate form with invoice data
   useEffect(() => {
     if (invoice) {
-      form.reset({
+      const formData = {
         customerId: invoice.customerId,
         shopId: invoice.shopId,
         invoiceDate: invoice.invoiceDate ? invoice.invoiceDate.split('T')[0] : new Date().toISOString().split('T')[0],
         discount: invoice.discount || 0,
-        discountType: "PERCENTAGE", // Default as this isn't in the invoice data
+        discountType: "PERCENTAGE" as const, // Default as this isn't in the invoice data
         amountPaid: invoice.amountPaid || 0,
         paymentMode: invoice.paymentMode,
         paymentStatus: invoice.paymentStatus,
@@ -278,9 +278,37 @@ export default function EditInvoice() {
               quantity: item.quantity,
               discount: item.discount,
               discountType: "PERCENTAGE" as const,
+              unitPrice: item.price || 0,
             }))
-          : [{ productId: 0, quantity: 1, discount: 0, discountType: "PERCENTAGE" as const }],
-      });
+          : [],
+      };
+      
+      // Reset form and mark all fields as dirty to enable form submission
+      form.reset(formData);
+      
+      // Trigger change detection by manually setting form values
+      setTimeout(() => {
+        Object.keys(formData).forEach((key) => {
+          if (key !== 'saleItems') {
+            form.setValue(key as any, formData[key as keyof typeof formData], { 
+              shouldDirty: true,
+              shouldTouch: true,
+              shouldValidate: true 
+            });
+          }
+        });
+        
+        // Handle sale items separately
+        formData.saleItems.forEach((item, index) => {
+          Object.keys(item).forEach((itemKey) => {
+            form.setValue(`saleItems.${index}.${itemKey}` as any, item[itemKey as keyof typeof item], {
+              shouldDirty: true,
+              shouldTouch: true,
+              shouldValidate: true
+            });
+          });
+        });
+      }, 100);
     }
   }, [invoice, form]);
 
@@ -359,10 +387,10 @@ export default function EditInvoice() {
 
   // Handle form submission
   const onSubmit = (data: InvoiceFormData) => {
-    if (!invoiceId) {
+    if (!invoiceId || !invoice) {
       toast({
         title: "Error",
-        description: "Invalid invoice ID",
+        description: "Invalid invoice ID or invoice data",
         variant: "destructive",
       });
       return;
@@ -372,35 +400,75 @@ export default function EditInvoice() {
     const uiTotals = totals;
     
     console.log('=== SUBMIT DEBUGGING ===');
+    console.log('Original invoice data:', invoice);
+    console.log('Form data:', data);
     console.log('UI Totals being used:', uiTotals);
-    console.log('Grand Total from UI:', uiTotals.grandTotal);
-    console.log('Total Tax from UI:', uiTotals.totalTax);
     console.log('=== END DEBUGGING ===');
     
-    const invoiceInput: InvoiceInput = {
-      customerId: data.customerId,
-      shopId: data.shopId,
+    // Create a complete invoice payload including all original data
+    const invoiceInput: any = {
+      // Include all original invoice data
+      invoiceId: invoice.invoiceId,
+      invoiceNo: invoice.invoiceNo,
       invoiceDate: data.invoiceDate,
+      customerId: data.customerId,
+      customerName: invoice.customerName,
+      salesId: invoice.salesId,
+      shopId: data.shopId,
       discount: data.discount,
+      staffId: invoice.staffId,
+      totalAmount: uiTotals.grandTotal,
       amountPaid: data.amountPaid,
-      paymentMode: data.paymentMode,
-      paymentStatus: data.paymentStatus,
-      remark: data.remark,
+      tax: uiTotals.totalTax,
       dueDate: data.dueDate,
+      paymentStatus: data.paymentStatus,
+      paymentMode: data.paymentMode,
+      remark: data.remark,
       billType: data.billType,
       saleType: data.saleType,
       transactionId: data.transactionId,
-      totalAmount: uiTotals.grandTotal,
-      tax: uiTotals.totalTax,
-      saleItems: data.saleItems.map(item => ({
-        productId: item.productId,
-        quantity: item.quantity,
-        discount: item.discount,
-      })),
+      signature: data.signature,
+      
+      // Include sale items with full product details
+      saleItems: data.saleItems.map((item, index) => {
+        const originalItem = invoice.saleItems?.[index];
+        const product = Array.isArray(products) ? products.find(p => p.productId === item.productId) : null;
+        
+        return {
+          saleItemId: originalItem?.saleItemId || null,
+          saleId: invoice.salesId,
+          productId: item.productId,
+          quantity: item.quantity,
+          price: product ? (data.saleType === 'RETAIL' ? product.retailRate : product.wholesaleRate) : originalItem?.price || 0,
+          tax: uiTotals.items.find(calcItem => calcItem?.product?.productId === item.productId)?.taxAmount || 0,
+          discount: item.discount,
+          total: uiTotals.items.find(calcItem => calcItem?.product?.productId === item.productId)?.totalPrice || 0,
+          product: product || originalItem?.product
+        };
+      }),
+      
+      // Include shop data if available
+      shop: invoice.shop,
+      
+      // Include sales data
+      sales: {
+        ...invoice.sales,
+        totalAmount: uiTotals.grandTotal,
+        taxRate: uiTotals.totalTax,
+        discountAmount: data.discount,
+        finalAmount: uiTotals.grandTotal,
+        paymentMode: data.paymentMode,
+        paymentStatus: data.paymentStatus,
+        saleType: data.saleType,
+        billType: data.billType,
+        transactionId: data.transactionId,
+      },
+      
+      // Include customer data
+      customer: invoice.customer
     };
 
-    console.log('Invoice input before update:', invoiceInput);
-    console.log('Using UI totals:', { grandTotal: uiTotals.grandTotal, totalTax: uiTotals.totalTax });
+    console.log('Complete invoice input for update:', invoiceInput);
 
     updateInvoiceMutation.mutate(invoiceInput);
   };
