@@ -1532,7 +1532,14 @@ export default function EditInvoice() {
               Download PDF
             </Button>
             <Button 
-              onClick={() => form.handleSubmit(onSubmit)()}
+              onClick={() => {
+                console.log('Save button clicked');
+                console.log('Form errors:', form.formState.errors);
+                console.log('Form values:', form.getValues());
+                console.log('Form isDirty:', form.formState.isDirty);
+                console.log('Form isValid:', form.formState.isValid);
+                form.handleSubmit(onSubmit)();
+              }}
               disabled={updateInvoiceMutation.isPending}
             >
               <Save className="h-4 w-4 mr-2" />
