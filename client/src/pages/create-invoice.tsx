@@ -336,7 +336,7 @@ export default function CreateInvoice() {
       const cgstAmount = (lineTotal * cgstRate) / 100;
       const sgstAmount = (lineTotal * sgstRate) / 100;
       const taxAmount = cgstAmount + sgstAmount;
-      const totalPrice = lineTotal; // Tax shown separately, not added to total
+      const totalPrice = lineTotal + taxAmount; // Total price includes tax
 
       return {
         product,
@@ -373,8 +373,8 @@ export default function CreateInvoice() {
       }
     }
     
-    // Grand total is subtotal minus all discounts (item-level + additional)
-    let grandTotal = subtotal - additionalDiscountAmount;
+    // Grand total is subtotal minus additional discounts plus taxes (CGST + SGST)
+    let grandTotal = subtotal - additionalDiscountAmount + totalTax;
     
     // Apply auto round-off if enabled
     if (autoRoundOff) {
