@@ -35,7 +35,10 @@ A React-based frontend-only invoice management dashboard that connects to extern
 - React Hook Form + Zod
 
 ## Recent Changes
-- January 8, 2025: Completed migration from Replit Agent to Replit environment
+- August 15, 2025: Successfully completed migration from Replit Agent to Replit environment
+- Fixed critical invoice calculation bug: CGST and SGST taxes are now properly added to grand total
+- Updated both create-invoice.tsx and edit-invoice.tsx with correct tax calculation logic
+- Subtotal now shows base amount (qty × rate), taxes are added separately to grand total
 - Added product number existence checking feature in add/edit product forms
   - Real-time validation when user moves away from product number field
   - Green checkmark with "Product number is available" message for new numbers
