@@ -194,6 +194,13 @@ export const productsApi = {
       method: "DELETE",
     });
   },
+
+  /**
+   * Check if product number exists
+   */
+  async checkProductExists(productNumber: string, shopId: number): Promise<{ exists: boolean; productNumber: string }> {
+    return apiRequest(`/products/product-number-exist?productNumber=${encodeURIComponent(productNumber)}&shopId=${shopId}`);
+  },
 };
 
 /**
