@@ -1,5 +1,5 @@
 // Products management component with full CRUD functionality
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm, Controller, FieldPath, ControllerRenderProps } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -7,7 +7,7 @@ import { z } from "zod";
 import { 
   Package, Plus, Edit2, Trash2, AlertTriangle, DollarSign, 
   Calendar, Tag, BarChart3, ShoppingCart, X, Search, ArrowUpDown, ArrowUp, ArrowDown,
-  Store, User, MapPin, Info, Hash
+  Store, User, MapPin, Info, Hash, CheckCircle, XCircle, Loader2
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -106,6 +106,19 @@ export default function ProductsManagement() {
   const [sortField, setSortField] = useState<keyof Product>("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
+  // Product number existence checking states
+  const [addPartNumberStatus, setAddPartNumberStatus] = useState<{
+    checking: boolean;
+    exists: boolean | null;
+    message: string;
+  }>({ checking: false, exists: null, message: "" });
+  
+  const [editPartNumberStatus, setEditPartNumberStatus] = useState<{
+    checking: boolean;
+    exists: boolean | null;
+    message: string;
+  }>({ checking: false, exists: null, message: "" });
+
   // Fetch all products
   const {
     data: products,
@@ -149,6 +162,95 @@ export default function ProductsManagement() {
   const editForm = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
   });
+
+  // Get shopId from token for product existence checking
+  const getShopId = useCallback(() => {
+    const token = getAuthToken();
+    if (token) {
+      try {
+        const decoded = decodeToken(token);
+        return decoded.shopId || 1;
+      } catch (error) {
+        console.warn('Failed to decode token:', error);
+      }
+    }
+    return 1; // Default fallback
+  }, []);
+
+  // Debounced function to check product existence
+  const checkProductExists = useCallback(async (
+    productNumber: string, 
+    isEdit: boolean = false,
+    currentProductNumber?: string
+  ) => {
+    if (!productNumber.trim()) {
+      const resetStatus = { checking: false, exists: null, message: "" };
+      if (isEdit) {
+        setEditPartNumberStatus(resetStatus);
+      } else {
+        setAddPartNumberStatus(resetStatus);
+      }
+      return;
+    }
+
+    // If editing and the product number hasn't changed, don't check
+    if (isEdit && currentProductNumber && productNumber === currentProductNumber) {
+      setEditPartNumberStatus({ checking: false, exists: null, message: "" });
+      return;
+    }
+
+    const shopId = getShopId();
+    
+    // Set checking state
+    const checkingStatus = { checking: true, exists: null, message: "Checking availability..." };
+    if (isEdit) {
+      setEditPartNumberStatus(checkingStatus);
+    } else {
+      setAddPartNumberStatus(checkingStatus);
+    }
+
+    try {
+      const result = await productsApi.checkProductExists(productNumber, shopId);
+      const status = {
+        checking: false,
+        exists: result.exists,
+        message: result.exists 
+          ? "Product number already exists" 
+          : "Product number is available"
+      };
+
+      if (isEdit) {
+        setEditPartNumberStatus(status);
+      } else {
+        setAddPartNumberStatus(status);
+      }
+    } catch (error) {
+      const errorStatus = {
+        checking: false,
+        exists: null,
+        message: "Error checking product number"
+      };
+
+      if (isEdit) {
+        setEditPartNumberStatus(errorStatus);
+      } else {
+        setAddPartNumberStatus(errorStatus);
+      }
+    }
+  }, [getShopId]);
+
+  // Debounced version of checkProductExists
+  const debouncedCheckProductExists = useCallback((
+    productNumber: string, 
+    isEdit: boolean = false,
+    currentProductNumber?: string
+  ) => {
+    const timeoutId = setTimeout(() => {
+      checkProductExists(productNumber, isEdit, currentProductNumber);
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timeoutId);
+  }, [checkProductExists]);
 
   // Add products mutation
   const addProductsMutation = useMutation({
@@ -510,7 +612,13 @@ export default function ProductsManagement() {
             <h1 className="text-xl sm:text-2xl font-bold text-slate-900 truncate">Products Management</h1>
             <p className="text-sm sm:text-base text-slate-600 mt-1">Manage your product inventory and pricing</p>
           </div>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
+            setIsAddDialogOpen(open);
+            if (!open) {
+              // Reset status when dialog closes
+              setAddPartNumberStatus({ checking: false, exists: null, message: "" });
+            }
+          }}>
             <DialogTrigger asChild>
               <Button className="w-full sm:w-auto">
                 <Plus className="mr-2 h-4 w-4 flex-shrink-0" />
@@ -542,11 +650,45 @@ export default function ProductsManagement() {
 
                   <div className="space-y-2">
                     <Label htmlFor="add-partNumber">Part Number</Label>
-                    <Input
-                      id="add-partNumber"
-                      {...addForm.register("partNumber")}
-                      placeholder="SGS24-128GB-BLK"
-                    />
+                    <div className="relative">
+                      <Input
+                        id="add-partNumber"
+                        {...addForm.register("partNumber")}
+                        placeholder="SE-KO-0001"
+                        onBlur={(e) => {
+                          const value = e.target.value;
+                          if (value.trim()) {
+                            debouncedCheckProductExists(value, false);
+                          }
+                        }}
+                      />
+                      {addPartNumberStatus.checking && (
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        </div>
+                      )}
+                      {!addPartNumberStatus.checking && addPartNumberStatus.exists !== null && (
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                          {addPartNumberStatus.exists ? (
+                            <XCircle className="h-4 w-4 text-red-500" />
+                          ) : (
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    {/* Status message */}
+                    {addPartNumberStatus.message && (
+                      <p className={`text-sm ${
+                        addPartNumberStatus.exists === true 
+                          ? 'text-red-600' 
+                          : addPartNumberStatus.exists === false 
+                            ? 'text-green-600' 
+                            : 'text-muted-foreground'
+                      }`}>
+                        {addPartNumberStatus.message}
+                      </p>
+                    )}
                     {addForm.formState.errors.partNumber && (
                       <p className="text-sm text-destructive">
                         {addForm.formState.errors.partNumber.message}
@@ -1238,7 +1380,13 @@ export default function ProductsManagement() {
       </Card>
 
       {/* Edit Product Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
+        setIsEditDialogOpen(open);
+        if (!open) {
+          // Reset status when dialog closes
+          setEditPartNumberStatus({ checking: false, exists: null, message: "" });
+        }
+      }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Product</DialogTitle>
@@ -1264,11 +1412,47 @@ export default function ProductsManagement() {
 
               <div className="space-y-2">
                 <Label htmlFor="edit-partNumber">Part Number</Label>
-                <Input
-                  id="edit-partNumber"
-                  {...editForm.register("partNumber")}
-                  placeholder="SGS24-128GB-BLK"
-                />
+                <div className="relative">
+                  <Input
+                    id="edit-partNumber"
+                    {...editForm.register("partNumber")}
+                    placeholder="SE-KO-0001"
+                    onBlur={(e) => {
+                      const value = e.target.value;
+                      if (value.trim()) {
+                        // Get the current product number for comparison
+                        const currentProductNumber = productToEdit?.productNumber;
+                        debouncedCheckProductExists(value, true, currentProductNumber);
+                      }
+                    }}
+                  />
+                  {editPartNumberStatus.checking && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    </div>
+                  )}
+                  {!editPartNumberStatus.checking && editPartNumberStatus.exists !== null && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      {editPartNumberStatus.exists ? (
+                        <XCircle className="h-4 w-4 text-red-500" />
+                      ) : (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      )}
+                    </div>
+                  )}
+                </div>
+                {/* Status message */}
+                {editPartNumberStatus.message && (
+                  <p className={`text-sm ${
+                    editPartNumberStatus.exists === true 
+                      ? 'text-red-600' 
+                      : editPartNumberStatus.exists === false 
+                        ? 'text-green-600' 
+                        : 'text-muted-foreground'
+                  }`}>
+                    {editPartNumberStatus.message}
+                  </p>
+                )}
                 {editForm.formState.errors.partNumber && (
                   <p className="text-sm text-destructive">
                     {editForm.formState.errors.partNumber.message}
