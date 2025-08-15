@@ -36,6 +36,13 @@ A React-based frontend-only invoice management dashboard that connects to extern
 
 ## Recent Changes
 - January 8, 2025: Completed migration from Replit Agent to Replit environment
+- Added product number existence checking feature in add/edit product forms
+  - Real-time validation when user moves away from product number field
+  - Green checkmark with "Product number is available" message for new numbers
+  - Red X with "Product number already exists" message for duplicate numbers
+  - Loading spinner during validation process
+  - Debounced API calls to prevent excessive requests
+  - Automatically retrieves shopId from JWT token for shop-specific validation
 - Fixed invoice subtotal calculation bug - subtotal now correctly sums base prices only (without CGST/SGST)
 - Updated both InvoiceTemplate component and PDF download functionality
 - Verified all calculation logic in create/edit invoice pages works correctly
