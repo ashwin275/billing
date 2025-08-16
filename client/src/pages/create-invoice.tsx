@@ -2594,7 +2594,7 @@ export default function CreateInvoice() {
                           </div>
                           
                           <div className="col-span-1 font-semibold">
-                            ₹{itemTotal.toFixed(2)}
+                            ₹{(itemTotal + cgstAmount + sgstAmount).toFixed(2)}
                           </div>
                           
                           <div className="col-span-1">
