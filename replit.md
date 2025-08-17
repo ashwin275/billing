@@ -53,4 +53,9 @@ A React-based frontend-only invoice management dashboard that connects to extern
 - Fixed product search dialog search text persistence issue - search bar now clears when dialog is closed
 - Reorganized invoice form layout: moved Invoice Date picker from header to above Due Date field
 - Enhanced Payment Status dropdown styling to match Due Date picker styling
+- CRITICAL FIX: Fixed invoice date loading issue in edit mode
+  - Issue: Edit button from Invoice Management routes to create page in edit mode, but create page wasn't loading invoice date
+  - Root cause: form.reset() in create-invoice.tsx was missing invoiceDate field while dueDate was working
+  - Solution: Added missing invoiceDate field to form reset in create-invoice.tsx line 475
+  - Result: Invoice Date now correctly shows backend date (e.g., "16/08/2025") instead of today's date
 - Application successfully running on Replit with all features functional

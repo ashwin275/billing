@@ -469,6 +469,7 @@ export default function CreateInvoice() {
       form.reset({
         customerId: editInvoice.customerId,
         shopId: editInvoice.shopId,
+        invoiceDate: editInvoice.invoiceDate ? editInvoice.invoiceDate.split('T')[0] : new Date().toISOString().split('T')[0],
         discount: editInvoice.discount || 0,
         discountType: "AMOUNT",
         amountPaid: editInvoice.amountPaid || 0,
