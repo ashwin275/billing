@@ -9,7 +9,7 @@ const __dirname = dirname(__filename);
 // Start Vite dev server for the frontend with Replit configuration
 const viteProcess = spawn('npx', [
   'vite', 
-  '--config', 'vite.config.ts',
+  '--config', 'vite.config.dev.ts',
   '--host', '0.0.0.0',
   '--port', '5000'
 ], {
