@@ -36,6 +36,11 @@ A React-based frontend-only invoice management dashboard that connects to extern
 
 ## Recent Changes
 - August 17, 2025: Successfully completed migration from Replit Agent to Replit environment
+  - Fixed server configuration to properly serve frontend with allowed hosts
+  - Updated server/index.ts to use vite.config.dev.ts for Replit compatibility
+  - Configured Vite dev server with host "0.0.0.0" and port 5000
+  - Set allowedHosts: true to handle Replit's dynamic host URLs
+  - Application now runs smoothly on Replit with all features functional
 - Fixed critical invoice calculation bug: CGST and SGST taxes are now properly added to grand total
 - Updated both create-invoice.tsx and edit-invoice.tsx with correct tax calculation logic
 - Subtotal now shows base amount (qty × rate), taxes are added separately to grand total
