@@ -495,13 +495,13 @@ export default function CreateInvoice() {
     }
   }, [isEditMode, editInvoice, form]);
 
-  // Auto-update amount paid to match grand total for new invoices
+  // Auto-update amount paid to match grand total for both new and edited invoices
   useEffect(() => {
-    if (!isEditMode && totals.grandTotal > 0) {
-      // Always update amount paid to match grand total for new invoices
+    if (totals.grandTotal > 0) {
+      // Always update amount paid to match grand total when it changes
       form.setValue('amountPaid', totals.grandTotal);
     }
-  }, [totals.grandTotal, isEditMode, form]);
+  }, [totals.grandTotal, form]);
 
   // Track form changes to detect unsaved data
   useEffect(() => {

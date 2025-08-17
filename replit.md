@@ -69,4 +69,8 @@ A React-based frontend-only invoice management dashboard that connects to extern
   - Updated create-invoice.tsx to always fetch fresh data when in edit mode (staleTime: 0, cacheTime: 0)
   - Removed unused edit-invoice.tsx page to avoid confusion
   - Users now see the most up-to-date invoice information when editing
+- Fixed invoice amount paid auto-update in edit mode (August 17, 2025):
+  - Amount Paid field now automatically updates to match Grand Total when quantities change in edit mode
+  - Previously only worked for new invoices, now works for both create and edit modes
+  - Ensures amount paid stays synchronized with total when making edits
 - Application successfully running on Replit with all features functional
