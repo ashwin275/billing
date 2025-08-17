@@ -257,11 +257,19 @@ export default function EditInvoice() {
 
   // Populate form with invoice data
   useEffect(() => {
+    console.log('🔍 DEBUGGING: useEffect triggered. Invoice exists:', !!invoice);
     if (invoice) {
+      console.log('🔍 DEBUGGING: Raw invoice data:', invoice);
+      console.log('🔍 DEBUGGING: Raw invoiceDate:', invoice.invoiceDate);
+      console.log('🔍 DEBUGGING: Raw dueDate:', invoice.dueDate);
+      
+      const processedInvoiceDate = invoice.invoiceDate ? invoice.invoiceDate.split('T')[0] : null;
+      console.log('🔍 DEBUGGING: Processed invoiceDate:', processedInvoiceDate);
+      
       const formData = {
         customerId: invoice.customerId,
         shopId: invoice.shopId,
-        invoiceDate: invoice.invoiceDate ? invoice.invoiceDate.split('T')[0] : null,
+        invoiceDate: processedInvoiceDate,
         discount: invoice.discount || 0,
         discountType: "PERCENTAGE" as const, // Default as this isn't in the invoice data
         amountPaid: invoice.amountPaid || 0,
@@ -284,8 +292,11 @@ export default function EditInvoice() {
           : [],
       };
       
+      console.log('🔍 DEBUGGING: Final formData object:', formData);
+      
       // Reset form and mark all fields as dirty to enable form submission
       form.reset(formData);
+      console.log('🔍 DEBUGGING: Form after reset:', form.getValues());
       
       // Trigger change detection by manually setting form values
       setTimeout(() => {
@@ -309,6 +320,10 @@ export default function EditInvoice() {
             });
           });
         });
+        
+        console.log('🔍 DEBUGGING: Form values after manual setting:', form.getValues());
+        console.log('🔍 DEBUGGING: Invoice date from form:', form.getValues('invoiceDate'));
+        console.log('🔍 DEBUGGING: Due date from form:', form.getValues('dueDate'));
       }, 100);
     }
   }, [invoice, form]);
@@ -1887,6 +1902,13 @@ export default function EditInvoice() {
                               {...field} 
                               value={field.value || ""}
                               max={new Date().toISOString().split('T')[0]}
+                              onChange={(e) => {
+                                console.log('📅 DEBUGGING: Invoice date input changed to:', e.target.value);
+                                field.onChange(e);
+                              }}
+                              onFocus={() => {
+                                console.log('📅 DEBUGGING: Invoice date field focused. Current value:', field.value);
+                              }}
                               className="border-2 border-gray-300 p-2 font-semibold bg-white rounded-md cursor-pointer hover:border-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors" 
                             />
                           </FormControl>
