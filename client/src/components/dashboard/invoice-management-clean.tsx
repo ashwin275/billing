@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { AlertTriangle } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { invoicesApi } from "@/lib/api";
 import { Invoice } from "@/types/api";
@@ -31,6 +31,7 @@ export default function InvoiceManagementClean() {
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
 
   // Fetch invoices
   const { data: invoices = [], isLoading } = useQuery({
@@ -106,6 +107,14 @@ export default function InvoiceManagementClean() {
       setIsDeleteDialogOpen(false);
       setInvoiceToDelete(null);
     }
+  };
+
+  // Handle edit invoice with fresh data fetch
+  const handleEditInvoice = (invoiceId: number) => {
+    // Invalidate the specific invoice query to ensure fresh data is fetched
+    queryClient.invalidateQueries({ queryKey: ["/api/invoices", invoiceId] });
+    // Navigate to create page in edit mode
+    setLocation(`/invoices/create?edit=${invoiceId}`);
   };
 
   // Handle preview
@@ -713,11 +722,13 @@ export default function InvoiceManagementClean() {
                         >
                           <Download className="h-4 w-4" />
                         </Button>
-                        <Link href={`/invoices/create?edit=${invoice.invoiceId}`}>
-                          <Button variant="outline" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </Link>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditInvoice(invoice.invoiceId)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
                         <Button
                           variant="outline"
                           size="sm"

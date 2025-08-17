@@ -110,11 +110,13 @@ export default function CreateInvoice() {
     queryFn: () => shopsApi.getAllShops(),
   });
 
-  // Fetch invoice data if in edit mode
+  // Fetch invoice data if in edit mode - always get fresh data
   const { data: editInvoice } = useQuery({
     queryKey: ["/api/invoices", editInvoiceId],
     queryFn: () => invoicesApi.getInvoiceById(parseInt(editInvoiceId!)),
     enabled: isEditMode && !!editInvoiceId,
+    staleTime: 0, // Always consider data stale to force refetch
+    cacheTime: 0, // Don't cache the data
   });
 
   // Main invoice form
