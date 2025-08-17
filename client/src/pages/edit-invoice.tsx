@@ -36,7 +36,7 @@ const saleItemSchema = z.object({
 const invoiceSchema = z.object({
   customerId: z.number().min(1, "Customer is required"),
   shopId: z.number().min(1, "Shop is required"),
-  invoiceDate: z.string().min(1, "Invoice date is required"),
+  invoiceDate: z.string().nullable().optional(),
   discount: z.number().min(0, "Discount cannot be negative").default(0),
   discountType: z.enum(["PERCENTAGE", "AMOUNT"]).default("PERCENTAGE"),
   amountPaid: z.number().min(0, "Amount paid cannot be negative").default(0),
@@ -106,7 +106,7 @@ export default function EditInvoice() {
     defaultValues: {
       customerId: 0,
       shopId: 0,
-      invoiceDate: "", // Will be set from backend data
+      invoiceDate: null, // Will be set from backend data, similar to dueDate
       discount: 0,
       discountType: "PERCENTAGE",
       amountPaid: 0,
@@ -213,6 +213,7 @@ export default function EditInvoice() {
                   const totals = calculateTotals();
                   const invoiceInput = {
                     ...formData,
+                    invoiceDate: formData.invoiceDate || new Date().toISOString().split('T')[0],
                     totalAmount: totals.grandTotal,
                     tax: totals.totalTax,
                   };
@@ -260,7 +261,7 @@ export default function EditInvoice() {
       const formData = {
         customerId: invoice.customerId,
         shopId: invoice.shopId,
-        invoiceDate: invoice.invoiceDate ? invoice.invoiceDate.split('T')[0] : new Date().toISOString().split('T')[0],
+        invoiceDate: invoice.invoiceDate ? invoice.invoiceDate.split('T')[0] : null,
         discount: invoice.discount || 0,
         discountType: "PERCENTAGE" as const, // Default as this isn't in the invoice data
         amountPaid: invoice.amountPaid || 0,
@@ -410,7 +411,7 @@ export default function EditInvoice() {
       // Include all original invoice data
       invoiceId: invoice.invoiceId,
       invoiceNo: invoice.invoiceNo,
-      invoiceDate: data.invoiceDate,
+      invoiceDate: data.invoiceDate || new Date().toISOString().split('T')[0],
       customerId: data.customerId,
       customerName: invoice.customerName,
       salesId: invoice.salesId,
@@ -1884,6 +1885,7 @@ export default function EditInvoice() {
                             <Input 
                               type="date" 
                               {...field} 
+                              value={field.value || ""}
                               max={new Date().toISOString().split('T')[0]}
                               className="border-2 border-gray-300 p-2 font-semibold bg-white rounded-md cursor-pointer hover:border-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors" 
                             />
