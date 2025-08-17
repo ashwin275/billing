@@ -110,11 +110,13 @@ export default function CreateInvoice() {
     queryFn: () => shopsApi.getAllShops(),
   });
 
-  // Fetch invoice data if in edit mode
+  // Fetch invoice data if in edit mode - always get fresh data
   const { data: editInvoice } = useQuery({
     queryKey: ["/api/invoices", editInvoiceId],
     queryFn: () => invoicesApi.getInvoiceById(parseInt(editInvoiceId!)),
     enabled: isEditMode && !!editInvoiceId,
+    staleTime: 0, // Always consider data stale to force refetch
+    cacheTime: 0, // Don't cache the data
   });
 
   // Main invoice form
@@ -493,13 +495,13 @@ export default function CreateInvoice() {
     }
   }, [isEditMode, editInvoice, form]);
 
-  // Auto-update amount paid to match grand total for new invoices
+  // Auto-update amount paid to match grand total for both new and edited invoices
   useEffect(() => {
-    if (!isEditMode && totals.grandTotal > 0) {
-      // Always update amount paid to match grand total for new invoices
+    if (totals.grandTotal > 0) {
+      // Always update amount paid to match grand total when it changes
       form.setValue('amountPaid', totals.grandTotal);
     }
-  }, [totals.grandTotal, isEditMode, form]);
+  }, [totals.grandTotal, form]);
 
   // Track form changes to detect unsaved data
   useEffect(() => {
