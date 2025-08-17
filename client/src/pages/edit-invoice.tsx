@@ -64,6 +64,7 @@ const customerSchema = z.object({
 type CustomerFormData = z.infer<typeof customerSchema>;
 
 export default function EditInvoice() {
+  console.log('🚀 EDIT INVOICE PAGE LOADED');
   const [match, params] = useRoute("/invoices/edit/:id");
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -80,9 +81,21 @@ export default function EditInvoice() {
   // Fetch invoice data
   const { data: invoice, isLoading: isLoadingInvoice } = useQuery({
     queryKey: ["/api/invoices", invoiceId],
-    queryFn: () => invoicesApi.getInvoiceById(invoiceId!),
+    queryFn: () => {
+      console.log('📡 FETCHING INVOICE DATA FOR ID:', invoiceId);
+      return invoicesApi.getInvoiceById(invoiceId!);
+    },
     enabled: !!invoiceId,
   });
+
+  // Debug invoice data when it loads
+  useEffect(() => {
+    if (invoice) {
+      console.log('✅ INVOICE DATA LOADED:', invoice);
+      console.log('✅ INVOICE DATE FROM API:', invoice?.invoiceDate);
+      console.log('✅ DUE DATE FROM API:', invoice?.dueDate);
+    }
+  }, [invoice]);
 
   // Fetch other data
   const { data: products = [] } = useQuery({
@@ -1902,13 +1915,6 @@ export default function EditInvoice() {
                               {...field} 
                               value={field.value || ""}
                               max={new Date().toISOString().split('T')[0]}
-                              onChange={(e) => {
-                                console.log('📅 DEBUGGING: Invoice date input changed to:', e.target.value);
-                                field.onChange(e);
-                              }}
-                              onFocus={() => {
-                                console.log('📅 DEBUGGING: Invoice date field focused. Current value:', field.value);
-                              }}
                               className="border-2 border-gray-300 p-2 font-semibold bg-white rounded-md cursor-pointer hover:border-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors" 
                             />
                           </FormControl>
