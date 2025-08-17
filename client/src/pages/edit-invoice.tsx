@@ -1858,7 +1858,7 @@ export default function EditInvoice() {
                             <FormLabel>Payment Status</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
-                                <SelectTrigger>
+                                <SelectTrigger className="border-2 border-gray-300 p-2 font-semibold bg-white rounded-md cursor-pointer hover:border-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors">
                                   <SelectValue />
                                 </SelectTrigger>
                               </FormControl>
@@ -1874,40 +1874,38 @@ export default function EditInvoice() {
                       />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="invoiceDate"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Invoice Date</FormLabel>
-                            <FormControl>
-                              <Input 
-                                type="date" 
-                                {...field} 
-                                max={new Date().toISOString().split('T')[0]}
-                                className="border-2 border-gray-300 p-2 font-semibold bg-white rounded-md cursor-pointer hover:border-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors" 
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="dueDate"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Due Date (Optional)</FormLabel>
-                            <FormControl>
-                              <Input {...field} type="date" value={field.value || ""} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                    <FormField
+                      control={form.control}
+                      name="invoiceDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Invoice Date</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="date" 
+                              {...field} 
+                              max={new Date().toISOString().split('T')[0]}
+                              className="border-2 border-gray-300 p-2 font-semibold bg-white rounded-md cursor-pointer hover:border-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors" 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="dueDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Due Date (Optional)</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="date" value={field.value || ""} className="border-2 border-gray-300 p-2 font-semibold bg-white rounded-md cursor-pointer hover:border-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
                 </div>
 

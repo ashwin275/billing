@@ -2087,21 +2087,6 @@ export default function CreateInvoice() {
                       <h2 className="text-3xl font-bold text-gray-900 mb-4">INVOICE</h2>
                       <div className="space-y-2">
                         <div>
-                          <Label className="text-sm text-gray-600">Date</Label>
-                          <FormField
-                            control={form.control}
-                            name="invoiceDate"
-                            render={({ field }) => (
-                              <Input 
-                                type="date" 
-                                {...field} 
-                                max={new Date().toISOString().split('T')[0]}
-                                className="text-right border-2 border-gray-300 p-2 font-semibold bg-white rounded-md cursor-pointer hover:border-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors" 
-                              />
-                            )}
-                          />
-                        </div>
-                        <div>
                           <Label className="text-sm text-gray-600">Transaction ID</Label>
                           <FormField
                             control={form.control}
@@ -2360,7 +2345,7 @@ export default function CreateInvoice() {
                             <FormLabel>Payment Status</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
-                                <SelectTrigger>
+                                <SelectTrigger className="border-2 border-gray-300 p-2 font-semibold bg-white rounded-md cursor-pointer hover:border-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors">
                                   <SelectValue />
                                 </SelectTrigger>
                               </FormControl>
@@ -2378,12 +2363,31 @@ export default function CreateInvoice() {
 
                     <FormField
                       control={form.control}
+                      name="invoiceDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Invoice Date</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="date" 
+                              {...field} 
+                              max={new Date().toISOString().split('T')[0]}
+                              className="border-2 border-gray-300 p-2 font-semibold bg-white rounded-md cursor-pointer hover:border-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors" 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
                       name="dueDate"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Due Date (Optional)</FormLabel>
                           <FormControl>
-                            <Input {...field} type="date" value={field.value || ""} />
+                            <Input {...field} type="date" value={field.value || ""} className="border-2 border-gray-300 p-2 font-semibold bg-white rounded-md cursor-pointer hover:border-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>

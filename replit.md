@@ -35,7 +35,7 @@ A React-based frontend-only invoice management dashboard that connects to extern
 - React Hook Form + Zod
 
 ## Recent Changes
-- August 15, 2025: Successfully completed migration from Replit Agent to Replit environment
+- August 17, 2025: Successfully completed migration from Replit Agent to Replit environment
 - Fixed critical invoice calculation bug: CGST and SGST taxes are now properly added to grand total
 - Updated both create-invoice.tsx and edit-invoice.tsx with correct tax calculation logic
 - Subtotal now shows base amount (qty × rate), taxes are added separately to grand total
@@ -51,4 +51,6 @@ A React-based frontend-only invoice management dashboard that connects to extern
 - Verified all calculation logic in create/edit invoice pages works correctly
 - Enhanced pagination system with First/Last buttons, smart page numbering, direct page jump input, and items per page selector
 - Fixed product search dialog search text persistence issue - search bar now clears when dialog is closed
+- Reorganized invoice form layout: moved Invoice Date picker from header to above Due Date field
+- Enhanced Payment Status dropdown styling to match Due Date picker styling
 - Application successfully running on Replit with all features functional
