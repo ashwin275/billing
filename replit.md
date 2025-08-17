@@ -63,4 +63,10 @@ A React-based frontend-only invoice management dashboard that connects to extern
   - Root cause: form.reset() in create-invoice.tsx was missing invoiceDate field while dueDate was working
   - Solution: Added missing invoiceDate field to form reset in create-invoice.tsx line 475
   - Result: Invoice Date now correctly shows backend date (e.g., "16/08/2025") instead of today's date
+- Fixed critical invoice edit data refresh issue (August 17, 2025):
+  - Edit button now invalidates query cache before navigation to ensure fresh data
+  - Added handleEditInvoice function that clears cache and fetches latest invoice data
+  - Updated create-invoice.tsx to always fetch fresh data when in edit mode (staleTime: 0, cacheTime: 0)
+  - Removed unused edit-invoice.tsx page to avoid confusion
+  - Users now see the most up-to-date invoice information when editing
 - Application successfully running on Replit with all features functional
