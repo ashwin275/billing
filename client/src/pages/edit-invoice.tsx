@@ -106,7 +106,7 @@ export default function EditInvoice() {
     defaultValues: {
       customerId: 0,
       shopId: 0,
-      invoiceDate: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
+      invoiceDate: "", // Will be set from backend data
       discount: 0,
       discountType: "PERCENTAGE",
       amountPaid: 0,
@@ -116,8 +116,8 @@ export default function EditInvoice() {
       dueDate: null,
       billType: "GST",
       saleType: "RETAIL",
-      transactionId: `TXN${Date.now()}`,
-      saleItems: [{ productId: 0, quantity: 1, discount: 0, discountType: "PERCENTAGE" }],
+      transactionId: "",
+      saleItems: [],
     },
   });
 
