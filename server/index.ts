@@ -6,10 +6,12 @@ import { dirname, resolve } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Start Vite dev server for the frontend with allowed hosts
+// Start Vite dev server for the frontend with Replit configuration
 const viteProcess = spawn('npx', [
   'vite', 
-  '--config', 'vite.config.dev.ts'
+  '--config', 'vite.config.ts',
+  '--host', '0.0.0.0',
+  '--port', '5000'
 ], {
   cwd: resolve(__dirname, '..'),
   stdio: 'inherit'
