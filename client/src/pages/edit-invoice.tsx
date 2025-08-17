@@ -36,7 +36,7 @@ const saleItemSchema = z.object({
 const invoiceSchema = z.object({
   customerId: z.number().min(1, "Customer is required"),
   shopId: z.number().min(1, "Shop is required"),
-  invoiceDate: z.string().min(1, "Invoice date is required"),
+  invoiceDate: z.string().nullable().optional(),
   discount: z.number().min(0, "Discount cannot be negative").default(0),
   discountType: z.enum(["PERCENTAGE", "AMOUNT"]).default("PERCENTAGE"),
   amountPaid: z.number().min(0, "Amount paid cannot be negative").default(0),
@@ -64,6 +64,7 @@ const customerSchema = z.object({
 type CustomerFormData = z.infer<typeof customerSchema>;
 
 export default function EditInvoice() {
+  console.log('🚀 EDIT INVOICE PAGE LOADED');
   const [match, params] = useRoute("/invoices/edit/:id");
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -80,9 +81,21 @@ export default function EditInvoice() {
   // Fetch invoice data
   const { data: invoice, isLoading: isLoadingInvoice } = useQuery({
     queryKey: ["/api/invoices", invoiceId],
-    queryFn: () => invoicesApi.getInvoiceById(invoiceId!),
+    queryFn: () => {
+      console.log('📡 FETCHING INVOICE DATA FOR ID:', invoiceId);
+      return invoicesApi.getInvoiceById(invoiceId!);
+    },
     enabled: !!invoiceId,
   });
+
+  // Debug invoice data when it loads
+  useEffect(() => {
+    if (invoice) {
+      console.log('✅ INVOICE DATA LOADED:', invoice);
+      console.log('✅ INVOICE DATE FROM API:', invoice?.invoiceDate);
+      console.log('✅ DUE DATE FROM API:', invoice?.dueDate);
+    }
+  }, [invoice]);
 
   // Fetch other data
   const { data: products = [] } = useQuery({
@@ -106,7 +119,7 @@ export default function EditInvoice() {
     defaultValues: {
       customerId: 0,
       shopId: 0,
-      invoiceDate: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
+      invoiceDate: null, // Will be set from backend data, similar to dueDate
       discount: 0,
       discountType: "PERCENTAGE",
       amountPaid: 0,
@@ -116,8 +129,8 @@ export default function EditInvoice() {
       dueDate: null,
       billType: "GST",
       saleType: "RETAIL",
-      transactionId: `TXN${Date.now()}`,
-      saleItems: [{ productId: 0, quantity: 1, discount: 0, discountType: "PERCENTAGE" }],
+      transactionId: "",
+      saleItems: [],
     },
   });
 
@@ -213,6 +226,7 @@ export default function EditInvoice() {
                   const totals = calculateTotals();
                   const invoiceInput = {
                     ...formData,
+                    invoiceDate: formData.invoiceDate || new Date().toISOString().split('T')[0],
                     totalAmount: totals.grandTotal,
                     tax: totals.totalTax,
                   };
@@ -256,11 +270,19 @@ export default function EditInvoice() {
 
   // Populate form with invoice data
   useEffect(() => {
+    console.log('🔍 DEBUGGING: useEffect triggered. Invoice exists:', !!invoice);
     if (invoice) {
+      console.log('🔍 DEBUGGING: Raw invoice data:', invoice);
+      console.log('🔍 DEBUGGING: Raw invoiceDate:', invoice.invoiceDate);
+      console.log('🔍 DEBUGGING: Raw dueDate:', invoice.dueDate);
+      
+      const processedInvoiceDate = invoice.invoiceDate ? invoice.invoiceDate.split('T')[0] : null;
+      console.log('🔍 DEBUGGING: Processed invoiceDate:', processedInvoiceDate);
+      
       const formData = {
         customerId: invoice.customerId,
         shopId: invoice.shopId,
-        invoiceDate: invoice.invoiceDate ? invoice.invoiceDate.split('T')[0] : new Date().toISOString().split('T')[0],
+        invoiceDate: processedInvoiceDate,
         discount: invoice.discount || 0,
         discountType: "PERCENTAGE" as const, // Default as this isn't in the invoice data
         amountPaid: invoice.amountPaid || 0,
@@ -283,8 +305,11 @@ export default function EditInvoice() {
           : [],
       };
       
+      console.log('🔍 DEBUGGING: Final formData object:', formData);
+      
       // Reset form and mark all fields as dirty to enable form submission
       form.reset(formData);
+      console.log('🔍 DEBUGGING: Form after reset:', form.getValues());
       
       // Trigger change detection by manually setting form values
       setTimeout(() => {
@@ -308,6 +333,10 @@ export default function EditInvoice() {
             });
           });
         });
+        
+        console.log('🔍 DEBUGGING: Form values after manual setting:', form.getValues());
+        console.log('🔍 DEBUGGING: Invoice date from form:', form.getValues('invoiceDate'));
+        console.log('🔍 DEBUGGING: Due date from form:', form.getValues('dueDate'));
       }, 100);
     }
   }, [invoice, form]);
@@ -410,7 +439,7 @@ export default function EditInvoice() {
       // Include all original invoice data
       invoiceId: invoice.invoiceId,
       invoiceNo: invoice.invoiceNo,
-      invoiceDate: data.invoiceDate,
+      invoiceDate: data.invoiceDate || new Date().toISOString().split('T')[0],
       customerId: data.customerId,
       customerName: invoice.customerName,
       salesId: invoice.salesId,
@@ -1858,7 +1887,7 @@ export default function EditInvoice() {
                             <FormLabel>Payment Status</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
-                                <SelectTrigger>
+                                <SelectTrigger className="border-2 border-gray-300 p-2 font-semibold bg-white rounded-md cursor-pointer hover:border-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors">
                                   <SelectValue />
                                 </SelectTrigger>
                               </FormControl>
@@ -1874,40 +1903,39 @@ export default function EditInvoice() {
                       />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="invoiceDate"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Invoice Date</FormLabel>
-                            <FormControl>
-                              <Input 
-                                type="date" 
-                                {...field} 
-                                max={new Date().toISOString().split('T')[0]}
-                                className="border-2 border-gray-300 p-2 font-semibold bg-white rounded-md cursor-pointer hover:border-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors" 
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="dueDate"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Due Date (Optional)</FormLabel>
-                            <FormControl>
-                              <Input {...field} type="date" value={field.value || ""} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                    <FormField
+                      control={form.control}
+                      name="invoiceDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Invoice Date</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="date" 
+                              {...field} 
+                              value={field.value || ""}
+                              max={new Date().toISOString().split('T')[0]}
+                              className="border-2 border-gray-300 p-2 font-semibold bg-white rounded-md cursor-pointer hover:border-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors" 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="dueDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Due Date (Optional)</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="date" value={field.value || ""} className="border-2 border-gray-300 p-2 font-semibold bg-white rounded-md cursor-pointer hover:border-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
                 </div>
 
