@@ -339,7 +339,7 @@ export const invoicesApi = {
       ...invoiceData, // Include all fields from the invoice data
       invoiceId: invoiceId, // Explicitly add invoice ID to payload
       userId: userId, // Override/add userId from token
-      dueDate: invoiceData.dueDate ? new Date(invoiceData.dueDate).toISOString() : new Date().toISOString(),
+      dueDate: invoiceData.dueDate ? new Date(invoiceData.dueDate).toISOString() : null,
     };
     
     console.log('API updateInvoice - final complete payload:', updatePayload);

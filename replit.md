@@ -73,4 +73,8 @@ A React-based frontend-only invoice management dashboard that connects to extern
   - Amount Paid field now automatically updates to match Grand Total when quantities change in edit mode
   - Previously only worked for new invoices, now works for both create and edit modes
   - Ensures amount paid stays synchronized with total when making edits
+- Fixed due date null handling in invoice updates (August 20, 2025):
+  - Invoice updates no longer set due date to current timestamp when user leaves due date empty
+  - Due date field now properly sends null when not selected instead of defaulting to today's date
+  - API payload only includes due date when user explicitly selects a date
 - Application successfully running on Replit with all features functional
