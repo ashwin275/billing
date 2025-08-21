@@ -194,6 +194,13 @@ export const productsApi = {
       method: "DELETE",
     });
   },
+
+  /**
+   * Check if product number exists
+   */
+  async checkProductExists(productNumber: string, shopId: number): Promise<{ exists: boolean; productNumber: string }> {
+    return apiRequest(`/products/product-number-exist?productNumber=${encodeURIComponent(productNumber)}&shopId=${shopId}`);
+  },
 };
 
 /**
@@ -309,7 +316,7 @@ export const invoicesApi = {
   /**
    * Update invoice by ID
    */
-  async updateInvoice(invoiceId: number, invoiceData: import("@/types/api").InvoiceInput): Promise<void> {
+  async updateInvoice(invoiceId: number, invoiceData: any): Promise<void> {
     // Get user and sales IDs from token if available
     const token = getAuthToken();
     let userId = 1;
@@ -324,29 +331,18 @@ export const invoicesApi = {
         console.warn('Failed to decode token for update invoice:', error);
       }
     }
-
-    // Use the calculated values from the invoice data
-    let totalAmount = invoiceData.totalAmount || 0;
-    let tax = invoiceData.tax || 0;
     
-    console.log('API updateInvoice - received data:', invoiceData);
-    console.log('API updateInvoice - using values:', { totalAmount, tax });
+    console.log('API updateInvoice - received complete data:', invoiceData);
 
+    // Send the complete invoice data instead of creating a minimal payload
     const updatePayload = {
-      invoiceId: invoiceId,
-      customerId: invoiceData.customerId,
-      shopId: invoiceData.shopId,
-      salesId: salesId,
-      userId: userId,
-      totalAmount: totalAmount,
-      tax: tax,
-      dueDate: invoiceData.dueDate ? new Date(invoiceData.dueDate).toISOString() : new Date().toISOString(),
-      paymentStatus: invoiceData.paymentStatus || "PENDING",
-      paymentMode: invoiceData.paymentMode || "CASH",
-      remark: invoiceData.remark || "",
+      ...invoiceData, // Include all fields from the invoice data
+      invoiceId: invoiceId, // Explicitly add invoice ID to payload
+      userId: userId, // Override/add userId from token
+      dueDate: invoiceData.dueDate ? new Date(invoiceData.dueDate).toISOString() : null,
     };
     
-    console.log('API updateInvoice - final payload:', updatePayload);
+    console.log('API updateInvoice - final complete payload:', updatePayload);
     
     return apiRequest(`/invoice/update/${invoiceId}`, {
       method: 'POST',

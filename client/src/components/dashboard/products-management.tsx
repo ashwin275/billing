@@ -1,5 +1,5 @@
 // Products management component with full CRUD functionality
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm, Controller, FieldPath, ControllerRenderProps } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -7,7 +7,7 @@ import { z } from "zod";
 import { 
   Package, Plus, Edit2, Trash2, AlertTriangle, DollarSign, 
   Calendar, Tag, BarChart3, ShoppingCart, X, Search, ArrowUpDown, ArrowUp, ArrowDown,
-  Store, User, MapPin, Info, Hash
+  Store, User, MapPin, Info, Hash, CheckCircle, XCircle, Loader2
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -100,11 +100,24 @@ export default function ProductsManagement() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [sortField, setSortField] = useState<keyof Product>("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
+  // Product number existence checking states
+  const [addPartNumberStatus, setAddPartNumberStatus] = useState<{
+    checking: boolean;
+    exists: boolean | null;
+    message: string;
+  }>({ checking: false, exists: null, message: "" });
+  
+  const [editPartNumberStatus, setEditPartNumberStatus] = useState<{
+    checking: boolean;
+    exists: boolean | null;
+    message: string;
+  }>({ checking: false, exists: null, message: "" });
 
   // Fetch all products
   const {
@@ -149,6 +162,95 @@ export default function ProductsManagement() {
   const editForm = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
   });
+
+  // Get shopId from token for product existence checking
+  const getShopId = useCallback(() => {
+    const token = getAuthToken();
+    if (token) {
+      try {
+        const decoded = decodeToken(token);
+        return decoded.shopId || 1;
+      } catch (error) {
+        console.warn('Failed to decode token:', error);
+      }
+    }
+    return 1; // Default fallback
+  }, []);
+
+  // Debounced function to check product existence
+  const checkProductExists = useCallback(async (
+    productNumber: string, 
+    isEdit: boolean = false,
+    currentProductNumber?: string
+  ) => {
+    if (!productNumber.trim()) {
+      const resetStatus = { checking: false, exists: null, message: "" };
+      if (isEdit) {
+        setEditPartNumberStatus(resetStatus);
+      } else {
+        setAddPartNumberStatus(resetStatus);
+      }
+      return;
+    }
+
+    // If editing and the product number hasn't changed, don't check
+    if (isEdit && currentProductNumber && productNumber === currentProductNumber) {
+      setEditPartNumberStatus({ checking: false, exists: null, message: "" });
+      return;
+    }
+
+    const shopId = getShopId();
+    
+    // Set checking state
+    const checkingStatus = { checking: true, exists: null, message: "Checking availability..." };
+    if (isEdit) {
+      setEditPartNumberStatus(checkingStatus);
+    } else {
+      setAddPartNumberStatus(checkingStatus);
+    }
+
+    try {
+      const result = await productsApi.checkProductExists(productNumber, shopId);
+      const status = {
+        checking: false,
+        exists: result.exists,
+        message: result.exists 
+          ? "Product number already exists" 
+          : "Product number is available"
+      };
+
+      if (isEdit) {
+        setEditPartNumberStatus(status);
+      } else {
+        setAddPartNumberStatus(status);
+      }
+    } catch (error) {
+      const errorStatus = {
+        checking: false,
+        exists: null,
+        message: "Error checking product number"
+      };
+
+      if (isEdit) {
+        setEditPartNumberStatus(errorStatus);
+      } else {
+        setAddPartNumberStatus(errorStatus);
+      }
+    }
+  }, [getShopId]);
+
+  // Debounced version of checkProductExists
+  const debouncedCheckProductExists = useCallback((
+    productNumber: string, 
+    isEdit: boolean = false,
+    currentProductNumber?: string
+  ) => {
+    const timeoutId = setTimeout(() => {
+      checkProductExists(productNumber, isEdit, currentProductNumber);
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timeoutId);
+  }, [checkProductExists]);
 
   // Add products mutation
   const addProductsMutation = useMutation({
@@ -510,7 +612,13 @@ export default function ProductsManagement() {
             <h1 className="text-xl sm:text-2xl font-bold text-slate-900 truncate">Products Management</h1>
             <p className="text-sm sm:text-base text-slate-600 mt-1">Manage your product inventory and pricing</p>
           </div>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
+            setIsAddDialogOpen(open);
+            if (!open) {
+              // Reset status when dialog closes
+              setAddPartNumberStatus({ checking: false, exists: null, message: "" });
+            }
+          }}>
             <DialogTrigger asChild>
               <Button className="w-full sm:w-auto">
                 <Plus className="mr-2 h-4 w-4 flex-shrink-0" />
@@ -542,11 +650,45 @@ export default function ProductsManagement() {
 
                   <div className="space-y-2">
                     <Label htmlFor="add-partNumber">Part Number</Label>
-                    <Input
-                      id="add-partNumber"
-                      {...addForm.register("partNumber")}
-                      placeholder="SGS24-128GB-BLK"
-                    />
+                    <div className="relative">
+                      <Input
+                        id="add-partNumber"
+                        {...addForm.register("partNumber")}
+                        placeholder="SE-KO-0001"
+                        onBlur={(e) => {
+                          const value = e.target.value;
+                          if (value.trim()) {
+                            debouncedCheckProductExists(value, false);
+                          }
+                        }}
+                      />
+                      {addPartNumberStatus.checking && (
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        </div>
+                      )}
+                      {!addPartNumberStatus.checking && addPartNumberStatus.exists !== null && (
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                          {addPartNumberStatus.exists ? (
+                            <XCircle className="h-4 w-4 text-red-500" />
+                          ) : (
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    {/* Status message */}
+                    {addPartNumberStatus.message && (
+                      <p className={`text-sm ${
+                        addPartNumberStatus.exists === true 
+                          ? 'text-red-600' 
+                          : addPartNumberStatus.exists === false 
+                            ? 'text-green-600' 
+                            : 'text-muted-foreground'
+                      }`}>
+                        {addPartNumberStatus.message}
+                      </p>
+                    )}
                     {addForm.formState.errors.partNumber && (
                       <p className="text-sm text-destructive">
                         {addForm.formState.errors.partNumber.message}
@@ -1072,52 +1214,157 @@ export default function ProductsManagement() {
             </Table>
           </div>
 
-          {/* Pagination */}
+          {/* Enhanced Pagination */}
           {totalProducts > 0 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-4 border-t bg-white dark:bg-slate-950">
-              <div className="text-sm text-slate-700 dark:text-slate-300 order-2 sm:order-1">
-                Showing {startIndex + 1} to {Math.min(endIndex, totalProducts)} of {totalProducts} products
+            <div className="flex flex-col gap-4 px-4 py-4 border-t bg-white dark:bg-slate-950">
+              {/* Results Info and Items Per Page */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="text-sm text-slate-700 dark:text-slate-300">
+                  Showing {startIndex + 1} to {Math.min(endIndex, totalProducts)} of {totalProducts} products
+                </div>
+                
+                {/* Items Per Page */}
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-slate-600 dark:text-slate-400">Show:</span>
+                  <Select value={itemsPerPage.toString()} onValueChange={(value) => {
+                    const newItemsPerPage = parseInt(value);
+                    setItemsPerPage(newItemsPerPage);
+                    setCurrentPage(1); // Reset to first page when changing items per page
+                  }}>
+                    <SelectTrigger className="w-20 h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5">5</SelectItem>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="25">25</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <span className="text-slate-600 dark:text-slate-400">per page</span>
+                </div>
               </div>
-              <div className="order-1 sm:order-2">
-                <Pagination>
-                  <PaginationContent className="gap-1">
-                    <PaginationItem>
-                      <PaginationPrevious 
-                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                        className={`${currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800"} transition-colors`}
-                      />
-                    </PaginationItem>
-                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                      let page;
-                      if (totalPages <= 5) {
-                        page = i + 1;
-                      } else if (currentPage <= 3) {
-                        page = i + 1;
-                      } else if (currentPage >= totalPages - 2) {
-                        page = totalPages - 4 + i;
-                      } else {
-                        page = currentPage - 2 + i;
+
+              {/* Navigation Controls */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                {/* Direct Page Jump */}
+                <div className="flex items-center gap-2 text-sm order-2 sm:order-1">
+                  <span className="text-slate-600 dark:text-slate-400">Go to page:</span>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={totalPages}
+                    value={currentPage}
+                    onChange={(e) => {
+                      const page = parseInt(e.target.value);
+                      if (page >= 1 && page <= totalPages) {
+                        setCurrentPage(page);
                       }
-                      return (
-                        <PaginationItem key={page}>
-                          <PaginationLink
-                            onClick={() => setCurrentPage(page)}
-                            isActive={currentPage === page}
-                            className="cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors min-w-[40px] justify-center"
-                          >
-                            {page}
-                          </PaginationLink>
-                        </PaginationItem>
-                      );
-                    })}
-                    <PaginationItem>
-                      <PaginationNext 
-                        onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                        className={`${currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800"} transition-colors`}
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
+                    }}
+                    className="w-16 h-8 text-center"
+                  />
+                  <span className="text-slate-600 dark:text-slate-400">of {totalPages}</span>
+                </div>
+
+                {/* Pagination Buttons */}
+                <div className="order-1 sm:order-2">
+                  <Pagination>
+                    <PaginationContent className="gap-1">
+                      {/* First Page */}
+                      <PaginationItem>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(1)}
+                          disabled={currentPage === 1}
+                          className="px-2"
+                        >
+                          First
+                        </Button>
+                      </PaginationItem>
+
+                      {/* Previous */}
+                      <PaginationItem>
+                        <PaginationPrevious 
+                          onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                          className={`${currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800"} transition-colors`}
+                        />
+                      </PaginationItem>
+
+                      {/* Smart Page Numbers */}
+                      {(() => {
+                        const pages = [];
+                        
+                        if (totalPages <= 7) {
+                          // Show all pages if total is 7 or less
+                          for (let i = 1; i <= totalPages; i++) {
+                            pages.push(i);
+                          }
+                        } else {
+                          // Smart pagination for many pages
+                          pages.push(1);
+                          
+                          if (currentPage > 4) {
+                            pages.push('...');
+                          }
+                          
+                          // Show pages around current page
+                          for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
+                            if (!pages.includes(i)) {
+                              pages.push(i);
+                            }
+                          }
+                          
+                          if (currentPage < totalPages - 3) {
+                            pages.push('...');
+                          }
+                          
+                          if (totalPages > 1) {
+                            pages.push(totalPages);
+                          }
+                        }
+                        
+                        return pages.map((page, index) => (
+                          <PaginationItem key={index}>
+                            {page === '...' ? (
+                              <span className="px-3 py-2 text-slate-500 dark:text-slate-400">...</span>
+                            ) : (
+                              <PaginationLink
+                                onClick={() => setCurrentPage(page as number)}
+                                isActive={currentPage === page}
+                                className="cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors min-w-[40px] justify-center"
+                              >
+                                {page}
+                              </PaginationLink>
+                            )}
+                          </PaginationItem>
+                        ));
+                      })()}
+
+                      {/* Next */}
+                      <PaginationItem>
+                        <PaginationNext 
+                          onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                          className={`${currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800"} transition-colors`}
+                        />
+                      </PaginationItem>
+
+                      {/* Last Page */}
+                      <PaginationItem>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(totalPages)}
+                          disabled={currentPage === totalPages}
+                          className="px-2"
+                        >
+                          Last
+                        </Button>
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
               </div>
             </div>
           )}
@@ -1133,7 +1380,13 @@ export default function ProductsManagement() {
       </Card>
 
       {/* Edit Product Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
+        setIsEditDialogOpen(open);
+        if (!open) {
+          // Reset status when dialog closes
+          setEditPartNumberStatus({ checking: false, exists: null, message: "" });
+        }
+      }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Product</DialogTitle>
@@ -1159,11 +1412,47 @@ export default function ProductsManagement() {
 
               <div className="space-y-2">
                 <Label htmlFor="edit-partNumber">Part Number</Label>
-                <Input
-                  id="edit-partNumber"
-                  {...editForm.register("partNumber")}
-                  placeholder="SGS24-128GB-BLK"
-                />
+                <div className="relative">
+                  <Input
+                    id="edit-partNumber"
+                    {...editForm.register("partNumber")}
+                    placeholder="SE-KO-0001"
+                    onBlur={(e) => {
+                      const value = e.target.value;
+                      if (value.trim()) {
+                        // Get the current product number for comparison
+                        const currentProductNumber = productToEdit?.productNumber;
+                        debouncedCheckProductExists(value, true, currentProductNumber);
+                      }
+                    }}
+                  />
+                  {editPartNumberStatus.checking && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    </div>
+                  )}
+                  {!editPartNumberStatus.checking && editPartNumberStatus.exists !== null && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      {editPartNumberStatus.exists ? (
+                        <XCircle className="h-4 w-4 text-red-500" />
+                      ) : (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      )}
+                    </div>
+                  )}
+                </div>
+                {/* Status message */}
+                {editPartNumberStatus.message && (
+                  <p className={`text-sm ${
+                    editPartNumberStatus.exists === true 
+                      ? 'text-red-600' 
+                      : editPartNumberStatus.exists === false 
+                        ? 'text-green-600' 
+                        : 'text-muted-foreground'
+                  }`}>
+                    {editPartNumberStatus.message}
+                  </p>
+                )}
                 {editForm.formState.errors.partNumber && (
                   <p className="text-sm text-destructive">
                     {editForm.formState.errors.partNumber.message}
