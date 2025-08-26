@@ -7,6 +7,9 @@ interface InvoiceTemplateProps {
 }
 
 export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPreview = false }) => {
+  // Debug: Log shop data to console
+  console.log('InvoiceTemplate - Shop data:', invoice.shop);
+  console.log('InvoiceTemplate - Shop logo:', invoice.shop?.logo);
   const calculateSubtotal = () => {
     // Subtotal should be sum of (price * quantity) only, without taxes
     return invoice.saleItems?.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 0)), 0) || 0;
@@ -488,7 +491,9 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
                 <img 
                   src={invoice.shop.logo} 
                   alt={`${invoice.shop.name || 'Shop'} Logo`}
+                  onLoad={() => console.log('Logo loaded successfully:', invoice.shop?.logo)}
                   onError={(e) => {
+                    console.log('Logo failed to load:', invoice.shop?.logo);
                     const target = e.target as HTMLImageElement;
                     target.style.display = 'none';
                     const parent = target.parentElement;
@@ -500,7 +505,10 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
                   }}
                 />
               ) : (
-                invoice.shop?.name?.charAt(0) || 'S'
+                (() => {
+                  console.log('No logo found, using text logo for shop:', invoice.shop?.name);
+                  return invoice.shop?.name?.charAt(0) || 'S';
+                })()
               )}
             </div>
             <div className="company-details">
