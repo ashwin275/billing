@@ -223,12 +223,12 @@ export default function Reports() {
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Tab Selector - Moved to top */}
         <div className="flex justify-center mb-4">
-          <div className="flex rounded-lg bg-gray-100 p-1">
+          <div className="flex rounded-lg bg-gray-100 p-2 gap-2 shadow-md">
             <Button
               variant={activeTab === 'business' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => setActiveTab('business')}
-              className="rounded-md"
+              className="rounded-md px-6 py-2 min-w-[140px] shadow-sm"
             >
               <Store className="h-4 w-4 mr-2" />
               Business Reports
@@ -237,7 +237,7 @@ export default function Reports() {
               variant={activeTab === 'customers' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => setActiveTab('customers')}
-              className="rounded-md"
+              className="rounded-md px-6 py-2 min-w-[140px] shadow-sm"
             >
               <Users className="h-4 w-4 mr-2" />
               Customer Reports
