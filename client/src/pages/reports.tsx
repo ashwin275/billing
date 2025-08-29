@@ -221,6 +221,30 @@ export default function Reports() {
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-7xl mx-auto space-y-6">
+        {/* Tab Selector - Moved to top */}
+        <div className="flex justify-center mb-4">
+          <div className="flex rounded-lg bg-gray-100 p-1">
+            <Button
+              variant={activeTab === 'business' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveTab('business')}
+              className="rounded-md"
+            >
+              <Store className="h-4 w-4 mr-2" />
+              Business Reports
+            </Button>
+            <Button
+              variant={activeTab === 'customers' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveTab('customers')}
+              className="rounded-md"
+            >
+              <Users className="h-4 w-4 mr-2" />
+              Customer Reports
+            </Button>
+          </div>
+        </div>
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
@@ -234,28 +258,6 @@ export default function Reports() {
           </div>
           
           <div className="flex flex-col sm:flex-row gap-3">
-            {/* Tab Selector */}
-            <div className="flex rounded-lg bg-gray-100 p-1">
-              <Button
-                variant={activeTab === 'business' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setActiveTab('business')}
-                className="rounded-md"
-              >
-                <Store className="h-4 w-4 mr-2" />
-                Business Reports
-              </Button>
-              <Button
-                variant={activeTab === 'customers' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setActiveTab('customers')}
-                className="rounded-md"
-              >
-                <Users className="h-4 w-4 mr-2" />
-                Customer Reports
-              </Button>
-            </div>
-            
             {/* Shop Selector - Only for Business Reports */}
             {activeTab === 'business' && (
               <Select value={selectedShopId?.toString()} onValueChange={(value) => setSelectedShopId(parseInt(value))}>
