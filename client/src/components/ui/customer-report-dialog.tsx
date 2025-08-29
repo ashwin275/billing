@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import * as XLSX from "xlsx";
-import { FileDown, Calendar, TrendingUp, Users, CreditCard, Package, AlertCircle } from "lucide-react";
+import { FileDown, Calendar, TrendingUp, Users, CreditCard, Package, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +24,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
@@ -48,6 +55,8 @@ export default function CustomerReportDialog({
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [hasSearched, setHasSearched] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const { toast } = useToast();
 
   // Fetch customer report data
@@ -116,22 +125,35 @@ export default function CustomerReportDialog({
       const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
       XLSX.utils.book_append_sheet(workbook, summarySheet, "Customer Summary");
 
-      // Top Products Sheet
+      // Top Products Sheet - Include ALL products, not just current page
       if (reportData.topProducts && reportData.topProducts.length > 0) {
         const productsData = [
           ["Product Name", "Quantity", "Sub Total", "Tax", "Discount", "Final Amount", "Invoice Date"],
           ...reportData.topProducts.map(product => [
             product.productName,
-            product.quantity,
-            product.subTotal,
-            product.tax,
-            product.discount,
-            product.finalAmount,
+            product.quantity.toFixed(2),
+            product.subTotal.toFixed(2),
+            product.tax.toFixed(2),
+            product.discount.toFixed(2),
+            product.finalAmount.toFixed(2),
             product.invoiceDate,
           ]),
         ];
 
         const productsSheet = XLSX.utils.aoa_to_sheet(productsData);
+        
+        // Auto-size columns for better readability
+        const columnWidths = [
+          { wch: 25 }, // Product Name
+          { wch: 10 }, // Quantity
+          { wch: 12 }, // Sub Total
+          { wch: 10 }, // Tax
+          { wch: 12 }, // Discount
+          { wch: 15 }, // Final Amount
+          { wch: 12 }, // Invoice Date
+        ];
+        productsSheet['!cols'] = columnWidths;
+        
         XLSX.utils.book_append_sheet(workbook, productsSheet, "Top Products");
       }
 
@@ -163,9 +185,18 @@ export default function CustomerReportDialog({
       setHasSearched(false);
       setFromDate("");
       setToDate("");
+      setCurrentPage(1);
     }
     onOpenChange(newOpen);
   };
+
+  // Pagination calculations for top products
+  const topProducts = reportData?.topProducts || [];
+  const totalProducts = topProducts.length;
+  const totalPages = Math.ceil(totalProducts / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentProducts = topProducts.slice(startIndex, endIndex);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -343,13 +374,13 @@ export default function CustomerReportDialog({
                 </CardContent>
               </Card>
 
-              {/* Top Products Table */}
+              {/* Top Products Table with Pagination */}
               {reportData.topProducts && reportData.topProducts.length > 0 && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-base">
                       <Package className="h-4 w-4" />
-                      Top Products Purchased
+                      Top Products Purchased ({totalProducts} items)
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -367,7 +398,7 @@ export default function CustomerReportDialog({
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {reportData.topProducts.map((product, index) => (
+                          {currentProducts.map((product, index) => (
                             <TableRow key={index}>
                               <TableCell className="font-medium">{product.productName}</TableCell>
                               <TableCell className="text-right">{product.quantity.toFixed(2)}</TableCell>
@@ -381,6 +412,84 @@ export default function CustomerReportDialog({
                         </TableBody>
                       </Table>
                     </div>
+
+                    {/* Pagination Controls for Top Products */}
+                    {totalPages > 1 && (
+                      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4 pt-4 border-t">
+                        <div className="text-sm text-muted-foreground">
+                          Showing {startIndex + 1} to {Math.min(endIndex, totalProducts)} of {totalProducts} products
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          {/* Items per page selector */}
+                          <div className="flex items-center gap-2 text-sm">
+                            <span>Show:</span>
+                            <Select 
+                              value={itemsPerPage.toString()} 
+                              onValueChange={(value) => {
+                                setItemsPerPage(parseInt(value));
+                                setCurrentPage(1);
+                              }}
+                            >
+                              <SelectTrigger className="w-20 h-8">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="5">5</SelectItem>
+                                <SelectItem value="10">10</SelectItem>
+                                <SelectItem value="20">20</SelectItem>
+                                <SelectItem value="50">50</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          {/* Page navigation */}
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setCurrentPage(1)}
+                              disabled={currentPage === 1}
+                              className="h-8 px-2"
+                            >
+                              First
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                              disabled={currentPage === 1}
+                              className="h-8 px-2"
+                            >
+                              <ChevronLeft className="h-4 w-4" />
+                            </Button>
+                            
+                            <span className="px-3 py-1 text-sm">
+                              Page {currentPage} of {totalPages}
+                            </span>
+                            
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                              disabled={currentPage === totalPages}
+                              className="h-8 px-2"
+                            >
+                              <ChevronRight className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setCurrentPage(totalPages)}
+                              disabled={currentPage === totalPages}
+                              className="h-8 px-2"
+                            >
+                              Last
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               )}
