@@ -1,0 +1,142 @@
+[
+    {
+        "customerId": 1,
+        "customerName": "shibinzzztest",
+        "phone": "8891440433",
+        "place": "Punalur",
+        "customerType": "CREDIT",
+        "totalPurchases": 979.60,
+        "totalBills": 1,
+        "averageBillValue": 979.60,
+        "biggestBill": 979.60,
+        "totalDiscount": 0.00,
+        "totalPaid": 979.60,
+        "pendingBalance": 0.00,
+        "advancePaid": 0,
+        "overdueInvoices": null,
+        "topProducts": [
+            {
+                "productName": "Sample Product ",
+                "quantity": 2.00,
+                "subTotal": 240.0000,
+                "tax": 69.60,
+                "discount": 0.00,
+                "finalAmount": 309.6000,
+                "invoiceDate": "2025-08-26"
+            },
+            {
+                "productName": "TV",
+                "quantity": 1.00,
+                "subTotal": 500.0000,
+                "tax": 170.00,
+                "discount": 0.00,
+                "finalAmount": 670.0000,
+                "invoiceDate": "2025-08-26"
+            }
+        ]
+    },
+    {
+        "customerId": 2,
+        "customerName": "Ashwins",
+        "phone": "1212121211",
+        "place": "KNRrd",
+        "customerType": "CREDIT",
+        "totalPurchases": 2372.80,
+        "totalBills": 2,
+        "averageBillValue": 1186.40,
+        "biggestBill": 1702.80,
+        "totalDiscount": 0.00,
+        "totalPaid": 2372.80,
+        "pendingBalance": 0.00,
+        "advancePaid": 0,
+        "overdueInvoices": null,
+        "topProducts": [
+            {
+                "productName": "Sample Product ",
+                "quantity": 11.00,
+                "subTotal": 1320.0000,
+                "tax": 382.80,
+                "discount": 0.00,
+                "finalAmount": 1702.8000,
+                "invoiceDate": "2025-08-20"
+            },
+            {
+                "productName": "TV",
+                "quantity": 1.00,
+                "subTotal": 500.0000,
+                "tax": 170.00,
+                "discount": 0.00,
+                "finalAmount": 670.0000,
+                "invoiceDate": "2025-08-29"
+            }
+        ]
+    },
+    {
+        "customerId": 3,
+        "customerName": "hello",
+        "phone": "9645640108",
+        "place": "hello",
+        "customerType": "DEALER",
+        "totalPurchases": 0,
+        "totalBills": 0,
+        "averageBillValue": 0,
+        "biggestBill": 0,
+        "totalDiscount": 0,
+        "totalPaid": 0,
+        "pendingBalance": 0,
+        "advancePaid": 0,
+        "overdueInvoices": 0,
+        "topProducts": []
+    },
+    {
+        "customerId": 7,
+        "customerName": "test",
+        "phone": "8891440733",
+        "place": "Punalur",
+        "customerType": "DEALER",
+        "totalPurchases": 0,
+        "totalBills": 0,
+        "averageBillValue": 0,
+        "biggestBill": 0,
+        "totalDiscount": 0,
+        "totalPaid": 0,
+        "pendingBalance": 0,
+        "advancePaid": 0,
+        "overdueInvoices": 0,
+        "topProducts": []
+    },
+    {
+        "customerId": 10,
+        "customerName": "asdf",
+        "phone": "9544441232",
+        "place": "Punalur",
+        "customerType": "SUBSCRIPTION",
+        "totalPurchases": 0,
+        "totalBills": 0,
+        "averageBillValue": 0,
+        "biggestBill": 0,
+        "totalDiscount": 0,
+        "totalPaid": 0,
+        "pendingBalance": 0,
+        "advancePaid": 0,
+        "overdueInvoices": 0,
+        "topProducts": []
+    },
+    {
+        "customerId": 11,
+        "customerName": "invoice update",
+        "phone": "1234564565",
+        "place": "Ealayil House",
+        "customerType": "CUSTOMER",
+        "totalPurchases": 0,
+        "totalBills": 0,
+        "averageBillValue": 0,
+        "biggestBill": 0,
+        "totalDiscount": 0,
+        "totalPaid": 0,
+        "pendingBalance": 0,
+        "advancePaid": 0,
+        "overdueInvoices": 0,
+        "topProducts": []
+    }
+]
