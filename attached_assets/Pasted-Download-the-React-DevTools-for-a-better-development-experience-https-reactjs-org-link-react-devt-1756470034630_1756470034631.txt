@@ -1,0 +1,63 @@
+Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+api.ts:36  GET https://billing-backend.serins.in/api/users/all 403 (Forbidden)
+apiRequest @ api.ts:36
+getAllUsers @ api.ts:123
+queryFn @ sidebar.tsx:77
+fetchFn @ @tanstack_react-query.js?v=661e46c8:840
+run @ @tanstack_react-query.js?v=661e46c8:494
+start @ @tanstack_react-query.js?v=661e46c8:536
+fetch @ @tanstack_react-query.js?v=661e46c8:926
+executeFetch_fn @ @tanstack_react-query.js?v=661e46c8:2211
+onSubscribe @ @tanstack_react-query.js?v=661e46c8:1898
+subscribe @ @tanstack_react-query.js?v=661e46c8:24
+(anonymous) @ @tanstack_react-query.js?v=661e46c8:3022
+subscribeToStore @ chunk-WERSD76P.js?v=661e46c8:11984
+commitHookEffectListMount @ chunk-WERSD76P.js?v=661e46c8:16915
+commitPassiveMountOnFiber @ chunk-WERSD76P.js?v=661e46c8:18156
+commitPassiveMountEffects_complete @ chunk-WERSD76P.js?v=661e46c8:18129
+commitPassiveMountEffects_begin @ chunk-WERSD76P.js?v=661e46c8:18119
+commitPassiveMountEffects @ chunk-WERSD76P.js?v=661e46c8:18109
+flushPassiveEffectsImpl @ chunk-WERSD76P.js?v=661e46c8:19490
+flushPassiveEffects @ chunk-WERSD76P.js?v=661e46c8:19447
+performSyncWorkOnRoot @ chunk-WERSD76P.js?v=661e46c8:18868
+flushSyncCallbacks @ chunk-WERSD76P.js?v=661e46c8:9119
+commitRootImpl @ chunk-WERSD76P.js?v=661e46c8:19432
+commitRoot @ chunk-WERSD76P.js?v=661e46c8:19277
+finishConcurrentRender @ chunk-WERSD76P.js?v=661e46c8:18805
+performConcurrentWorkOnRoot @ chunk-WERSD76P.js?v=661e46c8:18718
+workLoop @ chunk-WERSD76P.js?v=661e46c8:197
+flushWork @ chunk-WERSD76P.js?v=661e46c8:176
+performWorkUntilDeadline @ chunk-WERSD76P.js?v=661e46c8:384Understand this error
+api.ts:41 API returned 403 for /users/all, treating as empty data
+chunk-V5EQFP4E.js?v=661e46c8:337 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ chunk-V5EQFP4E.js?v=661e46c8:337
+commitHookEffectListMount @ chunk-WERSD76P.js?v=661e46c8:16915
+commitPassiveMountOnFiber @ chunk-WERSD76P.js?v=661e46c8:18156
+commitPassiveMountEffects_complete @ chunk-WERSD76P.js?v=661e46c8:18129
+commitPassiveMountEffects_begin @ chunk-WERSD76P.js?v=661e46c8:18119
+commitPassiveMountEffects @ chunk-WERSD76P.js?v=661e46c8:18109
+flushPassiveEffectsImpl @ chunk-WERSD76P.js?v=661e46c8:19490
+flushPassiveEffects @ chunk-WERSD76P.js?v=661e46c8:19447
+commitRootImpl @ chunk-WERSD76P.js?v=661e46c8:19416
+commitRoot @ chunk-WERSD76P.js?v=661e46c8:19277
+performSyncWorkOnRoot @ chunk-WERSD76P.js?v=661e46c8:18895
+flushSyncCallbacks @ chunk-WERSD76P.js?v=661e46c8:9119
+(anonymous) @ chunk-WERSD76P.js?v=661e46c8:18627Understand this warning
+create-invoice.tsx:386 Tax calculation debug: {subtotal: 0, totalTax: 0, itemsCount: 0, billType: 'GST', items: Array(0)}
+create-invoice.tsx:386 Tax calculation debug: {subtotal: 0, totalTax: 0, itemsCount: 0, billType: 'GST', items: Array(0)}
+chunk-V5EQFP4E.js?v=661e46c8:337 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ chunk-V5EQFP4E.js?v=661e46c8:337
+commitHookEffectListMount @ chunk-WERSD76P.js?v=661e46c8:16915
+commitPassiveMountOnFiber @ chunk-WERSD76P.js?v=661e46c8:18156
+commitPassiveMountEffects_complete @ chunk-WERSD76P.js?v=661e46c8:18129
+commitPassiveMountEffects_begin @ chunk-WERSD76P.js?v=661e46c8:18119
+commitPassiveMountEffects @ chunk-WERSD76P.js?v=661e46c8:18109
+flushPassiveEffectsImpl @ chunk-WERSD76P.js?v=661e46c8:19490
+flushPassiveEffects @ chunk-WERSD76P.js?v=661e46c8:19447
+commitRootImpl @ chunk-WERSD76P.js?v=661e46c8:19416
+commitRoot @ chunk-WERSD76P.js?v=661e46c8:19277
+performSyncWorkOnRoot @ chunk-WERSD76P.js?v=661e46c8:18895
+flushSyncCallbacks @ chunk-WERSD76P.js?v=661e46c8:9119
+(anonymous) @ chunk-WERSD76P.js?v=661e46c8:18627Understand this warning
+create-invoice.tsx:386 Tax calculation debug: {subtotal: 120, totalTax: 34.8, itemsCount: 1, billType: 'GST', items: Array(1)}
+create-invoice.tsx:386 Tax calculation debug: {subtotal: 120, totalTax: 34.8, itemsCount: 1, billType: 'GST', items: Array(1)
