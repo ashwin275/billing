@@ -245,3 +245,13 @@ export interface CustomerReport {
   overdueInvoices: number | null;
   topProducts: TopProduct[];
 }
+
+// HSN Report Types
+export interface HsnReport {
+  hsn: string;
+  productName: string;
+  totalQuantity: number;
+  totalAmount: number;
+  totalTax: number;
+  finalAmount: number;
+}
