@@ -43,6 +43,7 @@ export default function HsnReportDialog({
     queryKey: ["/api/reports/hsn", hsn, fromDate, toDate],
     queryFn: () => reportsApi.getHsnReport(hsn, fromDate, toDate),
     enabled: hasSearched && !!fromDate && !!toDate && !!hsn,
+    retry: false, // Don't retry on error
   });
 
   /**
@@ -206,7 +207,14 @@ export default function HsnReportDialog({
               <CardContent className="p-6">
                 <div className="text-center text-destructive">
                   <AlertCircle className="h-8 w-8 mx-auto mb-2" />
-                  <p>Failed to load HSN report. Please try again.</p>
+                  <p className="font-medium mb-2">No Sales Report Found</p>
+                  <p className="text-sm text-muted-foreground">
+                    No sales data found for HSN code "{hsn}" in the selected date range.
+                    {fromDate && toDate && ` (${fromDate} to ${toDate})`}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Try selecting a different date range or check if this HSN code has any sales records.
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -321,7 +329,11 @@ export default function HsnReportDialog({
               <CardContent className="p-6">
                 <div className="text-center text-muted-foreground">
                   <AlertCircle className="h-8 w-8 mx-auto mb-2" />
-                  <p>No data found for the selected date range.</p>
+                  <p className="font-medium mb-2">No Sales Data Found</p>
+                  <p className="text-sm">
+                    No sales data found for HSN code "{hsn}" in the selected date range.
+                    {fromDate && toDate && ` (${fromDate} to ${toDate})`}
+                  </p>
                 </div>
               </CardContent>
             </Card>
