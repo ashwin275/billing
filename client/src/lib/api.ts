@@ -513,6 +513,13 @@ export const reportsApi = {
   async getAllCustomerReports(from: string, to: string): Promise<import("@/types/api").CustomerReport[]> {
     return await apiRequest(`/reports/customer/all?from=${from}&to=${to}`);
   },
+
+  /**
+   * Get HSN reports for all products
+   */
+  async getAllHsnReports(from: string, to: string): Promise<import("@/types/api").HsnReport[]> {
+    return await apiRequest(`/reports/hsn/all?from=${from}&to=${to}`);
+  },
 };
 
 /**
