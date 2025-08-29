@@ -218,6 +218,38 @@ export default function Reports() {
     saveAs(data, fileName);
   };
 
+  // Export only Top Products by Customer to Excel
+  const exportTopProductsByCustomerToExcel = () => {
+    if (topProductsData.length === 0) {
+      alert('No top products data available to export');
+      return;
+    }
+
+    const workbook = XLSX.utils.book_new();
+    
+    // Top Products by Customer Sheet
+    const exportData = topProductsData.map(product => ({
+      'Customer ID': product.customerId,
+      'Customer Name': product.customerName,
+      'Product Name': product.productName,
+      'Quantity': product.quantity,
+      'Sub Total': product.subTotal,
+      'Tax': product.tax,
+      'Discount': product.discount,
+      'Final Amount': product.finalAmount,
+      'Invoice Date': new Date(product.invoiceDate).toLocaleDateString()
+    }));
+
+    const topProductsSheet = XLSX.utils.json_to_sheet(exportData);
+    XLSX.utils.book_append_sheet(workbook, topProductsSheet, 'Top Products by Customer');
+
+    // Save the file
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const data = new Blob([excelBuffer], { type: 'application/octet-stream' });
+    const fileName = `Top_Products_by_Customer_${customerReportDateRange.from}_to_${customerReportDateRange.to}.xlsx`;
+    saveAs(data, fileName);
+  };
+
   // Export HSN reports to Excel
   const exportHsnReportsToExcel = () => {
     if (!Array.isArray(hsnReports) || hsnReports.length === 0) {
@@ -1169,10 +1201,21 @@ export default function Reports() {
             {topProductsData.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <ShoppingBag className="h-5 w-5" />
-                    Top Products by Customer
-                  </CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <ShoppingBag className="h-5 w-5" />
+                      Top Products by Customer
+                    </CardTitle>
+                    <Button 
+                      onClick={exportTopProductsByCustomerToExcel}
+                      className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
+                      size="sm"
+                      data-testid="button-export-top-products"
+                    >
+                      <Download className="h-4 w-4" />
+                      Export Excel
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="overflow-x-auto">
