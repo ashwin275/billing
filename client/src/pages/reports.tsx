@@ -26,6 +26,12 @@ export default function Reports() {
     to: new Date().toISOString().split('T')[0]
   });
   const [activeTab, setActiveTab] = useState<'business' | 'customers'>('business');
+  
+  // Pagination states for Customer Reports tables
+  const [customerDetailsPage, setCustomerDetailsPage] = useState(1);
+  const [customerDetailsPerPage, setCustomerDetailsPerPage] = useState(10);
+  const [topProductsPage, setTopProductsPage] = useState(1);
+  const [topProductsPerPage, setTopProductsPerPage] = useState(15);
 
   // Fetch shops
   const { data: shops = [] } = useQuery({
@@ -100,6 +106,29 @@ export default function Reports() {
   const activeCustomers = Array.isArray(customerReports) ? customerReports.filter(c => c.totalBills > 0).length : 0;
   const totalCustomerPurchases = Array.isArray(customerReports) ? customerReports.reduce((sum, c) => sum + c.totalPurchases, 0) : 0;
   const totalPendingBalance = Array.isArray(customerReports) ? customerReports.reduce((sum, c) => sum + c.pendingBalance, 0) : 0;
+
+  // Pagination calculations for Customer Details Report
+  const totalCustomerPages = Math.ceil(totalCustomers / customerDetailsPerPage);
+  const paginatedCustomerReports = Array.isArray(customerReports) ? 
+    customerReports.slice((customerDetailsPage - 1) * customerDetailsPerPage, customerDetailsPage * customerDetailsPerPage) 
+    : [];
+
+  // Pagination calculations for Top Products by Customer
+  const topProductsData = Array.isArray(customerReports) ? 
+    customerReports
+      .filter(customer => Array.isArray(customer.topProducts) && customer.topProducts.length > 0)
+      .flatMap(customer => 
+        customer.topProducts.map(product => ({
+          ...product,
+          customerName: customer.customerName,
+          customerId: customer.customerId
+        }))
+      )
+      .sort((a, b) => b.finalAmount - a.finalAmount)
+    : [];
+  
+  const totalTopProductsPages = Math.ceil(topProductsData.length / topProductsPerPage);
+  const paginatedTopProducts = topProductsData.slice((topProductsPage - 1) * topProductsPerPage, topProductsPage * topProductsPerPage);
 
   // Export customer reports to Excel
   const exportCustomerReportsToExcel = () => {
@@ -602,8 +631,8 @@ export default function Reports() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {Array.isArray(customerReports) && customerReports.length > 0 ? (
-                        customerReports.map((customer, index) => (
+                      {paginatedCustomerReports.length > 0 ? (
+                        paginatedCustomerReports.map((customer, index) => (
                           <TableRow key={customer.customerId} className="hover:bg-gray-50">
                             <TableCell className="font-medium">
                               <div>
@@ -640,11 +669,90 @@ export default function Reports() {
                     </TableBody>
                   </Table>
                 </div>
+                
+                {/* Customer Details Pagination */}
+                {totalCustomers > 0 && (
+                  <div className="flex items-center justify-between px-2 py-4">
+                    <div className="flex items-center space-x-2">
+                      <p className="text-sm text-gray-700">
+                        Showing {(customerDetailsPage - 1) * customerDetailsPerPage + 1} to{' '}
+                        {Math.min(customerDetailsPage * customerDetailsPerPage, totalCustomers)} of{' '}
+                        {totalCustomers} customers
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2">
+                        <p className="text-sm text-gray-700">Rows per page:</p>
+                        <Select value={customerDetailsPerPage.toString()} onValueChange={(value) => {
+                          setCustomerDetailsPerPage(parseInt(value));
+                          setCustomerDetailsPage(1);
+                        }}>
+                          <SelectTrigger className="w-16">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="5">5</SelectItem>
+                            <SelectItem value="10">10</SelectItem>
+                            <SelectItem value="20">20</SelectItem>
+                            <SelectItem value="50">50</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCustomerDetailsPage(1)}
+                          disabled={customerDetailsPage === 1}
+                        >
+                          First
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCustomerDetailsPage(customerDetailsPage - 1)}
+                          disabled={customerDetailsPage === 1}
+                        >
+                          Previous
+                        </Button>
+                        <div className="flex items-center space-x-1">
+                          <Input
+                            className="w-12 text-center"
+                            value={customerDetailsPage}
+                            onChange={(e) => {
+                              const page = parseInt(e.target.value);
+                              if (page >= 1 && page <= totalCustomerPages) {
+                                setCustomerDetailsPage(page);
+                              }
+                            }}
+                          />
+                          <span className="text-sm text-gray-700">of {totalCustomerPages}</span>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCustomerDetailsPage(customerDetailsPage + 1)}
+                          disabled={customerDetailsPage === totalCustomerPages}
+                        >
+                          Next
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCustomerDetailsPage(totalCustomerPages)}
+                          disabled={customerDetailsPage === totalCustomerPages}
+                        >
+                          Last
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
             {/* Top Products by Customer */}
-            {Array.isArray(customerReports) && customerReports.some(c => Array.isArray(c.topProducts) && c.topProducts.length > 0) && (
+            {topProductsData.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -668,32 +776,100 @@ export default function Reports() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {customerReports
-                          .filter(customer => Array.isArray(customer.topProducts) && customer.topProducts.length > 0)
-                          .flatMap(customer => 
-                            customer.topProducts.map(product => ({
-                              ...product,
-                              customerName: customer.customerName,
-                              customerId: customer.customerId
-                            }))
-                          )
-                          .sort((a, b) => b.finalAmount - a.finalAmount)
-                          .slice(0, 20)
-                          .map((item, index) => (
-                            <TableRow key={`${item.customerId}-${item.productName}-${index}`} className="hover:bg-gray-50">
-                              <TableCell className="font-medium">{item.customerName}</TableCell>
-                              <TableCell>{item.productName}</TableCell>
-                              <TableCell className="text-right">{item.quantity}</TableCell>
-                              <TableCell className="text-right">₹{Number(item.subTotal).toFixed(2)}</TableCell>
-                              <TableCell className="text-right">₹{Number(item.tax).toFixed(2)}</TableCell>
-                              <TableCell className="text-right">₹{Number(item.discount).toFixed(2)}</TableCell>
-                              <TableCell className="text-right font-semibold">₹{Number(item.finalAmount).toFixed(2)}</TableCell>
-                              <TableCell>{new Date(item.invoiceDate).toLocaleDateString()}</TableCell>
-                            </TableRow>
-                          ))}
+                        {paginatedTopProducts.map((item, index) => (
+                          <TableRow key={`${item.customerId}-${item.productName}-${index}`} className="hover:bg-gray-50">
+                            <TableCell className="font-medium">{item.customerName}</TableCell>
+                            <TableCell>{item.productName}</TableCell>
+                            <TableCell className="text-right">{item.quantity}</TableCell>
+                            <TableCell className="text-right">₹{Number(item.subTotal).toFixed(2)}</TableCell>
+                            <TableCell className="text-right">₹{Number(item.tax).toFixed(2)}</TableCell>
+                            <TableCell className="text-right">₹{Number(item.discount).toFixed(2)}</TableCell>
+                            <TableCell className="text-right font-semibold">₹{Number(item.finalAmount).toFixed(2)}</TableCell>
+                            <TableCell>{new Date(item.invoiceDate).toLocaleDateString()}</TableCell>
+                          </TableRow>
+                        ))}
                       </TableBody>
                     </Table>
                   </div>
+                  
+                  {/* Top Products Pagination */}
+                  {topProductsData.length > 0 && (
+                    <div className="flex items-center justify-between px-2 py-4">
+                      <div className="flex items-center space-x-2">
+                        <p className="text-sm text-gray-700">
+                          Showing {(topProductsPage - 1) * topProductsPerPage + 1} to{' '}
+                          {Math.min(topProductsPage * topProductsPerPage, topProductsData.length)} of{' '}
+                          {topProductsData.length} products
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-2">
+                          <p className="text-sm text-gray-700">Rows per page:</p>
+                          <Select value={topProductsPerPage.toString()} onValueChange={(value) => {
+                            setTopProductsPerPage(parseInt(value));
+                            setTopProductsPage(1);
+                          }}>
+                            <SelectTrigger className="w-16">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="10">10</SelectItem>
+                              <SelectItem value="15">15</SelectItem>
+                              <SelectItem value="25">25</SelectItem>
+                              <SelectItem value="50">50</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setTopProductsPage(1)}
+                            disabled={topProductsPage === 1}
+                          >
+                            First
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setTopProductsPage(topProductsPage - 1)}
+                            disabled={topProductsPage === 1}
+                          >
+                            Previous
+                          </Button>
+                          <div className="flex items-center space-x-1">
+                            <Input
+                              className="w-12 text-center"
+                              value={topProductsPage}
+                              onChange={(e) => {
+                                const page = parseInt(e.target.value);
+                                if (page >= 1 && page <= totalTopProductsPages) {
+                                  setTopProductsPage(page);
+                                }
+                              }}
+                            />
+                            <span className="text-sm text-gray-700">of {totalTopProductsPages}</span>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setTopProductsPage(topProductsPage + 1)}
+                            disabled={topProductsPage === totalTopProductsPages}
+                          >
+                            Next
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setTopProductsPage(totalTopProductsPages)}
+                            disabled={topProductsPage === totalTopProductsPages}
+                          >
+                            Last
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
