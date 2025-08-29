@@ -2018,31 +2018,8 @@ export default function CreateInvoice() {
                         // Show shop info directly when only one shop exists
                         <div>
                           <FormLabel className="text-sm text-gray-600">Shop</FormLabel>
-                          <div className="border border-gray-300 text-2xl font-bold text-gray-900 p-3 rounded-md bg-gray-50 flex items-center gap-3">
-                            {/* Shop Logo */}
-                            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 font-bold text-lg overflow-hidden flex-shrink-0">
-                              {shops[0].logo ? (
-                                <img 
-                                  src={shops[0].logo} 
-                                  alt={`${shops[0].name} Logo`}
-                                  className="w-full h-full object-contain rounded-md"
-                                  onError={(e) => {
-                                    const target = e.target as HTMLImageElement;
-                                    target.style.display = 'none';
-                                    const parent = target.parentElement;
-                                    if (parent) {
-                                      parent.innerHTML = shops[0].name?.charAt(0) || 'S';
-                                      parent.className = 'w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 font-bold text-lg';
-                                    }
-                                  }}
-                                />
-                              ) : (
-                                shops[0].name?.charAt(0) || 'S'
-                              )}
-                            </div>
-                            <div className="flex-1">
-                              {shops[0].name}
-                            </div>
+                          <div className="border border-gray-300 text-2xl font-bold text-gray-900 p-3 rounded-md bg-gray-50">
+                            {shops[0].name}
                           </div>
                         </div>
                       ) : (
@@ -2074,33 +2051,6 @@ export default function CreateInvoice() {
                       )}
                       {selectedShop && (
                         <div className="mt-2">
-                          {/* Display selected shop with logo */}
-                          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-md border">
-                            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 font-bold text-sm overflow-hidden flex-shrink-0">
-                              {selectedShop.logo ? (
-                                <img 
-                                  src={selectedShop.logo} 
-                                  alt={`${selectedShop.name} Logo`}
-                                  className="w-full h-full object-contain rounded-md"
-                                  onError={(e) => {
-                                    const target = e.target as HTMLImageElement;
-                                    target.style.display = 'none';
-                                    const parent = target.parentElement;
-                                    if (parent) {
-                                      parent.innerHTML = selectedShop.name?.charAt(0) || 'S';
-                                      parent.className = 'w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 font-bold text-sm';
-                                    }
-                                  }}
-                                />
-                              ) : (
-                                selectedShop.name?.charAt(0) || 'S'
-                              )}
-                            </div>
-                            <div>
-                              <div className="font-semibold text-gray-900">{selectedShop.name}</div>
-                              <div className="text-sm text-gray-600">{selectedShop.place}</div>
-                            </div>
-                          </div>
                           <FormField
                             control={form.control}
                             name="useCustomBillingAddress"
