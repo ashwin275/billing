@@ -119,6 +119,9 @@ export default function InvoiceManagementClean() {
 
   // Handle preview
   const handlePreview = (invoice: Invoice) => {
+    console.log('handlePreview - Full invoice data:', invoice);
+    console.log('handlePreview - Shop data:', invoice.shop);
+    console.log('handlePreview - Shop logo:', invoice.shop?.logo);
     setSelectedInvoice(invoice);
     setIsPreviewDialogOpen(true);
   };
