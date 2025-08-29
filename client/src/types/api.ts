@@ -216,3 +216,32 @@ export interface SaleItemInput {
   quantity: number;
   discount: number;
 }
+
+// Customer Report Types
+export interface TopProduct {
+  productName: string;
+  quantity: number;
+  subTotal: number;
+  tax: number;
+  discount: number;
+  finalAmount: number;
+  invoiceDate: string;
+}
+
+export interface CustomerReport {
+  customerId: number;
+  customerName: string;
+  phone: string;
+  place: string;
+  customerType: string;
+  totalPurchases: number;
+  totalBills: number;
+  averageBillValue: number;
+  biggestBill: number;
+  totalDiscount: number;
+  totalPaid: number;
+  pendingBalance: number;
+  advancePaid: number;
+  overdueInvoices: number | null;
+  topProducts: TopProduct[];
+}

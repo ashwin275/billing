@@ -499,6 +499,20 @@ export const reportsApi = {
   async getDeadstock(shopId: number, from: string, to: string): Promise<any[]> {
     return await apiRequest(`/reports/shop/${shopId}/deadstock?from=${from}&to=${to}`);
   },
+
+  /**
+   * Get customer report for a specific customer
+   */
+  async getCustomerReport(customerId: number, from: string, to: string): Promise<import("@/types/api").CustomerReport> {
+    return await apiRequest(`/reports/customer/${customerId}?from=${from}&to=${to}`);
+  },
+
+  /**
+   * Get customer reports for all customers
+   */
+  async getAllCustomerReports(from: string, to: string): Promise<import("@/types/api").CustomerReport[]> {
+    return await apiRequest(`/reports/customer/all?from=${from}&to=${to}`);
+  },
 };
 
 /**
