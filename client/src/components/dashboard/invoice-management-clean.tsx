@@ -211,6 +211,14 @@ export default function InvoiceManagementClean() {
               font-size: 20px;
               font-weight: bold;
               border: 2px solid rgba(255, 255, 255, 0.3);
+              overflow: hidden;
+            }
+            
+            .company-logo img {
+              width: 100%;
+              height: 100%;
+              object-fit: contain;
+              border-radius: 6px;
             }
             
             .company-details h1 {
@@ -423,7 +431,10 @@ export default function InvoiceManagementClean() {
               <div class="header-content">
                 <div class="company-info">
                   <div class="company-logo">
-                    ${invoiceData.shop?.name?.charAt(0) || 'S'}
+                    ${invoiceData.shop?.logo ? 
+                      `<img src="${invoiceData.shop.logo}" alt="${invoiceData.shop.name || 'Shop'} Logo" onerror="this.style.display='none'; this.parentElement.innerHTML='${invoiceData.shop?.name?.charAt(0) || 'S'}'; this.parentElement.style.fontSize='20px'; this.parentElement.style.fontWeight='bold';" />` : 
+                      (invoiceData.shop?.name?.charAt(0) || 'S')
+                    }
                   </div>
                   <div class="company-details">
                     <h1>${invoiceData.shop?.name || 'Shop Name'}</h1>

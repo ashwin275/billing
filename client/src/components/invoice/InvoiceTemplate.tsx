@@ -124,6 +124,14 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
           font-size: 24px;
           font-weight: bold;
           border: 2px solid rgba(255, 255, 255, 0.3);
+          overflow: hidden;
+        }
+
+        .company-logo img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          border-radius: 8px;
         }
 
         .company-details h1 {
@@ -476,7 +484,24 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
         <div className="header-content">
           <div className="company-info">
             <div className="company-logo">
-              {invoice.shop?.name?.charAt(0) || 'S'}
+              {invoice.shop?.logo ? (
+                <img 
+                  src={invoice.shop.logo} 
+                  alt={`${invoice.shop.name || 'Shop'} Logo`}
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const parent = target.parentElement;
+                    if (parent) {
+                      parent.innerHTML = invoice.shop?.name?.charAt(0) || 'S';
+                      parent.style.fontSize = '24px';
+                      parent.style.fontWeight = 'bold';
+                    }
+                  }}
+                />
+              ) : (
+                invoice.shop?.name?.charAt(0) || 'S'
+              )}
             </div>
             <div className="company-details">
               <h1>{invoice.shop?.name || 'Shop Name'}</h1>

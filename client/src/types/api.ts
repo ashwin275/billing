@@ -51,6 +51,7 @@ export interface Shop {
   gstNo: string;
   status: 'CREATED' | 'ACTIVE' | 'INACTIVE';
   map: string;
+  logo?: string;
   ownerId: number | null;
   subscriptionPlanId: number | null;
   owner: User | null;
