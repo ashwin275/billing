@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import * as XLSX from "xlsx";
-import { FileDown, Calendar, TrendingUp, Users, CreditCard, Package, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { FileDown, Calendar, TrendingUp, Users, CreditCard, Package, AlertCircle, ChevronLeft, ChevronRight, Download, CheckCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -164,8 +164,18 @@ export default function CustomerReportDialog({
       XLSX.writeFile(workbook, fileName);
 
       toast({
-        title: "Excel downloaded",
-        description: `Report saved as ${fileName}`,
+        title: (
+          <div className="flex items-center gap-2">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <span className="text-green-800 font-semibold">Excel Downloaded Successfully!</span>
+          </div>
+        ),
+        description: (
+          <div className="text-green-700">
+            Report saved as <span className="font-medium">{fileName}</span>
+          </div>
+        ),
+        className: "bg-green-50 border-green-200 shadow-lg",
       });
     } catch (error) {
       console.error("Error generating Excel:", error);
@@ -278,9 +288,13 @@ export default function CustomerReportDialog({
             <div className="space-y-6">
               {/* Download Button */}
               <div className="flex justify-end">
-                <Button onClick={downloadExcel} className="gap-2">
-                  <FileDown className="h-4 w-4" />
-                  Download Excel
+                <Button 
+                  onClick={downloadExcel} 
+                  className="gap-2 bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
+                  size="lg"
+                >
+                  <Download className="h-5 w-5" />
+                  <span className="font-semibold">Download Excel Report</span>
                 </Button>
               </div>
 
