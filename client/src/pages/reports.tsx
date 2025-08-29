@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Calendar, TrendingUp, Package, Users, Clock, AlertTriangle, Percent, ArrowUpDown, Store } from "lucide-react";
+import { Calendar, TrendingUp, Package, Users, Clock, AlertTriangle, Percent, ArrowUpDown, Store, Download, FileSpreadsheet, UserCheck, CreditCard, ShoppingBag, DollarSign } from "lucide-react";
 import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
 import { shopsApi, reportsApi } from "@/lib/api";
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 
 const LIGHT_COLORS = ['#4ade80', '#22d3ee', '#3b82f6', '#8b5cf6', '#10b981', '#f97316'];
 
@@ -19,6 +21,17 @@ export default function Reports() {
     from: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
     to: new Date().toISOString().split('T')[0]
   });
+  const [customerReportDateRange, setCustomerReportDateRange] = useState({
+    from: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
+    to: new Date().toISOString().split('T')[0]
+  });
+  const [activeTab, setActiveTab] = useState<'business' | 'customers'>('business');
+  
+  // Pagination states for Customer Reports tables
+  const [customerDetailsPage, setCustomerDetailsPage] = useState(1);
+  const [customerDetailsPerPage, setCustomerDetailsPerPage] = useState(10);
+  const [topProductsPage, setTopProductsPage] = useState(1);
+  const [topProductsPerPage, setTopProductsPerPage] = useState(15);
 
   // Fetch shops
   const { data: shops = [] } = useQuery({
@@ -76,11 +89,108 @@ export default function Reports() {
     enabled: !!selectedShopId,
   });
 
+  // Fetch customer reports data
+  const { data: customerReports = [] } = useQuery({
+    queryKey: ["reports", "customer-reports", customerReportDateRange.from, customerReportDateRange.to],
+    queryFn: () => reportsApi.getAllCustomerReports(customerReportDateRange.from, customerReportDateRange.to),
+  });
+
   const selectedShop = Array.isArray(shops) ? shops.find(shop => shop.shopId === selectedShopId) : null;
 
   const totalSales = Array.isArray(salesSummary) ? salesSummary.reduce((sum: number, item: any) => sum + item.totalSales, 0) : 0;
   const totalDiscounts = Array.isArray(discountSummary) ? discountSummary.reduce((sum: number, item: any) => sum + item.discount, 0) : 0;
   const totalInventoryMoved = Array.isArray(inventoryMovement) ? inventoryMovement.reduce((sum: number, item: any) => sum + item.quantityMoved, 0) : 0;
+
+  // Customer report calculations
+  const totalCustomers = Array.isArray(customerReports) ? customerReports.length : 0;
+  const activeCustomers = Array.isArray(customerReports) ? customerReports.filter(c => c.totalBills > 0).length : 0;
+  const totalCustomerPurchases = Array.isArray(customerReports) ? customerReports.reduce((sum, c) => sum + c.totalPurchases, 0) : 0;
+  const totalPendingBalance = Array.isArray(customerReports) ? customerReports.reduce((sum, c) => sum + c.pendingBalance, 0) : 0;
+
+  // Pagination calculations for Customer Details Report
+  const totalCustomerPages = Math.ceil(totalCustomers / customerDetailsPerPage);
+  const paginatedCustomerReports = Array.isArray(customerReports) ? 
+    customerReports.slice((customerDetailsPage - 1) * customerDetailsPerPage, customerDetailsPage * customerDetailsPerPage) 
+    : [];
+
+  // Pagination calculations for Top Products by Customer
+  const topProductsData = Array.isArray(customerReports) ? 
+    customerReports
+      .filter(customer => Array.isArray(customer.topProducts) && customer.topProducts.length > 0)
+      .flatMap(customer => 
+        customer.topProducts.map(product => ({
+          ...product,
+          customerName: customer.customerName,
+          customerId: customer.customerId
+        }))
+      )
+      .sort((a, b) => b.finalAmount - a.finalAmount)
+    : [];
+  
+  const totalTopProductsPages = Math.ceil(topProductsData.length / topProductsPerPage);
+  const paginatedTopProducts = topProductsData.slice((topProductsPage - 1) * topProductsPerPage, topProductsPage * topProductsPerPage);
+
+  // Export customer reports to Excel
+  const exportCustomerReportsToExcel = () => {
+    if (!Array.isArray(customerReports) || customerReports.length === 0) {
+      alert('No customer data available to export');
+      return;
+    }
+
+    const workbook = XLSX.utils.book_new();
+    
+    // Customer Summary Sheet
+    const customerSummaryData = customerReports.map(customer => ({
+      'Customer ID': customer.customerId,
+      'Customer Name': customer.customerName,
+      'Phone': customer.phone,
+      'Place': customer.place,
+      'Customer Type': customer.customerType,
+      'Total Purchases': customer.totalPurchases,
+      'Total Bills': customer.totalBills,
+      'Average Bill Value': customer.averageBillValue,
+      'Biggest Bill': customer.biggestBill,
+      'Total Discount': customer.totalDiscount,
+      'Total Paid': customer.totalPaid,
+      'Pending Balance': customer.pendingBalance,
+      'Advance Paid': customer.advancePaid,
+      'Overdue Invoices': customer.overdueInvoices || 0
+    }));
+
+    const customerSummarySheet = XLSX.utils.json_to_sheet(customerSummaryData);
+    XLSX.utils.book_append_sheet(workbook, customerSummarySheet, 'Customer Summary');
+
+    // Top Products by Customer Sheet
+    const topProductsData: any[] = [];
+    customerReports.forEach(customer => {
+      if (Array.isArray(customer.topProducts)) {
+        customer.topProducts.forEach(product => {
+          topProductsData.push({
+            'Customer ID': customer.customerId,
+            'Customer Name': customer.customerName,
+            'Product Name': product.productName,
+            'Quantity': product.quantity,
+            'Sub Total': product.subTotal,
+            'Tax': product.tax,
+            'Discount': product.discount,
+            'Final Amount': product.finalAmount,
+            'Invoice Date': product.invoiceDate
+          });
+        });
+      }
+    });
+
+    if (topProductsData.length > 0) {
+      const topProductsSheet = XLSX.utils.json_to_sheet(topProductsData);
+      XLSX.utils.book_append_sheet(workbook, topProductsSheet, 'Top Products by Customer');
+    }
+
+    // Save the file
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const data = new Blob([excelBuffer], { type: 'application/octet-stream' });
+    const fileName = `Customer_Reports_${customerReportDateRange.from}_to_${customerReportDateRange.to}.xlsx`;
+    saveAs(data, fileName);
+  };
 
   if (!Array.isArray(shops) || shops.length === 0) {
     return (
@@ -140,99 +250,635 @@ export default function Reports() {
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-7xl mx-auto space-y-6">
+        {/* Tab Selector - Moved to top */}
+        <div className="flex justify-center mb-4">
+          <div className="flex rounded-lg bg-gray-100 p-2 gap-2 shadow-md">
+            <Button
+              variant={activeTab === 'business' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveTab('business')}
+              className="rounded-md px-6 py-2 min-w-[140px] shadow-sm"
+            >
+              <Store className="h-4 w-4 mr-2" />
+              Business Reports
+            </Button>
+            <Button
+              variant={activeTab === 'customers' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveTab('customers')}
+              className="rounded-md px-6 py-2 min-w-[140px] shadow-sm"
+            >
+              <Users className="h-4 w-4 mr-2" />
+              Customer Reports
+            </Button>
+          </div>
+        </div>
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Business Reports</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Reports Dashboard</h1>
             <p className="text-gray-600 mt-1">
-              Analytics and insights for {selectedShop?.name} - {selectedShop?.place}
+              {activeTab === 'business' 
+                ? `Analytics and insights for ${selectedShop?.name} - ${selectedShop?.place}`
+                : 'Customer analytics and insights'
+              }
             </p>
           </div>
           
           <div className="flex flex-col sm:flex-row gap-3">
-            <Select value={selectedShopId?.toString()} onValueChange={(value) => setSelectedShopId(parseInt(value))}>
-              <SelectTrigger className="w-full sm:w-64">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Array.isArray(shops) && shops.map((shop) => (
-                  <SelectItem key={shop.shopId} value={shop.shopId.toString()}>
-                    {shop.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {/* Shop Selector - Only for Business Reports */}
+            {activeTab === 'business' && (
+              <Select value={selectedShopId?.toString()} onValueChange={(value) => setSelectedShopId(parseInt(value))}>
+                <SelectTrigger className="w-full sm:w-64">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.isArray(shops) && shops.map((shop) => (
+                    <SelectItem key={shop.shopId} value={shop.shopId.toString()}>
+                      {shop.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             
+            {/* Date Range Selectors */}
             <div className="flex gap-2">
               <Input
                 type="date"
-                value={dateRange.from}
-                onChange={(e) => setDateRange(prev => ({ ...prev, from: e.target.value }))}
+                value={activeTab === 'business' ? dateRange.from : customerReportDateRange.from}
+                onChange={(e) => {
+                  if (activeTab === 'business') {
+                    setDateRange(prev => ({ ...prev, from: e.target.value }));
+                  } else {
+                    setCustomerReportDateRange(prev => ({ ...prev, from: e.target.value }));
+                  }
+                }}
                 className="w-36"
               />
               <Input
                 type="date"
-                value={dateRange.to}
-                onChange={(e) => setDateRange(prev => ({ ...prev, to: e.target.value }))}
+                value={activeTab === 'business' ? dateRange.to : customerReportDateRange.to}
+                onChange={(e) => {
+                  if (activeTab === 'business') {
+                    setDateRange(prev => ({ ...prev, to: e.target.value }));
+                  } else {
+                    setCustomerReportDateRange(prev => ({ ...prev, to: e.target.value }));
+                  }
+                }}
                 className="w-36"
               />
             </div>
+
+            {/* Export Button for Customer Reports */}
+            {activeTab === 'customers' && (
+              <Button 
+                onClick={exportCustomerReportsToExcel}
+                className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+              >
+                <Download className="h-4 w-4" />
+                Export Excel
+              </Button>
+            )}
           </div>
         </div>
 
         {/* Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Sales</p>
-                  <p className="text-3xl font-bold text-teal-500">₹{totalSales.toFixed(2)}</p>
+        {activeTab === 'business' ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Total Sales</p>
+                    <p className="text-3xl font-bold text-teal-500">₹{totalSales.toFixed(2)}</p>
+                  </div>
+                  <TrendingUp className="h-8 w-8 text-teal-400" />
                 </div>
-                <TrendingUp className="h-8 w-8 text-teal-400" />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Discounts</p>
-                  <p className="text-3xl font-bold text-cyan-500">₹{totalDiscounts.toFixed(2)}</p>
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Total Discounts</p>
+                    <p className="text-3xl font-bold text-cyan-500">₹{totalDiscounts.toFixed(2)}</p>
+                  </div>
+                  <Percent className="h-8 w-8 text-cyan-400" />
                 </div>
-                <Percent className="h-8 w-8 text-cyan-400" />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Inventory Moved</p>
-                  <p className="text-3xl font-bold text-sky-500">{totalInventoryMoved} units</p>
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Inventory Moved</p>
+                    <p className="text-3xl font-bold text-sky-500">{totalInventoryMoved} units</p>
+                  </div>
+                  <Package className="h-8 w-8 text-sky-400" />
                 </div>
-                <Package className="h-8 w-8 text-sky-400" />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Deadstock Items</p>
-                  <p className="text-3xl font-bold text-red-400">{Array.isArray(deadstock) ? deadstock.length : 0}</p>
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Deadstock Items</p>
+                    <p className="text-3xl font-bold text-red-400">{Array.isArray(deadstock) ? deadstock.length : 0}</p>
+                  </div>
+                  <AlertTriangle className="h-8 w-8 text-red-300" />
                 </div>
-                <AlertTriangle className="h-8 w-8 text-red-300" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Total Customers</p>
+                    <p className="text-3xl font-bold text-blue-500">{totalCustomers}</p>
+                  </div>
+                  <Users className="h-8 w-8 text-blue-400" />
+                </div>
+              </CardContent>
+            </Card>
 
-        {/* Time Insights */}
-        {timeInsights && (
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Active Customers</p>
+                    <p className="text-3xl font-bold text-green-500">{activeCustomers}</p>
+                  </div>
+                  <UserCheck className="h-8 w-8 text-green-400" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Total Customer Sales</p>
+                    <p className="text-3xl font-bold text-emerald-500">₹{totalCustomerPurchases.toFixed(2)}</p>
+                  </div>
+                  <DollarSign className="h-8 w-8 text-emerald-400" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Pending Balance</p>
+                    <p className="text-3xl font-bold text-orange-500">₹{totalPendingBalance.toFixed(2)}</p>
+                  </div>
+                  <CreditCard className="h-8 w-8 text-orange-400" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Customer Reports Content */}
+        {activeTab === 'customers' ? (
+          <>
+            {/* Customer Analytics Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Customer Type Distribution */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Customer Type Distribution
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={Array.isArray(customerReports) ? 
+                          Object.entries(
+                            customerReports.reduce((acc: { [key: string]: number }, customer) => {
+                              acc[customer.customerType] = (acc[customer.customerType] || 0) + 1;
+                              return acc;
+                            }, {})
+                          ).map(([type, count]) => ({ name: type, value: count }))
+                          : []
+                        }
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {Array.isArray(customerReports) && Object.entries(
+                          customerReports.reduce((acc: { [key: string]: number }, customer) => {
+                            acc[customer.customerType] = (acc[customer.customerType] || 0) + 1;
+                            return acc;
+                          }, {})
+                        ).map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={LIGHT_COLORS[index % LIGHT_COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              {/* Top Customers by Purchase Value */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Top Customers by Purchase Value</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart 
+                      data={Array.isArray(customerReports) ? 
+                        customerReports
+                          .filter(c => c.totalPurchases > 0)
+                          .sort((a, b) => b.totalPurchases - a.totalPurchases)
+                          .slice(0, 10)
+                        : []
+                      }
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey="customerName" 
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                      />
+                      <YAxis />
+                      <Tooltip formatter={(value) => [`₹${Number(value).toFixed(2)}`, 'Purchase Value']} />
+                      <Bar dataKey="totalPurchases">
+                        {Array.isArray(customerReports) && customerReports.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={LIGHT_COLORS[index % LIGHT_COLORS.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              {/* Customer Bills Comparison */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Customer Bills Comparison</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart 
+                      data={Array.isArray(customerReports) ? 
+                        customerReports
+                          .filter(c => c.totalBills > 0)
+                          .sort((a, b) => b.totalBills - a.totalBills)
+                          .slice(0, 10)
+                        : []
+                      }
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey="customerName" 
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                      />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="totalBills" fill="#3b82f6">
+                        {Array.isArray(customerReports) && customerReports.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={LIGHT_COLORS[index % LIGHT_COLORS.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              {/* Average Bill Value Chart */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Average Bill Value by Customer</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart 
+                      data={Array.isArray(customerReports) ? 
+                        customerReports
+                          .filter(c => c.averageBillValue > 0)
+                          .sort((a, b) => b.averageBillValue - a.averageBillValue)
+                          .slice(0, 10)
+                        : []
+                      }
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey="customerName" 
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                      />
+                      <YAxis />
+                      <Tooltip formatter={(value) => [`₹${Number(value).toFixed(2)}`, 'Avg Bill Value']} />
+                      <Bar dataKey="averageBillValue" fill="#10b981">
+                        {Array.isArray(customerReports) && customerReports.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={LIGHT_COLORS[index % LIGHT_COLORS.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Customer Details Table */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Customer Details Report
+                  </span>
+                  <Badge variant="outline">
+                    {customerReportDateRange.from} to {customerReportDateRange.to}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Customer</TableHead>
+                        <TableHead>Phone</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead className="text-right">Total Purchase</TableHead>
+                        <TableHead className="text-right">Bills</TableHead>
+                        <TableHead className="text-right">Avg Bill</TableHead>
+                        <TableHead className="text-right">Biggest Bill</TableHead>
+                        <TableHead className="text-right">Pending</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedCustomerReports.length > 0 ? (
+                        paginatedCustomerReports.map((customer, index) => (
+                          <TableRow key={customer.customerId} className="hover:bg-gray-50">
+                            <TableCell className="font-medium">
+                              <div>
+                                <div className="font-semibold">{customer.customerName}</div>
+                                <div className="text-sm text-gray-500">{customer.place}</div>
+                              </div>
+                            </TableCell>
+                            <TableCell>{customer.phone}</TableCell>
+                            <TableCell>
+                              <Badge variant={customer.customerType === 'CREDIT' ? 'destructive' : 'default'}>
+                                {customer.customerType}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right font-semibold">
+                              ₹{customer.totalPurchases.toFixed(2)}
+                            </TableCell>
+                            <TableCell className="text-right">{customer.totalBills}</TableCell>
+                            <TableCell className="text-right">₹{customer.averageBillValue.toFixed(2)}</TableCell>
+                            <TableCell className="text-right">₹{customer.biggestBill.toFixed(2)}</TableCell>
+                            <TableCell className="text-right">
+                              <span className={customer.pendingBalance > 0 ? 'text-red-600 font-semibold' : 'text-green-600'}>
+                                ₹{customer.pendingBalance.toFixed(2)}
+                              </span>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={8} className="text-center text-gray-500 py-8">
+                            No customer data available for the selected date range
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+                
+                {/* Customer Details Pagination */}
+                {totalCustomers > 0 && (
+                  <div className="flex items-center justify-between px-2 py-4">
+                    <div className="flex items-center space-x-2">
+                      <p className="text-sm text-gray-700">
+                        Showing {(customerDetailsPage - 1) * customerDetailsPerPage + 1} to{' '}
+                        {Math.min(customerDetailsPage * customerDetailsPerPage, totalCustomers)} of{' '}
+                        {totalCustomers} customers
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2">
+                        <p className="text-sm text-gray-700">Rows per page:</p>
+                        <Select value={customerDetailsPerPage.toString()} onValueChange={(value) => {
+                          setCustomerDetailsPerPage(parseInt(value));
+                          setCustomerDetailsPage(1);
+                        }}>
+                          <SelectTrigger className="w-16">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="5">5</SelectItem>
+                            <SelectItem value="10">10</SelectItem>
+                            <SelectItem value="20">20</SelectItem>
+                            <SelectItem value="50">50</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCustomerDetailsPage(1)}
+                          disabled={customerDetailsPage === 1}
+                        >
+                          First
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCustomerDetailsPage(customerDetailsPage - 1)}
+                          disabled={customerDetailsPage === 1}
+                        >
+                          Previous
+                        </Button>
+                        <div className="flex items-center space-x-1">
+                          <Input
+                            className="w-12 text-center"
+                            value={customerDetailsPage}
+                            onChange={(e) => {
+                              const page = parseInt(e.target.value);
+                              if (page >= 1 && page <= totalCustomerPages) {
+                                setCustomerDetailsPage(page);
+                              }
+                            }}
+                          />
+                          <span className="text-sm text-gray-700">of {totalCustomerPages}</span>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCustomerDetailsPage(customerDetailsPage + 1)}
+                          disabled={customerDetailsPage === totalCustomerPages}
+                        >
+                          Next
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCustomerDetailsPage(totalCustomerPages)}
+                          disabled={customerDetailsPage === totalCustomerPages}
+                        >
+                          Last
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Top Products by Customer */}
+            {topProductsData.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ShoppingBag className="h-5 w-5" />
+                    Top Products by Customer
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Customer</TableHead>
+                          <TableHead>Product</TableHead>
+                          <TableHead className="text-right">Quantity</TableHead>
+                          <TableHead className="text-right">Sub Total</TableHead>
+                          <TableHead className="text-right">Tax</TableHead>
+                          <TableHead className="text-right">Discount</TableHead>
+                          <TableHead className="text-right">Final Amount</TableHead>
+                          <TableHead>Date</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {paginatedTopProducts.map((item, index) => (
+                          <TableRow key={`${item.customerId}-${item.productName}-${index}`} className="hover:bg-gray-50">
+                            <TableCell className="font-medium">{item.customerName}</TableCell>
+                            <TableCell>{item.productName}</TableCell>
+                            <TableCell className="text-right">{item.quantity}</TableCell>
+                            <TableCell className="text-right">₹{Number(item.subTotal).toFixed(2)}</TableCell>
+                            <TableCell className="text-right">₹{Number(item.tax).toFixed(2)}</TableCell>
+                            <TableCell className="text-right">₹{Number(item.discount).toFixed(2)}</TableCell>
+                            <TableCell className="text-right font-semibold">₹{Number(item.finalAmount).toFixed(2)}</TableCell>
+                            <TableCell>{new Date(item.invoiceDate).toLocaleDateString()}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  
+                  {/* Top Products Pagination */}
+                  {topProductsData.length > 0 && (
+                    <div className="flex items-center justify-between px-2 py-4">
+                      <div className="flex items-center space-x-2">
+                        <p className="text-sm text-gray-700">
+                          Showing {(topProductsPage - 1) * topProductsPerPage + 1} to{' '}
+                          {Math.min(topProductsPage * topProductsPerPage, topProductsData.length)} of{' '}
+                          {topProductsData.length} products
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-2">
+                          <p className="text-sm text-gray-700">Rows per page:</p>
+                          <Select value={topProductsPerPage.toString()} onValueChange={(value) => {
+                            setTopProductsPerPage(parseInt(value));
+                            setTopProductsPage(1);
+                          }}>
+                            <SelectTrigger className="w-16">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="10">10</SelectItem>
+                              <SelectItem value="15">15</SelectItem>
+                              <SelectItem value="25">25</SelectItem>
+                              <SelectItem value="50">50</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setTopProductsPage(1)}
+                            disabled={topProductsPage === 1}
+                          >
+                            First
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setTopProductsPage(topProductsPage - 1)}
+                            disabled={topProductsPage === 1}
+                          >
+                            Previous
+                          </Button>
+                          <div className="flex items-center space-x-1">
+                            <Input
+                              className="w-12 text-center"
+                              value={topProductsPage}
+                              onChange={(e) => {
+                                const page = parseInt(e.target.value);
+                                if (page >= 1 && page <= totalTopProductsPages) {
+                                  setTopProductsPage(page);
+                                }
+                              }}
+                            />
+                            <span className="text-sm text-gray-700">of {totalTopProductsPages}</span>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setTopProductsPage(topProductsPage + 1)}
+                            disabled={topProductsPage === totalTopProductsPages}
+                          >
+                            Next
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setTopProductsPage(totalTopProductsPages)}
+                            disabled={topProductsPage === totalTopProductsPages}
+                          >
+                            Last
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+          </>
+        ) : (
+          <>
+            {/* Business Reports Content (existing content) */}
+            {/* Time Insights */}
+            {timeInsights && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -430,6 +1076,8 @@ export default function Reports() {
               </div>
             </CardContent>
           </Card>
+            )}
+          </>
         )}
       </div>
     </div>

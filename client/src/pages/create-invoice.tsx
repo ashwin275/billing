@@ -863,7 +863,7 @@ export default function CreateInvoice() {
                           <div class="header-content">
                             <div class="logo-section">
                               <div class="logo-placeholder">
-                                ${previewData.shop.name.charAt(0)}
+                                ${previewData.shop.logo ? `<img src="${previewData.shop.logo}" alt="${previewData.shop.name} Logo" style="width: 100%; height: 100%; object-fit: contain; border-radius: 10px;" onerror="this.style.display='none'; this.parentElement.innerHTML='${previewData.shop.name.charAt(0)}'; this.parentElement.style.fontSize='20px'; this.parentElement.style.fontWeight='bold';" />` : previewData.shop.name.charAt(0)}
                               </div>
                               <div class="company-info">
                                 <h1>${previewData.shop.name}</h1>
