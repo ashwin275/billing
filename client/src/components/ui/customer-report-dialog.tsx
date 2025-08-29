@@ -97,6 +97,9 @@ export default function CustomerReportDialog({
   const downloadExcel = () => {
     if (!reportData) return;
 
+    console.log("Download Excel - Report Data:", reportData);
+    console.log("Download Excel - Top Products:", reportData.topProducts);
+
     try {
       // Create workbook with multiple sheets
       const workbook = XLSX.utils.book_new();
@@ -127,6 +130,8 @@ export default function CustomerReportDialog({
 
       // Top Products Sheet - Include ALL products, not just current page
       if (reportData.topProducts && reportData.topProducts.length > 0) {
+        console.log("Adding Top Products sheet with", reportData.topProducts.length, "products");
+        
         const productsData = [
           ["Product Name", "Quantity", "Sub Total", "Tax", "Discount", "Final Amount", "Invoice Date"],
           ...reportData.topProducts.map(product => [
@@ -155,6 +160,8 @@ export default function CustomerReportDialog({
         productsSheet['!cols'] = columnWidths;
         
         XLSX.utils.book_append_sheet(workbook, productsSheet, "Top Products");
+      } else {
+        console.log("No top products found or empty array");
       }
 
       // Generate filename with customer name and date range
@@ -164,18 +171,14 @@ export default function CustomerReportDialog({
       XLSX.writeFile(workbook, fileName);
 
       toast({
-        title: (
-          <div className="flex items-center gap-2">
-            <CheckCircle className="h-4 w-4 text-green-600" />
-            <span className="text-green-800 font-semibold">Excel Downloaded Successfully!</span>
-          </div>
-        ),
-        description: (
-          <div className="text-green-700">
-            Report saved as <span className="font-medium">{fileName}</span>
-          </div>
-        ),
+        title: "✅ Excel Downloaded Successfully!",
+        description: `Report saved as ${fileName}`,
         className: "bg-green-50 border-green-200 shadow-lg",
+        style: {
+          background: "#f0fdf4",
+          borderColor: "#bbf7d0",
+          color: "#15803d"
+        }
       });
     } catch (error) {
       console.error("Error generating Excel:", error);
