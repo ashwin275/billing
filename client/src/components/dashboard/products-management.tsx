@@ -7,7 +7,7 @@ import { z } from "zod";
 import { 
   Package, Plus, Edit2, Trash2, AlertTriangle, DollarSign, 
   Calendar, Tag, BarChart3, ShoppingCart, X, Search, ArrowUpDown, ArrowUp, ArrowDown,
-  Store, User, MapPin, Info, Hash, CheckCircle, XCircle, Loader2
+  Store, User, MapPin, Info, Hash, CheckCircle, XCircle, Loader2, FileText
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -67,6 +67,7 @@ import { useToast } from "@/hooks/use-toast";
 import { productsApi, shopsApi, handleApiError } from "@/lib/api";
 import { Product, ProductInput } from "@/types/api";
 import { getAuthToken, decodeToken } from "@/lib/auth";
+import HsnReportDialog from "@/components/ui/hsn-report-dialog";
 
 // Form validation schema for products
 const productSchema = z.object({
@@ -105,6 +106,8 @@ export default function ProductsManagement() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [sortField, setSortField] = useState<keyof Product>("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [isHsnReportDialogOpen, setIsHsnReportDialogOpen] = useState(false);
+  const [selectedProductForReport, setSelectedProductForReport] = useState<Product | null>(null);
 
   // Product number existence checking states
   const [addPartNumberStatus, setAddPartNumberStatus] = useState<{
@@ -447,6 +450,14 @@ export default function ProductsManagement() {
     if (productToDelete) {
       deleteProductMutation.mutate(productToDelete.productId);
     }
+  };
+
+  /**
+   * Open HSN report dialog
+   */
+  const handleViewHsnReport = (product: Product) => {
+    setSelectedProductForReport(product);
+    setIsHsnReportDialogOpen(true);
   };
 
   /**
@@ -1177,8 +1188,19 @@ export default function ProductsManagement() {
                         <Button
                           variant="ghost"
                           size="sm"
+                          onClick={() => handleViewHsnReport(product)}
+                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                          data-testid={`button-hsn-report-${product.productId}`}
+                          title="View HSN Report"
+                        >
+                          <FileText className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => handleEditProduct(product)}
                           className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          data-testid={`button-edit-${product.productId}`}
                         >
                           <Edit2 className="h-4 w-4" />
                         </Button>
@@ -1187,6 +1209,7 @@ export default function ProductsManagement() {
                           size="sm"
                           onClick={() => setProductToDelete(product)}
                           className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          data-testid={`button-delete-${product.productId}`}
                         >
                           <Trash2 className="h-4 w-4 text-red-600" />
                         </Button>
@@ -1690,6 +1713,16 @@ export default function ProductsManagement() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* HSN Report Dialog */}
+      {selectedProductForReport && (
+        <HsnReportDialog
+          open={isHsnReportDialogOpen}
+          onOpenChange={setIsHsnReportDialogOpen}
+          hsn={selectedProductForReport.hsn?.toString() || ""}
+          productName={selectedProductForReport.name || ""}
+        />
+      )}
     </div>
   );
 }

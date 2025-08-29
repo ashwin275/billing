@@ -520,6 +520,13 @@ export const reportsApi = {
   async getAllHsnReports(from: string, to: string): Promise<import("@/types/api").HsnReport[]> {
     return await apiRequest(`/reports/hsn/all?from=${from}&to=${to}`);
   },
+
+  /**
+   * Get HSN report for a specific HSN code
+   */
+  async getHsnReport(hsn: string, from: string, to: string): Promise<import("@/types/api").HsnReport> {
+    return await apiRequest(`/reports/hsn/${encodeURIComponent(hsn)}?from=${from}&to=${to}`);
+  },
 };
 
 /**
