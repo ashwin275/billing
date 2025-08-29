@@ -171,7 +171,7 @@ export default function CustomerReportDialog({
       XLSX.writeFile(workbook, fileName);
 
       toast({
-        title: "✅ Excel Downloaded Successfully!",
+        title: "✅ Excel Exported Successfully!",
         description: `Report saved as ${fileName}`,
         className: "bg-green-50 border-green-200 shadow-lg",
         style: {
@@ -297,7 +297,7 @@ export default function CustomerReportDialog({
                   size="lg"
                 >
                   <Download className="h-5 w-5" />
-                  <span className="font-semibold">Download Excel Report</span>
+                  <span className="font-semibold">Export Excel Report</span>
                 </Button>
               </div>
 
