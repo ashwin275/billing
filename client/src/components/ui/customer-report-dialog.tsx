@@ -136,21 +136,35 @@ export default function CustomerReportDialog({
       XLSX.utils.book_append_sheet(workbook, summarySheet, "Customer Summary");
 
       // Top Products Sheet - Include ALL products, not just current page
-      if (reportData.topProducts && reportData.topProducts.length > 0) {
+      console.log("Checking products data:", {
+        hasProducts: !!reportData.topProducts,
+        productsLength: reportData.topProducts?.length,
+        productsData: reportData.topProducts
+      });
+
+      if (reportData.topProducts && Array.isArray(reportData.topProducts) && reportData.topProducts.length > 0) {
         console.log("Adding Top Products sheet with", reportData.topProducts.length, "products");
         
+        // Create header row
         const productsData = [
-          ["Product Name", "Quantity", "Sub Total", "Tax", "Discount", "Final Amount", "Invoice Date"],
-          ...reportData.topProducts.map(product => [
-            product.productName,
-            product.quantity.toFixed(2),
-            product.subTotal.toFixed(2),
-            product.tax.toFixed(2),
-            product.discount.toFixed(2),
-            product.finalAmount.toFixed(2),
-            product.invoiceDate,
-          ]),
+          ["Product Name", "Quantity", "Sub Total", "Tax", "Discount", "Final Amount", "Invoice Date"]
         ];
+        
+        // Add product rows
+        reportData.topProducts.forEach((product, index) => {
+          console.log(`Processing product ${index + 1}:`, product);
+          productsData.push([
+            product.productName || 'N/A',
+            parseFloat(product.quantity || 0).toFixed(2),
+            parseFloat(product.subTotal || 0).toFixed(2),
+            parseFloat(product.tax || 0).toFixed(2),
+            parseFloat(product.discount || 0).toFixed(2),
+            parseFloat(product.finalAmount || 0).toFixed(2),
+            product.invoiceDate ? new Date(product.invoiceDate).toLocaleDateString() : 'N/A',
+          ]);
+        });
+
+        console.log("Final products data for Excel:", productsData);
 
         const productsSheet = XLSX.utils.aoa_to_sheet(productsData);
         
@@ -166,9 +180,18 @@ export default function CustomerReportDialog({
         ];
         productsSheet['!cols'] = columnWidths;
         
-        XLSX.utils.book_append_sheet(workbook, productsSheet, "Top Products");
+        XLSX.utils.book_append_sheet(workbook, productsSheet, "Products Purchased");
+        console.log("Products sheet added successfully");
       } else {
         console.log("No top products found or empty array");
+        // Create empty products sheet with headers
+        const emptyProductsData = [
+          ["Product Name", "Quantity", "Sub Total", "Tax", "Discount", "Final Amount", "Invoice Date"],
+          ["No products found for this period", "", "", "", "", "", ""]
+        ];
+        const emptyProductsSheet = XLSX.utils.aoa_to_sheet(emptyProductsData);
+        XLSX.utils.book_append_sheet(workbook, emptyProductsSheet, "Products Purchased");
+        console.log("Empty products sheet added");
       }
 
       // Generate filename with customer name and date range
