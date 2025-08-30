@@ -243,7 +243,7 @@ export default function CustomerReportDialog({
             }
             
             @page {
-              margin: 20mm;
+              margin: 25mm;
               size: A4 portrait;
             }
             
@@ -253,12 +253,16 @@ export default function CustomerReportDialog({
               color: #000;
               line-height: 1.6;
               font-size: 12px;
+              padding: 0;
+              margin: 0;
             }
             
             .report-container {
               max-width: 100%;
               margin: 0 auto;
               background: white;
+              padding: 20px;
+              box-sizing: border-box;
             }
             
             .header {
