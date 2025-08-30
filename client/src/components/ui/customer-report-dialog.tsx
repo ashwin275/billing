@@ -155,11 +155,11 @@ export default function CustomerReportDialog({
           console.log(`Processing product ${index + 1}:`, product);
           productsData.push([
             product.productName || 'N/A',
-            parseFloat(product.quantity || 0).toFixed(2),
-            parseFloat(product.subTotal || 0).toFixed(2),
-            parseFloat(product.tax || 0).toFixed(2),
-            parseFloat(product.discount || 0).toFixed(2),
-            parseFloat(product.finalAmount || 0).toFixed(2),
+            String(parseFloat(product.quantity || 0).toFixed(2)),
+            String(parseFloat(product.subTotal || 0).toFixed(2)),
+            String(parseFloat(product.tax || 0).toFixed(2)),
+            String(parseFloat(product.discount || 0).toFixed(2)),
+            String(parseFloat(product.finalAmount || 0).toFixed(2)),
             product.invoiceDate ? new Date(product.invoiceDate).toLocaleDateString() : 'N/A',
           ]);
         });
@@ -510,7 +510,7 @@ export default function CustomerReportDialog({
                   ${shop?.address || 'Shop Address'}<br>
                   ${shop?.place || 'Shop Place'}<br>
                   Phone: ${shop?.phone || 'N/A'}<br>
-                  GST: ${shop?.gst || 'N/A'}
+                  GST: ${shop?.gstNo || shop?.gst || 'N/A'}
                 </div>
               </div>
               <div class="logo-section">
