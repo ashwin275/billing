@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { 
   Trash2, Users, Mail, Phone, MapPin, Store, AlertTriangle, 
-  Plus, X, Search, ArrowUpDown, ArrowUp, ArrowDown, Edit
+  Plus, X, Search, ArrowUpDown, ArrowUp, ArrowDown, Edit, FileText
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -67,6 +67,7 @@ import { useToast } from "@/hooks/use-toast";
 import { customersApi, shopsApi, handleApiError } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { Customer, Shop, CustomerInput, CustomerUpdate } from "@/types/api";
+import CustomerReportDialog from "@/components/ui/customer-report-dialog";
 
 // Form validation schema for customers
 const customerSchema = z.object({
@@ -101,6 +102,8 @@ export default function CustomersManagement() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
   const [customerToEdit, setCustomerToEdit] = useState<Customer | null>(null);
+  const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+  const [selectedCustomerForReport, setSelectedCustomerForReport] = useState<Customer | null>(null);
   const [sortField, setSortField] = useState<keyof Customer>("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
@@ -303,6 +306,14 @@ export default function CustomersManagement() {
       customerType: customer.customerType || "",
     });
     setIsEditDialogOpen(true);
+  };
+
+  /**
+   * Open customer report dialog
+   */
+  const handleViewReport = (customer: Customer) => {
+    setSelectedCustomerForReport(customer);
+    setIsReportDialogOpen(true);
   };
 
   /**
@@ -716,7 +727,17 @@ export default function CustomersManagement() {
                         <Button
                           variant="outline"
                           size="sm"
+                          onClick={() => handleViewReport(customer)}
+                          className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700"
+                          data-testid={`button-report-${customer.customerId}`}
+                        >
+                          <FileText className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => handleEditCustomer(customer)}
+                          data-testid={`button-edit-${customer.customerId}`}
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -725,6 +746,7 @@ export default function CustomersManagement() {
                           size="sm"
                           onClick={() => setCustomerToDelete(customer)}
                           className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 hover:text-red-700"
+                          data-testid={`button-delete-${customer.customerId}`}
                         >
                           <Trash2 className="h-4 w-4 text-red-600" />
                         </Button>
@@ -1028,6 +1050,14 @@ export default function CustomersManagement() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Customer Report Dialog */}
+      <CustomerReportDialog
+        open={isReportDialogOpen}
+        onOpenChange={setIsReportDialogOpen}
+        customerId={selectedCustomerForReport?.customerId || 0}
+        customerName={selectedCustomerForReport?.name || ""}
+      />
     </div>
   );
 }
