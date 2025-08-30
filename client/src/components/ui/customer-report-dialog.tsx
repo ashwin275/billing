@@ -264,161 +264,177 @@ export default function CustomerReportDialog({
             .header {
               display: flex;
               justify-content: space-between;
-              align-items: center;
-              margin-bottom: 30px;
-              padding-bottom: 20px;
+              align-items: flex-start;
+              margin-bottom: 25px;
+              padding-bottom: 15px;
               border-bottom: 2px solid #e2e8f0;
             }
             
             .company-info {
               flex: 1;
+              margin-right: 20px;
             }
             
             .company-info h1 {
-              font-size: 24px;
+              font-size: 20px;
               font-weight: bold;
               color: #1e40af;
-              margin-bottom: 5px;
+              margin-bottom: 8px;
+              line-height: 1.2;
             }
             
             .company-details {
               font-size: 11px;
               color: #64748b;
-              line-height: 1.4;
+              line-height: 1.5;
             }
             
             .logo-section {
-              width: 80px;
-              height: 80px;
+              width: 70px;
+              height: 70px;
               background: #f1f5f9;
-              border-radius: 8px;
+              border-radius: 6px;
               display: flex;
               align-items: center;
               justify-content: center;
               font-weight: bold;
               color: #475569;
-              border: 2px solid #e2e8f0;
+              border: 1px solid #e2e8f0;
+              flex-shrink: 0;
             }
             
             .report-title {
               text-align: center;
-              margin-bottom: 30px;
+              margin-bottom: 25px;
             }
             
             .report-title h2 {
-              font-size: 28px;
+              font-size: 22px;
               font-weight: bold;
               color: #1e293b;
-              margin-bottom: 8px;
+              margin-bottom: 6px;
+              line-height: 1.3;
             }
             
             .report-subtitle {
-              font-size: 14px;
+              font-size: 13px;
               color: #64748b;
             }
             
             .customer-details {
               background: #f8fafc;
-              padding: 20px;
-              border-radius: 8px;
-              margin-bottom: 30px;
+              padding: 18px;
+              border-radius: 6px;
+              margin-bottom: 25px;
               border: 1px solid #e2e8f0;
             }
             
             .customer-details h3 {
-              font-size: 16px;
+              font-size: 15px;
               font-weight: bold;
               color: #1e293b;
-              margin-bottom: 15px;
+              margin-bottom: 12px;
               border-bottom: 1px solid #e2e8f0;
-              padding-bottom: 8px;
+              padding-bottom: 6px;
             }
             
             .detail-grid {
               display: grid;
               grid-template-columns: repeat(2, 1fr);
-              gap: 12px;
+              gap: 10px 20px;
             }
             
             .detail-item {
               display: flex;
               justify-content: space-between;
               align-items: center;
-              padding: 8px 0;
+              padding: 4px 0;
+              min-height: 24px;
             }
             
             .detail-label {
               font-weight: 600;
               color: #475569;
+              font-size: 11px;
+              flex-shrink: 0;
+              width: 120px;
             }
             
             .detail-value {
               font-weight: bold;
               color: #1e293b;
+              font-size: 11px;
+              text-align: right;
+              flex: 1;
             }
             
             .summary-cards {
               display: grid;
               grid-template-columns: repeat(4, 1fr);
-              gap: 15px;
-              margin-bottom: 30px;
+              gap: 12px;
+              margin-bottom: 25px;
             }
             
             .summary-card {
               background: white;
-              padding: 15px;
-              border-radius: 8px;
+              padding: 12px;
+              border-radius: 6px;
               border: 1px solid #e2e8f0;
               text-align: center;
             }
             
             .summary-card h4 {
-              font-size: 11px;
+              font-size: 10px;
               color: #64748b;
-              margin-bottom: 8px;
+              margin-bottom: 6px;
               text-transform: uppercase;
-              letter-spacing: 0.5px;
+              letter-spacing: 0.3px;
+              line-height: 1.2;
             }
             
             .summary-card .value {
-              font-size: 18px;
+              font-size: 14px;
               font-weight: bold;
               color: #1e293b;
+              line-height: 1.2;
             }
             
             .products-section {
-              margin-top: 30px;
+              margin-top: 25px;
             }
             
             .products-section h3 {
-              font-size: 18px;
+              font-size: 16px;
               font-weight: bold;
               color: #1e293b;
-              margin-bottom: 15px;
+              margin-bottom: 12px;
               border-bottom: 2px solid #e2e8f0;
-              padding-bottom: 8px;
+              padding-bottom: 6px;
             }
             
             table {
               width: 100%;
               border-collapse: collapse;
-              margin-top: 15px;
+              margin-top: 10px;
             }
             
             th {
               background: #f1f5f9;
-              padding: 12px 8px;
+              padding: 8px 6px;
               text-align: left;
               font-weight: bold;
               color: #374151;
               border: 1px solid #e2e8f0;
-              font-size: 11px;
+              font-size: 10px;
+              line-height: 1.3;
             }
             
             td {
-              padding: 10px 8px;
+              padding: 6px 6px;
               border: 1px solid #e2e8f0;
-              font-size: 11px;
+              font-size: 10px;
+              line-height: 1.3;
+              vertical-align: top;
             }
             
             tr:nth-child(even) {
@@ -434,17 +450,26 @@ export default function CustomerReportDialog({
             }
             
             .footer {
-              margin-top: 40px;
+              margin-top: 30px;
               text-align: center;
-              padding-top: 20px;
+              padding-top: 15px;
               border-top: 1px solid #e2e8f0;
-              font-size: 10px;
+              font-size: 9px;
               color: #64748b;
             }
 
             @media print {
               body { -webkit-print-color-adjust: exact; }
-              .summary-cards { grid-template-columns: repeat(2, 1fr); }
+              .summary-cards { 
+                grid-template-columns: repeat(2, 1fr); 
+                gap: 10px;
+              }
+              table {
+                page-break-inside: avoid;
+              }
+              .products-section {
+                page-break-inside: avoid;
+              }
             }
           </style>
         </head>
