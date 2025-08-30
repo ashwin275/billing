@@ -570,6 +570,7 @@ export default function CreateInvoice() {
         address: shop.address || "",
         gstNo: shop.gstNo || "",
         phone: shop.phone || "",
+        logo: shop.logo || null,
         tagline: "Quality Products & Services"
       },
       customer: {
@@ -862,7 +863,7 @@ export default function CreateInvoice() {
                           <div class="header-content">
                             <div class="logo-section">
                               <div class="logo-placeholder">
-                                ${previewData.shop.name.charAt(0)}
+                                ${previewData.shop.logo ? `<img src="${previewData.shop.logo}" alt="${previewData.shop.name} Logo" style="width: 100%; height: 100%; object-fit: contain; border-radius: 10px;" onerror="this.style.display='none'; this.parentElement.innerHTML='${previewData.shop.name.charAt(0)}'; this.parentElement.style.fontSize='20px'; this.parentElement.style.fontWeight='bold';" />` : previewData.shop.name.charAt(0)}
                               </div>
                               <div class="company-info">
                                 <h1>${previewData.shop.name}</h1>
@@ -1039,6 +1040,7 @@ export default function CreateInvoice() {
                     address: selectedShop.address || "",
                     gstNo: selectedShop.gstNo || "",
                     phone: selectedShop.phone || "",
+                    logo: selectedShop.logo || null,
                     tagline: "Quality Products & Services"
                   },
                   customer: {
@@ -1376,7 +1378,7 @@ export default function CreateInvoice() {
                           <div class="header-content">
                             <div class="logo-section">
                               <div class="logo-placeholder">
-                                ${previewData.shop.name.charAt(0)}
+                                ${previewData.shop.logo ? `<img src="${previewData.shop.logo}" alt="${previewData.shop.name} Logo" style="width: 100%; height: 100%; object-fit: contain; border-radius: 8px;" onerror="this.style.display='none'; this.parentElement.innerHTML='${previewData.shop.name.charAt(0)}'; this.parentElement.style.fontSize='20px'; this.parentElement.style.fontWeight='bold';" />` : previewData.shop.name.charAt(0)}
                               </div>
                               <div class="company-info">
                                 <h1>${previewData.shop.name}</h1>
@@ -1531,6 +1533,7 @@ export default function CreateInvoice() {
                     address: selectedShop.address || "",
                     gstNo: selectedShop.gstNo || "",
                     phone: selectedShop.phone || "",
+                    logo: selectedShop.logo || null,
                     tagline: "Quality Products & Services"
                   },
                   customer: {
@@ -1844,7 +1847,7 @@ export default function CreateInvoice() {
                           <div class="header-content">
                             <div class="logo-section">
                               <div class="logo-placeholder">
-                                ${invoiceData.shop.name.charAt(0)}
+                                ${invoiceData.shop.logo ? `<img src="${invoiceData.shop.logo}" alt="${invoiceData.shop.name} Logo" style="width: 100%; height: 100%; object-fit: contain; border-radius: 6px;" onerror="this.style.display='none'; this.parentElement.innerHTML='${invoiceData.shop.name.charAt(0)}'; this.parentElement.style.fontSize='18px'; this.parentElement.style.fontWeight='bold';" />` : invoiceData.shop.name.charAt(0)}
                               </div>
                               <div class="company-info">
                                 <h1>${invoiceData.shop.name}</h1>

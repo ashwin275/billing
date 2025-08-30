@@ -51,6 +51,7 @@ export interface Shop {
   gstNo: string;
   status: 'CREATED' | 'ACTIVE' | 'INACTIVE';
   map: string;
+  logo?: string;
   ownerId: number | null;
   subscriptionPlanId: number | null;
   owner: User | null;
@@ -214,4 +215,43 @@ export interface SaleItemInput {
   productId: number;
   quantity: number;
   discount: number;
+}
+
+// Customer Report Types
+export interface TopProduct {
+  productName: string;
+  quantity: number;
+  subTotal: number;
+  tax: number;
+  discount: number;
+  finalAmount: number;
+  invoiceDate: string;
+}
+
+export interface CustomerReport {
+  customerId: number;
+  customerName: string;
+  phone: string;
+  place: string;
+  customerType: string;
+  totalPurchases: number;
+  totalBills: number;
+  averageBillValue: number;
+  biggestBill: number;
+  totalDiscount: number;
+  totalPaid: number;
+  pendingBalance: number;
+  advancePaid: number;
+  overdueInvoices: number | null;
+  topProducts: TopProduct[];
+}
+
+// HSN Report Types
+export interface HsnReport {
+  hsn: string;
+  productName: string;
+  totalQuantity: number;
+  totalAmount: number;
+  totalTax: number;
+  finalAmount: number;
 }

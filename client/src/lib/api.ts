@@ -499,6 +499,34 @@ export const reportsApi = {
   async getDeadstock(shopId: number, from: string, to: string): Promise<any[]> {
     return await apiRequest(`/reports/shop/${shopId}/deadstock?from=${from}&to=${to}`);
   },
+
+  /**
+   * Get customer report for a specific customer
+   */
+  async getCustomerReport(customerId: number, from: string, to: string): Promise<import("@/types/api").CustomerReport> {
+    return await apiRequest(`/reports/customer/${customerId}?from=${from}&to=${to}`);
+  },
+
+  /**
+   * Get customer reports for all customers
+   */
+  async getAllCustomerReports(from: string, to: string): Promise<import("@/types/api").CustomerReport[]> {
+    return await apiRequest(`/reports/customer/all?from=${from}&to=${to}`);
+  },
+
+  /**
+   * Get HSN reports for all products
+   */
+  async getAllHsnReports(from: string, to: string): Promise<import("@/types/api").HsnReport[]> {
+    return await apiRequest(`/reports/hsn/all?from=${from}&to=${to}`);
+  },
+
+  /**
+   * Get HSN report for a specific HSN code
+   */
+  async getHsnReport(hsn: string, from: string, to: string): Promise<import("@/types/api").HsnReport> {
+    return await apiRequest(`/reports/hsn/${encodeURIComponent(hsn)}?from=${from}&to=${to}`);
+  },
 };
 
 /**
