@@ -155,11 +155,11 @@ export default function CustomerReportDialog({
           console.log(`Processing product ${index + 1}:`, product);
           productsData.push([
             product.productName || 'N/A',
-            String(parseFloat(product.quantity || 0).toFixed(2)),
-            String(parseFloat(product.subTotal || 0).toFixed(2)),
-            String(parseFloat(product.tax || 0).toFixed(2)),
-            String(parseFloat(product.discount || 0).toFixed(2)),
-            String(parseFloat(product.finalAmount || 0).toFixed(2)),
+            (Number(product.quantity) || 0).toFixed(2),
+            (Number(product.subTotal) || 0).toFixed(2),
+            (Number(product.tax) || 0).toFixed(2),
+            (Number(product.discount) || 0).toFixed(2),
+            (Number(product.finalAmount) || 0).toFixed(2),
             product.invoiceDate ? new Date(product.invoiceDate).toLocaleDateString() : 'N/A',
           ]);
         });
