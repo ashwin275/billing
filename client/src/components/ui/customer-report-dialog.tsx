@@ -1,9 +1,9 @@
-// Customer Report Dialog with date filtering and Excel download
+// Customer Report Dialog with date filtering, Excel download, and PDF download
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import * as XLSX from "xlsx";
-import { FileDown, Calendar, TrendingUp, Users, CreditCard, Package, AlertCircle, ChevronLeft, ChevronRight, Download, CheckCircle } from "lucide-react";
+import { FileDown, Calendar, TrendingUp, Users, CreditCard, Package, AlertCircle, ChevronLeft, ChevronRight, Download, CheckCircle, FileText } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -35,9 +35,10 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 
-import { reportsApi } from "@/lib/api";
+import { reportsApi, shopsApi } from "@/lib/api";
 import { CustomerReport } from "@/types/api";
 import { cn } from "@/lib/utils";
+import { getAuthToken, decodeToken } from "@/lib/auth";
 
 interface CustomerReportDialogProps {
   open: boolean;
@@ -64,6 +65,12 @@ export default function CustomerReportDialog({
     queryKey: ["/api/reports/customer", customerId, fromDate, toDate],
     queryFn: () => reportsApi.getCustomerReport(customerId, fromDate, toDate),
     enabled: hasSearched && !!fromDate && !!toDate,
+  });
+
+  // Fetch shop data for PDF generation
+  const { data: shops = [] } = useQuery({
+    queryKey: ["/shop/all"],
+    queryFn: () => shopsApi.getAllShops(),
   });
 
   /**
@@ -191,6 +198,389 @@ export default function CustomerReportDialog({
   };
 
   /**
+   * Download report data as PDF file
+   */
+  const downloadPDF = () => {
+    if (!reportData) return;
+
+    // Get shop details
+    const token = getAuthToken();
+    let shopId = 1; // Default fallback
+    
+    if (token) {
+      try {
+        const decoded = decodeToken(token);
+        shopId = decoded.shopId || 1;
+      } catch (error) {
+        console.warn('Failed to decode token for PDF generation:', error);
+      }
+    }
+
+    const shop = Array.isArray(shops) ? shops.find(s => s.shopId === shopId) : null;
+    
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast({
+        title: "PDF generation failed",
+        description: "Please allow popups for this site to download PDF.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Customer Report - ${reportData.customerName}</title>
+          <style>
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            
+            @page {
+              margin: 20mm;
+              size: A4 portrait;
+            }
+            
+            body {
+              font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+              background: white;
+              color: #000;
+              line-height: 1.6;
+              font-size: 12px;
+            }
+            
+            .report-container {
+              max-width: 100%;
+              margin: 0 auto;
+              background: white;
+            }
+            
+            .header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 30px;
+              padding-bottom: 20px;
+              border-bottom: 2px solid #e2e8f0;
+            }
+            
+            .company-info {
+              flex: 1;
+            }
+            
+            .company-info h1 {
+              font-size: 24px;
+              font-weight: bold;
+              color: #1e40af;
+              margin-bottom: 5px;
+            }
+            
+            .company-details {
+              font-size: 11px;
+              color: #64748b;
+              line-height: 1.4;
+            }
+            
+            .logo-section {
+              width: 80px;
+              height: 80px;
+              background: #f1f5f9;
+              border-radius: 8px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-weight: bold;
+              color: #475569;
+              border: 2px solid #e2e8f0;
+            }
+            
+            .report-title {
+              text-align: center;
+              margin-bottom: 30px;
+            }
+            
+            .report-title h2 {
+              font-size: 28px;
+              font-weight: bold;
+              color: #1e293b;
+              margin-bottom: 8px;
+            }
+            
+            .report-subtitle {
+              font-size: 14px;
+              color: #64748b;
+            }
+            
+            .customer-details {
+              background: #f8fafc;
+              padding: 20px;
+              border-radius: 8px;
+              margin-bottom: 30px;
+              border: 1px solid #e2e8f0;
+            }
+            
+            .customer-details h3 {
+              font-size: 16px;
+              font-weight: bold;
+              color: #1e293b;
+              margin-bottom: 15px;
+              border-bottom: 1px solid #e2e8f0;
+              padding-bottom: 8px;
+            }
+            
+            .detail-grid {
+              display: grid;
+              grid-template-columns: repeat(2, 1fr);
+              gap: 12px;
+            }
+            
+            .detail-item {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              padding: 8px 0;
+            }
+            
+            .detail-label {
+              font-weight: 600;
+              color: #475569;
+            }
+            
+            .detail-value {
+              font-weight: bold;
+              color: #1e293b;
+            }
+            
+            .summary-cards {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 15px;
+              margin-bottom: 30px;
+            }
+            
+            .summary-card {
+              background: white;
+              padding: 15px;
+              border-radius: 8px;
+              border: 1px solid #e2e8f0;
+              text-align: center;
+            }
+            
+            .summary-card h4 {
+              font-size: 11px;
+              color: #64748b;
+              margin-bottom: 8px;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+            
+            .summary-card .value {
+              font-size: 18px;
+              font-weight: bold;
+              color: #1e293b;
+            }
+            
+            .products-section {
+              margin-top: 30px;
+            }
+            
+            .products-section h3 {
+              font-size: 18px;
+              font-weight: bold;
+              color: #1e293b;
+              margin-bottom: 15px;
+              border-bottom: 2px solid #e2e8f0;
+              padding-bottom: 8px;
+            }
+            
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 15px;
+            }
+            
+            th {
+              background: #f1f5f9;
+              padding: 12px 8px;
+              text-align: left;
+              font-weight: bold;
+              color: #374151;
+              border: 1px solid #e2e8f0;
+              font-size: 11px;
+            }
+            
+            td {
+              padding: 10px 8px;
+              border: 1px solid #e2e8f0;
+              font-size: 11px;
+            }
+            
+            tr:nth-child(even) {
+              background: #f9fafb;
+            }
+            
+            .text-right {
+              text-align: right;
+            }
+            
+            .font-bold {
+              font-weight: bold;
+            }
+            
+            .footer {
+              margin-top: 40px;
+              text-align: center;
+              padding-top: 20px;
+              border-top: 1px solid #e2e8f0;
+              font-size: 10px;
+              color: #64748b;
+            }
+
+            @media print {
+              body { -webkit-print-color-adjust: exact; }
+              .summary-cards { grid-template-columns: repeat(2, 1fr); }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="report-container">
+            <!-- Header -->
+            <div class="header">
+              <div class="company-info">
+                <h1>${shop?.name || 'Shop Name'}</h1>
+                <div class="company-details">
+                  ${shop?.address || 'Shop Address'}<br>
+                  ${shop?.place || 'Shop Place'}<br>
+                  Phone: ${shop?.phone || 'N/A'}<br>
+                  GST: ${shop?.gst || 'N/A'}
+                </div>
+              </div>
+              <div class="logo-section">
+                ${shop?.logo ? `<img src="${shop.logo}" alt="Logo" style="max-width: 60px; max-height: 60px;">` : shop?.name?.charAt(0) || 'S'}
+              </div>
+            </div>
+
+            <!-- Report Title -->
+            <div class="report-title">
+              <h2>Customer Report</h2>
+              <div class="report-subtitle">
+                Period: ${fromDate} to ${toDate}
+              </div>
+            </div>
+
+            <!-- Customer Details -->
+            <div class="customer-details">
+              <h3>Customer Information</h3>
+              <div class="detail-grid">
+                <div class="detail-item">
+                  <span class="detail-label">Customer Name:</span>
+                  <span class="detail-value">${reportData.customerName}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Phone:</span>
+                  <span class="detail-value">${reportData.phone}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Place:</span>
+                  <span class="detail-value">${reportData.place}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Customer Type:</span>
+                  <span class="detail-value">${reportData.customerType}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="summary-cards">
+              <div class="summary-card">
+                <h4>Total Purchases</h4>
+                <div class="value">₹${reportData.totalPurchases.toFixed(2)}</div>
+              </div>
+              <div class="summary-card">
+                <h4>Total Bills</h4>
+                <div class="value">${reportData.totalBills}</div>
+              </div>
+              <div class="summary-card">
+                <h4>Average Bill</h4>
+                <div class="value">₹${reportData.averageBillValue.toFixed(2)}</div>
+              </div>
+              <div class="summary-card">
+                <h4>Pending Balance</h4>
+                <div class="value">₹${reportData.pendingBalance.toFixed(2)}</div>
+              </div>
+            </div>
+
+            <!-- Top Products Section -->
+            ${reportData.topProducts && reportData.topProducts.length > 0 ? `
+            <div class="products-section">
+              <h3>Top Products Purchased</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Product Name</th>
+                    <th class="text-right">Quantity</th>
+                    <th class="text-right">Sub Total</th>
+                    <th class="text-right">Tax</th>
+                    <th class="text-right">Discount</th>
+                    <th class="text-right">Final Amount</th>
+                    <th>Invoice Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${reportData.topProducts.map(product => `
+                    <tr>
+                      <td class="font-bold">${product.productName}</td>
+                      <td class="text-right">${product.quantity.toFixed(2)}</td>
+                      <td class="text-right">₹${product.subTotal.toFixed(2)}</td>
+                      <td class="text-right">₹${product.tax.toFixed(2)}</td>
+                      <td class="text-right">₹${product.discount.toFixed(2)}</td>
+                      <td class="text-right font-bold">₹${product.finalAmount.toFixed(2)}</td>
+                      <td>${new Date(product.invoiceDate).toLocaleDateString()}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+            ` : ''}
+
+            <!-- Footer -->
+            <div class="footer">
+              Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}<br>
+              This is a computer-generated report.
+            </div>
+          </div>
+        </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+
+    // Wait for content to load then print
+    printWindow.onload = () => {
+      setTimeout(() => {
+        printWindow.print();
+        toast({
+          title: "✅ PDF Generated Successfully!",
+          description: `Customer report PDF has been generated and is ready for download.`,
+          className: "bg-green-50 border-green-200 shadow-lg",
+          style: {
+            background: "#f0fdf4",
+            borderColor: "#bbf7d0",
+            color: "#15803d"
+          }
+        });
+      }, 500);
+    };
+  };
+
+  /**
    * Reset dialog state when closed
    */
   const handleOpenChange = (newOpen: boolean) => {
@@ -289,12 +679,22 @@ export default function CustomerReportDialog({
           {/* Report Data */}
           {reportData && hasSearched && !isLoading && (
             <div className="space-y-6">
-              {/* Download Button */}
-              <div className="flex justify-end">
+              {/* Download Buttons */}
+              <div className="flex justify-end gap-3">
+                <Button 
+                  onClick={downloadPDF} 
+                  className="gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
+                  size="lg"
+                  data-testid="button-download-pdf"
+                >
+                  <FileText className="h-5 w-5" />
+                  <span className="font-semibold">Download PDF Report</span>
+                </Button>
                 <Button 
                   onClick={downloadExcel} 
                   className="gap-2 bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
                   size="lg"
+                  data-testid="button-export-excel"
                 >
                   <Download className="h-5 w-5" />
                   <span className="font-semibold">Export Excel Report</span>
