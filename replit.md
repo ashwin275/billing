@@ -102,4 +102,6 @@ A React-based frontend-only invoice management dashboard that connects to extern
   - Search placeholder text changes based on active mode
   - Icon in search bar changes between Search and Package icon based on mode
   - Search term clears when switching between modes for better UX
+  - Added debounce (500ms) to part number search to prevent API calls on every keystroke
+  - Moved loading spinner from entire page to only above the invoices table for better UX
 - Application successfully running on Replit with all features functional
