@@ -84,6 +84,10 @@ export default function HsnReportDialog({
       const workbook = XLSX.utils.book_new();
 
       // HSN Report Summary Sheet
+      const taxPercentage = reportData.totalAmount > 0 
+        ? ((reportData.totalTax / reportData.totalAmount) * 100).toFixed(2)
+        : '0.00';
+      
       const summaryData = [
         ["HSN Report", ""],
         ["HSN Code", reportData.hsn],
@@ -93,8 +97,7 @@ export default function HsnReportDialog({
         ["Sales Summary", ""],
         ["Total Quantity", reportData.totalQuantity.toFixed(2)],
         ["Total Amount", `₹${reportData.totalAmount.toFixed(2)}`],
-        ["CGST %", reportData.cgst ?? 0],
-        ["SGST %", reportData.sgst ?? 0],
+        ["Tax %", taxPercentage],
         ["Total Tax", `₹${reportData.totalTax.toFixed(2)}`],
         ["Final Amount", `₹${reportData.finalAmount.toFixed(2)}`],
       ];
@@ -267,22 +270,12 @@ export default function HsnReportDialog({
                   <CardContent className="p-4">
                     <div className="flex items-center gap-2">
                       <AlertCircle className="h-4 w-4 text-indigo-600" />
-                      <div className="text-sm font-medium text-muted-foreground">CGST %</div>
+                      <div className="text-sm font-medium text-muted-foreground">Tax %</div>
                     </div>
                     <div className="text-2xl font-bold text-indigo-600">
-                      {reportData.cgst ?? 0}%
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2">
-                      <AlertCircle className="h-4 w-4 text-pink-600" />
-                      <div className="text-sm font-medium text-muted-foreground">SGST %</div>
-                    </div>
-                    <div className="text-2xl font-bold text-pink-600">
-                      {reportData.sgst ?? 0}%
+                      {reportData.totalAmount > 0 
+                        ? ((reportData.totalTax / reportData.totalAmount) * 100).toFixed(2)
+                        : '0.00'}%
                     </div>
                   </CardContent>
                 </Card>

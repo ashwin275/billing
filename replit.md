@@ -81,10 +81,10 @@ A React-based frontend-only invoice management dashboard that connects to extern
   - Download PDF now shows both percentage (e.g., "9%") and calculated amount (e.g., "₹45.00") for CGST and SGST
   - Previously only showed calculated amounts, now matches the preview/eye view format
   - Updated invoice-management-clean.tsx handleDownloadPDF function to include tax percentage display
-- Added CGST% and SGST% to HSN reports (October 6, 2025):
-  - Reports page HSN section now displays CGST% and SGST% columns in the table
-  - Excel export from Reports page HSN section now includes CGST% and SGST% columns
-  - Products Management HSN Report dialog now shows CGST% and SGST% as separate cards
-  - Excel export from Products Management HSN Report now includes CGST% and SGST% fields
-  - Updated HsnReport type to include cgst and sgst fields
+- Added Tax % calculation to HSN reports (October 6, 2025):
+  - Reports page HSN section now displays calculated Tax % column (totalTax / totalAmount * 100)
+  - Excel export from Reports page HSN section now includes Tax % column
+  - Products Management HSN Report dialog now shows Tax % as a card in the UI
+  - Excel export from Products Management HSN Report now includes Tax % field
+  - Tax percentage is dynamically calculated from total tax and total amount values
 - Application successfully running on Replit with all features functional
