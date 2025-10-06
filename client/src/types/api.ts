@@ -254,6 +254,4 @@ export interface HsnReport {
   totalAmount: number;
   totalTax: number;
   finalAmount: number;
-  cgst?: number;
-  sgst?: number;
 }
