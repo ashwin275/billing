@@ -93,6 +93,8 @@ export default function HsnReportDialog({
         ["Sales Summary", ""],
         ["Total Quantity", reportData.totalQuantity.toFixed(2)],
         ["Total Amount", `₹${reportData.totalAmount.toFixed(2)}`],
+        ["CGST %", reportData.cgst ?? 0],
+        ["SGST %", reportData.sgst ?? 0],
         ["Total Tax", `₹${reportData.totalTax.toFixed(2)}`],
         ["Final Amount", `₹${reportData.finalAmount.toFixed(2)}`],
       ];
@@ -236,7 +238,7 @@ export default function HsnReportDialog({
               </div>
 
               {/* HSN Summary Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <Card>
                   <CardContent className="p-4">
                     <div className="flex items-center gap-2">
@@ -257,6 +259,30 @@ export default function HsnReportDialog({
                     </div>
                     <div className="text-2xl font-bold text-green-600">
                       ₹{reportData.totalAmount.toFixed(2)}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4 text-indigo-600" />
+                      <div className="text-sm font-medium text-muted-foreground">CGST %</div>
+                    </div>
+                    <div className="text-2xl font-bold text-indigo-600">
+                      {reportData.cgst ?? 0}%
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4 text-pink-600" />
+                      <div className="text-sm font-medium text-muted-foreground">SGST %</div>
+                    </div>
+                    <div className="text-2xl font-bold text-pink-600">
+                      {reportData.sgst ?? 0}%
                     </div>
                   </CardContent>
                 </Card>
