@@ -265,6 +265,7 @@ export default function Reports() {
       'Product Name': hsn.productName,
       'Total Quantity': hsn.totalQuantity,
       'Total Amount': hsn.totalAmount,
+      'Tax %': hsn.taxRate,
       'Total Tax': hsn.totalTax,
       'Final Amount': hsn.finalAmount
     }));
@@ -780,6 +781,7 @@ export default function Reports() {
                         <TableHead>Product Name</TableHead>
                         <TableHead className="text-right">Total Quantity</TableHead>
                         <TableHead className="text-right">Total Amount</TableHead>
+                        <TableHead className="text-right">Tax %</TableHead>
                         <TableHead className="text-right">Total Tax</TableHead>
                         <TableHead className="text-right">Final Amount</TableHead>
                       </TableRow>
@@ -796,6 +798,7 @@ export default function Reports() {
                             <TableCell className="text-right font-semibold">
                               ₹{hsn.totalAmount.toFixed(2)}
                             </TableCell>
+                            <TableCell className="text-right">{hsn.taxRate.toFixed(2)}%</TableCell>
                             <TableCell className="text-right">₹{hsn.totalTax.toFixed(2)}</TableCell>
                             <TableCell className="text-right font-semibold text-green-600">
                               ₹{hsn.finalAmount.toFixed(2)}
@@ -804,7 +807,7 @@ export default function Reports() {
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={6} className="text-center text-gray-500 py-8">
+                          <TableCell colSpan={7} className="text-center text-gray-500 py-8">
                             No HSN data available for the selected date range
                           </TableCell>
                         </TableRow>
