@@ -358,6 +358,13 @@ export const invoicesApi = {
       method: 'DELETE',
     });
   },
+
+  /**
+   * Search invoices by part number
+   */
+  async searchByPartNumber(partNumber: string): Promise<import("@/types/api").Invoice[]> {
+    return apiRequest(`/invoice/partno/${encodeURIComponent(partNumber)}`);
+  },
 };
 
 /**

@@ -93,4 +93,13 @@ A React-based frontend-only invoice management dashboard that connects to extern
   - Updated Product and ProductInput TypeScript interfaces to include location field
   - Location data is now sent to API when creating or updating products
   - Field includes placeholder text "Warehouse A - Shelf 3" as example
+- Added part number search to Invoice Management (October 6, 2025):
+  - Added toggle button to switch between normal search and part number search
+  - When "Part #" toggle is active, search uses new API endpoint: /invoice/partno/<part number>
+  - Normal mode searches by invoice number and customer name (existing functionality)
+  - Part number mode searches invoices containing products with specific part number
+  - Toggle button changes color when active (default/outline variant)
+  - Search placeholder text changes based on active mode
+  - Icon in search bar changes between Search and Package icon based on mode
+  - Search term clears when switching between modes for better UX
 - Application successfully running on Replit with all features functional
