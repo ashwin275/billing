@@ -260,20 +260,15 @@ export default function Reports() {
     const workbook = XLSX.utils.book_new();
     
     // HSN Summary Sheet
-    const hsnSummaryData = hsnReports.map(hsn => {
-      const taxPercentage = hsn.totalAmount > 0 
-        ? ((hsn.totalTax / hsn.totalAmount) * 100).toFixed(2)
-        : '0.00';
-      return {
-        'HSN Code': hsn.hsn,
-        'Product Name': hsn.productName,
-        'Total Quantity': hsn.totalQuantity,
-        'Total Amount': hsn.totalAmount,
-        'Tax %': taxPercentage,
-        'Total Tax': hsn.totalTax,
-        'Final Amount': hsn.finalAmount
-      };
-    });
+    const hsnSummaryData = hsnReports.map(hsn => ({
+      'HSN Code': hsn.hsn,
+      'Product Name': hsn.productName,
+      'Total Quantity': hsn.totalQuantity,
+      'Total Amount': hsn.totalAmount,
+      'Tax %': hsn.taxRate,
+      'Total Tax': hsn.totalTax,
+      'Final Amount': hsn.finalAmount
+    }));
 
     const hsnSummarySheet = XLSX.utils.json_to_sheet(hsnSummaryData);
     XLSX.utils.book_append_sheet(workbook, hsnSummarySheet, 'HSN Summary');
@@ -793,28 +788,23 @@ export default function Reports() {
                     </TableHeader>
                     <TableBody>
                       {paginatedHsnReports.length > 0 ? (
-                        paginatedHsnReports.map((hsn, index) => {
-                          const taxPercentage = hsn.totalAmount > 0 
-                            ? ((hsn.totalTax / hsn.totalAmount) * 100).toFixed(2)
-                            : '0.00';
-                          return (
-                            <TableRow key={`${hsn.hsn}-${index}`} className="hover:bg-gray-50">
-                              <TableCell className="font-medium">
-                                <Badge variant="outline">{hsn.hsn}</Badge>
-                              </TableCell>
-                              <TableCell>{hsn.productName}</TableCell>
-                              <TableCell className="text-right">{hsn.totalQuantity.toFixed(2)}</TableCell>
-                              <TableCell className="text-right font-semibold">
-                                ₹{hsn.totalAmount.toFixed(2)}
-                              </TableCell>
-                              <TableCell className="text-right">{taxPercentage}%</TableCell>
-                              <TableCell className="text-right">₹{hsn.totalTax.toFixed(2)}</TableCell>
-                              <TableCell className="text-right font-semibold text-green-600">
-                                ₹{hsn.finalAmount.toFixed(2)}
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })
+                        paginatedHsnReports.map((hsn, index) => (
+                          <TableRow key={`${hsn.hsn}-${index}`} className="hover:bg-gray-50">
+                            <TableCell className="font-medium">
+                              <Badge variant="outline">{hsn.hsn}</Badge>
+                            </TableCell>
+                            <TableCell>{hsn.productName}</TableCell>
+                            <TableCell className="text-right">{hsn.totalQuantity.toFixed(2)}</TableCell>
+                            <TableCell className="text-right font-semibold">
+                              ₹{hsn.totalAmount.toFixed(2)}
+                            </TableCell>
+                            <TableCell className="text-right">{hsn.taxRate.toFixed(2)}%</TableCell>
+                            <TableCell className="text-right">₹{hsn.totalTax.toFixed(2)}</TableCell>
+                            <TableCell className="text-right font-semibold text-green-600">
+                              ₹{hsn.finalAmount.toFixed(2)}
+                            </TableCell>
+                          </TableRow>
+                        ))
                       ) : (
                         <TableRow>
                           <TableCell colSpan={7} className="text-center text-gray-500 py-8">
