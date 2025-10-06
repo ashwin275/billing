@@ -508,8 +508,14 @@ export default function InvoiceManagementClean() {
                         <td class="text-right">${item.quantity}</td>
                         <td class="text-right">₹${item.price?.toFixed(2) || '0.00'}</td>
                         <td class="text-right">₹${item.discount?.toFixed(2) || '0.00'}</td>
-                        <td class="text-right">₹${((item.price * item.quantity * (item.product?.cgst || 0)) / 100).toFixed(2)}</td>
-                        <td class="text-right">₹${((item.price * item.quantity * (item.product?.sgst || 0)) / 100).toFixed(2)}</td>
+                        <td class="text-right">
+                          <div>${item.product?.cgst || 0}%</div>
+                          <div style="font-size: 10px; color: #718096;">₹${((item.price * item.quantity * (item.product?.cgst || 0)) / 100).toFixed(2)}</div>
+                        </td>
+                        <td class="text-right">
+                          <div>${item.product?.sgst || 0}%</div>
+                          <div style="font-size: 10px; color: #718096;">₹${((item.price * item.quantity * (item.product?.sgst || 0)) / 100).toFixed(2)}</div>
+                        </td>
                         <td class="text-right">₹${item.total?.toFixed(2) || '0.00'}</td>
                       </tr>
                     `).join('')
