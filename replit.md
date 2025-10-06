@@ -77,4 +77,8 @@ A React-based frontend-only invoice management dashboard that connects to extern
   - Invoice updates no longer set due date to current timestamp when user leaves due date empty
   - Due date field now properly sends null when not selected instead of defaulting to today's date
   - API payload only includes due date when user explicitly selects a date
+- Fixed CGST and SGST display in downloaded invoice PDF (October 6, 2025):
+  - Download PDF now shows both percentage (e.g., "9%") and calculated amount (e.g., "₹45.00") for CGST and SGST
+  - Previously only showed calculated amounts, now matches the preview/eye view format
+  - Updated invoice-management-clean.tsx handleDownloadPDF function to include tax percentage display
 - Application successfully running on Replit with all features functional
