@@ -87,4 +87,10 @@ A React-based frontend-only invoice management dashboard that connects to extern
   - Products Management HSN Report dialog now shows Tax % as a card in the UI
   - Excel export from Products Management HSN Report now includes Tax % field
   - Updated HsnReport type to include taxRate field from backend response
+- Added location field to Product Management forms (October 6, 2025):
+  - Added "Location" input field to Add Product form
+  - Added "Location" input field to Edit Product form
+  - Updated Product and ProductInput TypeScript interfaces to include location field
+  - Location data is now sent to API when creating or updating products
+  - Field includes placeholder text "Warehouse A - Shelf 3" as example
 - Application successfully running on Replit with all features functional
