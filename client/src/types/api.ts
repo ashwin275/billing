@@ -250,6 +250,7 @@ export interface CustomerReport {
 export interface HsnReport {
   hsn: string;
   productName: string;
+  taxRate: number;
   totalQuantity: number;
   totalAmount: number;
   totalTax: number;

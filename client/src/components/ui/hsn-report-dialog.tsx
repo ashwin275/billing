@@ -84,10 +84,6 @@ export default function HsnReportDialog({
       const workbook = XLSX.utils.book_new();
 
       // HSN Report Summary Sheet
-      const taxPercentage = reportData.totalAmount > 0 
-        ? ((reportData.totalTax / reportData.totalAmount) * 100).toFixed(2)
-        : '0.00';
-      
       const summaryData = [
         ["HSN Report", ""],
         ["HSN Code", reportData.hsn],
@@ -97,7 +93,7 @@ export default function HsnReportDialog({
         ["Sales Summary", ""],
         ["Total Quantity", reportData.totalQuantity.toFixed(2)],
         ["Total Amount", `₹${reportData.totalAmount.toFixed(2)}`],
-        ["Tax %", taxPercentage],
+        ["Tax %", reportData.taxRate.toFixed(2)],
         ["Total Tax", `₹${reportData.totalTax.toFixed(2)}`],
         ["Final Amount", `₹${reportData.finalAmount.toFixed(2)}`],
       ];
@@ -273,9 +269,7 @@ export default function HsnReportDialog({
                       <div className="text-sm font-medium text-muted-foreground">Tax %</div>
                     </div>
                     <div className="text-2xl font-bold text-indigo-600">
-                      {reportData.totalAmount > 0 
-                        ? ((reportData.totalTax / reportData.totalAmount) * 100).toFixed(2)
-                        : '0.00'}%
+                      {reportData.taxRate.toFixed(2)}%
                     </div>
                   </CardContent>
                 </Card>
