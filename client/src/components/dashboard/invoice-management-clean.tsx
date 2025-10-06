@@ -1,5 +1,5 @@
 // Invoice Management Component with PDF Generation
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Eye, Download, Edit, Trash2, Plus, Search, Filter, ArrowUpDown, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import InvoiceTemplate from "@/components/invoice/InvoiceTemplate";
 
 export default function InvoiceManagementClean() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -34,18 +35,27 @@ export default function InvoiceManagementClean() {
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
 
+  // Debounce search term for part number search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   // Fetch invoices
   const { data: invoices = [], isLoading } = useQuery({
     queryKey: ["/api/invoices/all"],
     queryFn: () => invoicesApi.getAllInvoices(),
-    enabled: !searchByPartNumber || !searchTerm, // Disable when searching by part number
+    enabled: !searchByPartNumber || !debouncedSearchTerm, // Disable when searching by part number
   });
 
   // Fetch invoices by part number
   const { data: partNumberInvoices = [], isLoading: isPartNumberLoading } = useQuery({
-    queryKey: ["/api/invoices/partno", searchTerm],
-    queryFn: () => invoicesApi.searchByPartNumber(searchTerm),
-    enabled: searchByPartNumber && searchTerm.length > 0, // Only fetch when toggle is on and search term exists
+    queryKey: ["/api/invoices/partno", debouncedSearchTerm],
+    queryFn: () => invoicesApi.searchByPartNumber(debouncedSearchTerm),
+    enabled: searchByPartNumber && debouncedSearchTerm.length > 0, // Only fetch when toggle is on and debounced search term exists
   });
 
   // Delete invoice mutation
@@ -68,14 +78,14 @@ export default function InvoiceManagementClean() {
   });
 
   // Use the appropriate data source based on search mode
-  const activeInvoices = searchByPartNumber && searchTerm 
+  const activeInvoices = searchByPartNumber && debouncedSearchTerm 
     ? partNumberInvoices 
     : invoices;
 
   // Filter and sort invoices
   const filteredInvoices = Array.isArray(activeInvoices) ? activeInvoices.filter(invoice => {
     // When searching by part number, API already returns filtered results
-    if (searchByPartNumber && searchTerm) {
+    if (searchByPartNumber && debouncedSearchTerm) {
       const matchesStatus = statusFilter === "all" || 
         invoice.paymentStatus?.toLowerCase() === statusFilter.toLowerCase();
       return matchesStatus;
@@ -615,17 +625,6 @@ export default function InvoiceManagementClean() {
     printWindow.document.close();
   };
 
-  if (isLoading || isPartNumberLoading) {
-    return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          <span className="ml-2">Loading invoices...</span>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -691,7 +690,14 @@ export default function InvoiceManagementClean() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
+          {(isLoading || isPartNumberLoading) ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <span className="ml-2">Loading invoices...</span>
+            </div>
+          ) : (
+            <div>
+              <div className="rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -933,6 +939,8 @@ export default function InvoiceManagementClean() {
                   </Select>
                 </div>
               </div>
+            </div>
+          )}
             </div>
           )}
         </CardContent>
