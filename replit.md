@@ -104,4 +104,12 @@ A React-based frontend-only invoice management dashboard that connects to extern
   - Search term clears when switching between modes for better UX
   - Added debounce (500ms) to part number search to prevent API calls on every keystroke
   - Moved loading spinner from entire page to only above the invoices table for better UX
+- Fixed profile fetch API endpoint (October 7, 2025):
+  - Changed from `/users/{userId}` to `/users/me` endpoint
+  - Removed userId parameter requirement from getUserProfile function
+  - API now automatically gets user info from authentication token
+- Cleaned up Products Management table display (October 7, 2025):
+  - Removed duplicate part number from Product Info column
+  - Product Info now shows only product name and HSN code
+  - Part number remains visible in its dedicated "Part Number" column
 - Application successfully running on Replit with all features functional
