@@ -100,8 +100,8 @@ export default function ProfileManagement() {
 
   // Fetch user profile
   const { data: userProfile, isLoading: profileLoading, error: profileError, isError: profileIsError } = useQuery({
-    queryKey: ["user-profile", userId],
-    queryFn: () => profileApi.getUserProfile(userId!),
+    queryKey: ["user-profile"],
+    queryFn: () => profileApi.getUserProfile(),
     enabled: !!userId,
     retry: (failureCount, error: any) => {
       // Don't retry on 403 (Forbidden) errors
