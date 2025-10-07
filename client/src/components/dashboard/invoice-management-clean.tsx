@@ -1,7 +1,7 @@
 // Invoice Management Component with PDF Generation
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Eye, Download, Edit, Trash2, Plus, Search, Filter, ArrowUpDown } from "lucide-react";
+import { Eye, Download, Edit, Trash2, Plus, Search, Filter, ArrowUpDown, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +19,7 @@ import InvoiceTemplate from "@/components/invoice/InvoiceTemplate";
 
 export default function InvoiceManagementClean() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -28,15 +29,33 @@ export default function InvoiceManagementClean() {
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
+  const [searchByPartNumber, setSearchByPartNumber] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
 
+  // Debounce search term for part number search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   // Fetch invoices
   const { data: invoices = [], isLoading } = useQuery({
     queryKey: ["/api/invoices/all"],
     queryFn: () => invoicesApi.getAllInvoices(),
+    enabled: !searchByPartNumber || !debouncedSearchTerm, // Disable when searching by part number
+  });
+
+  // Fetch invoices by part number
+  const { data: partNumberInvoices = [], isLoading: isPartNumberLoading } = useQuery({
+    queryKey: ["/api/invoices/partno", debouncedSearchTerm],
+    queryFn: () => invoicesApi.searchByPartNumber(debouncedSearchTerm),
+    enabled: searchByPartNumber && debouncedSearchTerm.length > 0, // Only fetch when toggle is on and debounced search term exists
   });
 
   // Delete invoice mutation
@@ -58,8 +77,21 @@ export default function InvoiceManagementClean() {
     },
   });
 
+  // Use the appropriate data source based on search mode
+  const activeInvoices = searchByPartNumber && debouncedSearchTerm 
+    ? partNumberInvoices 
+    : invoices;
+
   // Filter and sort invoices
-  const filteredInvoices = Array.isArray(invoices) ? invoices.filter(invoice => {
+  const filteredInvoices = Array.isArray(activeInvoices) ? activeInvoices.filter(invoice => {
+    // When searching by part number, API already returns filtered results
+    if (searchByPartNumber && debouncedSearchTerm) {
+      const matchesStatus = statusFilter === "all" || 
+        invoice.paymentStatus?.toLowerCase() === statusFilter.toLowerCase();
+      return matchesStatus;
+    }
+    
+    // Normal search mode
     const matchesSearch = 
       invoice.invoiceNo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       invoice.customerName?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -508,8 +540,14 @@ export default function InvoiceManagementClean() {
                         <td class="text-right">${item.quantity}</td>
                         <td class="text-right">₹${item.price?.toFixed(2) || '0.00'}</td>
                         <td class="text-right">₹${item.discount?.toFixed(2) || '0.00'}</td>
-                        <td class="text-right">₹${((item.price * item.quantity * (item.product?.cgst || 0)) / 100).toFixed(2)}</td>
-                        <td class="text-right">₹${((item.price * item.quantity * (item.product?.sgst || 0)) / 100).toFixed(2)}</td>
+                        <td class="text-right">
+                          <div>${item.product?.cgst || 0}%</div>
+                          <div style="font-size: 10px; color: #718096;">₹${((item.price * item.quantity * (item.product?.cgst || 0)) / 100).toFixed(2)}</div>
+                        </td>
+                        <td class="text-right">
+                          <div>${item.product?.sgst || 0}%</div>
+                          <div style="font-size: 10px; color: #718096;">₹${((item.price * item.quantity * (item.product?.sgst || 0)) / 100).toFixed(2)}</div>
+                        </td>
                         <td class="text-right">₹${item.total?.toFixed(2) || '0.00'}</td>
                       </tr>
                     `).join('')
@@ -587,17 +625,6 @@ export default function InvoiceManagementClean() {
     printWindow.document.close();
   };
 
-  if (isLoading) {
-    return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          <span className="ml-2">Loading invoices...</span>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -619,14 +646,34 @@ export default function InvoiceManagementClean() {
           <div className="flex items-center justify-between">
             <CardTitle>All Invoices</CardTitle>
             <div className="flex items-center space-x-2">
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by invoice # or customer name..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8 w-[300px]"
-                />
+              <div className="flex items-center space-x-2">
+                <div className="relative">
+                  {searchByPartNumber ? (
+                    <Package className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  )}
+                  <Input
+                    placeholder={searchByPartNumber ? "Search by part number..." : "Search by invoice # or customer name..."}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-8 w-[300px]"
+                    data-testid="input-search-invoice"
+                  />
+                </div>
+                <Button
+                  variant={searchByPartNumber ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    setSearchByPartNumber(!searchByPartNumber);
+                    setSearchTerm(""); // Clear search term when toggling
+                  }}
+                  title={searchByPartNumber ? "Switch to normal search" : "Search by part number"}
+                  data-testid="button-toggle-search-mode"
+                >
+                  <Package className="h-4 w-4 mr-1" />
+                  {searchByPartNumber ? "Part #" : "Part #"}
+                </Button>
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-[150px]">
@@ -643,7 +690,14 @@ export default function InvoiceManagementClean() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
+          {(isLoading || isPartNumberLoading) ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <span className="ml-2">Loading invoices...</span>
+            </div>
+          ) : (
+            <div>
+              <div className="rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -885,6 +939,8 @@ export default function InvoiceManagementClean() {
                   </Select>
                 </div>
               </div>
+            </div>
+          )}
             </div>
           )}
         </CardContent>

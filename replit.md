@@ -77,4 +77,39 @@ A React-based frontend-only invoice management dashboard that connects to extern
   - Invoice updates no longer set due date to current timestamp when user leaves due date empty
   - Due date field now properly sends null when not selected instead of defaulting to today's date
   - API payload only includes due date when user explicitly selects a date
+- Fixed CGST and SGST display in downloaded invoice PDF (October 6, 2025):
+  - Download PDF now shows both percentage (e.g., "9%") and calculated amount (e.g., "₹45.00") for CGST and SGST
+  - Previously only showed calculated amounts, now matches the preview/eye view format
+  - Updated invoice-management-clean.tsx handleDownloadPDF function to include tax percentage display
+- Added Tax % display to HSN reports (October 6, 2025):
+  - Reports page HSN section now displays Tax % column using taxRate field from backend API
+  - Excel export from Reports page HSN section now includes Tax % column
+  - Products Management HSN Report dialog now shows Tax % as a card in the UI
+  - Excel export from Products Management HSN Report now includes Tax % field
+  - Updated HsnReport type to include taxRate field from backend response
+- Added location field to Product Management forms (October 6, 2025):
+  - Added "Location" input field to Add Product form
+  - Added "Location" input field to Edit Product form
+  - Updated Product and ProductInput TypeScript interfaces to include location field
+  - Location data is now sent to API when creating or updating products
+  - Field includes placeholder text "Warehouse A - Shelf 3" as example
+- Added part number search to Invoice Management (October 6, 2025):
+  - Added toggle button to switch between normal search and part number search
+  - When "Part #" toggle is active, search uses new API endpoint: /invoice/partno/<part number>
+  - Normal mode searches by invoice number and customer name (existing functionality)
+  - Part number mode searches invoices containing products with specific part number
+  - Toggle button changes color when active (default/outline variant)
+  - Search placeholder text changes based on active mode
+  - Icon in search bar changes between Search and Package icon based on mode
+  - Search term clears when switching between modes for better UX
+  - Added debounce (500ms) to part number search to prevent API calls on every keystroke
+  - Moved loading spinner from entire page to only above the invoices table for better UX
+- Fixed profile fetch API endpoint (October 7, 2025):
+  - Changed from `/users/{userId}` to `/users/me` endpoint
+  - Removed userId parameter requirement from getUserProfile function
+  - API now automatically gets user info from authentication token
+- Cleaned up Products Management table display (October 7, 2025):
+  - Removed duplicate part number from Product Info column
+  - Product Info now shows only product name and HSN code
+  - Part number remains visible in its dedicated "Part Number" column
 - Application successfully running on Replit with all features functional

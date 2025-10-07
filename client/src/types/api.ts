@@ -76,6 +76,7 @@ export interface Product {
   imageUrl: string;
   expiry: string;
   barcode: string;
+  location: string;
   shopId: number | null;
   shop: Shop | null;
   createdAt: string | null;
@@ -101,6 +102,7 @@ export interface ProductInput {
   imageUrl?: string;
   expiry?: string;
   barcode?: string;
+  location?: string;
   shopId: number;
 }
 
@@ -250,6 +252,7 @@ export interface CustomerReport {
 export interface HsnReport {
   hsn: string;
   productName: string;
+  taxRate: number;
   totalQuantity: number;
   totalAmount: number;
   totalTax: number;

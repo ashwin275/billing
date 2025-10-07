@@ -358,6 +358,13 @@ export const invoicesApi = {
       method: 'DELETE',
     });
   },
+
+  /**
+   * Search invoices by part number
+   */
+  async searchByPartNumber(partNumber: string): Promise<import("@/types/api").Invoice[]> {
+    return apiRequest(`/invoice/partno/${encodeURIComponent(partNumber)}`);
+  },
 };
 
 /**
@@ -365,10 +372,10 @@ export const invoicesApi = {
  */
 export const profileApi = {
   /**
-   * Get user profile by ID
+   * Get user profile
    */
-  async getUserProfile(userId: number): Promise<any> {
-    return apiRequest(`/users/${userId}`);
+  async getUserProfile(): Promise<any> {
+    return apiRequest(`/users/me`);
   },
 
   /**

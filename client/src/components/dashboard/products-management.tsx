@@ -85,6 +85,7 @@ const productSchema = z.object({
   imageUrl: z.string().url("Must be a valid URL").optional(),
   expiry: z.string().optional(),
   barcode: z.string().optional(),
+  location: z.string().optional(),
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
@@ -158,6 +159,7 @@ export default function ProductsManagement() {
       imageUrl: "https://example.com/product.jpg",
       expiry: "2025-12-31",
       barcode: "",
+      location: "",
     },
   });
 
@@ -392,6 +394,7 @@ export default function ProductsManagement() {
       imageUrl: data.imageUrl || "",
       expiry: data.expiry || "",
       barcode: data.barcode || "",
+      location: data.location || "",
       shopId: shopId, // Use shopId from token
     };
     
@@ -432,6 +435,7 @@ export default function ProductsManagement() {
       imageUrl: data.imageUrl || "",
       expiry: data.expiry || "",
       barcode: data.barcode || "",
+      location: data.location || "",
       cgst: data.cgst || 0,
       sgst: data.sgst || 0,
       shopId: shopId // Add shopId from token
@@ -480,6 +484,7 @@ export default function ProductsManagement() {
       imageUrl: product.imageUrl || "",
       expiry: product.expiry ? product.expiry.split('T')[0] : "", // Convert to date format with null safety
       barcode: product.barcode || "",
+      location: product.location || "",
     });
     setIsEditDialogOpen(true);
   };
@@ -893,6 +898,22 @@ export default function ProductsManagement() {
                   </div>
                 </div>
 
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="add-location">Location</Label>
+                    <Input
+                      id="add-location"
+                      data-testid="input-add-location"
+                      {...addForm.register("location")}
+                      placeholder="Warehouse A - Shelf 3"
+                    />
+                    {addForm.formState.errors.location && (
+                      <p className="text-sm text-destructive">
+                        {addForm.formState.errors.location.message}
+                      </p>
+                    )}
+                  </div>
+                </div>
                 
                 <div className="flex justify-end space-x-2 pt-4">
                   <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
@@ -1105,7 +1126,6 @@ export default function ProductsManagement() {
                             </HoverCard>
                           )}
                         </div>
-                        <span className="text-sm text-slate-500">{product.productNumber}</span>
                         <span className="text-xs text-slate-400">HSN: {product.hsn}</span>
                         <div className="md:hidden mt-2">
                           <div className="flex items-center space-x-4 text-sm">
@@ -1655,6 +1675,22 @@ export default function ProductsManagement() {
               </div>
             </div>
 
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-location">Location</Label>
+                <Input
+                  id="edit-location"
+                  data-testid="input-edit-location"
+                  {...editForm.register("location")}
+                  placeholder="Warehouse A - Shelf 3"
+                />
+                {editForm.formState.errors.location && (
+                  <p className="text-sm text-destructive">
+                    {editForm.formState.errors.location.message}
+                  </p>
+                )}
+              </div>
+            </div>
 
             <div className="flex justify-end space-x-2 pt-4">
               <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
