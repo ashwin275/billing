@@ -1126,7 +1126,6 @@ export default function ProductsManagement() {
                             </HoverCard>
                           )}
                         </div>
-                        <span className="text-sm text-slate-500">{product.productNumber}</span>
                         <span className="text-xs text-slate-400">HSN: {product.hsn}</span>
                         <div className="md:hidden mt-2">
                           <div className="flex items-center space-x-4 text-sm">

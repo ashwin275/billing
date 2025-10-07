@@ -108,4 +108,8 @@ A React-based frontend-only invoice management dashboard that connects to extern
   - Changed from `/users/{userId}` to `/users/me` endpoint
   - Removed userId parameter requirement from getUserProfile function
   - API now automatically gets user info from authentication token
+- Cleaned up Products Management table display (October 7, 2025):
+  - Removed duplicate part number from Product Info column
+  - Product Info now shows only product name and HSN code
+  - Part number remains visible in its dedicated "Part Number" column
 - Application successfully running on Replit with all features functional
