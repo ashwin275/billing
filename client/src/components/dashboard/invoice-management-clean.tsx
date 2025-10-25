@@ -175,7 +175,7 @@ export default function InvoiceManagementClean() {
             }
             
             @page {
-              margin: 0;
+              margin: 15mm 10mm;
               size: A4 portrait;
             }
             
@@ -189,22 +189,20 @@ export default function InvoiceManagementClean() {
             }
             
             .invoice-template {
-              width: 210mm;
-              min-height: 297mm;
+              width: 100%;
+              max-width: 210mm;
               margin: 0 auto;
               background: white;
-              display: flex;
-              flex-direction: column;
             }
             
             .invoice-header {
               background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
               color: #000000;
-              padding: 40px 30px;
+              padding: 30px 20px;
               position: relative;
               overflow: hidden;
-              flex-shrink: 0;
-              min-height: 180px;
+              page-break-after: avoid;
+              page-break-inside: avoid;
             }
             
             .invoice-header::after {
@@ -291,17 +289,16 @@ export default function InvoiceManagementClean() {
             }
             
             .invoice-body {
-              padding: 30px;
-              flex: 1;
-              display: flex;
-              flex-direction: column;
+              padding: 20px;
             }
             
             .billing-section {
               display: grid;
               grid-template-columns: 1fr 1fr;
-              gap: 30px;
-              margin-bottom: 25px;
+              gap: 20px;
+              margin-bottom: 20px;
+              page-break-inside: avoid;
+              page-break-after: avoid;
             }
             
             .billing-block h3 {
@@ -328,7 +325,7 @@ export default function InvoiceManagementClean() {
             .items-table {
               width: 100%;
               border-collapse: collapse;
-              margin-bottom: 20px;
+              margin-bottom: 15px;
               border-radius: 6px;
               overflow: hidden;
               box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -336,14 +333,20 @@ export default function InvoiceManagementClean() {
             
             .items-table thead {
               background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              display: table-header-group;
+            }
+            
+            .items-table thead tr {
+              page-break-inside: avoid;
+              page-break-after: avoid;
             }
             
             .items-table th {
               color: #000000;
               font-weight: 600;
-              padding: 10px 8px;
+              padding: 8px 6px;
               text-align: left;
-              font-size: 11px;
+              font-size: 10px;
               letter-spacing: 0.3px;
             }
             
@@ -351,11 +354,20 @@ export default function InvoiceManagementClean() {
               text-align: right;
             }
             
+            .items-table tbody {
+              display: table-row-group;
+            }
+            
+            .items-table tbody tr {
+              page-break-inside: avoid;
+              page-break-after: auto;
+            }
+            
             .items-table td {
-              padding: 8px;
+              padding: 6px;
               border-bottom: 1px solid #e2e8f0;
               color: #4a5568;
-              font-size: 11px;
+              font-size: 10px;
             }
             
             .items-table td.text-right {
@@ -374,7 +386,9 @@ export default function InvoiceManagementClean() {
             .totals-section {
               display: flex;
               justify-content: flex-end;
-              margin-bottom: 25px;
+              margin-top: 15px;
+              margin-bottom: 20px;
+              page-break-inside: avoid;
             }
             
             .totals-table {
@@ -384,23 +398,23 @@ export default function InvoiceManagementClean() {
             .total-row {
               display: flex;
               justify-content: space-between;
-              padding: 5px 0;
+              padding: 4px 0;
               color: #4a5568;
-              font-size: 12px;
+              font-size: 11px;
             }
             
             .total-row.grand-total {
               border-top: 2px solid #e2e8f0;
-              margin-top: 8px;
-              padding-top: 10px;
-              font-size: 16px;
+              margin-top: 6px;
+              padding-top: 8px;
+              font-size: 14px;
               font-weight: 700;
               color: #2d3748;
             }
             
             .total-row.balance {
               font-weight: 600;
-              font-size: 14px;
+              font-size: 12px;
             }
             
             .balance.positive {
@@ -412,33 +426,33 @@ export default function InvoiceManagementClean() {
             }
             
             .bottom-section {
-              margin-top: auto;
-              margin-bottom: 20px;
+              margin-top: 20px;
+              page-break-inside: avoid;
             }
             
             .terms-section {
               background: #f7fafc;
-              padding: 15px;
+              padding: 12px;
               border-radius: 6px;
             }
             
             .terms-section h3 {
               color: #2d3748;
-              font-size: 14px;
+              font-size: 13px;
               font-weight: 600;
-              margin: 0 0 10px 0;
+              margin: 0 0 8px 0;
             }
             
             .terms-section p {
               color: #4a5568;
-              font-size: 11px;
-              margin: 5px 0;
+              font-size: 10px;
+              margin: 4px 0;
               line-height: 1.4;
             }
             
             .remarks-section {
-              margin-top: 15px;
-              padding-top: 10px;
+              margin-top: 12px;
+              padding-top: 8px;
               border-top: 1px solid #e2e8f0;
             }
             
@@ -446,12 +460,46 @@ export default function InvoiceManagementClean() {
               color: #2d3748;
             }
             
-
-            
             @media print {
               body {
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
+              }
+              
+              .invoice-template {
+                page-break-after: auto;
+              }
+              
+              .invoice-header {
+                page-break-after: avoid;
+                page-break-inside: avoid;
+              }
+              
+              .billing-section {
+                page-break-inside: avoid;
+                page-break-after: avoid;
+              }
+              
+              .items-table {
+                page-break-before: auto;
+              }
+              
+              .items-table thead {
+                display: table-header-group;
+              }
+              
+              .items-table tbody tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+              }
+              
+              .totals-section {
+                page-break-inside: avoid;
+                page-break-before: avoid;
+              }
+              
+              .bottom-section {
+                page-break-inside: avoid;
               }
             }
           </style>
