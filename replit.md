@@ -112,4 +112,13 @@ A React-based frontend-only invoice management dashboard that connects to extern
   - Removed duplicate part number from Product Info column
   - Product Info now shows only product name and HSN code
   - Part number remains visible in its dedicated "Part Number" column
+- Fixed invoice PDF generation layout and page breaks (October 25, 2025):
+  - Added proper page margins (15mm top/bottom, 10mm left/right) for A4 paper
+  - Implemented page break handling for multi-page invoices with many items
+  - Table header now repeats on each page automatically
+  - Table rows prevent breaking across pages for better readability
+  - Reduced padding and font sizes for better space utilization
+  - Prevented page breaks within billing section, totals, and terms & conditions
+  - Fixed alignment issues when invoice spans multiple pages
+  - Improved spacing between invoice sections
 - Application successfully running on Replit with all features functional
