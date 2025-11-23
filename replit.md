@@ -152,7 +152,7 @@ A React-based frontend-only invoice management dashboard that connects to extern
   - Removed SalesReportDialog component dependency from Reports page
 - Added professional PDF download for Sales Report (November 23, 2025):
   - Implemented PDF generation with proper A4 page formatting
-  - PDF includes gradient header with report title and date range
+  - PDF includes gradient header with clean report title only
   - Summary cards showing Total Revenue, Total Tax, Total Invoices, and Average Invoice Value
   - Complete sales table with invoice details, amounts, tax, and payment status
   - Color-coded payment status badges (Paid/Pending/Overdue)
@@ -161,6 +161,6 @@ A React-based frontend-only invoice management dashboard that connects to extern
   - Right-aligned numeric columns for better readability
   - Page break handling for multi-page reports
   - Print-optimized styling with professional appearance
-  - Footer with generation timestamp
+  - Clean PDF without extra footer text or timestamp information
   - Download PDF button in red color for easy identification
 - Application successfully running on Replit with all features functional

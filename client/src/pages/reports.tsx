@@ -505,7 +505,6 @@ export default function Reports() {
       <body>
         <div class="header">
           <h1>📊 Sales Report</h1>
-          <p>Period: ${new Date(startDate).toLocaleDateString()} - ${new Date(endDate).toLocaleDateString()}</p>
         </div>
         
         <div class="summary-cards">
@@ -559,11 +558,6 @@ export default function Reports() {
             `).join('')}
           </tbody>
         </table>
-        
-        <div class="footer">
-          <p>Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</p>
-          <p>This is a computer-generated document. No signature required.</p>
-        </div>
       </body>
       </html>
     `;
