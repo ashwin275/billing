@@ -64,8 +64,21 @@ function DashboardOverview({ onNavigate }: { onNavigate: (section: string) => vo
     queryFn: () => shopsApi.getAllShops(),
   });
 
-  // Calculate real stats from API data with safety checks
-  const totalRevenue = Array.isArray(invoices) ? invoices.reduce((sum, invoice) => sum + (invoice.totalAmount || 0), 0) : 0;
+  // Fetch total invoice count from API
+  const { data: invoiceCountData } = useQuery({
+    queryKey: ["/invoice/count"],
+    queryFn: () => invoicesApi.getInvoiceCount(),
+  });
+
+  // Fetch total invoice amount from API
+  const { data: totalAmountData } = useQuery({
+    queryKey: ["/invoice/total-amount"],
+    queryFn: () => invoicesApi.getTotalAmount(),
+  });
+
+  // Get stats from API data with safety checks
+  const totalRevenue = totalAmountData?.totalAmount || 0;
+  const totalInvoicesCount = invoiceCountData?.totalInvoices || 0;
   const pendingPayments = Array.isArray(invoices) ? invoices
     .filter(invoice => invoice.paymentStatus !== 'PAID')
     .reduce((sum, invoice) => sum + (invoice.totalAmount || 0), 0) : 0;
@@ -86,7 +99,7 @@ function DashboardOverview({ onNavigate }: { onNavigate: (section: string) => vo
 
   const dashboardStats = {
     totalRevenue: `₹${totalRevenue.toFixed(2)}`,
-    totalInvoices: invoices.length,
+    totalInvoices: totalInvoicesCount,
     activeShops: activeShops,
     pendingPayments: `₹${pendingPayments.toFixed(2)}`
   };

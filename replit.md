@@ -121,4 +121,10 @@ A React-based frontend-only invoice management dashboard that connects to extern
   - Prevented page breaks within billing section, totals, and terms & conditions
   - Fixed alignment issues when invoice spans multiple pages
   - Improved spacing between invoice sections
+- Added dedicated API endpoints for dashboard statistics (November 23, 2025):
+  - Integrated `/invoice/count` API endpoint to get total invoice count
+  - Integrated `/invoice/total-amount` API endpoint to get total revenue
+  - Updated dashboard to use dedicated APIs instead of calculating from all invoices on frontend
+  - Improved dashboard performance by fetching only required statistics
+  - Total Revenue and Total Invoices now come from backend APIs
 - Application successfully running on Replit with all features functional

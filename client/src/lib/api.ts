@@ -365,6 +365,20 @@ export const invoicesApi = {
   async searchByPartNumber(partNumber: string): Promise<import("@/types/api").Invoice[]> {
     return apiRequest(`/invoice/partno/${encodeURIComponent(partNumber)}`);
   },
+
+  /**
+   * Get total invoice count
+   */
+  async getInvoiceCount(): Promise<{ totalInvoices: number }> {
+    return apiRequest('/invoice/count');
+  },
+
+  /**
+   * Get total invoice amount
+   */
+  async getTotalAmount(): Promise<{ totalAmount: number }> {
+    return apiRequest('/invoice/total-amount');
+  },
 };
 
 /**
