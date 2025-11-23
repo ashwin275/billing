@@ -127,4 +127,17 @@ A React-based frontend-only invoice management dashboard that connects to extern
   - Updated dashboard to use dedicated APIs instead of calculating from all invoices on frontend
   - Improved dashboard performance by fetching only required statistics
   - Total Revenue and Total Invoices now come from backend APIs
+- Added comprehensive Sales/Invoice Report feature (November 23, 2025):
+  - Integrated `/sales/report` API endpoint with date range filtering
+  - Created new Sales Report Dialog component with professional design
+  - Added "Invoice Report" button on Reports page (HSN tab) next to Export HSN button
+  - Features included:
+    * Summary cards showing Total Revenue, Total Tax, and Invoice Count
+    * Payment Status Pie Chart showing distribution of Paid/Pending/Overdue invoices
+    * Top 5 Sales Bar Chart displaying highest value invoices
+    * Detailed sales table with invoice number, date, customer, amounts, tax, and payment status
+    * Excel export functionality with summary and detailed sales sheets
+    * Professional PDF download with A4 layout, color-coded summary cards, and complete sales table
+    * PDF includes gradient header, status badges, and print-optimized styling
+  - Sales report provides comprehensive analytics for invoice performance tracking
 - Application successfully running on Replit with all features functional

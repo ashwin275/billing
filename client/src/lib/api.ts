@@ -548,6 +548,13 @@ export const reportsApi = {
   async getHsnReport(hsn: string, from: string, to: string): Promise<import("@/types/api").HsnReport> {
     return await apiRequest(`/reports/hsn/${encodeURIComponent(hsn)}?from=${from}&to=${to}`);
   },
+
+  /**
+   * Get sales/invoice report for a date range
+   */
+  async getSalesReport(startDate: string, endDate: string): Promise<import("@/types/api").SalesReport> {
+    return await apiRequest(`/sales/report?startDate=${startDate}&endDate=${endDate}`);
+  },
 };
 
 /**

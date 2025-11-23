@@ -12,6 +12,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { shopsApi, reportsApi } from "@/lib/api";
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
+import SalesReportDialog from "@/components/ui/sales-report-dialog";
 
 const LIGHT_COLORS = ['#4ade80', '#22d3ee', '#3b82f6', '#8b5cf6', '#10b981', '#f97316'];
 
@@ -40,6 +41,9 @@ export default function Reports() {
   });
   const [hsnReportsPage, setHsnReportsPage] = useState(1);
   const [hsnReportsPerPage, setHsnReportsPerPage] = useState(10);
+
+  // Sales Report Dialog state
+  const [isSalesReportOpen, setIsSalesReportOpen] = useState(false);
 
   // Fetch shops
   const { data: shops = [] } = useQuery({
@@ -447,13 +451,24 @@ export default function Reports() {
             
             {/* Export Button for HSN Reports */}
             {activeTab === 'hsn' && (
-              <Button 
-                onClick={exportHsnReportsToExcel}
-                className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
-              >
-                <Download className="h-4 w-4" />
-                Export Excel
-              </Button>
+              <>
+                <Button 
+                  onClick={exportHsnReportsToExcel}
+                  className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+                  data-testid="button-export-hsn-excel"
+                >
+                  <Download className="h-4 w-4" />
+                  Export Excel
+                </Button>
+                <Button 
+                  onClick={() => setIsSalesReportOpen(true)}
+                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+                  data-testid="button-open-sales-report"
+                >
+                  <BarChart3 className="h-4 w-4" />
+                  Invoice Report
+                </Button>
+              </>
             )}
           </div>
         </div>
@@ -1540,6 +1555,12 @@ export default function Reports() {
           </>
         )}
       </div>
+
+      {/* Sales Report Dialog */}
+      <SalesReportDialog
+        open={isSalesReportOpen}
+        onOpenChange={setIsSalesReportOpen}
+      />
     </div>
   );
 }

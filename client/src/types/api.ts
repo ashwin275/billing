@@ -258,3 +258,21 @@ export interface HsnReport {
   totalTax: number;
   finalAmount: number;
 }
+
+// Sales Report Types
+export interface SaleReportItem {
+  invoiceNo: string;
+  saleDate: string;
+  customerName: string;
+  totalAmount: number;
+  tax: number;
+  finalAmount: number;
+  paymentStatus: 'PAID' | 'PENDING' | 'OVERDUE';
+}
+
+export interface SalesReport {
+  sales: SaleReportItem[];
+  totalFinalAmount: number;
+  totalTax: number;
+  invoiceCount: number;
+}
