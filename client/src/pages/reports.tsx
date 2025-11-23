@@ -12,7 +12,6 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { shopsApi, reportsApi } from "@/lib/api";
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
-import SalesReportDialog from "@/components/ui/sales-report-dialog";
 
 const LIGHT_COLORS = ['#4ade80', '#22d3ee', '#3b82f6', '#8b5cf6', '#10b981', '#f97316'];
 
@@ -42,8 +41,13 @@ export default function Reports() {
   const [hsnReportsPage, setHsnReportsPage] = useState(1);
   const [hsnReportsPerPage, setHsnReportsPerPage] = useState(10);
 
-  // Sales Report Dialog state
-  const [isSalesReportOpen, setIsSalesReportOpen] = useState(false);
+  // Sales Report state
+  const [salesReportDateRange, setSalesReportDateRange] = useState({
+    from: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
+    to: new Date().toISOString().split('T')[0]
+  });
+  const [salesReportPage, setSalesReportPage] = useState(1);
+  const [salesReportPerPage, setSalesReportPerPage] = useState(10);
 
   // Fetch shops
   const { data: shops = [] } = useQuery({
@@ -113,6 +117,12 @@ export default function Reports() {
     queryFn: () => reportsApi.getAllHsnReports(hsnReportDateRange.from, hsnReportDateRange.to),
   });
 
+  // Fetch Sales Report data
+  const { data: salesReportData, isLoading: isSalesReportLoading } = useQuery({
+    queryKey: ["/sales/report", salesReportDateRange.from, salesReportDateRange.to],
+    queryFn: () => reportsApi.getSalesReport(salesReportDateRange.from, salesReportDateRange.to),
+  });
+
   const selectedShop = Array.isArray(shops) ? shops.find(shop => shop.shopId === selectedShopId) : null;
 
   const totalSales = Array.isArray(salesSummary) ? salesSummary.reduce((sum: number, item: any) => sum + item.totalSales, 0) : 0;
@@ -159,6 +169,23 @@ export default function Reports() {
   const paginatedHsnReports = Array.isArray(hsnReports) ? 
     hsnReports.slice((hsnReportsPage - 1) * hsnReportsPerPage, hsnReportsPage * hsnReportsPerPage) 
     : [];
+
+  // Sales Report calculations
+  const salesData = salesReportData?.sales || [];
+  const totalSalesRecords = salesData.length;
+  const totalSalesPages = Math.ceil(totalSalesRecords / salesReportPerPage);
+  const paginatedSalesData = salesData.slice((salesReportPage - 1) * salesReportPerPage, salesReportPage * salesReportPerPage);
+  
+  // Payment status data for pie chart
+  const paymentStatusData = salesData.reduce((acc: any[], sale: any) => {
+    const existing = acc.find(item => item.name === sale.paymentStatus);
+    if (existing) {
+      existing.value += 1;
+    } else {
+      acc.push({ name: sale.paymentStatus, value: 1 });
+    }
+    return acc;
+  }, []);
 
   // Export customer reports to Excel
   const exportCustomerReportsToExcel = () => {
@@ -1320,59 +1347,272 @@ export default function Reports() {
       
       case 'sales':
         return (
-          <div className="flex flex-col items-center justify-center py-12">
-            <Card className="max-w-2xl w-full">
-              <CardHeader className="text-center">
-                <div className="flex justify-center mb-4">
-                  <div className="bg-blue-100 p-4 rounded-full">
-                    <BarChart3 className="h-12 w-12 text-blue-600" />
+          <>
+            {isSalesReportLoading ? (
+              <div className="flex justify-center items-center py-12">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+                  <p className="mt-4 text-gray-600">Loading sales report...</p>
+                </div>
+              </div>
+            ) : salesReportData && salesData.length > 0 ? (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-green-700">
+                        <DollarSign className="h-5 w-5" />
+                        Total Revenue
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-3xl font-bold text-green-600">₹{salesReportData.totalFinalAmount.toFixed(2)}</p>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-orange-700">
+                        <Percent className="h-5 w-5" />
+                        Total Tax
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-3xl font-bold text-orange-600">₹{salesReportData.totalTax.toFixed(2)}</p>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-blue-700">
+                        <FileText className="h-5 w-5" />
+                        Invoice Count
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-3xl font-bold text-blue-600">{salesReportData.invoiceCount}</p>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-purple-700">
+                        <TrendingUp className="h-5 w-5" />
+                        Avg Invoice Value
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-3xl font-bold text-purple-600">
+                        ₹{(salesReportData.totalFinalAmount / salesReportData.invoiceCount).toFixed(2)}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <CreditCard className="h-5 w-5" />
+                        Payment Status Distribution
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <PieChart>
+                          <Pie
+                            data={paymentStatusData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={({ name, value }) => `${name}: ${value}`}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                          >
+                            {paymentStatusData.map((entry, index) => (
+                              <Cell 
+                                key={`cell-${index}`} 
+                                fill={entry.name === 'PAID' ? '#10b981' : entry.name === 'PENDING' ? '#f59e0b' : '#ef4444'} 
+                              />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <BarChart3 className="h-5 w-5" />
+                        Top 5 Sales
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <BarChart 
+                          data={salesData.slice().sort((a: any, b: any) => b.finalAmount - a.finalAmount).slice(0, 5)}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis 
+                            dataKey="invoiceNo" 
+                            angle={-45}
+                            textAnchor="end"
+                            height={80}
+                          />
+                          <YAxis />
+                          <Tooltip formatter={(value) => [`₹${Number(value).toFixed(2)}`, 'Amount']} />
+                          <Bar dataKey="finalAmount">
+                            {salesData.slice(0, 5).map((entry: any, index: number) => (
+                              <Cell key={`cell-${index}`} fill={LIGHT_COLORS[index % LIGHT_COLORS.length]} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      Sales Details
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Invoice No</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Customer</TableHead>
+                            <TableHead className="text-right">Total Amount</TableHead>
+                            <TableHead className="text-right">Tax</TableHead>
+                            <TableHead className="text-right">Final Amount</TableHead>
+                            <TableHead>Status</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {paginatedSalesData.map((sale: any, index: number) => (
+                            <TableRow key={index} className="hover:bg-gray-50">
+                              <TableCell className="font-medium">{sale.invoiceNo}</TableCell>
+                              <TableCell>{new Date(sale.saleDate).toLocaleDateString()}</TableCell>
+                              <TableCell>{sale.customerName}</TableCell>
+                              <TableCell className="text-right">₹{sale.totalAmount.toFixed(2)}</TableCell>
+                              <TableCell className="text-right">₹{sale.tax.toFixed(2)}</TableCell>
+                              <TableCell className="text-right font-semibold">₹{sale.finalAmount.toFixed(2)}</TableCell>
+                              <TableCell>
+                                <Badge 
+                                  variant={
+                                    sale.paymentStatus === 'PAID' ? 'default' : 
+                                    sale.paymentStatus === 'PENDING' ? 'secondary' : 
+                                    'destructive'
+                                  }
+                                >
+                                  {sale.paymentStatus}
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+
+                    {totalSalesRecords > 0 && (
+                      <div className="flex items-center justify-between px-2 py-4">
+                        <div className="flex items-center space-x-2">
+                          <p className="text-sm text-gray-700">
+                            Showing {(salesReportPage - 1) * salesReportPerPage + 1} to{' '}
+                            {Math.min(salesReportPage * salesReportPerPage, totalSalesRecords)} of{' '}
+                            {totalSalesRecords} sales
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-2">
+                            <p className="text-sm text-gray-700">Rows per page:</p>
+                            <Select value={salesReportPerPage.toString()} onValueChange={(value) => {
+                              setSalesReportPerPage(parseInt(value));
+                              setSalesReportPage(1);
+                            }}>
+                              <SelectTrigger className="w-16">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="5">5</SelectItem>
+                                <SelectItem value="10">10</SelectItem>
+                                <SelectItem value="20">20</SelectItem>
+                                <SelectItem value="50">50</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setSalesReportPage(1)}
+                              disabled={salesReportPage === 1}
+                            >
+                              First
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setSalesReportPage(salesReportPage - 1)}
+                              disabled={salesReportPage === 1}
+                            >
+                              Previous
+                            </Button>
+                            <div className="flex items-center space-x-1">
+                              <Input
+                                className="w-12 text-center"
+                                value={salesReportPage}
+                                onChange={(e) => {
+                                  const page = parseInt(e.target.value);
+                                  if (page >= 1 && page <= totalSalesPages) {
+                                    setSalesReportPage(page);
+                                  }
+                                }}
+                              />
+                              <span className="text-sm text-gray-700">of {totalSalesPages}</span>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setSalesReportPage(salesReportPage + 1)}
+                              disabled={salesReportPage === totalSalesPages}
+                            >
+                              Next
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setSalesReportPage(totalSalesPages)}
+                              disabled={salesReportPage === totalSalesPages}
+                            >
+                              Last
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </>
+            ) : (
+              <Card>
+                <CardContent className="py-12">
+                  <div className="text-center text-gray-500">
+                    <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                    <p>No sales data available for the selected date range</p>
                   </div>
-                </div>
-                <CardTitle className="text-2xl">Sales & Invoice Reports</CardTitle>
-                <p className="text-muted-foreground mt-2">
-                  Generate comprehensive sales reports with detailed analytics, charts, and export options
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="bg-gray-50 p-4 rounded-md space-y-2">
-                  <h3 className="font-semibold text-sm text-gray-700">Report Features:</h3>
-                  <ul className="space-y-1 text-sm text-gray-600">
-                    <li className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                      Total revenue, tax, and invoice count summaries
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                      Payment status distribution (Paid/Pending/Overdue)
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                      Top 5 sales visualization with bar charts
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                      Detailed sales table with all invoice data
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                      Export to Excel and professional PDF formats
-                    </li>
-                  </ul>
-                </div>
-                <div className="flex justify-center pt-2">
-                  <Button 
-                    onClick={() => setIsSalesReportOpen(true)}
-                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
-                    size="lg"
-                    data-testid="button-generate-sales-report"
-                  >
-                    <BarChart3 className="h-5 w-5" />
-                    Generate Sales Report
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                </CardContent>
+              </Card>
+            )}
+          </>
         );
       
       default:
@@ -1517,39 +1757,51 @@ export default function Reports() {
               </Select>
             )}
             
-            {/* Date Range Selectors - Hide for Sales Report */}
-            {activeTab !== 'sales' && (
-              <div className="flex gap-2">
-                <Input
-                  type="date"
-                  value={activeTab === 'business' ? dateRange.from : activeTab === 'customers' ? customerReportDateRange.from : hsnReportDateRange.from}
-                  onChange={(e) => {
-                    if (activeTab === 'business') {
-                      setDateRange(prev => ({ ...prev, from: e.target.value }));
-                    } else if (activeTab === 'customers') {
-                      setCustomerReportDateRange(prev => ({ ...prev, from: e.target.value }));
-                    } else {
-                      setHsnReportDateRange(prev => ({ ...prev, from: e.target.value }));
-                    }
-                  }}
-                  className="w-36"
-                />
-                <Input
-                  type="date"
-                  value={activeTab === 'business' ? dateRange.to : activeTab === 'customers' ? customerReportDateRange.to : hsnReportDateRange.to}
-                  onChange={(e) => {
-                    if (activeTab === 'business') {
-                      setDateRange(prev => ({ ...prev, to: e.target.value }));
-                    } else if (activeTab === 'customers') {
-                      setCustomerReportDateRange(prev => ({ ...prev, to: e.target.value }));
-                    } else {
-                      setHsnReportDateRange(prev => ({ ...prev, to: e.target.value }));
-                    }
-                  }}
-                  className="w-36"
-                />
-              </div>
-            )}
+            {/* Date Range Selectors */}
+            <div className="flex gap-2">
+              <Input
+                type="date"
+                value={
+                  activeTab === 'business' ? dateRange.from :
+                  activeTab === 'customers' ? customerReportDateRange.from :
+                  activeTab === 'hsn' ? hsnReportDateRange.from :
+                  salesReportDateRange.from
+                }
+                onChange={(e) => {
+                  if (activeTab === 'business') {
+                    setDateRange(prev => ({ ...prev, from: e.target.value }));
+                  } else if (activeTab === 'customers') {
+                    setCustomerReportDateRange(prev => ({ ...prev, from: e.target.value }));
+                  } else if (activeTab === 'hsn') {
+                    setHsnReportDateRange(prev => ({ ...prev, from: e.target.value }));
+                  } else {
+                    setSalesReportDateRange(prev => ({ ...prev, from: e.target.value }));
+                  }
+                }}
+                className="w-36"
+              />
+              <Input
+                type="date"
+                value={
+                  activeTab === 'business' ? dateRange.to :
+                  activeTab === 'customers' ? customerReportDateRange.to :
+                  activeTab === 'hsn' ? hsnReportDateRange.to :
+                  salesReportDateRange.to
+                }
+                onChange={(e) => {
+                  if (activeTab === 'business') {
+                    setDateRange(prev => ({ ...prev, to: e.target.value }));
+                  } else if (activeTab === 'customers') {
+                    setCustomerReportDateRange(prev => ({ ...prev, to: e.target.value }));
+                  } else if (activeTab === 'hsn') {
+                    setHsnReportDateRange(prev => ({ ...prev, to: e.target.value }));
+                  } else {
+                    setSalesReportDateRange(prev => ({ ...prev, to: e.target.value }));
+                  }
+                }}
+                className="w-36"
+              />
+            </div>
 
             {/* Export Button for Customer Reports */}
             {activeTab === 'customers' && (
@@ -1582,12 +1834,6 @@ export default function Reports() {
         {/* Tab Content */}
         {renderTabContent()}
       </div>
-
-      {/* Sales Report Dialog */}
-      <SalesReportDialog
-        open={isSalesReportOpen}
-        onOpenChange={setIsSalesReportOpen}
-      />
     </div>
   );
 }

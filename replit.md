@@ -141,4 +141,13 @@ A React-based frontend-only invoice management dashboard that connects to extern
     * Professional PDF download with A4 layout, color-coded summary cards, and complete sales table
     * PDF includes gradient header, status badges, and print-optimized styling
   - Sales report provides comprehensive analytics for invoice performance tracking
+- Refactored Sales Report tab to auto-load data (November 23, 2025):
+  - Removed welcome page from Sales Report tab - now directly displays sales data on tab click
+  - Sales report data automatically loads based on date range (similar to Business, Customer, and HSN reports)
+  - Added date range picker in header for Sales Report (previously hidden)
+  - Removed Excel export functionality from Sales Report (kept for other report types)
+  - PDF download still available for Sales Report
+  - Improved user experience - no extra click needed to view sales data
+  - Sales report now integrates seamlessly with other report tabs
+  - Removed SalesReportDialog component dependency from Reports page
 - Application successfully running on Replit with all features functional
