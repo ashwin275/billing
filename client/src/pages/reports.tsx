@@ -311,6 +311,264 @@ export default function Reports() {
     saveAs(data, fileName);
   };
 
+  // Download Sales Report as PDF
+  const downloadSalesReportPDF = () => {
+    if (!salesReportData || !salesReportData.sales || salesReportData.sales.length === 0) {
+      alert('No sales data available to export');
+      return;
+    }
+
+    const printWindow = window.open('', '', 'width=800,height=600');
+    if (!printWindow) return;
+
+    const pdfContent = generateSalesReportPDFContent(salesReportData, salesReportDateRange.from, salesReportDateRange.to);
+    printWindow.document.write(pdfContent);
+    printWindow.document.close();
+    
+    setTimeout(() => {
+      printWindow.print();
+    }, 250);
+  };
+
+  // Generate PDF HTML content for Sales Report
+  const generateSalesReportPDFContent = (data: any, startDate: string, endDate: string) => {
+    const avgInvoiceValue = data.invoiceCount > 0 ? (data.totalFinalAmount / data.invoiceCount) : 0;
+    
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Sales Report - ${startDate} to ${endDate}</title>
+        <style>
+          @page {
+            size: A4;
+            margin: 15mm 10mm;
+          }
+          
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
+          
+          body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: #000;
+            font-weight: 600;
+            line-height: 1.5;
+            padding: 20px;
+          }
+          
+          .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: #000;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: center;
+          }
+          
+          .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 10px;
+          }
+          
+          .header p {
+            font-size: 16px;
+            opacity: 0.9;
+          }
+          
+          .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+          }
+          
+          .summary-card {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+          }
+          
+          .summary-card h3 {
+            color: #64748b;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+          
+          .summary-card p {
+            color: #000;
+            font-size: 22px;
+            font-weight: 700;
+          }
+          
+          .summary-card.total { border-color: #10b981; background: #ecfdf5; }
+          .summary-card.tax { border-color: #f59e0b; background: #fffbeb; }
+          .summary-card.invoices { border-color: #3b82f6; background: #eff6ff; }
+          .summary-card.average { border-color: #8b5cf6; background: #f5f3ff; }
+          
+          .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin: 25px 0 15px 0;
+            color: #1e293b;
+          }
+          
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            page-break-inside: auto;
+          }
+          
+          thead {
+            display: table-header-group;
+          }
+          
+          tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+          }
+          
+          th {
+            background: #1e293b;
+            color: white;
+            padding: 10px 6px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 11px;
+            border: 1px solid #334155;
+          }
+          
+          td {
+            padding: 8px 6px;
+            border: 1px solid #e2e8f0;
+            font-size: 10px;
+            font-weight: 600;
+          }
+          
+          tr:nth-child(even) {
+            background: #f8fafc;
+          }
+          
+          .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+          }
+          
+          .status-paid {
+            background: #dcfce7;
+            color: #166534;
+          }
+          
+          .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+          }
+          
+          .status-overdue {
+            background: #fee2e2;
+            color: #991b1b;
+          }
+          
+          .text-right {
+            text-align: right;
+          }
+          
+          .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #e2e8f0;
+            text-align: center;
+            color: #64748b;
+            font-size: 12px;
+            page-break-inside: avoid;
+          }
+          
+          @media print {
+            body { padding: 0; }
+            .header { page-break-after: avoid; }
+            .summary-cards { page-break-inside: avoid; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>📊 Sales Report</h1>
+          <p>Period: ${new Date(startDate).toLocaleDateString()} - ${new Date(endDate).toLocaleDateString()}</p>
+        </div>
+        
+        <div class="summary-cards">
+          <div class="summary-card total">
+            <h3>Total Revenue</h3>
+            <p>₹${data.totalFinalAmount.toFixed(2)}</p>
+          </div>
+          <div class="summary-card tax">
+            <h3>Total Tax</h3>
+            <p>₹${data.totalTax.toFixed(2)}</p>
+          </div>
+          <div class="summary-card invoices">
+            <h3>Total Invoices</h3>
+            <p>${data.invoiceCount}</p>
+          </div>
+          <div class="summary-card average">
+            <h3>Avg Invoice Value</h3>
+            <p>₹${avgInvoiceValue.toFixed(2)}</p>
+          </div>
+        </div>
+        
+        <h2 class="section-title">Sales Details</h2>
+        
+        <table>
+          <thead>
+            <tr>
+              <th>Invoice No</th>
+              <th>Date</th>
+              <th>Customer Name</th>
+              <th class="text-right">Total Amount</th>
+              <th class="text-right">Tax</th>
+              <th class="text-right">Final Amount</th>
+              <th>Payment Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.sales.map((sale: any) => `
+              <tr>
+                <td>${sale.invoiceNo}</td>
+                <td>${new Date(sale.saleDate).toLocaleDateString()}</td>
+                <td>${sale.customerName}</td>
+                <td class="text-right">₹${sale.totalAmount.toFixed(2)}</td>
+                <td class="text-right">₹${sale.tax.toFixed(2)}</td>
+                <td class="text-right">₹${sale.finalAmount.toFixed(2)}</td>
+                <td>
+                  <span class="status-badge status-${sale.paymentStatus.toLowerCase()}">
+                    ${sale.paymentStatus}
+                  </span>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        
+        <div class="footer">
+          <p>Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</p>
+          <p>This is a computer-generated document. No signature required.</p>
+        </div>
+      </body>
+      </html>
+    `;
+  };
+
   // Helper function to render overview cards based on active tab
   const renderOverviewCards = () => {
     switch (activeTab) {
@@ -1823,6 +2081,18 @@ export default function Reports() {
               >
                 <Download className="h-4 w-4" />
                 Export Excel
+              </Button>
+            )}
+            
+            {/* PDF Download Button for Sales Report */}
+            {activeTab === 'sales' && (
+              <Button 
+                onClick={downloadSalesReportPDF}
+                className="flex items-center gap-2 bg-red-600 hover:bg-red-700"
+                data-testid="button-download-sales-pdf"
+              >
+                <FileText className="h-4 w-4" />
+                Download PDF
               </Button>
             )}
           </div>
