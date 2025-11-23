@@ -26,7 +26,7 @@ export default function Reports() {
     from: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
     to: new Date().toISOString().split('T')[0]
   });
-  const [activeTab, setActiveTab] = useState<'business' | 'customers' | 'hsn'>('business');
+  const [activeTab, setActiveTab] = useState<'business' | 'customers' | 'hsn' | 'sales'>('business');
   
   // Pagination states for Customer Reports tables
   const [customerDetailsPage, setCustomerDetailsPage] = useState(1);
@@ -284,197 +284,11 @@ export default function Reports() {
     saveAs(data, fileName);
   };
 
-  if (!Array.isArray(shops) || shops.length === 0) {
-    return (
-      <div className="min-h-screen bg-gray-50 p-4">
-        <div className="max-w-7xl mx-auto">
-          <Card className="max-w-md mx-auto mt-20">
-            <CardHeader>
-              <CardTitle className="text-center flex items-center justify-center gap-2">
-                <Store className="h-6 w-6" />
-                No Shops Available
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-center space-y-4">
-              <p className="text-gray-600">
-                You need to add shops before viewing reports.
-              </p>
-              <Link href="/dashboard">
-                <Button className="w-full">
-                  Go to Dashboard
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  if (!selectedShopId) {
-    return (
-      <div className="min-h-screen bg-gray-50 p-4">
-        <div className="max-w-7xl mx-auto">
-          <Card className="max-w-md mx-auto mt-20">
-            <CardHeader>
-              <CardTitle className="text-center">Select a Shop</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Select onValueChange={(value) => setSelectedShopId(parseInt(value))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose a shop to view reports" />
-                </SelectTrigger>
-                <SelectContent>
-                  {shops.map((shop) => (
-                    <SelectItem key={shop.shopId} value={shop.shopId.toString()}>
-                      {shop.name} - {shop.place}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Tab Selector - Moved to top */}
-        <div className="flex justify-center mb-4">
-          <div className="flex rounded-lg bg-gray-100 p-2 gap-2 shadow-md">
-            <Button
-              variant={activeTab === 'business' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setActiveTab('business')}
-              className="rounded-md px-6 py-2 min-w-[140px] shadow-sm"
-            >
-              <Store className="h-4 w-4 mr-2" />
-              Business Reports
-            </Button>
-            <Button
-              variant={activeTab === 'customers' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setActiveTab('customers')}
-              className="rounded-md px-6 py-2 min-w-[140px] shadow-sm"
-            >
-              <Users className="h-4 w-4 mr-2" />
-              Customer Reports
-            </Button>
-            <Button
-              variant={activeTab === 'hsn' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setActiveTab('hsn')}
-              className="rounded-md px-6 py-2 min-w-[140px] shadow-sm"
-            >
-              <FileText className="h-4 w-4 mr-2" />
-              HSN Reports
-            </Button>
-          </div>
-        </div>
-
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Reports Dashboard</h1>
-            <p className="text-gray-600 mt-1">
-              {activeTab === 'business' 
-                ? `Analytics and insights for ${selectedShop?.name} - ${selectedShop?.place}`
-                : activeTab === 'customers'
-                ? 'Customer analytics and insights'
-                : 'HSN code analytics and insights'
-              }
-            </p>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row gap-3">
-            {/* Shop Selector - Only for Business Reports */}
-            {activeTab === 'business' && (
-              <Select value={selectedShopId?.toString()} onValueChange={(value) => setSelectedShopId(parseInt(value))}>
-                <SelectTrigger className="w-full sm:w-64">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.isArray(shops) && shops.map((shop) => (
-                    <SelectItem key={shop.shopId} value={shop.shopId.toString()}>
-                      {shop.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-            
-            {/* Date Range Selectors */}
-            <div className="flex gap-2">
-              <Input
-                type="date"
-                value={activeTab === 'business' ? dateRange.from : activeTab === 'customers' ? customerReportDateRange.from : hsnReportDateRange.from}
-                onChange={(e) => {
-                  if (activeTab === 'business') {
-                    setDateRange(prev => ({ ...prev, from: e.target.value }));
-                  } else if (activeTab === 'customers') {
-                    setCustomerReportDateRange(prev => ({ ...prev, from: e.target.value }));
-                  } else {
-                    setHsnReportDateRange(prev => ({ ...prev, from: e.target.value }));
-                  }
-                }}
-                className="w-36"
-              />
-              <Input
-                type="date"
-                value={activeTab === 'business' ? dateRange.to : activeTab === 'customers' ? customerReportDateRange.to : hsnReportDateRange.to}
-                onChange={(e) => {
-                  if (activeTab === 'business') {
-                    setDateRange(prev => ({ ...prev, to: e.target.value }));
-                  } else if (activeTab === 'customers') {
-                    setCustomerReportDateRange(prev => ({ ...prev, to: e.target.value }));
-                  } else {
-                    setHsnReportDateRange(prev => ({ ...prev, to: e.target.value }));
-                  }
-                }}
-                className="w-36"
-              />
-            </div>
-
-            {/* Export Button for Customer Reports */}
-            {activeTab === 'customers' && (
-              <Button 
-                onClick={exportCustomerReportsToExcel}
-                className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
-              >
-                <Download className="h-4 w-4" />
-                Export Excel
-              </Button>
-            )}
-            
-            {/* Export Button for HSN Reports */}
-            {activeTab === 'hsn' && (
-              <>
-                <Button 
-                  onClick={exportHsnReportsToExcel}
-                  className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
-                  data-testid="button-export-hsn-excel"
-                >
-                  <Download className="h-4 w-4" />
-                  Export Excel
-                </Button>
-                <Button 
-                  onClick={() => setIsSalesReportOpen(true)}
-                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
-                  data-testid="button-open-sales-report"
-                >
-                  <BarChart3 className="h-4 w-4" />
-                  Invoice Report
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Overview Cards */}
-        {activeTab === 'business' ? (
+  // Helper function to render overview cards based on active tab
+  const renderOverviewCards = () => {
+    switch (activeTab) {
+      case 'business':
+        return (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card>
               <CardContent className="p-6">
@@ -524,7 +338,10 @@ export default function Reports() {
               </CardContent>
             </Card>
           </div>
-        ) : activeTab === 'customers' ? (
+        );
+      
+      case 'customers':
+        return (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card>
               <CardContent className="p-6">
@@ -574,7 +391,10 @@ export default function Reports() {
               </CardContent>
             </Card>
           </div>
-        ) : (
+        );
+      
+      case 'hsn':
+        return (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card>
               <CardContent className="p-6">
@@ -624,42 +444,80 @@ export default function Reports() {
               </CardContent>
             </Card>
           </div>
-        )}
+        );
+      
+      case 'sales':
+        return null;
+      
+      default:
+        return null;
+    }
+  };
 
-        {/* HSN Reports Content */}
-        {activeTab === 'hsn' ? (
+  // Helper function to render tab-specific content
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'business':
+        return (
           <>
-            {/* HSN Analytics Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* HSN Distribution by Amount */}
+            {timeInsights && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="h-5 w-5" />
-                    Top HSN by Total Amount
+                    <Clock className="h-5 w-5" />
+                    Time Insights
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-teal-400">{timeInsights.peakHour}:00</div>
+                      <p className="text-sm text-muted-foreground">Peak Hour</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-cyan-400">{timeInsights.bestDay}</div>
+                      <p className="text-sm text-muted-foreground">Best Day</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-sky-400">{timeInsights.worstDay}</div>
+                      <p className="text-sm text-muted-foreground">Worst Day</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Sales Trend</CardTitle>
+                </CardHeader>
+                <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart 
-                      data={Array.isArray(hsnReports) ? 
-                        hsnReports
-                          .sort((a, b) => b.totalAmount - a.totalAmount)
-                          .slice(0, 10)
-                        : []
-                      }
-                    >
+                    <LineChart data={salesSummary}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="hsn" 
-                        angle={-45}
-                        textAnchor="end"
-                        height={80}
-                      />
+                      <XAxis dataKey="period" />
                       <YAxis />
-                      <Tooltip formatter={(value) => [`₹${Number(value).toFixed(2)}`, 'Total Amount']} />
-                      <Bar dataKey="totalAmount">
-                        {Array.isArray(hsnReports) && hsnReports.map((entry, index) => (
+                      <Tooltip formatter={(value) => [`₹${value}`, 'Sales']} />
+                      <Line type="monotone" dataKey="totalSales" stroke="#10b981" strokeWidth={3} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Top Products by Quantity</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={topProducts}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="productName" />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="totalQuantity">
+                        {Array.isArray(topProducts) && topProducts.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={LIGHT_COLORS[index % LIGHT_COLORS.length]} />
                         ))}
                       </Bar>
@@ -668,103 +526,46 @@ export default function Reports() {
                 </CardContent>
               </Card>
 
-              {/* HSN Tax Distribution */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Percent className="h-5 w-5" />
-                    HSN Tax Distribution
-                  </CardTitle>
+                  <CardTitle>Inventory Movement</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
                     <PieChart>
                       <Pie
-                        data={Array.isArray(hsnReports) ? 
-                          hsnReports
-                            .sort((a, b) => b.totalTax - a.totalTax)
-                            .slice(0, 8)
-                            .map(hsn => ({ name: hsn.hsn, value: hsn.totalTax, productName: hsn.productName }))
-                          : []
-                        }
+                        data={inventoryMovement}
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        label={({ productName, percent }) => `${productName} ${(percent * 100).toFixed(0)}%`}
                         outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
+                        fill="#22d3ee"
+                        dataKey="quantityMoved"
                       >
-                        {Array.isArray(hsnReports) && hsnReports.slice(0, 8).map((entry, index) => (
+                        {Array.isArray(inventoryMovement) && inventoryMovement.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={LIGHT_COLORS[index % LIGHT_COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value) => [`₹${Number(value).toFixed(2)}`, 'Tax Amount']} />
+                      <Tooltip />
                     </PieChart>
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
 
-              {/* Quantity Distribution */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Top HSN by Quantity</CardTitle>
+                  <CardTitle>Product Discounts</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart 
-                      data={Array.isArray(hsnReports) ? 
-                        hsnReports
-                          .sort((a, b) => b.totalQuantity - a.totalQuantity)
-                          .slice(0, 10)
-                        : []
-                      }
-                    >
+                    <BarChart data={discountSummary}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="hsn" 
-                        angle={-45}
-                        textAnchor="end"
-                        height={80}
-                      />
+                      <XAxis dataKey="productName" />
                       <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="totalQuantity" fill="#10b981">
-                        {Array.isArray(hsnReports) && hsnReports.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={LIGHT_COLORS[index % LIGHT_COLORS.length]} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-
-              {/* Final Amount Chart */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Final Amount by HSN Code</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart 
-                      data={Array.isArray(hsnReports) ? 
-                        hsnReports
-                          .sort((a, b) => b.finalAmount - a.finalAmount)
-                          .slice(0, 10)
-                        : []
-                      }
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="hsn" 
-                        angle={-45}
-                        textAnchor="end"
-                        height={80}
-                      />
-                      <YAxis />
-                      <Tooltip formatter={(value) => [`₹${Number(value).toFixed(2)}`, 'Final Amount']} />
-                      <Bar dataKey="finalAmount" fill="#f59e0b">
-                        {Array.isArray(hsnReports) && hsnReports.map((entry, index) => (
+                      <Tooltip formatter={(value) => [`₹${value}`, 'Discount']} />
+                      <Bar dataKey="discount">
+                        {Array.isArray(discountSummary) && discountSummary.map((entry: any, index: number) => (
                           <Cell key={`cell-${index}`} fill={LIGHT_COLORS[index % LIGHT_COLORS.length]} />
                         ))}
                       </Bar>
@@ -774,193 +575,88 @@ export default function Reports() {
               </Card>
             </div>
 
-            {/* HSN Details Table */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
-                    HSN Code Report
-                  </span>
-                  <Badge variant="outline">
-                    {hsnReportDateRange.from} to {hsnReportDateRange.to}
-                  </Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Top Products Details</CardTitle>
+                </CardHeader>
+                <CardContent>
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>HSN Code</TableHead>
                         <TableHead>Product Name</TableHead>
-                        <TableHead className="text-right">Total Quantity</TableHead>
-                        <TableHead className="text-right">Total Amount</TableHead>
-                        <TableHead className="text-right">Tax %</TableHead>
-                        <TableHead className="text-right">Total Tax</TableHead>
-                        <TableHead className="text-right">Final Amount</TableHead>
+                        <TableHead className="text-right">Quantity Sold</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {paginatedHsnReports.length > 0 ? (
-                        paginatedHsnReports.map((hsn, index) => (
-                          <TableRow key={`${hsn.hsn}-${index}`} className="hover:bg-gray-50">
-                            <TableCell className="font-medium">
-                              <Badge variant="outline">{hsn.hsn}</Badge>
-                            </TableCell>
-                            <TableCell>{hsn.productName}</TableCell>
-                            <TableCell className="text-right">{hsn.totalQuantity.toFixed(2)}</TableCell>
-                            <TableCell className="text-right font-semibold">
-                              ₹{hsn.totalAmount.toFixed(2)}
-                            </TableCell>
-                            <TableCell className="text-right">{hsn.taxRate.toFixed(2)}%</TableCell>
-                            <TableCell className="text-right">₹{hsn.totalTax.toFixed(2)}</TableCell>
-                            <TableCell className="text-right font-semibold text-green-600">
-                              ₹{hsn.finalAmount.toFixed(2)}
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
+                      {Array.isArray(topProducts) && topProducts.map((product, index) => (
+                        <TableRow key={index} className="hover:bg-teal-50">
+                          <TableCell className="font-medium text-gray-700">{product.productName}</TableCell>
+                          <TableCell className="text-right font-semibold text-teal-600">{product.totalQuantity}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Top Customers</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Customer</TableHead>
+                        <TableHead className="text-right">Value</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {Array.isArray(topCustomers) && topCustomers.length > 0 ? topCustomers.map((customer, index) => (
+                        <TableRow key={index} className="hover:bg-sky-50">
+                          <TableCell className="font-medium text-gray-700">{customer.name || 'N/A'}</TableCell>
+                          <TableCell className="text-right font-semibold text-sky-600">{customer.value || '0'}</TableCell>
+                        </TableRow>
+                      )) : (
                         <TableRow>
-                          <TableCell colSpan={7} className="text-center text-gray-500 py-8">
-                            No HSN data available for the selected date range
+                          <TableCell colSpan={2} className="text-center text-muted-foreground">
+                            No customer data available
                           </TableCell>
                         </TableRow>
                       )}
                     </TableBody>
                   </Table>
-                </div>
-                
-                {/* HSN Pagination */}
-                {totalHsnRecords > 0 && (
-                  <div className="flex items-center justify-between px-2 py-4">
-                    <div className="flex items-center space-x-2">
-                      <p className="text-sm text-gray-700">
-                        Showing {(hsnReportsPage - 1) * hsnReportsPerPage + 1} to{' '}
-                        {Math.min(hsnReportsPage * hsnReportsPerPage, totalHsnRecords)} of{' '}
-                        {totalHsnRecords} HSN records
-                      </p>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="flex items-center space-x-2">
-                        <p className="text-sm text-gray-700">Rows per page:</p>
-                        <Select value={hsnReportsPerPage.toString()} onValueChange={(value) => {
-                          setHsnReportsPerPage(parseInt(value));
-                          setHsnReportsPage(1);
-                        }}>
-                          <SelectTrigger className="w-16">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="5">5</SelectItem>
-                            <SelectItem value="10">10</SelectItem>
-                            <SelectItem value="20">20</SelectItem>
-                            <SelectItem value="50">50</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setHsnReportsPage(1)}
-                          disabled={hsnReportsPage === 1}
-                        >
-                          First
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setHsnReportsPage(hsnReportsPage - 1)}
-                          disabled={hsnReportsPage === 1}
-                        >
-                          Previous
-                        </Button>
-                        <div className="flex items-center space-x-1">
-                          <Input
-                            className="w-12 text-center"
-                            value={hsnReportsPage}
-                            onChange={(e) => {
-                              const page = parseInt(e.target.value);
-                              if (page >= 1 && page <= totalHsnPages) {
-                                setHsnReportsPage(page);
-                              }
-                            }}
-                          />
-                          <span className="text-sm text-gray-700">of {totalHsnPages}</span>
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setHsnReportsPage(hsnReportsPage + 1)}
-                          disabled={hsnReportsPage === totalHsnPages}
-                        >
-                          Next
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setHsnReportsPage(totalHsnPages)}
-                          disabled={hsnReportsPage === totalHsnPages}
-                        >
-                          Last
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </>
-        ) : activeTab === 'customers' ? (
-          <>
-            {/* Customer Analytics Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Customer Type Distribution */}
+                </CardContent>
+              </Card>
+            </div>
+
+            {Array.isArray(deadstock) && deadstock.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    Customer Type Distribution
+                  <CardTitle className="flex items-center gap-2 text-red-400">
+                    <AlertTriangle className="h-5 w-5" />
+                    Deadstock Alert
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={Array.isArray(customerReports) ? 
-                          Object.entries(
-                            customerReports.reduce((acc: { [key: string]: number }, customer) => {
-                              acc[customer.customerType] = (acc[customer.customerType] || 0) + 1;
-                              return acc;
-                            }, {})
-                          ).map(([type, count]) => ({ name: type, value: count }))
-                          : []
-                        }
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                      >
-                        {Array.isArray(customerReports) && Object.entries(
-                          customerReports.reduce((acc: { [key: string]: number }, customer) => {
-                            acc[customer.customerType] = (acc[customer.customerType] || 0) + 1;
-                            return acc;
-                          }, {})
-                        ).map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={LIGHT_COLORS[index % LIGHT_COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {Array.isArray(deadstock) && deadstock.map((item, index) => (
+                      <Badge key={index} className="p-2 bg-red-100 text-red-600 hover:bg-red-200">
+                        {item.productName || `Item ${index + 1}`}
+                      </Badge>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
-
-              {/* Top Customers by Purchase Value */}
+            )}
+          </>
+        );
+      
+      case 'customers':
+        return (
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
                   <CardTitle>Top Customers by Purchase Value</CardTitle>
@@ -995,7 +691,6 @@ export default function Reports() {
                 </CardContent>
               </Card>
 
-              {/* Customer Bills Comparison */}
               <Card>
                 <CardHeader>
                   <CardTitle>Customer Bills Comparison</CardTitle>
@@ -1030,7 +725,6 @@ export default function Reports() {
                 </CardContent>
               </Card>
 
-              {/* Average Bill Value Chart */}
               <Card>
                 <CardHeader>
                   <CardTitle>Average Bill Value by Customer</CardTitle>
@@ -1066,7 +760,6 @@ export default function Reports() {
               </Card>
             </div>
 
-            {/* Customer Details Table */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
@@ -1134,7 +827,6 @@ export default function Reports() {
                   </Table>
                 </div>
                 
-                {/* Customer Details Pagination */}
                 {totalCustomers > 0 && (
                   <div className="flex items-center justify-between px-2 py-4">
                     <div className="flex items-center space-x-2">
@@ -1215,7 +907,6 @@ export default function Reports() {
               </CardContent>
             </Card>
 
-            {/* Top Products by Customer */}
             {topProductsData.length > 0 && (
               <Card>
                 <CardHeader>
@@ -1267,7 +958,6 @@ export default function Reports() {
                     </Table>
                   </div>
                   
-                  {/* Top Products Pagination */}
                   {topProductsData.length > 0 && (
                     <div className="flex items-center justify-between px-2 py-4">
                       <div className="flex items-center space-x-2">
@@ -1349,211 +1039,548 @@ export default function Reports() {
               </Card>
             )}
           </>
-        ) : (
+        );
+      
+      case 'hsn':
+        return (
           <>
-            {/* Business Reports Content (existing content) */}
-            {/* Time Insights */}
-            {timeInsights && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                Time Insights
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-teal-400">{timeInsights.peakHour}:00</div>
-                  <p className="text-sm text-muted-foreground">Peak Hour</p>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-cyan-400">{timeInsights.bestDay}</div>
-                  <p className="text-sm text-muted-foreground">Best Day</p>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-sky-400">{timeInsights.worstDay}</div>
-                  <p className="text-sm text-muted-foreground">Worst Day</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5" />
+                    Top HSN by Total Amount
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart 
+                      data={Array.isArray(hsnReports) ? 
+                        hsnReports
+                          .sort((a, b) => b.totalAmount - a.totalAmount)
+                          .slice(0, 10)
+                        : []
+                      }
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey="hsn" 
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                      />
+                      <YAxis />
+                      <Tooltip formatter={(value) => [`₹${Number(value).toFixed(2)}`, 'Total Amount']} />
+                      <Bar dataKey="totalAmount">
+                        {Array.isArray(hsnReports) && hsnReports.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={LIGHT_COLORS[index % LIGHT_COLORS.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
 
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Sales Trend */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Sales Trend</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={salesSummary}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="period" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => [`₹${value}`, 'Sales']} />
-                  <Line type="monotone" dataKey="totalSales" stroke="#10b981" strokeWidth={3} />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Percent className="h-5 w-5" />
+                    HSN Tax Distribution
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={Array.isArray(hsnReports) ? 
+                          hsnReports
+                            .sort((a, b) => b.totalTax - a.totalTax)
+                            .slice(0, 8)
+                            .map(hsn => ({ name: hsn.hsn, value: hsn.totalTax, productName: hsn.productName }))
+                          : []
+                        }
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {Array.isArray(hsnReports) && hsnReports.slice(0, 8).map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={LIGHT_COLORS[index % LIGHT_COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value) => [`₹${Number(value).toFixed(2)}`, 'Tax Amount']} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
 
-          {/* Top Products */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Top Products by Quantity</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={topProducts}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="productName" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="totalQuantity">
-                    {Array.isArray(topProducts) && topProducts.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={LIGHT_COLORS[index % LIGHT_COLORS.length]} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Top HSN by Quantity</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart 
+                      data={Array.isArray(hsnReports) ? 
+                        hsnReports
+                          .sort((a, b) => b.totalQuantity - a.totalQuantity)
+                          .slice(0, 10)
+                        : []
+                      }
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey="hsn" 
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                      />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="totalQuantity" fill="#10b981">
+                        {Array.isArray(hsnReports) && hsnReports.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={LIGHT_COLORS[index % LIGHT_COLORS.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
 
-          {/* Inventory Movement */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Inventory Movement</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={inventoryMovement}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ productName, percent }) => `${productName} ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#22d3ee"
-                    dataKey="quantityMoved"
-                  >
-                    {Array.isArray(inventoryMovement) && inventoryMovement.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={LIGHT_COLORS[index % LIGHT_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Final Amount by HSN Code</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart 
+                      data={Array.isArray(hsnReports) ? 
+                        hsnReports
+                          .sort((a, b) => b.finalAmount - a.finalAmount)
+                          .slice(0, 10)
+                        : []
+                      }
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey="hsn" 
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                      />
+                      <YAxis />
+                      <Tooltip formatter={(value) => [`₹${Number(value).toFixed(2)}`, 'Final Amount']} />
+                      <Bar dataKey="finalAmount" fill="#f59e0b">
+                        {Array.isArray(hsnReports) && hsnReports.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={LIGHT_COLORS[index % LIGHT_COLORS.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
 
-          {/* Discount Summary */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Product Discounts</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={discountSummary}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="productName" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => [`₹${value}`, 'Discount']} />
-                  <Bar dataKey="discount">
-                    {Array.isArray(discountSummary) && discountSummary.map((entry: any, index: number) => (
-                      <Cell key={`cell-${index}`} fill="#FCA36B" />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Data Tables */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Top Products Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Top Products Details</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Product Name</TableHead>
-                    <TableHead className="text-right">Quantity Sold</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {Array.isArray(topProducts) && topProducts.map((product, index) => (
-                    <TableRow key={index} className="hover:bg-teal-50">
-                      <TableCell className="font-medium text-gray-700">{product.productName}</TableCell>
-                      <TableCell className="text-right font-semibold text-teal-600">{product.totalQuantity}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-
-          {/* Top Customers Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Top Customers</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Customer</TableHead>
-                    <TableHead className="text-right">Value</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {Array.isArray(topCustomers) && topCustomers.length > 0 ? topCustomers.map((customer, index) => (
-                    <TableRow key={index} className="hover:bg-sky-50">
-                      <TableCell className="font-medium text-gray-700">{customer.name || 'N/A'}</TableCell>
-                      <TableCell className="text-right font-semibold text-sky-600">{customer.value || '0'}</TableCell>
-                    </TableRow>
-                  )) : (
-                    <TableRow>
-                      <TableCell colSpan={2} className="text-center text-muted-foreground">
-                        No customer data available
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Deadstock Alert */}
-        {Array.isArray(deadstock) && deadstock.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-red-400">
-                <AlertTriangle className="h-5 w-5" />
-                Deadstock Alert
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {Array.isArray(deadstock) && deadstock.map((item, index) => (
-                  <Badge key={index} className="p-2 bg-red-100 text-red-600 hover:bg-red-200">
-                    {item.productName || `Item ${index + 1}`}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    HSN Code Report
+                  </span>
+                  <Badge variant="outline">
+                    {hsnReportDateRange.from} to {hsnReportDateRange.to}
                   </Badge>
-                ))}
-              </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>HSN Code</TableHead>
+                        <TableHead>Product Name</TableHead>
+                        <TableHead className="text-right">Total Quantity</TableHead>
+                        <TableHead className="text-right">Total Amount</TableHead>
+                        <TableHead className="text-right">Tax %</TableHead>
+                        <TableHead className="text-right">Total Tax</TableHead>
+                        <TableHead className="text-right">Final Amount</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedHsnReports.length > 0 ? (
+                        paginatedHsnReports.map((hsn, index) => (
+                          <TableRow key={`${hsn.hsn}-${index}`} className="hover:bg-gray-50">
+                            <TableCell className="font-medium">
+                              <Badge variant="outline">{hsn.hsn}</Badge>
+                            </TableCell>
+                            <TableCell>{hsn.productName}</TableCell>
+                            <TableCell className="text-right">{hsn.totalQuantity.toFixed(2)}</TableCell>
+                            <TableCell className="text-right">₹{hsn.totalAmount.toFixed(2)}</TableCell>
+                            <TableCell className="text-right">{hsn.taxRate}%</TableCell>
+                            <TableCell className="text-right">₹{hsn.totalTax.toFixed(2)}</TableCell>
+                            <TableCell className="text-right font-semibold">₹{hsn.finalAmount.toFixed(2)}</TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={7} className="text-center text-gray-500 py-8">
+                            No HSN data available for the selected date range
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+                
+                {totalHsnRecords > 0 && (
+                  <div className="flex items-center justify-between px-2 py-4">
+                    <div className="flex items-center space-x-2">
+                      <p className="text-sm text-gray-700">
+                        Showing {(hsnReportsPage - 1) * hsnReportsPerPage + 1} to{' '}
+                        {Math.min(hsnReportsPage * hsnReportsPerPage, totalHsnRecords)} of{' '}
+                        {totalHsnRecords} records
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2">
+                        <p className="text-sm text-gray-700">Rows per page:</p>
+                        <Select value={hsnReportsPerPage.toString()} onValueChange={(value) => {
+                          setHsnReportsPerPage(parseInt(value));
+                          setHsnReportsPage(1);
+                        }}>
+                          <SelectTrigger className="w-16">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="5">5</SelectItem>
+                            <SelectItem value="10">10</SelectItem>
+                            <SelectItem value="20">20</SelectItem>
+                            <SelectItem value="50">50</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setHsnReportsPage(1)}
+                          disabled={hsnReportsPage === 1}
+                        >
+                          First
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setHsnReportsPage(hsnReportsPage - 1)}
+                          disabled={hsnReportsPage === 1}
+                        >
+                          Previous
+                        </Button>
+                        <div className="flex items-center space-x-1">
+                          <Input
+                            className="w-12 text-center"
+                            value={hsnReportsPage}
+                            onChange={(e) => {
+                              const page = parseInt(e.target.value);
+                              if (page >= 1 && page <= totalHsnPages) {
+                                setHsnReportsPage(page);
+                              }
+                            }}
+                          />
+                          <span className="text-sm text-gray-700">of {totalHsnPages}</span>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setHsnReportsPage(hsnReportsPage + 1)}
+                          disabled={hsnReportsPage === totalHsnPages}
+                        >
+                          Next
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setHsnReportsPage(totalHsnPages)}
+                          disabled={hsnReportsPage === totalHsnPages}
+                        >
+                          Last
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </>
+        );
+      
+      case 'sales':
+        return (
+          <div className="flex flex-col items-center justify-center py-12">
+            <Card className="max-w-2xl w-full">
+              <CardHeader className="text-center">
+                <div className="flex justify-center mb-4">
+                  <div className="bg-blue-100 p-4 rounded-full">
+                    <BarChart3 className="h-12 w-12 text-blue-600" />
+                  </div>
+                </div>
+                <CardTitle className="text-2xl">Sales & Invoice Reports</CardTitle>
+                <p className="text-muted-foreground mt-2">
+                  Generate comprehensive sales reports with detailed analytics, charts, and export options
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="bg-gray-50 p-4 rounded-md space-y-2">
+                  <h3 className="font-semibold text-sm text-gray-700">Report Features:</h3>
+                  <ul className="space-y-1 text-sm text-gray-600">
+                    <li className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                      Total revenue, tax, and invoice count summaries
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                      Payment status distribution (Paid/Pending/Overdue)
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                      Top 5 sales visualization with bar charts
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                      Detailed sales table with all invoice data
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                      Export to Excel and professional PDF formats
+                    </li>
+                  </ul>
+                </div>
+                <div className="flex justify-center pt-2">
+                  <Button 
+                    onClick={() => setIsSalesReportOpen(true)}
+                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+                    size="lg"
+                    data-testid="button-generate-sales-report"
+                  >
+                    <BarChart3 className="h-5 w-5" />
+                    Generate Sales Report
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        );
+      
+      default:
+        return null;
+    }
+  };
+
+  if (!Array.isArray(shops) || shops.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="max-w-7xl mx-auto">
+          <Card className="max-w-md mx-auto mt-20">
+            <CardHeader>
+              <CardTitle className="text-center flex items-center justify-center gap-2">
+                <Store className="h-6 w-6" />
+                No Shops Available
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+              <p className="text-gray-600">
+                You need to add shops before viewing reports.
+              </p>
+              <Link href="/dashboard">
+                <Button className="w-full">
+                  Go to Dashboard
+                </Button>
+              </Link>
             </CardContent>
           </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (!selectedShopId) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="max-w-7xl mx-auto">
+          <Card className="max-w-md mx-auto mt-20">
+            <CardHeader>
+              <CardTitle className="text-center">Select a Shop</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Select onValueChange={(value) => setSelectedShopId(parseInt(value))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a shop to view reports" />
+                </SelectTrigger>
+                <SelectContent>
+                  {shops.map((shop) => (
+                    <SelectItem key={shop.shopId} value={shop.shopId.toString()}>
+                      {shop.name} - {shop.place}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Tab Selector - Moved to top */}
+        <div className="flex justify-center mb-4">
+          <div className="flex flex-wrap rounded-lg bg-gray-100 p-2 gap-2 shadow-md">
+            <Button
+              variant={activeTab === 'business' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveTab('business')}
+              className="rounded-md px-6 py-2 min-w-[140px] shadow-sm"
+              data-testid="tab-business-reports"
+            >
+              <Store className="h-4 w-4 mr-2" />
+              Business Reports
+            </Button>
+            <Button
+              variant={activeTab === 'customers' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveTab('customers')}
+              className="rounded-md px-6 py-2 min-w-[140px] shadow-sm"
+              data-testid="tab-customer-reports"
+            >
+              <Users className="h-4 w-4 mr-2" />
+              Customer Reports
+            </Button>
+            <Button
+              variant={activeTab === 'hsn' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveTab('hsn')}
+              className="rounded-md px-6 py-2 min-w-[140px] shadow-sm"
+              data-testid="tab-hsn-reports"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              HSN Reports
+            </Button>
+            <Button
+              variant={activeTab === 'sales' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveTab('sales')}
+              className="rounded-md px-6 py-2 min-w-[140px] shadow-sm"
+              data-testid="tab-sales-reports"
+            >
+              <BarChart3 className="h-4 w-4 mr-2" />
+              Sales Report
+            </Button>
+          </div>
+        </div>
+
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Reports Dashboard</h1>
+            <p className="text-gray-600 mt-1">
+              {activeTab === 'business' 
+                ? `Analytics and insights for ${selectedShop?.name} - ${selectedShop?.place}`
+                : activeTab === 'customers'
+                ? 'Customer analytics and insights'
+                : activeTab === 'hsn'
+                ? 'HSN code analytics and insights'
+                : 'Comprehensive sales and invoice reports'
+              }
+            </p>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row gap-3">
+            {/* Shop Selector - Only for Business Reports */}
+            {activeTab === 'business' && (
+              <Select value={selectedShopId?.toString()} onValueChange={(value) => setSelectedShopId(parseInt(value))}>
+                <SelectTrigger className="w-full sm:w-64">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.isArray(shops) && shops.map((shop) => (
+                    <SelectItem key={shop.shopId} value={shop.shopId.toString()}>
+                      {shop.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
-          </>
-        )}
+            
+            {/* Date Range Selectors - Hide for Sales Report */}
+            {activeTab !== 'sales' && (
+              <div className="flex gap-2">
+                <Input
+                  type="date"
+                  value={activeTab === 'business' ? dateRange.from : activeTab === 'customers' ? customerReportDateRange.from : hsnReportDateRange.from}
+                  onChange={(e) => {
+                    if (activeTab === 'business') {
+                      setDateRange(prev => ({ ...prev, from: e.target.value }));
+                    } else if (activeTab === 'customers') {
+                      setCustomerReportDateRange(prev => ({ ...prev, from: e.target.value }));
+                    } else {
+                      setHsnReportDateRange(prev => ({ ...prev, from: e.target.value }));
+                    }
+                  }}
+                  className="w-36"
+                />
+                <Input
+                  type="date"
+                  value={activeTab === 'business' ? dateRange.to : activeTab === 'customers' ? customerReportDateRange.to : hsnReportDateRange.to}
+                  onChange={(e) => {
+                    if (activeTab === 'business') {
+                      setDateRange(prev => ({ ...prev, to: e.target.value }));
+                    } else if (activeTab === 'customers') {
+                      setCustomerReportDateRange(prev => ({ ...prev, to: e.target.value }));
+                    } else {
+                      setHsnReportDateRange(prev => ({ ...prev, to: e.target.value }));
+                    }
+                  }}
+                  className="w-36"
+                />
+              </div>
+            )}
+
+            {/* Export Button for Customer Reports */}
+            {activeTab === 'customers' && (
+              <Button 
+                onClick={exportCustomerReportsToExcel}
+                className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+              >
+                <Download className="h-4 w-4" />
+                Export Excel
+              </Button>
+            )}
+            
+            {/* Export Button for HSN Reports */}
+            {activeTab === 'hsn' && (
+              <Button 
+                onClick={exportHsnReportsToExcel}
+                className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+                data-testid="button-export-hsn-excel"
+              >
+                <Download className="h-4 w-4" />
+                Export Excel
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Overview Cards */}
+        {renderOverviewCards()}
+
+        {/* Tab Content */}
+        {renderTabContent()}
       </div>
 
       {/* Sales Report Dialog */}
