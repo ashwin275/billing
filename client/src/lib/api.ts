@@ -297,10 +297,17 @@ export const customersApi = {
  */
 export const invoicesApi = {
   /**
-   * Get all invoices
+   * Get all invoices (for backward compatibility - non-paginated)
    */
   async getAllInvoices(): Promise<import("@/types/api").Invoice[]> {
     return apiRequest('/invoice/all');
+  },
+
+  /**
+   * Get paginated invoices
+   */
+  async getPaginatedInvoices(page: number = 0, size: number = 10): Promise<import("@/types/api").PaginatedInvoicesResponse> {
+    return apiRequest(`/invoice/all?page=${page}&size=${size}`);
   },
 
   /**
