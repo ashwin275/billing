@@ -25,7 +25,7 @@ export default function Reports() {
     from: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
     to: new Date().toISOString().split('T')[0]
   });
-  const [activeTab, setActiveTab] = useState<'business' | 'customers' | 'hsn'>('business');
+  const [activeTab, setActiveTab] = useState<'business' | 'customers' | 'hsn' | 'sales'>('business');
   
   // Pagination states for Customer Reports tables
   const [customerDetailsPage, setCustomerDetailsPage] = useState(1);
@@ -40,6 +40,14 @@ export default function Reports() {
   });
   const [hsnReportsPage, setHsnReportsPage] = useState(1);
   const [hsnReportsPerPage, setHsnReportsPerPage] = useState(10);
+
+  // Sales Report state
+  const [salesReportDateRange, setSalesReportDateRange] = useState({
+    from: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
+    to: new Date().toISOString().split('T')[0]
+  });
+  const [salesReportPage, setSalesReportPage] = useState(1);
+  const [salesReportPerPage, setSalesReportPerPage] = useState(10);
 
   // Fetch shops
   const { data: shops = [] } = useQuery({
@@ -109,6 +117,12 @@ export default function Reports() {
     queryFn: () => reportsApi.getAllHsnReports(hsnReportDateRange.from, hsnReportDateRange.to),
   });
 
+  // Fetch Sales Report data
+  const { data: salesReportData, isLoading: isSalesReportLoading } = useQuery({
+    queryKey: ["/sales/report", salesReportDateRange.from, salesReportDateRange.to],
+    queryFn: () => reportsApi.getSalesReport(salesReportDateRange.from, salesReportDateRange.to),
+  });
+
   const selectedShop = Array.isArray(shops) ? shops.find(shop => shop.shopId === selectedShopId) : null;
 
   const totalSales = Array.isArray(salesSummary) ? salesSummary.reduce((sum: number, item: any) => sum + item.totalSales, 0) : 0;
@@ -155,6 +169,23 @@ export default function Reports() {
   const paginatedHsnReports = Array.isArray(hsnReports) ? 
     hsnReports.slice((hsnReportsPage - 1) * hsnReportsPerPage, hsnReportsPage * hsnReportsPerPage) 
     : [];
+
+  // Sales Report calculations
+  const salesData = salesReportData?.sales || [];
+  const totalSalesRecords = salesData.length;
+  const totalSalesPages = Math.ceil(totalSalesRecords / salesReportPerPage);
+  const paginatedSalesData = salesData.slice((salesReportPage - 1) * salesReportPerPage, salesReportPage * salesReportPerPage);
+  
+  // Payment status data for pie chart
+  const paymentStatusData = salesData.reduce((acc: any[], sale: any) => {
+    const existing = acc.find(item => item.name === sale.paymentStatus);
+    if (existing) {
+      existing.value += 1;
+    } else {
+      acc.push({ name: sale.paymentStatus, value: 1 });
+    }
+    return acc;
+  }, []);
 
   // Export customer reports to Excel
   const exportCustomerReportsToExcel = () => {
@@ -280,186 +311,263 @@ export default function Reports() {
     saveAs(data, fileName);
   };
 
-  if (!Array.isArray(shops) || shops.length === 0) {
-    return (
-      <div className="min-h-screen bg-gray-50 p-4">
-        <div className="max-w-7xl mx-auto">
-          <Card className="max-w-md mx-auto mt-20">
-            <CardHeader>
-              <CardTitle className="text-center flex items-center justify-center gap-2">
-                <Store className="h-6 w-6" />
-                No Shops Available
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-center space-y-4">
-              <p className="text-gray-600">
-                You need to add shops before viewing reports.
-              </p>
-              <Link href="/dashboard">
-                <Button className="w-full">
-                  Go to Dashboard
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
+  // Download Sales Report as PDF
+  const downloadSalesReportPDF = () => {
+    if (!salesReportData || !salesReportData.sales || salesReportData.sales.length === 0) {
+      alert('No sales data available to export');
+      return;
+    }
 
-  if (!selectedShopId) {
-    return (
-      <div className="min-h-screen bg-gray-50 p-4">
-        <div className="max-w-7xl mx-auto">
-          <Card className="max-w-md mx-auto mt-20">
-            <CardHeader>
-              <CardTitle className="text-center">Select a Shop</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Select onValueChange={(value) => setSelectedShopId(parseInt(value))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose a shop to view reports" />
-                </SelectTrigger>
-                <SelectContent>
-                  {shops.map((shop) => (
-                    <SelectItem key={shop.shopId} value={shop.shopId.toString()}>
-                      {shop.name} - {shop.place}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
+    const printWindow = window.open('', '', 'width=800,height=600');
+    if (!printWindow) return;
 
-  return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Tab Selector - Moved to top */}
-        <div className="flex justify-center mb-4">
-          <div className="flex rounded-lg bg-gray-100 p-2 gap-2 shadow-md">
-            <Button
-              variant={activeTab === 'business' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setActiveTab('business')}
-              className="rounded-md px-6 py-2 min-w-[140px] shadow-sm"
-            >
-              <Store className="h-4 w-4 mr-2" />
-              Business Reports
-            </Button>
-            <Button
-              variant={activeTab === 'customers' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setActiveTab('customers')}
-              className="rounded-md px-6 py-2 min-w-[140px] shadow-sm"
-            >
-              <Users className="h-4 w-4 mr-2" />
-              Customer Reports
-            </Button>
-            <Button
-              variant={activeTab === 'hsn' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setActiveTab('hsn')}
-              className="rounded-md px-6 py-2 min-w-[140px] shadow-sm"
-            >
-              <FileText className="h-4 w-4 mr-2" />
-              HSN Reports
-            </Button>
-          </div>
-        </div>
+    const pdfContent = generateSalesReportPDFContent(salesReportData, salesReportDateRange.from, salesReportDateRange.to);
+    printWindow.document.write(pdfContent);
+    printWindow.document.close();
+    
+    setTimeout(() => {
+      printWindow.print();
+    }, 250);
+  };
 
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Reports Dashboard</h1>
-            <p className="text-gray-600 mt-1">
-              {activeTab === 'business' 
-                ? `Analytics and insights for ${selectedShop?.name} - ${selectedShop?.place}`
-                : activeTab === 'customers'
-                ? 'Customer analytics and insights'
-                : 'HSN code analytics and insights'
-              }
-            </p>
-          </div>
+  // Generate PDF HTML content for Sales Report
+  const generateSalesReportPDFContent = (data: any, startDate: string, endDate: string) => {
+    const avgInvoiceValue = data.invoiceCount > 0 ? (data.totalFinalAmount / data.invoiceCount) : 0;
+    
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Sales Report - ${startDate} to ${endDate}</title>
+        <style>
+          @page {
+            size: A4;
+            margin: 15mm 10mm;
+          }
           
-          <div className="flex flex-col sm:flex-row gap-3">
-            {/* Shop Selector - Only for Business Reports */}
-            {activeTab === 'business' && (
-              <Select value={selectedShopId?.toString()} onValueChange={(value) => setSelectedShopId(parseInt(value))}>
-                <SelectTrigger className="w-full sm:w-64">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.isArray(shops) && shops.map((shop) => (
-                    <SelectItem key={shop.shopId} value={shop.shopId.toString()}>
-                      {shop.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-            
-            {/* Date Range Selectors */}
-            <div className="flex gap-2">
-              <Input
-                type="date"
-                value={activeTab === 'business' ? dateRange.from : activeTab === 'customers' ? customerReportDateRange.from : hsnReportDateRange.from}
-                onChange={(e) => {
-                  if (activeTab === 'business') {
-                    setDateRange(prev => ({ ...prev, from: e.target.value }));
-                  } else if (activeTab === 'customers') {
-                    setCustomerReportDateRange(prev => ({ ...prev, from: e.target.value }));
-                  } else {
-                    setHsnReportDateRange(prev => ({ ...prev, from: e.target.value }));
-                  }
-                }}
-                className="w-36"
-              />
-              <Input
-                type="date"
-                value={activeTab === 'business' ? dateRange.to : activeTab === 'customers' ? customerReportDateRange.to : hsnReportDateRange.to}
-                onChange={(e) => {
-                  if (activeTab === 'business') {
-                    setDateRange(prev => ({ ...prev, to: e.target.value }));
-                  } else if (activeTab === 'customers') {
-                    setCustomerReportDateRange(prev => ({ ...prev, to: e.target.value }));
-                  } else {
-                    setHsnReportDateRange(prev => ({ ...prev, to: e.target.value }));
-                  }
-                }}
-                className="w-36"
-              />
-            </div>
-
-            {/* Export Button for Customer Reports */}
-            {activeTab === 'customers' && (
-              <Button 
-                onClick={exportCustomerReportsToExcel}
-                className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
-              >
-                <Download className="h-4 w-4" />
-                Export Excel
-              </Button>
-            )}
-            
-            {/* Export Button for HSN Reports */}
-            {activeTab === 'hsn' && (
-              <Button 
-                onClick={exportHsnReportsToExcel}
-                className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
-              >
-                <Download className="h-4 w-4" />
-                Export Excel
-              </Button>
-            )}
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
+          
+          body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: #000;
+            font-weight: 600;
+            line-height: 1.5;
+            padding: 20px;
+          }
+          
+          .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: #000;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: center;
+          }
+          
+          .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 10px;
+          }
+          
+          .header p {
+            font-size: 16px;
+            opacity: 0.9;
+          }
+          
+          .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+          }
+          
+          .summary-card {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+          }
+          
+          .summary-card h3 {
+            color: #64748b;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+          
+          .summary-card p {
+            color: #000;
+            font-size: 22px;
+            font-weight: 700;
+          }
+          
+          .summary-card.total { border-color: #10b981; background: #ecfdf5; }
+          .summary-card.tax { border-color: #f59e0b; background: #fffbeb; }
+          .summary-card.invoices { border-color: #3b82f6; background: #eff6ff; }
+          .summary-card.average { border-color: #8b5cf6; background: #f5f3ff; }
+          
+          .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin: 25px 0 15px 0;
+            color: #1e293b;
+          }
+          
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            page-break-inside: auto;
+          }
+          
+          thead {
+            display: table-header-group;
+          }
+          
+          tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+          }
+          
+          th {
+            background: #1e293b;
+            color: white;
+            padding: 10px 6px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 11px;
+            border: 1px solid #334155;
+          }
+          
+          td {
+            padding: 8px 6px;
+            border: 1px solid #e2e8f0;
+            font-size: 10px;
+            font-weight: 600;
+          }
+          
+          tr:nth-child(even) {
+            background: #f8fafc;
+          }
+          
+          .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+          }
+          
+          .status-paid {
+            background: #dcfce7;
+            color: #166534;
+          }
+          
+          .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+          }
+          
+          .status-overdue {
+            background: #fee2e2;
+            color: #991b1b;
+          }
+          
+          .text-right {
+            text-align: right;
+          }
+          
+          .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #e2e8f0;
+            text-align: center;
+            color: #64748b;
+            font-size: 12px;
+            page-break-inside: avoid;
+          }
+          
+          @media print {
+            body { padding: 0; }
+            .header { page-break-after: avoid; }
+            .summary-cards { page-break-inside: avoid; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>📊 Sales Report</h1>
+        </div>
+        
+        <div class="summary-cards">
+          <div class="summary-card total">
+            <h3>Total Revenue</h3>
+            <p>₹${data.totalFinalAmount.toFixed(2)}</p>
+          </div>
+          <div class="summary-card tax">
+            <h3>Total Tax</h3>
+            <p>₹${data.totalTax.toFixed(2)}</p>
+          </div>
+          <div class="summary-card invoices">
+            <h3>Total Invoices</h3>
+            <p>${data.invoiceCount}</p>
+          </div>
+          <div class="summary-card average">
+            <h3>Avg Invoice Value</h3>
+            <p>₹${avgInvoiceValue.toFixed(2)}</p>
           </div>
         </div>
+        
+        <h2 class="section-title">Sales Details</h2>
+        
+        <table>
+          <thead>
+            <tr>
+              <th>Invoice No</th>
+              <th>Date</th>
+              <th>Customer Name</th>
+              <th class="text-right">Total Amount</th>
+              <th class="text-right">Tax</th>
+              <th class="text-right">Final Amount</th>
+              <th>Payment Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.sales.map((sale: any) => `
+              <tr>
+                <td>${sale.invoiceNo}</td>
+                <td>${new Date(sale.saleDate).toLocaleDateString()}</td>
+                <td>${sale.customerName}</td>
+                <td class="text-right">₹${sale.totalAmount.toFixed(2)}</td>
+                <td class="text-right">₹${sale.tax.toFixed(2)}</td>
+                <td class="text-right">₹${sale.finalAmount.toFixed(2)}</td>
+                <td>
+                  <span class="status-badge status-${sale.paymentStatus.toLowerCase()}">
+                    ${sale.paymentStatus}
+                  </span>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </body>
+      </html>
+    `;
+  };
 
-        {/* Overview Cards */}
-        {activeTab === 'business' ? (
+  // Helper function to render overview cards based on active tab
+  const renderOverviewCards = () => {
+    switch (activeTab) {
+      case 'business':
+        return (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card>
               <CardContent className="p-6">
@@ -509,7 +617,10 @@ export default function Reports() {
               </CardContent>
             </Card>
           </div>
-        ) : activeTab === 'customers' ? (
+        );
+      
+      case 'customers':
+        return (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card>
               <CardContent className="p-6">
@@ -559,7 +670,10 @@ export default function Reports() {
               </CardContent>
             </Card>
           </div>
-        ) : (
+        );
+      
+      case 'hsn':
+        return (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card>
               <CardContent className="p-6">
@@ -609,42 +723,80 @@ export default function Reports() {
               </CardContent>
             </Card>
           </div>
-        )}
+        );
+      
+      case 'sales':
+        return null;
+      
+      default:
+        return null;
+    }
+  };
 
-        {/* HSN Reports Content */}
-        {activeTab === 'hsn' ? (
+  // Helper function to render tab-specific content
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'business':
+        return (
           <>
-            {/* HSN Analytics Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* HSN Distribution by Amount */}
+            {timeInsights && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="h-5 w-5" />
-                    Top HSN by Total Amount
+                    <Clock className="h-5 w-5" />
+                    Time Insights
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-teal-400">{timeInsights.peakHour}:00</div>
+                      <p className="text-sm text-muted-foreground">Peak Hour</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-cyan-400">{timeInsights.bestDay}</div>
+                      <p className="text-sm text-muted-foreground">Best Day</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-sky-400">{timeInsights.worstDay}</div>
+                      <p className="text-sm text-muted-foreground">Worst Day</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Sales Trend</CardTitle>
+                </CardHeader>
+                <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart 
-                      data={Array.isArray(hsnReports) ? 
-                        hsnReports
-                          .sort((a, b) => b.totalAmount - a.totalAmount)
-                          .slice(0, 10)
-                        : []
-                      }
-                    >
+                    <LineChart data={salesSummary}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="hsn" 
-                        angle={-45}
-                        textAnchor="end"
-                        height={80}
-                      />
+                      <XAxis dataKey="period" />
                       <YAxis />
-                      <Tooltip formatter={(value) => [`₹${Number(value).toFixed(2)}`, 'Total Amount']} />
-                      <Bar dataKey="totalAmount">
-                        {Array.isArray(hsnReports) && hsnReports.map((entry, index) => (
+                      <Tooltip formatter={(value) => [`₹${value}`, 'Sales']} />
+                      <Line type="monotone" dataKey="totalSales" stroke="#10b981" strokeWidth={3} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Top Products by Quantity</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={topProducts}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="productName" />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="totalQuantity">
+                        {Array.isArray(topProducts) && topProducts.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={LIGHT_COLORS[index % LIGHT_COLORS.length]} />
                         ))}
                       </Bar>
@@ -653,103 +805,46 @@ export default function Reports() {
                 </CardContent>
               </Card>
 
-              {/* HSN Tax Distribution */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Percent className="h-5 w-5" />
-                    HSN Tax Distribution
-                  </CardTitle>
+                  <CardTitle>Inventory Movement</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
                     <PieChart>
                       <Pie
-                        data={Array.isArray(hsnReports) ? 
-                          hsnReports
-                            .sort((a, b) => b.totalTax - a.totalTax)
-                            .slice(0, 8)
-                            .map(hsn => ({ name: hsn.hsn, value: hsn.totalTax, productName: hsn.productName }))
-                          : []
-                        }
+                        data={inventoryMovement}
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        label={({ productName, percent }) => `${productName} ${(percent * 100).toFixed(0)}%`}
                         outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
+                        fill="#22d3ee"
+                        dataKey="quantityMoved"
                       >
-                        {Array.isArray(hsnReports) && hsnReports.slice(0, 8).map((entry, index) => (
+                        {Array.isArray(inventoryMovement) && inventoryMovement.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={LIGHT_COLORS[index % LIGHT_COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value) => [`₹${Number(value).toFixed(2)}`, 'Tax Amount']} />
+                      <Tooltip />
                     </PieChart>
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
 
-              {/* Quantity Distribution */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Top HSN by Quantity</CardTitle>
+                  <CardTitle>Product Discounts</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart 
-                      data={Array.isArray(hsnReports) ? 
-                        hsnReports
-                          .sort((a, b) => b.totalQuantity - a.totalQuantity)
-                          .slice(0, 10)
-                        : []
-                      }
-                    >
+                    <BarChart data={discountSummary}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="hsn" 
-                        angle={-45}
-                        textAnchor="end"
-                        height={80}
-                      />
+                      <XAxis dataKey="productName" />
                       <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="totalQuantity" fill="#10b981">
-                        {Array.isArray(hsnReports) && hsnReports.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={LIGHT_COLORS[index % LIGHT_COLORS.length]} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-
-              {/* Final Amount Chart */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Final Amount by HSN Code</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart 
-                      data={Array.isArray(hsnReports) ? 
-                        hsnReports
-                          .sort((a, b) => b.finalAmount - a.finalAmount)
-                          .slice(0, 10)
-                        : []
-                      }
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="hsn" 
-                        angle={-45}
-                        textAnchor="end"
-                        height={80}
-                      />
-                      <YAxis />
-                      <Tooltip formatter={(value) => [`₹${Number(value).toFixed(2)}`, 'Final Amount']} />
-                      <Bar dataKey="finalAmount" fill="#f59e0b">
-                        {Array.isArray(hsnReports) && hsnReports.map((entry, index) => (
+                      <Tooltip formatter={(value) => [`₹${value}`, 'Discount']} />
+                      <Bar dataKey="discount">
+                        {Array.isArray(discountSummary) && discountSummary.map((entry: any, index: number) => (
                           <Cell key={`cell-${index}`} fill={LIGHT_COLORS[index % LIGHT_COLORS.length]} />
                         ))}
                       </Bar>
@@ -759,193 +854,88 @@ export default function Reports() {
               </Card>
             </div>
 
-            {/* HSN Details Table */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
-                    HSN Code Report
-                  </span>
-                  <Badge variant="outline">
-                    {hsnReportDateRange.from} to {hsnReportDateRange.to}
-                  </Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Top Products Details</CardTitle>
+                </CardHeader>
+                <CardContent>
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>HSN Code</TableHead>
                         <TableHead>Product Name</TableHead>
-                        <TableHead className="text-right">Total Quantity</TableHead>
-                        <TableHead className="text-right">Total Amount</TableHead>
-                        <TableHead className="text-right">Tax %</TableHead>
-                        <TableHead className="text-right">Total Tax</TableHead>
-                        <TableHead className="text-right">Final Amount</TableHead>
+                        <TableHead className="text-right">Quantity Sold</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {paginatedHsnReports.length > 0 ? (
-                        paginatedHsnReports.map((hsn, index) => (
-                          <TableRow key={`${hsn.hsn}-${index}`} className="hover:bg-gray-50">
-                            <TableCell className="font-medium">
-                              <Badge variant="outline">{hsn.hsn}</Badge>
-                            </TableCell>
-                            <TableCell>{hsn.productName}</TableCell>
-                            <TableCell className="text-right">{hsn.totalQuantity.toFixed(2)}</TableCell>
-                            <TableCell className="text-right font-semibold">
-                              ₹{hsn.totalAmount.toFixed(2)}
-                            </TableCell>
-                            <TableCell className="text-right">{hsn.taxRate.toFixed(2)}%</TableCell>
-                            <TableCell className="text-right">₹{hsn.totalTax.toFixed(2)}</TableCell>
-                            <TableCell className="text-right font-semibold text-green-600">
-                              ₹{hsn.finalAmount.toFixed(2)}
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
+                      {Array.isArray(topProducts) && topProducts.map((product, index) => (
+                        <TableRow key={index} className="hover:bg-teal-50">
+                          <TableCell className="font-medium text-gray-700">{product.productName}</TableCell>
+                          <TableCell className="text-right font-semibold text-teal-600">{product.totalQuantity}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Top Customers</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Customer</TableHead>
+                        <TableHead className="text-right">Value</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {Array.isArray(topCustomers) && topCustomers.length > 0 ? topCustomers.map((customer, index) => (
+                        <TableRow key={index} className="hover:bg-sky-50">
+                          <TableCell className="font-medium text-gray-700">{customer.name || 'N/A'}</TableCell>
+                          <TableCell className="text-right font-semibold text-sky-600">{customer.value || '0'}</TableCell>
+                        </TableRow>
+                      )) : (
                         <TableRow>
-                          <TableCell colSpan={7} className="text-center text-gray-500 py-8">
-                            No HSN data available for the selected date range
+                          <TableCell colSpan={2} className="text-center text-muted-foreground">
+                            No customer data available
                           </TableCell>
                         </TableRow>
                       )}
                     </TableBody>
                   </Table>
-                </div>
-                
-                {/* HSN Pagination */}
-                {totalHsnRecords > 0 && (
-                  <div className="flex items-center justify-between px-2 py-4">
-                    <div className="flex items-center space-x-2">
-                      <p className="text-sm text-gray-700">
-                        Showing {(hsnReportsPage - 1) * hsnReportsPerPage + 1} to{' '}
-                        {Math.min(hsnReportsPage * hsnReportsPerPage, totalHsnRecords)} of{' '}
-                        {totalHsnRecords} HSN records
-                      </p>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="flex items-center space-x-2">
-                        <p className="text-sm text-gray-700">Rows per page:</p>
-                        <Select value={hsnReportsPerPage.toString()} onValueChange={(value) => {
-                          setHsnReportsPerPage(parseInt(value));
-                          setHsnReportsPage(1);
-                        }}>
-                          <SelectTrigger className="w-16">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="5">5</SelectItem>
-                            <SelectItem value="10">10</SelectItem>
-                            <SelectItem value="20">20</SelectItem>
-                            <SelectItem value="50">50</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setHsnReportsPage(1)}
-                          disabled={hsnReportsPage === 1}
-                        >
-                          First
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setHsnReportsPage(hsnReportsPage - 1)}
-                          disabled={hsnReportsPage === 1}
-                        >
-                          Previous
-                        </Button>
-                        <div className="flex items-center space-x-1">
-                          <Input
-                            className="w-12 text-center"
-                            value={hsnReportsPage}
-                            onChange={(e) => {
-                              const page = parseInt(e.target.value);
-                              if (page >= 1 && page <= totalHsnPages) {
-                                setHsnReportsPage(page);
-                              }
-                            }}
-                          />
-                          <span className="text-sm text-gray-700">of {totalHsnPages}</span>
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setHsnReportsPage(hsnReportsPage + 1)}
-                          disabled={hsnReportsPage === totalHsnPages}
-                        >
-                          Next
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setHsnReportsPage(totalHsnPages)}
-                          disabled={hsnReportsPage === totalHsnPages}
-                        >
-                          Last
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </>
-        ) : activeTab === 'customers' ? (
-          <>
-            {/* Customer Analytics Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Customer Type Distribution */}
+                </CardContent>
+              </Card>
+            </div>
+
+            {Array.isArray(deadstock) && deadstock.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    Customer Type Distribution
+                  <CardTitle className="flex items-center gap-2 text-red-400">
+                    <AlertTriangle className="h-5 w-5" />
+                    Deadstock Alert
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={Array.isArray(customerReports) ? 
-                          Object.entries(
-                            customerReports.reduce((acc: { [key: string]: number }, customer) => {
-                              acc[customer.customerType] = (acc[customer.customerType] || 0) + 1;
-                              return acc;
-                            }, {})
-                          ).map(([type, count]) => ({ name: type, value: count }))
-                          : []
-                        }
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                      >
-                        {Array.isArray(customerReports) && Object.entries(
-                          customerReports.reduce((acc: { [key: string]: number }, customer) => {
-                            acc[customer.customerType] = (acc[customer.customerType] || 0) + 1;
-                            return acc;
-                          }, {})
-                        ).map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={LIGHT_COLORS[index % LIGHT_COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {Array.isArray(deadstock) && deadstock.map((item, index) => (
+                      <Badge key={index} className="p-2 bg-red-100 text-red-600 hover:bg-red-200">
+                        {item.productName || `Item ${index + 1}`}
+                      </Badge>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
-
-              {/* Top Customers by Purchase Value */}
+            )}
+          </>
+        );
+      
+      case 'customers':
+        return (
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
                   <CardTitle>Top Customers by Purchase Value</CardTitle>
@@ -980,7 +970,6 @@ export default function Reports() {
                 </CardContent>
               </Card>
 
-              {/* Customer Bills Comparison */}
               <Card>
                 <CardHeader>
                   <CardTitle>Customer Bills Comparison</CardTitle>
@@ -1015,7 +1004,6 @@ export default function Reports() {
                 </CardContent>
               </Card>
 
-              {/* Average Bill Value Chart */}
               <Card>
                 <CardHeader>
                   <CardTitle>Average Bill Value by Customer</CardTitle>
@@ -1051,7 +1039,6 @@ export default function Reports() {
               </Card>
             </div>
 
-            {/* Customer Details Table */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
@@ -1119,7 +1106,6 @@ export default function Reports() {
                   </Table>
                 </div>
                 
-                {/* Customer Details Pagination */}
                 {totalCustomers > 0 && (
                   <div className="flex items-center justify-between px-2 py-4">
                     <div className="flex items-center space-x-2">
@@ -1200,7 +1186,6 @@ export default function Reports() {
               </CardContent>
             </Card>
 
-            {/* Top Products by Customer */}
             {topProductsData.length > 0 && (
               <Card>
                 <CardHeader>
@@ -1252,7 +1237,6 @@ export default function Reports() {
                     </Table>
                   </div>
                   
-                  {/* Top Products Pagination */}
                   {topProductsData.length > 0 && (
                     <div className="flex items-center justify-between px-2 py-4">
                       <div className="flex items-center space-x-2">
@@ -1334,211 +1318,785 @@ export default function Reports() {
               </Card>
             )}
           </>
-        ) : (
+        );
+      
+      case 'hsn':
+        return (
           <>
-            {/* Business Reports Content (existing content) */}
-            {/* Time Insights */}
-            {timeInsights && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                Time Insights
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-teal-400">{timeInsights.peakHour}:00</div>
-                  <p className="text-sm text-muted-foreground">Peak Hour</p>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-cyan-400">{timeInsights.bestDay}</div>
-                  <p className="text-sm text-muted-foreground">Best Day</p>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-sky-400">{timeInsights.worstDay}</div>
-                  <p className="text-sm text-muted-foreground">Worst Day</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5" />
+                    Top HSN by Total Amount
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart 
+                      data={Array.isArray(hsnReports) ? 
+                        hsnReports
+                          .sort((a, b) => b.totalAmount - a.totalAmount)
+                          .slice(0, 10)
+                        : []
+                      }
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey="hsn" 
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                      />
+                      <YAxis />
+                      <Tooltip formatter={(value) => [`₹${Number(value).toFixed(2)}`, 'Total Amount']} />
+                      <Bar dataKey="totalAmount">
+                        {Array.isArray(hsnReports) && hsnReports.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={LIGHT_COLORS[index % LIGHT_COLORS.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
 
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Sales Trend */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Sales Trend</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={salesSummary}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="period" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => [`₹${value}`, 'Sales']} />
-                  <Line type="monotone" dataKey="totalSales" stroke="#10b981" strokeWidth={3} />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Percent className="h-5 w-5" />
+                    HSN Tax Distribution
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={Array.isArray(hsnReports) ? 
+                          hsnReports
+                            .sort((a, b) => b.totalTax - a.totalTax)
+                            .slice(0, 8)
+                            .map(hsn => ({ name: hsn.hsn, value: hsn.totalTax, productName: hsn.productName }))
+                          : []
+                        }
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {Array.isArray(hsnReports) && hsnReports.slice(0, 8).map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={LIGHT_COLORS[index % LIGHT_COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value) => [`₹${Number(value).toFixed(2)}`, 'Tax Amount']} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
 
-          {/* Top Products */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Top Products by Quantity</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={topProducts}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="productName" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="totalQuantity">
-                    {Array.isArray(topProducts) && topProducts.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={LIGHT_COLORS[index % LIGHT_COLORS.length]} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Top HSN by Quantity</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart 
+                      data={Array.isArray(hsnReports) ? 
+                        hsnReports
+                          .sort((a, b) => b.totalQuantity - a.totalQuantity)
+                          .slice(0, 10)
+                        : []
+                      }
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey="hsn" 
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                      />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="totalQuantity" fill="#10b981">
+                        {Array.isArray(hsnReports) && hsnReports.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={LIGHT_COLORS[index % LIGHT_COLORS.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
 
-          {/* Inventory Movement */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Inventory Movement</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={inventoryMovement}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ productName, percent }) => `${productName} ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#22d3ee"
-                    dataKey="quantityMoved"
-                  >
-                    {Array.isArray(inventoryMovement) && inventoryMovement.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={LIGHT_COLORS[index % LIGHT_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Final Amount by HSN Code</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart 
+                      data={Array.isArray(hsnReports) ? 
+                        hsnReports
+                          .sort((a, b) => b.finalAmount - a.finalAmount)
+                          .slice(0, 10)
+                        : []
+                      }
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey="hsn" 
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                      />
+                      <YAxis />
+                      <Tooltip formatter={(value) => [`₹${Number(value).toFixed(2)}`, 'Final Amount']} />
+                      <Bar dataKey="finalAmount" fill="#f59e0b">
+                        {Array.isArray(hsnReports) && hsnReports.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={LIGHT_COLORS[index % LIGHT_COLORS.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
 
-          {/* Discount Summary */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Product Discounts</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={discountSummary}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="productName" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => [`₹${value}`, 'Discount']} />
-                  <Bar dataKey="discount">
-                    {Array.isArray(discountSummary) && discountSummary.map((entry: any, index: number) => (
-                      <Cell key={`cell-${index}`} fill="#FCA36B" />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Data Tables */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Top Products Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Top Products Details</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Product Name</TableHead>
-                    <TableHead className="text-right">Quantity Sold</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {Array.isArray(topProducts) && topProducts.map((product, index) => (
-                    <TableRow key={index} className="hover:bg-teal-50">
-                      <TableCell className="font-medium text-gray-700">{product.productName}</TableCell>
-                      <TableCell className="text-right font-semibold text-teal-600">{product.totalQuantity}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-
-          {/* Top Customers Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Top Customers</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Customer</TableHead>
-                    <TableHead className="text-right">Value</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {Array.isArray(topCustomers) && topCustomers.length > 0 ? topCustomers.map((customer, index) => (
-                    <TableRow key={index} className="hover:bg-sky-50">
-                      <TableCell className="font-medium text-gray-700">{customer.name || 'N/A'}</TableCell>
-                      <TableCell className="text-right font-semibold text-sky-600">{customer.value || '0'}</TableCell>
-                    </TableRow>
-                  )) : (
-                    <TableRow>
-                      <TableCell colSpan={2} className="text-center text-muted-foreground">
-                        No customer data available
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Deadstock Alert */}
-        {Array.isArray(deadstock) && deadstock.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-red-400">
-                <AlertTriangle className="h-5 w-5" />
-                Deadstock Alert
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {Array.isArray(deadstock) && deadstock.map((item, index) => (
-                  <Badge key={index} className="p-2 bg-red-100 text-red-600 hover:bg-red-200">
-                    {item.productName || `Item ${index + 1}`}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    HSN Code Report
+                  </span>
+                  <Badge variant="outline">
+                    {hsnReportDateRange.from} to {hsnReportDateRange.to}
                   </Badge>
-                ))}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>HSN Code</TableHead>
+                        <TableHead>Product Name</TableHead>
+                        <TableHead className="text-right">Total Quantity</TableHead>
+                        <TableHead className="text-right">Total Amount</TableHead>
+                        <TableHead className="text-right">Tax %</TableHead>
+                        <TableHead className="text-right">Total Tax</TableHead>
+                        <TableHead className="text-right">Final Amount</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedHsnReports.length > 0 ? (
+                        paginatedHsnReports.map((hsn, index) => (
+                          <TableRow key={`${hsn.hsn}-${index}`} className="hover:bg-gray-50">
+                            <TableCell className="font-medium">
+                              <Badge variant="outline">{hsn.hsn}</Badge>
+                            </TableCell>
+                            <TableCell>{hsn.productName}</TableCell>
+                            <TableCell className="text-right">{hsn.totalQuantity.toFixed(2)}</TableCell>
+                            <TableCell className="text-right">₹{hsn.totalAmount.toFixed(2)}</TableCell>
+                            <TableCell className="text-right">{hsn.taxRate}%</TableCell>
+                            <TableCell className="text-right">₹{hsn.totalTax.toFixed(2)}</TableCell>
+                            <TableCell className="text-right font-semibold">₹{hsn.finalAmount.toFixed(2)}</TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={7} className="text-center text-gray-500 py-8">
+                            No HSN data available for the selected date range
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+                
+                {totalHsnRecords > 0 && (
+                  <div className="flex items-center justify-between px-2 py-4">
+                    <div className="flex items-center space-x-2">
+                      <p className="text-sm text-gray-700">
+                        Showing {(hsnReportsPage - 1) * hsnReportsPerPage + 1} to{' '}
+                        {Math.min(hsnReportsPage * hsnReportsPerPage, totalHsnRecords)} of{' '}
+                        {totalHsnRecords} records
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2">
+                        <p className="text-sm text-gray-700">Rows per page:</p>
+                        <Select value={hsnReportsPerPage.toString()} onValueChange={(value) => {
+                          setHsnReportsPerPage(parseInt(value));
+                          setHsnReportsPage(1);
+                        }}>
+                          <SelectTrigger className="w-16">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="5">5</SelectItem>
+                            <SelectItem value="10">10</SelectItem>
+                            <SelectItem value="20">20</SelectItem>
+                            <SelectItem value="50">50</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setHsnReportsPage(1)}
+                          disabled={hsnReportsPage === 1}
+                        >
+                          First
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setHsnReportsPage(hsnReportsPage - 1)}
+                          disabled={hsnReportsPage === 1}
+                        >
+                          Previous
+                        </Button>
+                        <div className="flex items-center space-x-1">
+                          <Input
+                            className="w-12 text-center"
+                            value={hsnReportsPage}
+                            onChange={(e) => {
+                              const page = parseInt(e.target.value);
+                              if (page >= 1 && page <= totalHsnPages) {
+                                setHsnReportsPage(page);
+                              }
+                            }}
+                          />
+                          <span className="text-sm text-gray-700">of {totalHsnPages}</span>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setHsnReportsPage(hsnReportsPage + 1)}
+                          disabled={hsnReportsPage === totalHsnPages}
+                        >
+                          Next
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setHsnReportsPage(totalHsnPages)}
+                          disabled={hsnReportsPage === totalHsnPages}
+                        >
+                          Last
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </>
+        );
+      
+      case 'sales':
+        return (
+          <>
+            {isSalesReportLoading ? (
+              <div className="flex justify-center items-center py-12">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+                  <p className="mt-4 text-gray-600">Loading sales report...</p>
+                </div>
               </div>
-            </CardContent>
-          </Card>
+            ) : salesReportData && salesData.length > 0 ? (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-green-700">
+                        <DollarSign className="h-5 w-5" />
+                        Total Revenue
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-3xl font-bold text-green-600">₹{salesReportData.totalFinalAmount.toFixed(2)}</p>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-orange-700">
+                        <Percent className="h-5 w-5" />
+                        Total Tax
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-3xl font-bold text-orange-600">₹{salesReportData.totalTax.toFixed(2)}</p>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-blue-700">
+                        <FileText className="h-5 w-5" />
+                        Invoice Count
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-3xl font-bold text-blue-600">{salesReportData.invoiceCount}</p>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-purple-700">
+                        <TrendingUp className="h-5 w-5" />
+                        Avg Invoice Value
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-3xl font-bold text-purple-600">
+                        ₹{(salesReportData.totalFinalAmount / salesReportData.invoiceCount).toFixed(2)}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <CreditCard className="h-5 w-5" />
+                        Payment Status Distribution
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <PieChart>
+                          <Pie
+                            data={paymentStatusData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={({ name, value }) => `${name}: ${value}`}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                          >
+                            {paymentStatusData.map((entry, index) => (
+                              <Cell 
+                                key={`cell-${index}`} 
+                                fill={entry.name === 'PAID' ? '#10b981' : entry.name === 'PENDING' ? '#f59e0b' : '#ef4444'} 
+                              />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <BarChart3 className="h-5 w-5" />
+                        Top 5 Sales
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <BarChart 
+                          data={salesData.slice().sort((a: any, b: any) => b.finalAmount - a.finalAmount).slice(0, 5)}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis 
+                            dataKey="invoiceNo" 
+                            angle={-45}
+                            textAnchor="end"
+                            height={80}
+                          />
+                          <YAxis />
+                          <Tooltip formatter={(value) => [`₹${Number(value).toFixed(2)}`, 'Amount']} />
+                          <Bar dataKey="finalAmount">
+                            {salesData.slice(0, 5).map((entry: any, index: number) => (
+                              <Cell key={`cell-${index}`} fill={LIGHT_COLORS[index % LIGHT_COLORS.length]} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      Sales Details
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Invoice No</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Customer</TableHead>
+                            <TableHead className="text-right">Total Amount</TableHead>
+                            <TableHead className="text-right">Tax</TableHead>
+                            <TableHead className="text-right">Final Amount</TableHead>
+                            <TableHead>Status</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {paginatedSalesData.map((sale: any, index: number) => (
+                            <TableRow key={index} className="hover:bg-gray-50">
+                              <TableCell className="font-medium">{sale.invoiceNo}</TableCell>
+                              <TableCell>{new Date(sale.saleDate).toLocaleDateString()}</TableCell>
+                              <TableCell>{sale.customerName}</TableCell>
+                              <TableCell className="text-right">₹{sale.totalAmount.toFixed(2)}</TableCell>
+                              <TableCell className="text-right">₹{sale.tax.toFixed(2)}</TableCell>
+                              <TableCell className="text-right font-semibold">₹{sale.finalAmount.toFixed(2)}</TableCell>
+                              <TableCell>
+                                <Badge 
+                                  variant={
+                                    sale.paymentStatus === 'PAID' ? 'default' : 
+                                    sale.paymentStatus === 'PENDING' ? 'secondary' : 
+                                    'destructive'
+                                  }
+                                >
+                                  {sale.paymentStatus}
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+
+                    {totalSalesRecords > 0 && (
+                      <div className="flex items-center justify-between px-2 py-4">
+                        <div className="flex items-center space-x-2">
+                          <p className="text-sm text-gray-700">
+                            Showing {(salesReportPage - 1) * salesReportPerPage + 1} to{' '}
+                            {Math.min(salesReportPage * salesReportPerPage, totalSalesRecords)} of{' '}
+                            {totalSalesRecords} sales
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-2">
+                            <p className="text-sm text-gray-700">Rows per page:</p>
+                            <Select value={salesReportPerPage.toString()} onValueChange={(value) => {
+                              setSalesReportPerPage(parseInt(value));
+                              setSalesReportPage(1);
+                            }}>
+                              <SelectTrigger className="w-16">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="5">5</SelectItem>
+                                <SelectItem value="10">10</SelectItem>
+                                <SelectItem value="20">20</SelectItem>
+                                <SelectItem value="50">50</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setSalesReportPage(1)}
+                              disabled={salesReportPage === 1}
+                            >
+                              First
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setSalesReportPage(salesReportPage - 1)}
+                              disabled={salesReportPage === 1}
+                            >
+                              Previous
+                            </Button>
+                            <div className="flex items-center space-x-1">
+                              <Input
+                                className="w-12 text-center"
+                                value={salesReportPage}
+                                onChange={(e) => {
+                                  const page = parseInt(e.target.value);
+                                  if (page >= 1 && page <= totalSalesPages) {
+                                    setSalesReportPage(page);
+                                  }
+                                }}
+                              />
+                              <span className="text-sm text-gray-700">of {totalSalesPages}</span>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setSalesReportPage(salesReportPage + 1)}
+                              disabled={salesReportPage === totalSalesPages}
+                            >
+                              Next
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setSalesReportPage(totalSalesPages)}
+                              disabled={salesReportPage === totalSalesPages}
+                            >
+                              Last
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </>
+            ) : (
+              <Card>
+                <CardContent className="py-12">
+                  <div className="text-center text-gray-500">
+                    <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                    <p>No sales data available for the selected date range</p>
+                  </div>
+                </CardContent>
+              </Card>
             )}
           </>
-        )}
+        );
+      
+      default:
+        return null;
+    }
+  };
+
+  if (!Array.isArray(shops) || shops.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="max-w-7xl mx-auto">
+          <Card className="max-w-md mx-auto mt-20">
+            <CardHeader>
+              <CardTitle className="text-center flex items-center justify-center gap-2">
+                <Store className="h-6 w-6" />
+                No Shops Available
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+              <p className="text-gray-600">
+                You need to add shops before viewing reports.
+              </p>
+              <Link href="/dashboard">
+                <Button className="w-full">
+                  Go to Dashboard
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (!selectedShopId) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="max-w-7xl mx-auto">
+          <Card className="max-w-md mx-auto mt-20">
+            <CardHeader>
+              <CardTitle className="text-center">Select a Shop</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Select onValueChange={(value) => setSelectedShopId(parseInt(value))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a shop to view reports" />
+                </SelectTrigger>
+                <SelectContent>
+                  {shops.map((shop) => (
+                    <SelectItem key={shop.shopId} value={shop.shopId.toString()}>
+                      {shop.name} - {shop.place}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Tab Selector - Moved to top */}
+        <div className="flex justify-center mb-4">
+          <div className="flex flex-wrap rounded-lg bg-gray-100 p-2 gap-2 shadow-md">
+            <Button
+              variant={activeTab === 'business' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveTab('business')}
+              className="rounded-md px-6 py-2 min-w-[140px] shadow-sm"
+              data-testid="tab-business-reports"
+            >
+              <Store className="h-4 w-4 mr-2" />
+              Business Reports
+            </Button>
+            <Button
+              variant={activeTab === 'customers' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveTab('customers')}
+              className="rounded-md px-6 py-2 min-w-[140px] shadow-sm"
+              data-testid="tab-customer-reports"
+            >
+              <Users className="h-4 w-4 mr-2" />
+              Customer Reports
+            </Button>
+            <Button
+              variant={activeTab === 'hsn' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveTab('hsn')}
+              className="rounded-md px-6 py-2 min-w-[140px] shadow-sm"
+              data-testid="tab-hsn-reports"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              HSN Reports
+            </Button>
+            <Button
+              variant={activeTab === 'sales' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveTab('sales')}
+              className="rounded-md px-6 py-2 min-w-[140px] shadow-sm"
+              data-testid="tab-sales-reports"
+            >
+              <BarChart3 className="h-4 w-4 mr-2" />
+              Sales Report
+            </Button>
+          </div>
+        </div>
+
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Reports Dashboard</h1>
+            <p className="text-gray-600 mt-1">
+              {activeTab === 'business' 
+                ? `Analytics and insights for ${selectedShop?.name} - ${selectedShop?.place}`
+                : activeTab === 'customers'
+                ? 'Customer analytics and insights'
+                : activeTab === 'hsn'
+                ? 'HSN code analytics and insights'
+                : 'Comprehensive sales and invoice reports'
+              }
+            </p>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row gap-3">
+            {/* Shop Selector - Only for Business Reports */}
+            {activeTab === 'business' && (
+              <Select value={selectedShopId?.toString()} onValueChange={(value) => setSelectedShopId(parseInt(value))}>
+                <SelectTrigger className="w-full sm:w-64">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.isArray(shops) && shops.map((shop) => (
+                    <SelectItem key={shop.shopId} value={shop.shopId.toString()}>
+                      {shop.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            
+            {/* Date Range Selectors */}
+            <div className="flex gap-2">
+              <Input
+                type="date"
+                value={
+                  activeTab === 'business' ? dateRange.from :
+                  activeTab === 'customers' ? customerReportDateRange.from :
+                  activeTab === 'hsn' ? hsnReportDateRange.from :
+                  salesReportDateRange.from
+                }
+                onChange={(e) => {
+                  if (activeTab === 'business') {
+                    setDateRange(prev => ({ ...prev, from: e.target.value }));
+                  } else if (activeTab === 'customers') {
+                    setCustomerReportDateRange(prev => ({ ...prev, from: e.target.value }));
+                  } else if (activeTab === 'hsn') {
+                    setHsnReportDateRange(prev => ({ ...prev, from: e.target.value }));
+                  } else {
+                    setSalesReportDateRange(prev => ({ ...prev, from: e.target.value }));
+                  }
+                }}
+                className="w-36"
+              />
+              <Input
+                type="date"
+                value={
+                  activeTab === 'business' ? dateRange.to :
+                  activeTab === 'customers' ? customerReportDateRange.to :
+                  activeTab === 'hsn' ? hsnReportDateRange.to :
+                  salesReportDateRange.to
+                }
+                onChange={(e) => {
+                  if (activeTab === 'business') {
+                    setDateRange(prev => ({ ...prev, to: e.target.value }));
+                  } else if (activeTab === 'customers') {
+                    setCustomerReportDateRange(prev => ({ ...prev, to: e.target.value }));
+                  } else if (activeTab === 'hsn') {
+                    setHsnReportDateRange(prev => ({ ...prev, to: e.target.value }));
+                  } else {
+                    setSalesReportDateRange(prev => ({ ...prev, to: e.target.value }));
+                  }
+                }}
+                className="w-36"
+              />
+            </div>
+
+            {/* Export Button for Customer Reports */}
+            {activeTab === 'customers' && (
+              <Button 
+                onClick={exportCustomerReportsToExcel}
+                className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+              >
+                <Download className="h-4 w-4" />
+                Export Excel
+              </Button>
+            )}
+            
+            {/* Export Button for HSN Reports */}
+            {activeTab === 'hsn' && (
+              <Button 
+                onClick={exportHsnReportsToExcel}
+                className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+                data-testid="button-export-hsn-excel"
+              >
+                <Download className="h-4 w-4" />
+                Export Excel
+              </Button>
+            )}
+            
+            {/* PDF Download Button for Sales Report */}
+            {activeTab === 'sales' && (
+              <Button 
+                onClick={downloadSalesReportPDF}
+                className="flex items-center gap-2 bg-red-600 hover:bg-red-700"
+                data-testid="button-download-sales-pdf"
+              >
+                <FileText className="h-4 w-4" />
+                Download PDF
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Overview Cards */}
+        {renderOverviewCards()}
+
+        {/* Tab Content */}
+        {renderTabContent()}
       </div>
     </div>
   );

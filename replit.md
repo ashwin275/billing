@@ -121,4 +121,46 @@ A React-based frontend-only invoice management dashboard that connects to extern
   - Prevented page breaks within billing section, totals, and terms & conditions
   - Fixed alignment issues when invoice spans multiple pages
   - Improved spacing between invoice sections
+- Added dedicated API endpoints for dashboard statistics (November 23, 2025):
+  - Integrated `/invoice/count` API endpoint to get total invoice count
+  - Integrated `/invoice/total-amount` API endpoint to get total revenue
+  - Updated dashboard to use dedicated APIs instead of calculating from all invoices on frontend
+  - Improved dashboard performance by fetching only required statistics
+  - Total Revenue and Total Invoices now come from backend APIs
+- Added comprehensive Sales/Invoice Report feature (November 23, 2025):
+  - Integrated `/sales/report` API endpoint with date range filtering
+  - Created new Sales Report Dialog component with professional design
+  - Added as a separate top-level "Sales Report" tab on Reports page (alongside Business, Customer, and HSN Reports)
+  - Refactored Reports page to use helper functions with switch statements for cleaner code and better maintainability
+  - Features included:
+    * Summary cards showing Total Revenue, Total Tax, and Invoice Count
+    * Payment Status Pie Chart showing distribution of Paid/Pending/Overdue invoices
+    * Top 5 Sales Bar Chart displaying highest value invoices
+    * Detailed sales table with invoice number, date, customer, amounts, tax, and payment status
+    * Excel export functionality with summary and detailed sales sheets
+    * Professional PDF download with A4 layout, color-coded summary cards, and complete sales table
+    * PDF includes gradient header, status badges, and print-optimized styling
+  - Sales report provides comprehensive analytics for invoice performance tracking
+- Refactored Sales Report tab to auto-load data (November 23, 2025):
+  - Removed welcome page from Sales Report tab - now directly displays sales data on tab click
+  - Sales report data automatically loads based on date range (similar to Business, Customer, and HSN reports)
+  - Added date range picker in header for Sales Report (previously hidden)
+  - Removed Excel export functionality from Sales Report (kept for other report types)
+  - PDF download still available for Sales Report
+  - Improved user experience - no extra click needed to view sales data
+  - Sales report now integrates seamlessly with other report tabs
+  - Removed SalesReportDialog component dependency from Reports page
+- Added professional PDF download for Sales Report (November 23, 2025):
+  - Implemented PDF generation with proper A4 page formatting
+  - PDF includes gradient header with clean report title only
+  - Summary cards showing Total Revenue, Total Tax, Total Invoices, and Average Invoice Value
+  - Complete sales table with invoice details, amounts, tax, and payment status
+  - Color-coded payment status badges (Paid/Pending/Overdue)
+  - Proper margins (15mm top/bottom, 10mm left/right) for A4 paper
+  - Consistent padding and spacing throughout the document
+  - Right-aligned numeric columns for better readability
+  - Page break handling for multi-page reports
+  - Print-optimized styling with professional appearance
+  - Clean PDF without extra footer text or timestamp information
+  - Download PDF button in red color for easy identification
 - Application successfully running on Replit with all features functional

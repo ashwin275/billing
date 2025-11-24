@@ -365,6 +365,20 @@ export const invoicesApi = {
   async searchByPartNumber(partNumber: string): Promise<import("@/types/api").Invoice[]> {
     return apiRequest(`/invoice/partno/${encodeURIComponent(partNumber)}`);
   },
+
+  /**
+   * Get total invoice count
+   */
+  async getInvoiceCount(): Promise<{ totalInvoices: number }> {
+    return apiRequest('/invoice/count');
+  },
+
+  /**
+   * Get total invoice amount
+   */
+  async getTotalAmount(): Promise<{ totalAmount: number }> {
+    return apiRequest('/invoice/total-amount');
+  },
 };
 
 /**
@@ -533,6 +547,13 @@ export const reportsApi = {
    */
   async getHsnReport(hsn: string, from: string, to: string): Promise<import("@/types/api").HsnReport> {
     return await apiRequest(`/reports/hsn/${encodeURIComponent(hsn)}?from=${from}&to=${to}`);
+  },
+
+  /**
+   * Get sales/invoice report for a date range
+   */
+  async getSalesReport(startDate: string, endDate: string): Promise<import("@/types/api").SalesReport> {
+    return await apiRequest(`/sales/report?startDate=${startDate}&endDate=${endDate}`);
   },
 };
 

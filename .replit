@@ -15,12 +15,20 @@ localPort = 5000
 externalPort = 80
 
 [[ports]]
-localPort = 5001
+localPort = 5002
+externalPort = 3001
+
+[[ports]]
+localPort = 38243
 externalPort = 3000
 
 [[ports]]
-localPort = 5002
-externalPort = 3001
+localPort = 38499
+externalPort = 3002
+
+[[ports]]
+localPort = 39907
+externalPort = 3003
 
 [workflows]
 runButton = "Project"
@@ -38,10 +46,18 @@ args = "Start application"
 name = "Start application"
 author = "agent"
 
+[workflows.workflow.metadata]
+outputType = "webview"
+
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run dev"
+args = "npx vite --config vite.config.dev.ts --host 0.0.0.0 --port 5000"
 waitForPort = 5000
 
 [agent]
 expertMode = true
+
+[userenv]
+
+[userenv.shared]
+VITE_API_BASE_URL = "https://billing-backend.serins.in/api"
