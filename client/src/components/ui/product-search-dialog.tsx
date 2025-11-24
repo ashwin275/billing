@@ -509,6 +509,13 @@ export function ProductSearchDialog({
                 </TableBody>
               </Table>
             </div>
+            
+            {/* Product count info */}
+            {filteredProducts.length < products.length && (
+              <div className="px-4 py-2 border-t text-sm text-muted-foreground">
+                Showing {filteredProducts.length} of {products.length} products (filtered)
+              </div>
+            )}
           </div>
 
           {/* Selected Items Side */}

@@ -93,12 +93,17 @@ export default function CreateInvoice() {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [selectedShop, setSelectedShop] = useState<Shop | null>(null);
   const [autoRoundOff, setAutoRoundOff] = useState(false);
-
-  // Fetch data
-  const { data: products = [] } = useQuery({
-    queryKey: ["/api/products/all"],
-    queryFn: () => productsApi.getAllProducts(),
+  
+  // Fetch products - use high page size to get all products at once for invoice creation
+  // This ensures all selected products remain available for calculations across the dialog
+  const { data: productsResponse } = useQuery({
+    queryKey: ["/api/products/paginated", 0, 1000], // Fetch up to 1000 products
+    queryFn: () => productsApi.getPaginatedProducts(0, 1000),
   });
+  
+  // Extract products from paginated response
+  const products = productsResponse?.content || [];
+  const totalProducts = productsResponse?.totalElements || 0;
 
   const { data: customers = [] } = useQuery({
     queryKey: ["/api/customers/all"],
