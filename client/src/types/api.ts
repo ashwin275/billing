@@ -85,6 +85,35 @@ export interface Product {
   sgst: number;
 }
 
+export interface PaginatedProductsResponse {
+  content: Product[];
+  pageable: {
+    pageNumber: number;
+    pageSize: number;
+    sort: {
+      sorted: boolean;
+      empty: boolean;
+      unsorted: boolean;
+    };
+    offset: number;
+    unpaged: boolean;
+    paged: boolean;
+  };
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
+  size: number;
+  number: number;
+  sort: {
+    sorted: boolean;
+    empty: boolean;
+    unsorted: boolean;
+  };
+  numberOfElements: number;
+  first: boolean;
+  empty: boolean;
+}
+
 export interface ProductInput {
   name: string;
   productNumber?: string; // Backend expects productNumber instead of partNumber
