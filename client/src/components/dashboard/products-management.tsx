@@ -105,6 +105,10 @@ export default function ProductsManagement() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [isHsnReportDialogOpen, setIsHsnReportDialogOpen] = useState(false);
   const [selectedProductForReport, setSelectedProductForReport] = useState<Product | null>(null);
+  
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
   // Product number existence checking states
   const [addPartNumberStatus, setAddPartNumberStatus] = useState<{
@@ -520,7 +524,24 @@ export default function ProductsManagement() {
   const products = productsResponse?.content || [];
   const totalProducts = productsResponse?.totalElements || 0;
   const totalPages = productsResponse?.totalPages || 0;
-  const currentProducts = products;
+  
+  // Extract unique categories from all products
+  const uniqueCategories = Array.from(new Set(products.map(p => p.category).filter(Boolean)));
+  
+  // Filter products based on search term and category
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch = searchTerm === "" || 
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.productNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.hsn?.toString().toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesCategory = selectedCategory === "all" || product.category === selectedCategory;
+    
+    return matchesSearch && matchesCategory;
+  });
+  
+  const currentProducts = filteredProducts;
 
   if (isLoading) {
     return (
@@ -573,7 +594,7 @@ export default function ProductsManagement() {
             }
           }}>
             <DialogTrigger asChild>
-              <Button className="w-full sm:w-auto">
+              <Button className="w-full sm:w-auto" data-testid="button-add-product">
                 <Plus className="mr-2 h-4 w-4 flex-shrink-0" />
                 Add Product
               </Button>
@@ -892,10 +913,44 @@ export default function ProductsManagement() {
               <span>All Products</span>
             </CardTitle>
             
-            {/* Product Count - Search and Filter removed until backend supports them */}
+            {/* Search and Filter Controls */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              {/* Search Bar */}
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  data-testid="input-search-products"
+                  placeholder="Search products by name, part number, HSN..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              
+              {/* Category Filter */}
+              <div className="w-full sm:w-[200px]">
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger data-testid="select-category-filter">
+                    <SelectValue placeholder="All Categories" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {uniqueCategories.map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            {/* Product Count */}
             <div className="flex items-center gap-2 text-sm text-slate-600">
               <Package className="h-4 w-4" />
-              <span>{totalProducts} product{totalProducts !== 1 ? 's' : ''} total</span>
+              <span>
+                Showing {filteredProducts.length} of {products.length} product{products.length !== 1 ? 's' : ''}
+              </span>
             </div>
           </div>
         </CardHeader>
