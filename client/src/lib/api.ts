@@ -160,10 +160,10 @@ export const rolesApi = {
  */
 export const productsApi = {
   /**
-   * Get all products
+   * Get all products with pagination
    */
-  async getAllProducts(): Promise<import("@/types/api").Product[]> {
-    return apiRequest("/products/all");
+  async getAllProducts(page: number = 0, size: number = 10): Promise<import("@/types/api").PaginatedProductsResponse> {
+    return apiRequest(`/products/all?page=${page}&size=${size}`);
   },
 
   /**
