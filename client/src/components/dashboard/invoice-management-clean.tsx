@@ -119,6 +119,19 @@ export default function InvoiceManagementClean() {
     ? Math.ceil(filteredInvoices.length / itemsPerPage)
     : totalPages;
 
+  // Clamp currentPage to finalTotalPages when mode changes
+  useEffect(() => {
+    setCurrentPage((prev) => {
+      if (finalTotalPages < 1) {
+        return 1;
+      }
+      if (prev > finalTotalPages) {
+        return finalTotalPages;
+      }
+      return prev;
+    });
+  }, [finalTotalPages]);
+
   // Handle delete with modal confirmation
   const handleDeleteInvoice = (invoice: Invoice) => {
     setInvoiceToDelete(invoice);
@@ -827,8 +840,24 @@ export default function InvoiceManagementClean() {
             </Table>
           </div>
 
-          {/* Enhanced Pagination */}
-          {paginatedInvoices.length > 0 && (
+          {/* No Results Message - Only show when there are truly no results across all pages */}
+          {finalTotalPages < 1 && !isLoading && !isPartNumberLoading && (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="text-muted-foreground">
+                <p className="text-lg font-medium">No invoices found</p>
+                <p className="text-sm mt-2">
+                  {debouncedSearchTerm
+                    ? `No invoices match your search "${debouncedSearchTerm}"`
+                    : statusFilter !== "all"
+                    ? `No invoices found with status "${statusFilter}"`
+                    : "No invoices available"}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Enhanced Pagination - Show whenever there are pages to navigate */}
+          {finalTotalPages >= 1 && (
             <div className="flex flex-col items-center gap-4 px-4 py-6 border-t bg-white dark:bg-slate-950">
               {/* Results Info */}
               <div className="text-sm text-slate-700 dark:text-slate-300">
@@ -921,17 +950,20 @@ export default function InvoiceManagementClean() {
                   <Input
                     type="number"
                     min="1"
-                    max={finalTotalPages}
+                    max={Math.max(1, finalTotalPages)}
                     value={currentPage}
                     onChange={(e) => {
                       const page = parseInt(e.target.value);
-                      if (page >= 1 && page <= finalTotalPages) {
-                        setCurrentPage(page);
+                      if (!isNaN(page)) {
+                        // Clamp to valid range
+                        const clampedPage = Math.max(1, Math.min(Math.max(1, finalTotalPages), page));
+                        setCurrentPage(clampedPage);
                       }
                     }}
                     className="w-16 h-8 text-center text-sm"
+                    disabled={finalTotalPages < 1}
                   />
-                  <span className="text-slate-600 dark:text-slate-400">of {finalTotalPages}</span>
+                  <span className="text-slate-600 dark:text-slate-400">of {Math.max(1, finalTotalPages)}</span>
                 </div>
                 
                 {/* Items Per Page */}
