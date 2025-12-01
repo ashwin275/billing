@@ -33,32 +33,46 @@ export default function InvoiceManagementClean() {
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
 
-  // Debounce search term for part number search
+  // Debounce search term for all search types (500ms delay)
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
-    }, 500); // 500ms delay
+    }, 500);
 
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Reset to page 1 when filters change
+  // Reset to page 1 when search term or items per page changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, itemsPerPage, searchByPartNumber]);
+  }, [debouncedSearchTerm, itemsPerPage, searchByPartNumber]);
 
-  // Fetch paginated invoices from backend
+  // Reset status filter when search is active (backend handles search, not combined with status)
+  useEffect(() => {
+    if (debouncedSearchTerm && !searchByPartNumber) {
+      setStatusFilter("all");
+    }
+  }, [debouncedSearchTerm, searchByPartNumber]);
+
+  // Fetch paginated invoices from backend (no search)
   const { data: paginatedResponse, isLoading } = useQuery({
     queryKey: ["/api/invoices/paginated", currentPage - 1, itemsPerPage],
     queryFn: () => invoicesApi.getPaginatedInvoices(currentPage - 1, itemsPerPage),
-    enabled: !searchByPartNumber || !debouncedSearchTerm, // Disable when searching by part number
+    enabled: !searchByPartNumber && !debouncedSearchTerm, // Disable when searching
+  });
+
+  // Fetch invoices with backend search (normal search mode)
+  const { data: searchResponse, isLoading: isSearchLoading } = useQuery({
+    queryKey: ["/api/invoices/search", debouncedSearchTerm, currentPage - 1, itemsPerPage],
+    queryFn: () => invoicesApi.searchInvoices(debouncedSearchTerm, currentPage - 1, itemsPerPage),
+    enabled: !searchByPartNumber && debouncedSearchTerm.length > 0, // Only when normal search mode and search term exists
   });
 
   // Fetch invoices by part number
   const { data: partNumberInvoices = [], isLoading: isPartNumberLoading } = useQuery({
     queryKey: ["/api/invoices/partno", debouncedSearchTerm],
     queryFn: () => invoicesApi.searchByPartNumber(debouncedSearchTerm),
-    enabled: searchByPartNumber && debouncedSearchTerm.length > 0, // Only fetch when toggle is on and debounced search term exists
+    enabled: searchByPartNumber && debouncedSearchTerm.length > 0, // Only when part number search mode
   });
 
   // Delete invoice mutation
@@ -70,6 +84,8 @@ export default function InvoiceManagementClean() {
         description: "Invoice has been permanently deleted.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/invoices/paginated"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices/search"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices/partno"] });
       queryClient.invalidateQueries({ queryKey: ["/api/invoices/all"] });
     },
     onError: (error: any) => {
@@ -81,13 +97,25 @@ export default function InvoiceManagementClean() {
     },
   });
 
-  // Use backend pagination when available, fallback to part number search
-  const invoices = paginatedResponse?.content || [];
-  const totalPages = paginatedResponse?.totalPages || 1;
-  const totalElements = paginatedResponse?.totalElements || 0;
+  // Determine which data source to use based on search mode
+  const isNormalSearchActive = !searchByPartNumber && debouncedSearchTerm.length > 0;
+  const isPartNumberSearchActive = searchByPartNumber && debouncedSearchTerm.length > 0;
+  
+  // Get invoices from appropriate source
+  const invoices = isNormalSearchActive 
+    ? (searchResponse?.content || [])
+    : (paginatedResponse?.content || []);
+  
+  // Get pagination info from appropriate source
+  const totalPages = isNormalSearchActive
+    ? (searchResponse?.totalPages || 1)
+    : (paginatedResponse?.totalPages || 1);
+  const totalElements = isNormalSearchActive
+    ? (searchResponse?.totalElements || 0)
+    : (paginatedResponse?.totalElements || 0);
 
   // When using part number search, we still need frontend filtering for status
-  const filteredPartNumberInvoices = searchByPartNumber && debouncedSearchTerm 
+  const filteredPartNumberInvoices = isPartNumberSearchActive 
     ? partNumberInvoices.filter(invoice => {
         const matchesStatus = statusFilter === "all" || 
           invoice.paymentStatus?.toLowerCase() === statusFilter.toLowerCase();
@@ -95,29 +123,29 @@ export default function InvoiceManagementClean() {
       })
     : [];
 
-  // Apply frontend filters only for search and status (backend handles pagination)
-  const filteredInvoices = searchByPartNumber && debouncedSearchTerm
+  // Apply frontend status filter only when not using normal search (backend handles that)
+  const filteredInvoices = isPartNumberSearchActive
     ? filteredPartNumberInvoices
-    : invoices.filter(invoice => {
-        const matchesSearch = !searchTerm || 
-          invoice.invoiceNo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          invoice.customerName?.toLowerCase().includes(searchTerm.toLowerCase());
-        
-        const matchesStatus = statusFilter === "all" || 
-          invoice.paymentStatus?.toLowerCase() === statusFilter.toLowerCase();
-        
-        return matchesSearch && matchesStatus;
-      });
+    : isNormalSearchActive
+      ? invoices // Backend already filtered, no frontend filtering needed
+      : invoices.filter(invoice => {
+          const matchesStatus = statusFilter === "all" || 
+            invoice.paymentStatus?.toLowerCase() === statusFilter.toLowerCase();
+          return matchesStatus;
+        });
 
   // For part number search, we need frontend pagination
-  const paginatedInvoices = searchByPartNumber && debouncedSearchTerm
+  const paginatedInvoices = isPartNumberSearchActive
     ? filteredInvoices.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
     : filteredInvoices;
 
-  // Calculate total pages for part number search
-  const finalTotalPages = searchByPartNumber && debouncedSearchTerm
+  // Calculate total pages based on search mode
+  const finalTotalPages = isPartNumberSearchActive
     ? Math.ceil(filteredInvoices.length / itemsPerPage)
     : totalPages;
+  
+  // Combined loading state
+  const isDataLoading = isLoading || isSearchLoading || isPartNumberLoading;
 
   // Clamp currentPage to finalTotalPages when mode changes
   useEffect(() => {
@@ -728,8 +756,12 @@ export default function InvoiceManagementClean() {
                   {searchByPartNumber ? "Part #" : "Part #"}
                 </Button>
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[150px]">
+              <Select 
+                value={statusFilter} 
+                onValueChange={setStatusFilter}
+                disabled={isNormalSearchActive}
+              >
+                <SelectTrigger className="w-[150px]" title={isNormalSearchActive ? "Status filter disabled during search" : ""}>
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -743,7 +775,7 @@ export default function InvoiceManagementClean() {
           </div>
         </CardHeader>
         <CardContent>
-          {(isLoading || isPartNumberLoading) ? (
+          {isDataLoading ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               <span className="ml-2">Loading invoices...</span>
@@ -841,7 +873,7 @@ export default function InvoiceManagementClean() {
           </div>
 
           {/* No Results Message - Only show when there are truly no results across all pages */}
-          {finalTotalPages < 1 && !isLoading && !isPartNumberLoading && (
+          {finalTotalPages < 1 && !isDataLoading && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <div className="text-muted-foreground">
                 <p className="text-lg font-medium">No invoices found</p>
@@ -861,7 +893,13 @@ export default function InvoiceManagementClean() {
             <div className="flex flex-col items-center gap-4 px-4 py-6 border-t bg-white dark:bg-slate-950">
               {/* Results Info */}
               <div className="text-sm text-slate-700 dark:text-slate-300">
-                Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, searchByPartNumber && debouncedSearchTerm ? filteredInvoices.length : totalElements)} of {searchByPartNumber && debouncedSearchTerm ? filteredInvoices.length : totalElements} invoices
+                {isNormalSearchActive ? (
+                  <>Found {totalElements} results for "{debouncedSearchTerm}" (Page {currentPage} of {finalTotalPages})</>
+                ) : isPartNumberSearchActive ? (
+                  <>Found {filteredInvoices.length} results for part # "{debouncedSearchTerm}" (Page {currentPage} of {finalTotalPages})</>
+                ) : (
+                  <>{totalElements} invoices (Page {currentPage} of {finalTotalPages})</>
+                )}
               </div>
               
               {/* Enhanced Pagination Controls */}

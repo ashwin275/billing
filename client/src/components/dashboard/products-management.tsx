@@ -1,5 +1,5 @@
 // Products management component with full CRUD functionality
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm, Controller, FieldPath, ControllerRenderProps } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -105,6 +105,32 @@ export default function ProductsManagement() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [isHsnReportDialogOpen, setIsHsnReportDialogOpen] = useState(false);
   const [selectedProductForReport, setSelectedProductForReport] = useState<Product | null>(null);
+  
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+
+  // Debounce search term for API calls
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Reset to page 1 when search term changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm, itemsPerPage]);
+
+  // Reset category filter when search is active
+  useEffect(() => {
+    if (debouncedSearchTerm) {
+      setSelectedCategory("all");
+    }
+  }, [debouncedSearchTerm]);
 
   // Product number existence checking states
   const [addPartNumberStatus, setAddPartNumberStatus] = useState<{
@@ -119,14 +145,17 @@ export default function ProductsManagement() {
     message: string;
   }>({ checking: false, exists: null, message: "" });
 
-  // Fetch products with pagination
+  // Fetch products with pagination and search
   const {
     data: productsResponse,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["/api/products/paginated", currentPage, itemsPerPage],
-    queryFn: () => productsApi.getPaginatedProducts(currentPage - 1, itemsPerPage), // Backend uses 0-based indexing
+    queryKey: ["/api/products/paginated", currentPage, itemsPerPage, debouncedSearchTerm],
+    queryFn: () => 
+      debouncedSearchTerm.trim() 
+        ? productsApi.searchProducts(debouncedSearchTerm, currentPage - 1, itemsPerPage)
+        : productsApi.getPaginatedProducts(currentPage - 1, itemsPerPage), // Backend uses 0-based indexing
   });
 
   // Fetch all shops for dropdown
@@ -516,11 +545,18 @@ export default function ProductsManagement() {
     }
   };
 
-  // Extract products from paginated response
+  // Extract products from paginated response - search is now done on backend
   const products = productsResponse?.content || [];
   const totalProducts = productsResponse?.totalElements || 0;
   const totalPages = productsResponse?.totalPages || 0;
-  const currentProducts = products;
+  
+  // Extract unique categories from all products
+  const uniqueCategories = Array.from(new Set(products.map(p => p.category).filter(Boolean)));
+  
+  // Apply only category filter on frontend (search is handled by backend)
+  const currentProducts = selectedCategory === "all" 
+    ? products 
+    : products.filter(product => product.category === selectedCategory);
 
   if (isLoading) {
     return (
@@ -573,7 +609,7 @@ export default function ProductsManagement() {
             }
           }}>
             <DialogTrigger asChild>
-              <Button className="w-full sm:w-auto">
+              <Button className="w-full sm:w-auto" data-testid="button-add-product">
                 <Plus className="mr-2 h-4 w-4 flex-shrink-0" />
                 Add Product
               </Button>
@@ -892,10 +928,58 @@ export default function ProductsManagement() {
               <span>All Products</span>
             </CardTitle>
             
-            {/* Product Count - Search and Filter removed until backend supports them */}
+            {/* Search and Filter Controls */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              {/* Search Bar */}
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  data-testid="input-search-products"
+                  placeholder="Search products by name, part number, HSN..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              
+              {/* Category Filter - disabled during search since search is handled by backend */}
+              <div className="w-full sm:w-[200px]">
+                <Select 
+                  value={selectedCategory} 
+                  onValueChange={setSelectedCategory}
+                  disabled={!!debouncedSearchTerm}
+                >
+                  <SelectTrigger data-testid="select-category-filter">
+                    <SelectValue placeholder={debouncedSearchTerm ? "Search active..." : "All Categories"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {uniqueCategories.map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            {/* Product Count */}
             <div className="flex items-center gap-2 text-sm text-slate-600">
               <Package className="h-4 w-4" />
-              <span>{totalProducts} product{totalProducts !== 1 ? 's' : ''} total</span>
+              <span>
+                {debouncedSearchTerm ? (
+                  <>
+                    Found {totalProducts} result{totalProducts !== 1 ? 's' : ''} for "{debouncedSearchTerm}"
+                    {totalPages > 1 && ` (Page ${currentPage} of ${totalPages})`}
+                  </>
+                ) : (
+                  <>
+                    {totalProducts} product{totalProducts !== 1 ? 's' : ''}
+                    {totalPages > 1 && ` (Page ${currentPage} of ${totalPages})`}
+                  </>
+                )}
+              </span>
             </div>
           </div>
         </CardHeader>
