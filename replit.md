@@ -163,4 +163,13 @@ A React-based frontend-only invoice management dashboard that connects to extern
   - Print-optimized styling with professional appearance
   - Clean PDF without extra footer text or timestamp information
   - Download PDF button in red color for easy identification
+- Implemented backend search with pagination for Products Management (December 1, 2025):
+  - Added searchProducts API method that passes search, page, and size parameters to backend
+  - Search now uses backend API (/products/all?search=...&page=...&size=...) instead of frontend filtering
+  - Added 500ms debounce on search input to prevent excessive API calls
+  - Pagination now correctly reflects total pages from search results
+  - Page resets to 1 when search term or items per page changes
+  - Category filter disabled during active search to avoid confusion
+  - Product count display shows proper totals from backend API response
+  - Better UX with "Found X results for 'search term' (Page Y of Z)" format
 - Application successfully running on Replit with all features functional

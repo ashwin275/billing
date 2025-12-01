@@ -174,6 +174,18 @@ export const productsApi = {
   },
 
   /**
+   * Search products with pagination
+   */
+  async searchProducts(search: string, page: number = 0, size: number = 10): Promise<import("@/types/api").PaginatedProductsResponse> {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      size: size.toString(),
+      search: search,
+    });
+    return apiRequest(`/products/all?${params.toString()}`);
+  },
+
+  /**
    * Add multiple products
    */
   async addProducts(products: import("@/types/api").ProductInput[]): Promise<void> {
