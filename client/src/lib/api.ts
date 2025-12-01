@@ -323,6 +323,13 @@ export const invoicesApi = {
   },
 
   /**
+   * Search invoices with pagination (searches by invoice number and customer name)
+   */
+  async searchInvoices(search: string, page: number = 0, size: number = 10): Promise<import("@/types/api").PaginatedInvoicesResponse> {
+    return apiRequest(`/invoice/all?search=${encodeURIComponent(search)}&page=${page}&size=${size}`);
+  },
+
+  /**
    * Add new invoice
    */
   async addInvoice(invoiceData: import("@/types/api").InvoiceInput): Promise<void> {
