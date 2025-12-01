@@ -85,6 +85,35 @@ export interface Product {
   sgst: number;
 }
 
+export interface PaginatedProductsResponse {
+  content: Product[];
+  pageable: {
+    pageNumber: number;
+    pageSize: number;
+    sort: {
+      sorted: boolean;
+      empty: boolean;
+      unsorted: boolean;
+    };
+    offset: number;
+    unpaged: boolean;
+    paged: boolean;
+  };
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
+  size: number;
+  number: number;
+  sort: {
+    sorted: boolean;
+    empty: boolean;
+    unsorted: boolean;
+  };
+  numberOfElements: number;
+  first: boolean;
+  empty: boolean;
+}
+
 export interface ProductInput {
   name: string;
   productNumber?: string; // Backend expects productNumber instead of partNumber
@@ -194,6 +223,35 @@ export interface SaleItem {
   taxAmount: number;
 }
 
+export interface PaginatedInvoicesResponse {
+  content: Invoice[];
+  pageable: {
+    pageNumber: number;
+    pageSize: number;
+    sort: {
+      sorted: boolean;
+      empty: boolean;
+      unsorted: boolean;
+    };
+    offset: number;
+    unpaged: boolean;
+    paged: boolean;
+  };
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
+  size: number;
+  number: number;
+  sort: {
+    sorted: boolean;
+    empty: boolean;
+    unsorted: boolean;
+  };
+  numberOfElements: number;
+  first: boolean;
+  empty: boolean;
+}
+
 export interface InvoiceInput {
   customerId: number;
   shopId: number;
@@ -257,4 +315,22 @@ export interface HsnReport {
   totalAmount: number;
   totalTax: number;
   finalAmount: number;
+}
+
+// Sales Report Types
+export interface SaleReportItem {
+  invoiceNo: string;
+  saleDate: string;
+  customerName: string;
+  totalAmount: number;
+  tax: number;
+  finalAmount: number;
+  paymentStatus: 'PAID' | 'PENDING' | 'OVERDUE';
+}
+
+export interface SalesReport {
+  sales: SaleReportItem[];
+  totalFinalAmount: number;
+  totalTax: number;
+  invoiceCount: number;
 }

@@ -1,7 +1,7 @@
 // Invoice Management Component with PDF Generation
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Eye, Download, Edit, Trash2, Plus, Search, Filter, ArrowUpDown, Package } from "lucide-react";
+import { Eye, Download, Edit, Trash2, Plus, Search, Filter, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,8 +23,6 @@ export default function InvoiceManagementClean() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [sortField, setSortField] = useState<keyof Invoice>("invoiceDate");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -35,27 +33,46 @@ export default function InvoiceManagementClean() {
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
 
-  // Debounce search term for part number search
+  // Debounce search term for all search types (500ms delay)
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
-    }, 500); // 500ms delay
+    }, 500);
 
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Fetch invoices
-  const { data: invoices = [], isLoading } = useQuery({
-    queryKey: ["/api/invoices/all"],
-    queryFn: () => invoicesApi.getAllInvoices(),
-    enabled: !searchByPartNumber || !debouncedSearchTerm, // Disable when searching by part number
+  // Reset to page 1 when search term or items per page changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm, itemsPerPage, searchByPartNumber]);
+
+  // Reset status filter when search is active (backend handles search, not combined with status)
+  useEffect(() => {
+    if (debouncedSearchTerm && !searchByPartNumber) {
+      setStatusFilter("all");
+    }
+  }, [debouncedSearchTerm, searchByPartNumber]);
+
+  // Fetch paginated invoices from backend (no search)
+  const { data: paginatedResponse, isLoading } = useQuery({
+    queryKey: ["/api/invoices/paginated", currentPage - 1, itemsPerPage],
+    queryFn: () => invoicesApi.getPaginatedInvoices(currentPage - 1, itemsPerPage),
+    enabled: !searchByPartNumber && !debouncedSearchTerm, // Disable when searching
+  });
+
+  // Fetch invoices with backend search (normal search mode)
+  const { data: searchResponse, isLoading: isSearchLoading } = useQuery({
+    queryKey: ["/api/invoices/search", debouncedSearchTerm, currentPage - 1, itemsPerPage],
+    queryFn: () => invoicesApi.searchInvoices(debouncedSearchTerm, currentPage - 1, itemsPerPage),
+    enabled: !searchByPartNumber && debouncedSearchTerm.length > 0, // Only when normal search mode and search term exists
   });
 
   // Fetch invoices by part number
   const { data: partNumberInvoices = [], isLoading: isPartNumberLoading } = useQuery({
     queryKey: ["/api/invoices/partno", debouncedSearchTerm],
     queryFn: () => invoicesApi.searchByPartNumber(debouncedSearchTerm),
-    enabled: searchByPartNumber && debouncedSearchTerm.length > 0, // Only fetch when toggle is on and debounced search term exists
+    enabled: searchByPartNumber && debouncedSearchTerm.length > 0, // Only when part number search mode
   });
 
   // Delete invoice mutation
@@ -66,6 +83,9 @@ export default function InvoiceManagementClean() {
         title: "Success",
         description: "Invoice has been permanently deleted.",
       });
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices/paginated"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices/search"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices/partno"] });
       queryClient.invalidateQueries({ queryKey: ["/api/invoices/all"] });
     },
     onError: (error: any) => {
@@ -77,55 +97,68 @@ export default function InvoiceManagementClean() {
     },
   });
 
-  // Use the appropriate data source based on search mode
-  const activeInvoices = searchByPartNumber && debouncedSearchTerm 
-    ? partNumberInvoices 
-    : invoices;
+  // Determine which data source to use based on search mode
+  const isNormalSearchActive = !searchByPartNumber && debouncedSearchTerm.length > 0;
+  const isPartNumberSearchActive = searchByPartNumber && debouncedSearchTerm.length > 0;
+  
+  // Get invoices from appropriate source
+  const invoices = isNormalSearchActive 
+    ? (searchResponse?.content || [])
+    : (paginatedResponse?.content || []);
+  
+  // Get pagination info from appropriate source
+  const totalPages = isNormalSearchActive
+    ? (searchResponse?.totalPages || 1)
+    : (paginatedResponse?.totalPages || 1);
+  const totalElements = isNormalSearchActive
+    ? (searchResponse?.totalElements || 0)
+    : (paginatedResponse?.totalElements || 0);
 
-  // Filter and sort invoices
-  const filteredInvoices = Array.isArray(activeInvoices) ? activeInvoices.filter(invoice => {
-    // When searching by part number, API already returns filtered results
-    if (searchByPartNumber && debouncedSearchTerm) {
-      const matchesStatus = statusFilter === "all" || 
-        invoice.paymentStatus?.toLowerCase() === statusFilter.toLowerCase();
-      return matchesStatus;
-    }
-    
-    // Normal search mode
-    const matchesSearch = 
-      invoice.invoiceNo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      invoice.customerName?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === "all" || 
-      invoice.paymentStatus?.toLowerCase() === statusFilter.toLowerCase();
-    
-    return matchesSearch && matchesStatus;
-  }) : [];
+  // When using part number search, we still need frontend filtering for status
+  const filteredPartNumberInvoices = isPartNumberSearchActive 
+    ? partNumberInvoices.filter(invoice => {
+        const matchesStatus = statusFilter === "all" || 
+          invoice.paymentStatus?.toLowerCase() === statusFilter.toLowerCase();
+        return matchesStatus;
+      })
+    : [];
 
-  const sortedInvoices = [...filteredInvoices].sort((a, b) => {
-    const aValue = a[sortField];
-    const bValue = b[sortField];
-    
-    if ((aValue ?? 0) < (bValue ?? 0)) return sortDirection === "asc" ? -1 : 1;
-    if ((aValue ?? 0) > (bValue ?? 0)) return sortDirection === "asc" ? 1 : -1;
-    return 0;
-  });
+  // Apply frontend status filter only when not using normal search (backend handles that)
+  const filteredInvoices = isPartNumberSearchActive
+    ? filteredPartNumberInvoices
+    : isNormalSearchActive
+      ? invoices // Backend already filtered, no frontend filtering needed
+      : invoices.filter(invoice => {
+          const matchesStatus = statusFilter === "all" || 
+            invoice.paymentStatus?.toLowerCase() === statusFilter.toLowerCase();
+          return matchesStatus;
+        });
 
-  // Pagination
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedInvoices = sortedInvoices.slice(startIndex, endIndex);
-  const totalPages = Math.ceil(sortedInvoices.length / itemsPerPage);
+  // For part number search, we need frontend pagination
+  const paginatedInvoices = isPartNumberSearchActive
+    ? filteredInvoices.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+    : filteredInvoices;
 
-  // Handle sort
-  const handleSort = (field: keyof Invoice) => {
-    if (field === sortField) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortDirection("asc");
-    }
-  };
+  // Calculate total pages based on search mode
+  const finalTotalPages = isPartNumberSearchActive
+    ? Math.ceil(filteredInvoices.length / itemsPerPage)
+    : totalPages;
+  
+  // Combined loading state
+  const isDataLoading = isLoading || isSearchLoading || isPartNumberLoading;
+
+  // Clamp currentPage to finalTotalPages when mode changes
+  useEffect(() => {
+    setCurrentPage((prev) => {
+      if (finalTotalPages < 1) {
+        return 1;
+      }
+      if (prev > finalTotalPages) {
+        return finalTotalPages;
+      }
+      return prev;
+    });
+  }, [finalTotalPages]);
 
   // Handle delete with modal confirmation
   const handleDeleteInvoice = (invoice: Invoice) => {
@@ -723,8 +756,12 @@ export default function InvoiceManagementClean() {
                   {searchByPartNumber ? "Part #" : "Part #"}
                 </Button>
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[150px]">
+              <Select 
+                value={statusFilter} 
+                onValueChange={setStatusFilter}
+                disabled={isNormalSearchActive}
+              >
+                <SelectTrigger className="w-[150px]" title={isNormalSearchActive ? "Status filter disabled during search" : ""}>
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -738,7 +775,7 @@ export default function InvoiceManagementClean() {
           </div>
         </CardHeader>
         <CardContent>
-          {(isLoading || isPartNumberLoading) ? (
+          {isDataLoading ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               <span className="ml-2">Loading invoices...</span>
@@ -749,34 +786,10 @@ export default function InvoiceManagementClean() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead 
-                    className="cursor-pointer select-none"
-                    onClick={() => handleSort("invoiceNo")}
-                  >
-                    <div className="flex items-center">
-                      Invoice #
-                      <ArrowUpDown className="ml-2 h-3 w-3" />
-                    </div>
-                  </TableHead>
-                  <TableHead 
-                    className="cursor-pointer select-none"
-                    onClick={() => handleSort("invoiceDate")}
-                  >
-                    <div className="flex items-center">
-                      Date
-                      <ArrowUpDown className="ml-2 h-3 w-3" />
-                    </div>
-                  </TableHead>
+                  <TableHead>Invoice #</TableHead>
+                  <TableHead>Date</TableHead>
                   <TableHead>Customer</TableHead>
-                  <TableHead 
-                    className="cursor-pointer select-none"
-                    onClick={() => handleSort("totalAmount")}
-                  >
-                    <div className="flex items-center">
-                      Amount
-                      <ArrowUpDown className="ml-2 h-3 w-3" />
-                    </div>
-                  </TableHead>
+                  <TableHead>Amount</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -859,12 +872,34 @@ export default function InvoiceManagementClean() {
             </Table>
           </div>
 
-          {/* Enhanced Pagination */}
-          {sortedInvoices.length > 0 && (
+          {/* No Results Message - Only show when there are truly no results across all pages */}
+          {finalTotalPages < 1 && !isDataLoading && (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="text-muted-foreground">
+                <p className="text-lg font-medium">No invoices found</p>
+                <p className="text-sm mt-2">
+                  {debouncedSearchTerm
+                    ? `No invoices match your search "${debouncedSearchTerm}"`
+                    : statusFilter !== "all"
+                    ? `No invoices found with status "${statusFilter}"`
+                    : "No invoices available"}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Enhanced Pagination - Show whenever there are pages to navigate */}
+          {finalTotalPages >= 1 && (
             <div className="flex flex-col items-center gap-4 px-4 py-6 border-t bg-white dark:bg-slate-950">
               {/* Results Info */}
               <div className="text-sm text-slate-700 dark:text-slate-300">
-                Showing {startIndex + 1} to {Math.min(endIndex, sortedInvoices.length)} of {sortedInvoices.length} invoices
+                {isNormalSearchActive ? (
+                  <>Found {totalElements} results for "{debouncedSearchTerm}" (Page {currentPage} of {finalTotalPages})</>
+                ) : isPartNumberSearchActive ? (
+                  <>Found {filteredInvoices.length} results for part # "{debouncedSearchTerm}" (Page {currentPage} of {finalTotalPages})</>
+                ) : (
+                  <>{totalElements} invoices (Page {currentPage} of {finalTotalPages})</>
+                )}
               </div>
               
               {/* Enhanced Pagination Controls */}
@@ -894,19 +929,19 @@ export default function InvoiceManagementClean() {
                     {/* Page Numbers with Smart Display */}
                     {(() => {
                       const getVisiblePages = () => {
-                        if (totalPages <= 7) {
-                          return Array.from({ length: totalPages }, (_, i) => i + 1);
+                        if (finalTotalPages <= 7) {
+                          return Array.from({ length: finalTotalPages }, (_, i) => i + 1);
                         }
                         
                         if (currentPage <= 4) {
-                          return [1, 2, 3, 4, 5, '...', totalPages];
+                          return [1, 2, 3, 4, 5, '...', finalTotalPages];
                         }
                         
-                        if (currentPage >= totalPages - 3) {
-                          return [1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+                        if (currentPage >= finalTotalPages - 3) {
+                          return [1, '...', finalTotalPages - 4, finalTotalPages - 3, finalTotalPages - 2, finalTotalPages - 1, finalTotalPages];
                         }
                         
-                        return [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
+                        return [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', finalTotalPages];
                       };
                       
                       return getVisiblePages().map((page, index) => (
@@ -929,16 +964,16 @@ export default function InvoiceManagementClean() {
                     {/* Next */}
                     <PaginationItem>
                       <PaginationNext 
-                        onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                        className={`${currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800"} transition-colors`}
+                        onClick={() => setCurrentPage(Math.min(finalTotalPages, currentPage + 1))}
+                        className={`${currentPage === finalTotalPages ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800"} transition-colors`}
                       />
                     </PaginationItem>
                     
                     {/* Last Page */}
                     <PaginationItem>
                       <PaginationLink
-                        onClick={() => setCurrentPage(totalPages)}
-                        className={`${currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800"} transition-colors px-3 py-2`}
+                        onClick={() => setCurrentPage(finalTotalPages)}
+                        className={`${currentPage === finalTotalPages ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800"} transition-colors px-3 py-2`}
                         size="default"
                       >
                         Last
@@ -953,17 +988,20 @@ export default function InvoiceManagementClean() {
                   <Input
                     type="number"
                     min="1"
-                    max={totalPages}
+                    max={Math.max(1, finalTotalPages)}
                     value={currentPage}
                     onChange={(e) => {
                       const page = parseInt(e.target.value);
-                      if (page >= 1 && page <= totalPages) {
-                        setCurrentPage(page);
+                      if (!isNaN(page)) {
+                        // Clamp to valid range
+                        const clampedPage = Math.max(1, Math.min(Math.max(1, finalTotalPages), page));
+                        setCurrentPage(clampedPage);
                       }
                     }}
                     className="w-16 h-8 text-center text-sm"
+                    disabled={finalTotalPages < 1}
                   />
-                  <span className="text-slate-600 dark:text-slate-400">of {totalPages}</span>
+                  <span className="text-slate-600 dark:text-slate-400">of {Math.max(1, finalTotalPages)}</span>
                 </div>
                 
                 {/* Items Per Page */}

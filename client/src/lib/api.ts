@@ -160,10 +160,29 @@ export const rolesApi = {
  */
 export const productsApi = {
   /**
-   * Get all products
+   * Get all products (for backward compatibility with components expecting array)
    */
   async getAllProducts(): Promise<import("@/types/api").Product[]> {
     return apiRequest("/products/all");
+  },
+
+  /**
+   * Get paginated products
+   */
+  async getPaginatedProducts(page: number = 0, size: number = 10): Promise<import("@/types/api").PaginatedProductsResponse> {
+    return apiRequest(`/products/all?page=${page}&size=${size}`);
+  },
+
+  /**
+   * Search products with pagination
+   */
+  async searchProducts(search: string, page: number = 0, size: number = 10): Promise<import("@/types/api").PaginatedProductsResponse> {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      size: size.toString(),
+      search: search,
+    });
+    return apiRequest(`/products/all?${params.toString()}`);
   },
 
   /**
@@ -290,10 +309,24 @@ export const customersApi = {
  */
 export const invoicesApi = {
   /**
-   * Get all invoices
+   * Get all invoices (for backward compatibility - non-paginated)
    */
   async getAllInvoices(): Promise<import("@/types/api").Invoice[]> {
     return apiRequest('/invoice/all');
+  },
+
+  /**
+   * Get paginated invoices
+   */
+  async getPaginatedInvoices(page: number = 0, size: number = 10): Promise<import("@/types/api").PaginatedInvoicesResponse> {
+    return apiRequest(`/invoice/all?page=${page}&size=${size}`);
+  },
+
+  /**
+   * Search invoices with pagination (searches by invoice number and customer name)
+   */
+  async searchInvoices(search: string, page: number = 0, size: number = 10): Promise<import("@/types/api").PaginatedInvoicesResponse> {
+    return apiRequest(`/invoice/all?search=${encodeURIComponent(search)}&page=${page}&size=${size}`);
   },
 
   /**
@@ -364,6 +397,20 @@ export const invoicesApi = {
    */
   async searchByPartNumber(partNumber: string): Promise<import("@/types/api").Invoice[]> {
     return apiRequest(`/invoice/partno/${encodeURIComponent(partNumber)}`);
+  },
+
+  /**
+   * Get total invoice count
+   */
+  async getInvoiceCount(): Promise<{ totalInvoices: number }> {
+    return apiRequest('/invoice/count');
+  },
+
+  /**
+   * Get total invoice amount
+   */
+  async getTotalAmount(): Promise<{ totalAmount: number }> {
+    return apiRequest('/invoice/total-amount');
   },
 };
 
@@ -533,6 +580,13 @@ export const reportsApi = {
    */
   async getHsnReport(hsn: string, from: string, to: string): Promise<import("@/types/api").HsnReport> {
     return await apiRequest(`/reports/hsn/${encodeURIComponent(hsn)}?from=${from}&to=${to}`);
+  },
+
+  /**
+   * Get sales/invoice report for a date range
+   */
+  async getSalesReport(startDate: string, endDate: string): Promise<import("@/types/api").SalesReport> {
+    return await apiRequest(`/sales/report?startDate=${startDate}&endDate=${endDate}`);
   },
 };
 

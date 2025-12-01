@@ -9,6 +9,7 @@ channel = "stable-25_05"
 deploymentTarget = "autoscale"
 run = ["npm", "run", "start"]
 build = ["npm", "run", "build"]
+publicDir = "dist/public"
 
 [[ports]]
 localPort = 5000
@@ -16,11 +17,35 @@ externalPort = 80
 
 [[ports]]
 localPort = 5001
+externalPort = 5173
+
+[[ports]]
+localPort = 37221
+externalPort = 5000
+
+[[ports]]
+localPort = 38243
 externalPort = 3000
 
 [[ports]]
-localPort = 5002
+localPort = 38499
+externalPort = 3002
+
+[[ports]]
+localPort = 39907
+externalPort = 3003
+
+[[ports]]
+localPort = 40063
+externalPort = 6000
+
+[[ports]]
+localPort = 40147
 externalPort = 3001
+
+[[ports]]
+localPort = 40813
+externalPort = 4200
 
 [workflows]
 runButton = "Project"
@@ -38,6 +63,9 @@ args = "Start application"
 name = "Start application"
 author = "agent"
 
+[workflows.workflow.metadata]
+outputType = "webview"
+
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run dev"
@@ -45,3 +73,8 @@ waitForPort = 5000
 
 [agent]
 expertMode = true
+
+[userenv]
+
+[userenv.shared]
+VITE_API_BASE_URL = "https://billing-backend.serins.in/api"

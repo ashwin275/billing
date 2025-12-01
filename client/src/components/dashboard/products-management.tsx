@@ -1,5 +1,5 @@
 // Products management component with full CRUD functionality
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm, Controller, FieldPath, ControllerRenderProps } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -103,12 +103,34 @@ export default function ProductsManagement() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [sortField, setSortField] = useState<keyof Product>("name");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [isHsnReportDialogOpen, setIsHsnReportDialogOpen] = useState(false);
   const [selectedProductForReport, setSelectedProductForReport] = useState<Product | null>(null);
+  
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+
+  // Debounce search term for API calls
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Reset to page 1 when search term changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm, itemsPerPage]);
+
+  // Reset category filter when search is active
+  useEffect(() => {
+    if (debouncedSearchTerm) {
+      setSelectedCategory("all");
+    }
+  }, [debouncedSearchTerm]);
 
   // Product number existence checking states
   const [addPartNumberStatus, setAddPartNumberStatus] = useState<{
@@ -123,14 +145,17 @@ export default function ProductsManagement() {
     message: string;
   }>({ checking: false, exists: null, message: "" });
 
-  // Fetch all products
+  // Fetch products with pagination and search
   const {
-    data: products,
+    data: productsResponse,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["/api/products/all"],
-    queryFn: () => productsApi.getAllProducts(),
+    queryKey: ["/api/products/paginated", currentPage, itemsPerPage, debouncedSearchTerm],
+    queryFn: () => 
+      debouncedSearchTerm.trim() 
+        ? productsApi.searchProducts(debouncedSearchTerm, currentPage - 1, itemsPerPage)
+        : productsApi.getPaginatedProducts(currentPage - 1, itemsPerPage), // Backend uses 0-based indexing
   });
 
   // Fetch all shops for dropdown
@@ -266,6 +291,9 @@ export default function ProductsManagement() {
         description: "Product has been successfully added.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/products/all"] });
+      queryClient.invalidateQueries({ 
+        predicate: ({ queryKey }) => Array.isArray(queryKey) && queryKey[0] === "/api/products/paginated" 
+      });
       setIsAddDialogOpen(false);
       addForm.reset();
     },
@@ -302,6 +330,9 @@ export default function ProductsManagement() {
         description: "Product has been successfully updated.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/products/all"] });
+      queryClient.invalidateQueries({ 
+        predicate: ({ queryKey }) => Array.isArray(queryKey) && queryKey[0] === "/api/products/paginated" 
+      });
       setIsEditDialogOpen(false);
       setProductToEdit(null);
     },
@@ -336,6 +367,9 @@ export default function ProductsManagement() {
         description: "Product has been successfully deleted.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/products/all"] });
+      queryClient.invalidateQueries({ 
+        predicate: ({ queryKey }) => Array.isArray(queryKey) && queryKey[0] === "/api/products/paginated" 
+      });
       setProductToDelete(null);
     },
     onError: (error: any) => {
@@ -511,79 +545,18 @@ export default function ProductsManagement() {
     }
   };
 
-  /**
-   * Handle sorting
-   */
-  const handleSort = (field: keyof Product) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortDirection("asc");
-    }
-    setCurrentPage(1); // Reset to first page when sorting
-  };
-
-  /**
-   * Get sort icon for column headers
-   */
-  const getSortIcon = (field: keyof Product) => {
-    if (sortField !== field) {
-      return <ArrowUpDown className="h-4 w-4" />;
-    }
-    return sortDirection === "asc" ? 
-      <ArrowUp className="h-4 w-4" /> : 
-      <ArrowDown className="h-4 w-4" />;
-  };
-
-  // Get unique categories for filter dropdown
-  const categories = Array.isArray(products) ? 
-    [...new Set(products.map(product => product.category).filter(category => category && category.trim() !== ''))].sort() : [];
-
-  // Filter and sort products
-  const filteredProducts = Array.isArray(products) ? products.filter(product => {
-    const matchesSearch = (product.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (product.productNumber || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (product.description || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (product.category || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (product.hsn ? product.hsn.toString() : "").includes(searchTerm) ||
-      (product.barcode || "").includes(searchTerm);
-    
-    const matchesCategory = selectedCategory === "all" || product.category === selectedCategory;
-    
-    return matchesSearch && matchesCategory;
-  }) : [];
-
-  const sortedProducts = filteredProducts.sort((a, b) => {
-    let aValue: any = a[sortField];
-    let bValue: any = b[sortField];
-
-    // Handle null/undefined values
-    if (aValue == null && bValue == null) return 0;
-    if (aValue == null) return sortDirection === "asc" ? 1 : -1;
-    if (bValue == null) return sortDirection === "asc" ? -1 : 1;
-
-    // Handle different data types
-    if (typeof aValue === 'string' && typeof bValue === 'string') {
-      aValue = aValue.toLowerCase();
-      bValue = bValue.toLowerCase();
-    }
-
-    if (aValue < bValue) {
-      return sortDirection === "asc" ? -1 : 1;
-    }
-    if (aValue > bValue) {
-      return sortDirection === "asc" ? 1 : -1;
-    }
-    return 0;
-  });
-
-  // Pagination calculations
-  const totalProducts = sortedProducts.length;
-  const totalPages = Math.ceil(totalProducts / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentProducts = sortedProducts.slice(startIndex, endIndex);
+  // Extract products from paginated response - search is now done on backend
+  const products = productsResponse?.content || [];
+  const totalProducts = productsResponse?.totalElements || 0;
+  const totalPages = productsResponse?.totalPages || 0;
+  
+  // Extract unique categories from all products
+  const uniqueCategories = Array.from(new Set(products.map(p => p.category).filter(Boolean)));
+  
+  // Apply only category filter on frontend (search is handled by backend)
+  const currentProducts = selectedCategory === "all" 
+    ? products 
+    : products.filter(product => product.category === selectedCategory);
 
   if (isLoading) {
     return (
@@ -636,7 +609,7 @@ export default function ProductsManagement() {
             }
           }}>
             <DialogTrigger asChild>
-              <Button className="w-full sm:w-auto">
+              <Button className="w-full sm:w-auto" data-testid="button-add-product">
                 <Plus className="mr-2 h-4 w-4 flex-shrink-0" />
                 Add Product
               </Button>
@@ -956,30 +929,32 @@ export default function ProductsManagement() {
             </CardTitle>
             
             {/* Search and Filter Controls */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              {/* Search */}
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <div className="flex flex-col sm:flex-row gap-3">
+              {/* Search Bar */}
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search products..."
+                  data-testid="input-search-products"
+                  placeholder="Search products by name, part number, HSN..."
                   value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                    setCurrentPage(1); // Reset to first page when searching
-                  }}
-                  className="pl-10 w-full"
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
                 />
               </div>
               
-              {/* Category Filter */}
-              <div className="w-full sm:w-48">
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Filter by category" />
+              {/* Category Filter - disabled during search since search is handled by backend */}
+              <div className="w-full sm:w-[200px]">
+                <Select 
+                  value={selectedCategory} 
+                  onValueChange={setSelectedCategory}
+                  disabled={!!debouncedSearchTerm}
+                >
+                  <SelectTrigger data-testid="select-category-filter">
+                    <SelectValue placeholder={debouncedSearchTerm ? "Search active..." : "All Categories"} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Categories</SelectItem>
-                    {categories.map((category) => (
+                    {uniqueCategories.map((category) => (
                       <SelectItem key={category} value={category}>
                         {category}
                       </SelectItem>
@@ -987,12 +962,24 @@ export default function ProductsManagement() {
                   </SelectContent>
                 </Select>
               </div>
-              
-              {/* Product Count */}
-              <div className="flex items-center gap-2 text-sm text-slate-600">
-                <Package className="h-4 w-4" />
-                <span>{totalProducts} product{totalProducts !== 1 ? 's' : ''}</span>
-              </div>
+            </div>
+            
+            {/* Product Count */}
+            <div className="flex items-center gap-2 text-sm text-slate-600">
+              <Package className="h-4 w-4" />
+              <span>
+                {debouncedSearchTerm ? (
+                  <>
+                    Found {totalProducts} result{totalProducts !== 1 ? 's' : ''} for "{debouncedSearchTerm}"
+                    {totalPages > 1 && ` (Page ${currentPage} of ${totalPages})`}
+                  </>
+                ) : (
+                  <>
+                    {totalProducts} product{totalProducts !== 1 ? 's' : ''}
+                    {totalPages > 1 && ` (Page ${currentPage} of ${totalPages})`}
+                  </>
+                )}
+              </span>
             </div>
           </div>
         </CardHeader>
@@ -1001,65 +988,23 @@ export default function ProductsManagement() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleSort("name")}
-                      className="h-auto p-0 font-semibold hover:bg-transparent"
-                    >
-                      Product Info
-                      {getSortIcon("name")}
-                    </Button>
+                  <TableHead className="font-semibold">
+                    Product Info
                   </TableHead>
-                  <TableHead className="hidden sm:table-cell">
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleSort("productNumber")}
-                      className="h-auto p-0 font-semibold hover:bg-transparent"
-                    >
-                      Part Number
-                      {getSortIcon("productNumber")}
-                    </Button>
+                  <TableHead className="hidden sm:table-cell font-semibold">
+                    Part Number
                   </TableHead>
-                  <TableHead className="hidden md:table-cell">
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleSort("retailRate")}
-                      className="h-auto p-0 font-semibold hover:bg-transparent"
-                    >
-                      Pricing
-                      {getSortIcon("retailRate")}
-                    </Button>
+                  <TableHead className="hidden md:table-cell font-semibold">
+                    Pricing
                   </TableHead>
-                  <TableHead className="hidden lg:table-cell">
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleSort("quantity")}
-                      className="h-auto p-0 font-semibold hover:bg-transparent"
-                    >
-                      Stock
-                      {getSortIcon("quantity")}
-                    </Button>
+                  <TableHead className="hidden lg:table-cell font-semibold">
+                    Stock
                   </TableHead>
-                  <TableHead>
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleSort("category")}
-                      className="h-auto p-0 font-semibold hover:bg-transparent"
-                    >
-                      Category
-                      {getSortIcon("category")}
-                    </Button>
+                  <TableHead className="font-semibold">
+                    Category
                   </TableHead>
-                  <TableHead className="hidden xl:table-cell">
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleSort("expiry")}
-                      className="h-auto p-0 font-semibold hover:bg-transparent"
-                    >
-                      Expiry
-                      {getSortIcon("expiry")}
-                    </Button>
+                  <TableHead className="hidden xl:table-cell font-semibold">
+                    Expiry
                   </TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -1263,7 +1208,11 @@ export default function ProductsManagement() {
               {/* Results Info and Items Per Page */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="text-sm text-slate-700 dark:text-slate-300">
-                  Showing {startIndex + 1} to {Math.min(endIndex, totalProducts)} of {totalProducts} products
+                  {(productsResponse?.numberOfElements || 0) > 0 ? (
+                    <>Showing {(productsResponse?.pageable?.offset || 0) + 1} to {(productsResponse?.pageable?.offset || 0) + (productsResponse?.numberOfElements || 0)} of {totalProducts} products</>
+                  ) : (
+                    <>No products to display</>
+                  )}
                 </div>
                 
                 {/* Items Per Page */}
