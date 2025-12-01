@@ -2432,7 +2432,6 @@ export default function CreateInvoice() {
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-gray-900">Items</h3>
                     <ProductSearchDialog
-                      products={Array.isArray(products) ? products : []}
                       saleType={form.watch("saleType")}
                       existingItems={fields.map((field, index) => {
                         const productId = form.watch(`saleItems.${index}.productId`);
@@ -2459,7 +2458,7 @@ export default function CreateInvoice() {
                         });
                       }}
                       trigger={
-                        <Button size="sm" className="bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white border-0">
+                        <Button size="sm" className="bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white border-0" data-testid="button-add-invoice-items">
                           <Plus className="mr-2 h-4 w-4" />
                           Add Items
                         </Button>
