@@ -505,7 +505,7 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
             </div>
             <div className="company-details">
               <h1>{invoice.shop?.name || 'Shop Name'}</h1>
-              <p className="company-tagline">Quality Products & Services</p>
+              <p className="company-tagline">{invoice.shop?.description || 'Quality Products & Services'}</p>
               {invoice.shop?.address && <p style={{fontSize: '10px', marginTop: '3px'}}>{invoice.shop.address}</p>}
               {invoice.shop?.place && <p style={{fontSize: '10px', marginTop: '2px'}}>📍 {invoice.shop.place}</p>}
               {invoice.shop?.gstNo && <p style={{fontSize: '10px', marginTop: '2px'}}>GST: {invoice.shop.gstNo}</p>}

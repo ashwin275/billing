@@ -13,8 +13,8 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 import { AlertTriangle } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import { invoicesApi } from "@/lib/api";
-import { Invoice } from "@/types/api";
+import { invoicesApi, shopsApi } from "@/lib/api";
+import { Invoice, Shop } from "@/types/api";
 import InvoiceTemplate from "@/components/invoice/InvoiceTemplate";
 
 export default function InvoiceManagementClean() {
@@ -74,6 +74,24 @@ export default function InvoiceManagementClean() {
     queryFn: () => invoicesApi.searchByPartNumber(debouncedSearchTerm),
     enabled: searchByPartNumber && debouncedSearchTerm.length > 0, // Only when part number search mode
   });
+
+  // Fetch shops to get fresh shop data with description
+  const { data: shops = [] } = useQuery({
+    queryKey: ["/api/shops/all"],
+    queryFn: () => shopsApi.getAllShops(),
+  });
+
+  // Helper function to get shop with description from fresh shops data
+  const getShopWithDescription = (invoice: Invoice): Invoice['shop'] => {
+    const freshShop = shops.find((s: Shop) => s.shopId === invoice.shopId);
+    if (freshShop) {
+      return {
+        ...invoice.shop,
+        description: freshShop.description || invoice.shop?.description,
+      };
+    }
+    return invoice.shop;
+  };
 
   // Delete invoice mutation
   const deleteInvoiceMutation = useMutation({
@@ -182,14 +200,22 @@ export default function InvoiceManagementClean() {
     setLocation(`/invoices/create?edit=${invoiceId}`);
   };
 
-  // Handle preview
+  // Handle preview - merge fresh shop data with description
   const handlePreview = (invoice: Invoice) => {
-    setSelectedInvoice(invoice);
+    const invoiceWithShopDescription = {
+      ...invoice,
+      shop: getShopWithDescription(invoice),
+    };
+    setSelectedInvoice(invoiceWithShopDescription);
     setIsPreviewDialogOpen(true);
   };
 
-  // Generate PDF using the new template system
-  const handleDownloadPDF = (invoiceData: Invoice) => {
+  // Generate PDF using the new template system - merge fresh shop data with description
+  const handleDownloadPDF = (invoice: Invoice) => {
+    const invoiceData = {
+      ...invoice,
+      shop: getShopWithDescription(invoice),
+    };
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
@@ -551,7 +577,7 @@ export default function InvoiceManagementClean() {
                   </div>
                   <div class="company-details">
                     <h1>${invoiceData.shop?.name || 'Shop Name'}</h1>
-                    <p class="company-tagline">Quality Products & Services</p>
+                    <p class="company-tagline">${invoiceData.shop?.description || 'Quality Products & Services'}</p>
                     ${invoiceData.shop?.address ? `<p style="font-size: 10px; margin-top: 3px;">${invoiceData.shop.address}</p>` : ''}
                     ${invoiceData.shop?.place ? `<p style="font-size: 10px; margin-top: 2px;">📍 ${invoiceData.shop.place}</p>` : ''}
                     ${invoiceData.shop?.gstNo ? `<p style="font-size: 10px; margin-top: 2px;">GST: ${invoiceData.shop.gstNo}</p>` : ''}
