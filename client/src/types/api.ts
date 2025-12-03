@@ -45,6 +45,7 @@ export interface User {
 export interface Shop {
   shopId: number;
   name: string;
+  description?: string;
   place: string;
   address?: string;
   phone: string;

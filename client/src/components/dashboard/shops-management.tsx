@@ -69,6 +69,7 @@ type ShopFormData = z.infer<typeof shopSchema>;
 interface Shop {
   shopId: number;
   name: string;
+  description?: string;
   place: string;
   status: string;
   map: string;

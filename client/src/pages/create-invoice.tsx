@@ -576,7 +576,7 @@ export default function CreateInvoice() {
         gstNo: shop.gstNo || "",
         phone: shop.phone || "",
         logo: shop.logo || null,
-        tagline: "Quality Products & Services"
+        tagline: shop.description || "Quality Products & Services"
       },
       customer: {
         name: customer.name,
@@ -1052,7 +1052,7 @@ export default function CreateInvoice() {
                     gstNo: selectedShop.gstNo || "",
                     phone: selectedShop.phone || "",
                     logo: selectedShop.logo || null,
-                    tagline: "Quality Products & Services"
+                    tagline: selectedShop.description || "Quality Products & Services"
                   },
                   customer: {
                     name: selectedCustomer.name,
@@ -1551,7 +1551,7 @@ export default function CreateInvoice() {
                     gstNo: selectedShop.gstNo || "",
                     phone: selectedShop.phone || "",
                     logo: selectedShop.logo || null,
-                    tagline: "Quality Products & Services"
+                    tagline: selectedShop.description || "Quality Products & Services"
                   },
                   customer: {
                     name: selectedCustomer.name,

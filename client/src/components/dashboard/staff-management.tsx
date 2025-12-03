@@ -54,6 +54,7 @@ interface Country {
 interface Shop {
   shopId: number;
   name: string;
+  description?: string;
 }
 
 // Staff API functions
