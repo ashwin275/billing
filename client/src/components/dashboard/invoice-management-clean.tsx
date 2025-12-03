@@ -551,7 +551,7 @@ export default function InvoiceManagementClean() {
                   </div>
                   <div class="company-details">
                     <h1>${invoiceData.shop?.name || 'Shop Name'}</h1>
-                    <p class="company-tagline">Quality Products & Services</p>
+                    <p class="company-tagline">${invoiceData.shop?.description || 'Quality Products & Services'}</p>
                     ${invoiceData.shop?.address ? `<p style="font-size: 10px; margin-top: 3px;">${invoiceData.shop.address}</p>` : ''}
                     ${invoiceData.shop?.place ? `<p style="font-size: 10px; margin-top: 2px;">📍 ${invoiceData.shop.place}</p>` : ''}
                     ${invoiceData.shop?.gstNo ? `<p style="font-size: 10px; margin-top: 2px;">GST: ${invoiceData.shop.gstNo}</p>` : ''}
