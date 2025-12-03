@@ -13,8 +13,8 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 import { AlertTriangle } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import { invoicesApi } from "@/lib/api";
-import { Invoice } from "@/types/api";
+import { invoicesApi, shopsApi } from "@/lib/api";
+import { Invoice, Shop } from "@/types/api";
 import InvoiceTemplate from "@/components/invoice/InvoiceTemplate";
 
 export default function InvoiceManagementClean() {
@@ -37,6 +37,24 @@ export default function InvoiceManagementClean() {
     queryKey: ["/api/invoices/all"],
     queryFn: () => invoicesApi.getAllInvoices(),
   });
+
+  // Fetch shops to get fresh shop data with description
+  const { data: shops = [] } = useQuery({
+    queryKey: ["/api/shops/all"],
+    queryFn: () => shopsApi.getAllShops(),
+  });
+
+  // Helper function to get shop with description from fresh shops data
+  const getShopWithDescription = (invoice: Invoice): Invoice['shop'] => {
+    const freshShop = shops.find((s: Shop) => s.shopId === invoice.shopId);
+    if (freshShop) {
+      return {
+        ...invoice.shop,
+        description: freshShop.description || invoice.shop?.description,
+      };
+    }
+    return invoice.shop;
+  };
 
   // Delete invoice mutation
   const deleteInvoiceMutation = useMutation({
@@ -108,14 +126,22 @@ export default function InvoiceManagementClean() {
     }
   };
 
-  // Handle preview
+  // Handle preview - merge fresh shop data with description
   const handlePreview = (invoice: Invoice) => {
-    setSelectedInvoice(invoice);
+    const invoiceWithShopDescription = {
+      ...invoice,
+      shop: getShopWithDescription(invoice),
+    };
+    setSelectedInvoice(invoiceWithShopDescription);
     setIsPreviewDialogOpen(true);
   };
 
-  // Generate PDF using the new template system
-  const handleDownloadPDF = (invoiceData: Invoice) => {
+  // Generate PDF using the new template system - merge fresh shop data with description
+  const handleDownloadPDF = (invoice: Invoice) => {
+    const invoiceData = {
+      ...invoice,
+      shop: getShopWithDescription(invoice),
+    };
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
