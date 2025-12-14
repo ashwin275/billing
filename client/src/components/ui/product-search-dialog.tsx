@@ -520,6 +520,11 @@ export function ProductSearchDialog({
                           <TableRow key={product.productId} data-testid={`row-product-${product.productId}`}>
                             <TableCell>
                               <div className="font-medium">{product.name}</div>
+                              {product.location && (
+                                <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                                  <span className="text-slate-400">Loc:</span> {product.location}
+                                </div>
+                              )}
                             </TableCell>
                             <TableCell className="text-sm text-muted-foreground">
                               {product.productNumber}

@@ -1072,6 +1072,12 @@ export default function ProductsManagement() {
                           )}
                         </div>
                         <span className="text-xs text-slate-400">HSN: {product.hsn}</span>
+                        {product.location && (
+                          <div className="flex items-center space-x-1 text-xs text-slate-500">
+                            <MapPin className="h-3 w-3" />
+                            <span>{product.location}</span>
+                          </div>
+                        )}
                         <div className="md:hidden mt-2">
                           <div className="flex items-center space-x-4 text-sm">
                             <span className="flex items-center space-x-1">
