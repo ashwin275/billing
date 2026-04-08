@@ -493,7 +493,8 @@ export default function CreateInvoice() {
               quantity: item.quantity,
               discount: item.discount,
               discountType: "AMOUNT" as const,
-              unitPrice: item.unitPrice || 0
+              unitPrice: item.price || item.unitPrice || 0,
+              _product: item.product || null
             }))
           : [],
       });
@@ -2485,7 +2486,8 @@ export default function CreateInvoice() {
                         <p>No items added yet. Click "Add Items" to get started.</p>
                       </div>
                     ) : fields.map((field, index) => {
-                      const selectedProduct = Array.isArray(products) ? products.find(p => p.productId === form.watch(`saleItems.${index}.productId`)) : null;
+                      const savedProduct = form.watch(`saleItems.${index}._product`) as any;
+                      const selectedProduct = savedProduct || (Array.isArray(products) ? products.find(p => p.productId === form.watch(`saleItems.${index}.productId`)) : null);
                       const quantity = form.watch(`saleItems.${index}.quantity`) || 0;
                       const discount = form.watch(`saleItems.${index}.discount`) || 0;
                       const discountType = form.watch(`saleItems.${index}.discountType`) || "AMOUNT";

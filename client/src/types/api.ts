@@ -276,6 +276,9 @@ export interface SaleItemInput {
   productId: number;
   quantity: number;
   discount: number;
+  unitPrice?: number;
+  discountType?: "AMOUNT" | "PERCENTAGE";
+  _product?: Product | null;
 }
 
 // Customer Report Types
