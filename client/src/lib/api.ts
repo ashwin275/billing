@@ -5,6 +5,7 @@ import { SignUpData, SignInData, AuthResponse, Country, ApiError } from "@/types
 
 // Get base URL from environment variable with fallback
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://billing-backend.serins.in/api";
+// const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://billing.everesigroup.com/api";
 
 /**
  * Generic API request function with error handling
@@ -219,6 +220,13 @@ export const productsApi = {
    */
   async checkProductExists(productNumber: string, shopId: number): Promise<{ exists: boolean; productNumber: string }> {
     return apiRequest(`/products/product-number-exist?productNumber=${encodeURIComponent(productNumber)}&shopId=${shopId}`);
+  },
+
+  /**
+   * Get product by ID
+   */
+  async getProductById(productId: number): Promise<import("@/types/api").Product> {
+    return apiRequest(`/products/${productId}`);
   },
 };
 
