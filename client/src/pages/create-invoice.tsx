@@ -93,6 +93,7 @@ export default function CreateInvoice() {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [selectedShop, setSelectedShop] = useState<Shop | null>(null);
   const [autoRoundOff, setAutoRoundOff] = useState(false);
+  const [fetchedProducts, setFetchedProducts] = useState<Record<number, Product>>({});
   
   // Fetch products - use high page size to get all products at once for invoice creation
   // This ensures all selected products remain available for calculations across the dialog
@@ -155,6 +156,36 @@ export default function CreateInvoice() {
     control: form.control,
     name: "saleItems",
   });
+
+  // Fetch individual products when not in cached list
+  useEffect(() => {
+    const fetchMissingProducts = async () => {
+      const allProductIds = fields.map((_, index) => form.watch(`saleItems.${index}.productId`)).filter(Boolean);
+      
+      for (const productId of allProductIds) {
+        if (!productId) continue;
+        if (products.find(p => p.productId === productId)) continue;
+        if (fetchedProducts[productId]) continue;
+        
+        try {
+          const product = await productsApi.getProductById(productId);
+          setFetchedProducts(prev => ({ ...prev, [productId]: product }));
+        } catch (error) {
+          console.error('Failed to fetch product:', productId, error);
+        }
+      }
+    };
+    
+    fetchMissingProducts();
+  }, [fields, form, products, fetchedProducts]);
+  
+  // Helper to get product - first from cached products, then from individually fetched products
+  const getProductById = (productId: number): Product | undefined => {
+    if (!productId) return undefined;
+    const cached = products.find(p => p.productId === productId);
+    if (cached) return cached;
+    return fetchedProducts[productId];
+  };
 
   // Prevent default items from being added
   useEffect(() => {
@@ -322,7 +353,7 @@ export default function CreateInvoice() {
     if (!selectedCustomer || !selectedShop) return { subtotal: 0, totalTax: 0, totalDiscount: 0, overallDiscountAmount: 0, grandTotal: 0, items: [], itemDiscounts: 0, itemsBeforeDiscount: 0 };
 
     const items = formData.saleItems.map(item => {
-      const product = Array.isArray(products) ? products.find(p => p.productId === item.productId) : null;
+      const product = getProductById(item.productId) || null;
       if (!product) return null;
 
       const unitPrice = formData.saleType === 'RETAIL' ? product.retailRate : product.wholesaleRate;
@@ -2436,7 +2467,7 @@ export default function CreateInvoice() {
                       saleType={form.watch("saleType")}
                       existingItems={fields.map((field, index) => {
                         const productId = form.watch(`saleItems.${index}.productId`);
-                        const product = Array.isArray(products) ? products.find(p => p.productId === productId) : null;
+                        const product = getProductById(productId) || null;
                         if (!product) return null;
                         return {
                           ...product,
@@ -2487,7 +2518,8 @@ export default function CreateInvoice() {
                       </div>
                     ) : fields.map((field, index) => {
                       const savedProduct = form.watch(`saleItems.${index}._product`) as any;
-                      const selectedProduct = savedProduct || (Array.isArray(products) ? products.find(p => p.productId === form.watch(`saleItems.${index}.productId`)) : null);
+                      const productId = form.watch(`saleItems.${index}.productId`);
+                      const selectedProduct = savedProduct || getProductById(productId);
                       const quantity = form.watch(`saleItems.${index}.quantity`) || 0;
                       const discount = form.watch(`saleItems.${index}.discount`) || 0;
                       const discountType = form.watch(`saleItems.${index}.discountType`) || "AMOUNT";
