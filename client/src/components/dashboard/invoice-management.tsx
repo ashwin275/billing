@@ -476,6 +476,7 @@ export default function InvoiceManagementClean() {
                   </div>
                   <p>Phone: ${invoiceData.customerPhone || invoiceData.customer?.phone || 'N/A'}</p>
                   <p>Location: ${invoiceData.customerLocation || invoiceData.customer?.place || 'N/A'}</p>
+                  ${invoiceData.customerGstNo || invoiceData.customer?.gstNo ? `<p>GST: ${invoiceData.customerGstNo || invoiceData.customer?.gstNo}</p>` : ''}
                 </div>
                 <div class="billing-block">
                   <h3>Payment Details</h3>

@@ -20,6 +20,7 @@ const customerEditSchema = z.object({
   name: z.string().min(1, "Customer name is required"),
   place: z.string().min(1, "Place is required"),
   phone: z.string().min(1, "Phone number is required"),
+  gstNo: z.string().optional(),
   customerType: z.enum(["CASH", "CREDIT"], {
     required_error: "Customer type is required",
   }),
@@ -57,6 +58,7 @@ export const CustomerSearchDialog: React.FC<CustomerSearchDialogProps> = ({
       name: "",
       place: "",
       phone: "",
+      gstNo: "",
       customerType: "CASH",
     },
   });
@@ -69,7 +71,8 @@ export const CustomerSearchDialog: React.FC<CustomerSearchDialogProps> = ({
     return customers.filter(customer => 
       customer.name?.toLowerCase().includes(query) ||
       customer.phone?.toString().includes(query) ||
-      customer.place?.toLowerCase().includes(query)
+      customer.place?.toLowerCase().includes(query) ||
+      customer.gstNo?.toLowerCase().includes(query)
     );
   }, [customers, searchQuery]);
 
@@ -128,6 +131,7 @@ export const CustomerSearchDialog: React.FC<CustomerSearchDialogProps> = ({
       name: customer.name || "",
       place: customer.place || "",
       phone: customer.phone?.toString() || "",
+      gstNo: customer.gstNo || "",
       customerType: customer.customerType === "CREDIT" ? "CREDIT" : "CASH",
     });
     setIsEditDialogOpen(true);
@@ -142,6 +146,7 @@ export const CustomerSearchDialog: React.FC<CustomerSearchDialogProps> = ({
       name: data.name,
       place: data.place,
       phone: parseInt(data.phone),
+      gstNo: data.gstNo || "",
       customerType: data.customerType,
     };
     
@@ -226,6 +231,11 @@ export const CustomerSearchDialog: React.FC<CustomerSearchDialogProps> = ({
                         <MapPin className="h-3 w-3" />
                         <span>{customer.place}</span>
                       </div>
+                      {customer.gstNo && (
+                        <div className="flex items-center gap-1">
+                          <span>GST: {customer.gstNo}</span>
+                        </div>
+                      )}
                     </div>
 
                     {customer.totalSpend && (
@@ -354,6 +364,15 @@ export const CustomerSearchDialog: React.FC<CustomerSearchDialogProps> = ({
                   {editForm.formState.errors.phone.message}
                 </p>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-gstNo">GST No</Label>
+              <Input
+                id="edit-gstNo"
+                {...editForm.register("gstNo")}
+                placeholder="Enter GST number"
+              />
             </div>
 
             <div className="space-y-2">

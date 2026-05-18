@@ -66,6 +66,7 @@ const customerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   place: z.string().min(2, "Place must be at least 2 characters"),
   phone: z.string().min(10, "Phone number must be at least 10 digits").regex(/^\d+$/, "Phone number must contain only digits"),
+  gstNo: z.string().optional(),
   shopId: z.number().min(1, "Shop is required"),
   customerType: z.string().min(1, "Please select a customer type"),
 });
@@ -210,6 +211,7 @@ export default function CreateInvoice() {
       name: "",
       place: "",
       phone: "",
+      gstNo: "",
       shopId: 0,
       customerType: "",
     },
@@ -465,6 +467,7 @@ export default function CreateInvoice() {
         productId: item.productId,
         quantity: item.quantity,
         discount: item.discount,
+        discountUnit: item.discountType,
       })),
     };
 
@@ -481,6 +484,7 @@ export default function CreateInvoice() {
       name: data.name,
       place: data.place,
       phone: data.phone,
+      gstNo: data.gstNo || "",
       shopId: data.shopId,
       customerType: data.customerType,
     };
@@ -523,7 +527,7 @@ export default function CreateInvoice() {
               productId: item.product?.productId || 0,
               quantity: item.quantity,
               discount: item.discount,
-              discountType: "AMOUNT" as const,
+              discountType: (item.discountUnit || item.discountType || "AMOUNT") as "AMOUNT" | "PERCENTAGE",
               unitPrice: item.price || item.unitPrice || 0,
               _product: item.product || null
             }))
@@ -613,7 +617,8 @@ export default function CreateInvoice() {
       customer: {
         name: customer.name,
         place: customer.place,
-        phone: customer.phone
+        phone: customer.phone,
+        gstNo: customer.gstNo || ""
       },
       paymentDetails: {
         paymentStatus: formData.paymentStatus,
@@ -930,6 +935,7 @@ export default function CreateInvoice() {
                               <p class="customer-name">${previewData.customer.name}</p>
                               <p>📍 ${previewData.customer.place}</p>
                               <p>📞 ${previewData.customer.phone}</p>
+                              ${previewData.customer.gstNo ? `<p>GST: ${previewData.customer.gstNo}</p>` : ''}
                             </div>
                             <div class="info-block">
                               <h3>Payment Info:</h3>
@@ -1089,7 +1095,8 @@ export default function CreateInvoice() {
                   customer: {
                     name: selectedCustomer.name,
                     place: selectedCustomer.place,
-                    phone: selectedCustomer.phone
+                    phone: selectedCustomer.phone,
+                    gstNo: selectedCustomer.gstNo || ""
                   },
                   paymentDetails: {
                     paymentStatus: formData.paymentStatus,
@@ -1450,6 +1457,7 @@ export default function CreateInvoice() {
                               <p class="customer-name">${previewData.customer.name}</p>
                               <p>📍 ${previewData.customer.place}</p>
                               <p>📞 ${previewData.customer.phone}</p>
+                              ${previewData.customer.gstNo ? `<p>GST: ${previewData.customer.gstNo}</p>` : ''}
                             </div>
                             <div class="info-block">
                               <h3>Payment Info:</h3>
@@ -1588,7 +1596,8 @@ export default function CreateInvoice() {
                   customer: {
                     name: selectedCustomer.name,
                     place: selectedCustomer.place,
-                    phone: selectedCustomer.phone?.toString() || ""
+                    phone: selectedCustomer.phone?.toString() || "",
+                    gstNo: selectedCustomer.gstNo || ""
                   },
                   paymentDetails: {
                     paymentStatus: formData.paymentStatus,
@@ -1924,6 +1933,7 @@ export default function CreateInvoice() {
                               <p class="customer-name">${invoiceData.customer.name}</p>
                               <p>📍 ${invoiceData.customer.place}</p>
                               <p>📞 ${invoiceData.customer.phone}</p>
+                              ${invoiceData.customer.gstNo ? `<p>GST: ${invoiceData.customer.gstNo}</p>` : ''}
                             </div>
                             <div class="info-block">
                               <h3>Payment Info:</h3>
@@ -2228,6 +2238,19 @@ export default function CreateInvoice() {
                               />
                               <FormField
                                 control={customerForm.control}
+                                name="gstNo"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>GST No</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} placeholder="Enter GST number" />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={customerForm.control}
                                 name="customerType"
                                 render={({ field }) => (
                                   <FormItem>
@@ -2320,6 +2343,12 @@ export default function CreateInvoice() {
                           <Phone className="h-4 w-4 text-gray-600" />
                           <span className="text-gray-600">{selectedCustomer.phone}</span>
                         </div>
+                        {selectedCustomer.gstNo && (
+                          <div className="flex items-center space-x-2 mt-2">
+                            <Hash className="h-4 w-4 text-gray-600" />
+                            <span className="text-gray-600">GST: {selectedCustomer.gstNo}</span>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

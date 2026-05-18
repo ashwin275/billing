@@ -141,6 +141,7 @@ export interface Customer {
   name: string;
   place: string;
   phone: string | number;
+  gstNo?: string | null;
   customerType: string;
   loyaltyPoints: number;
   shop: Shop;
@@ -153,6 +154,7 @@ export interface CustomerInput {
   name: string;
   place: string;
   phone: string;
+  gstNo?: string;
   customerType: string;
   shopId: number;
 }
@@ -162,6 +164,7 @@ export interface CustomerUpdate {
   name: string;
   place: string;
   phone: number;
+  gstNo?: string;
   customerType: string;
 }
 
@@ -185,6 +188,7 @@ export interface Invoice {
   customerName?: string; // Added for compatibility
   customerPhone?: string; // Customer phone number
   customerLocation?: string; // Customer location
+  customerGstNo?: string | null; // Customer GST number
   customer?: Customer; // Customer object with full details
   shop: Shop;
   sales: {
@@ -215,6 +219,8 @@ export interface SaleItem {
   product: Product;
   quantity: number;
   discount: number;
+  discountUnit?: "AMOUNT" | "PERCENTAGE";
+  discountType?: "AMOUNT" | "PERCENTAGE";
   unitPrice: number;
   totalPrice: number;
   price: number; // Added for compatibility
@@ -277,6 +283,7 @@ export interface SaleItemInput {
   quantity: number;
   discount: number;
   unitPrice?: number;
+  discountUnit?: "AMOUNT" | "PERCENTAGE";
   discountType?: "AMOUNT" | "PERCENTAGE";
   _product?: Product | null;
 }
@@ -297,6 +304,7 @@ export interface CustomerReport {
   customerName: string;
   phone: string;
   place: string;
+  gstNo?: string | null;
   customerType: string;
   totalPurchases: number;
   totalBills: number;

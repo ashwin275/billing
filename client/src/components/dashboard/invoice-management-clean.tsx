@@ -609,6 +609,7 @@ export default function InvoiceManagementClean() {
                   </div>
                   <p>Phone: ${invoiceData.customerPhone || invoiceData.customer?.phone || 'N/A'}</p>
                   <p>Location: ${invoiceData.customerLocation || invoiceData.customer?.place || 'N/A'}</p>
+                  ${invoiceData.customerGstNo || invoiceData.customer?.gstNo ? `<p>GST: ${invoiceData.customerGstNo || invoiceData.customer?.gstNo}</p>` : ''}
                 </div>
                 <div class="billing-block">
                   <h3>Payment Details</h3>
@@ -839,6 +840,11 @@ export default function InvoiceManagementClean() {
                     <TableCell>
                       <div>
                         <div className="font-medium">{invoice.customerName || 'Unknown Customer'}</div>
+                        {(invoice.customer?.gstNo || invoice.customerGstNo) && (
+                          <div className="text-sm text-muted-foreground">
+                            GST: {invoice.customer?.gstNo || invoice.customerGstNo}
+                          </div>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>

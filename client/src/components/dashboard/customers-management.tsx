@@ -74,6 +74,7 @@ const customerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   place: z.string().min(2, "Place must be at least 2 characters"),
   phone: z.string().min(10, "Phone number must be at least 10 digits"),
+  gstNo: z.string().optional(),
   shopId: z.number().min(1, "Please select a shop"),
   customerType: z.string().min(1, "Please select a customer type"),
 });
@@ -83,6 +84,7 @@ const customerUpdateSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   place: z.string().min(2, "Place must be at least 2 characters"),
   phone: z.number().min(1000000000, "Phone number must be at least 10 digits"),
+  gstNo: z.string().optional(),
   customerType: z.string().min(1, "Please select a customer type"),
 });
 
@@ -117,6 +119,7 @@ export default function CustomersManagement() {
       name: "",
       place: "",
       phone: "",
+      gstNo: "",
       shopId: 0,
       customerType: "",
     },
@@ -130,6 +133,7 @@ export default function CustomersManagement() {
       name: "",
       place: "",
       phone: 0,
+      gstNo: "",
       customerType: "",
     },
   });
@@ -259,6 +263,7 @@ export default function CustomersManagement() {
       name: data.name,
       place: data.place,
       phone: data.phone,
+      gstNo: data.gstNo || "",
       shopId: data.shopId,
       customerType: data.customerType,
     };
@@ -276,6 +281,7 @@ export default function CustomersManagement() {
       name: data.name,
       place: data.place,
       phone: data.phone,
+      gstNo: data.gstNo || "",
       customerType: data.customerType,
     };
 
@@ -303,6 +309,7 @@ export default function CustomersManagement() {
       name: customer.name,
       place: customer.place,
       phone: typeof customer.phone === 'string' ? parseInt(customer.phone) : customer.phone,
+      gstNo: customer.gstNo || "",
       customerType: customer.customerType || "",
     });
     setIsEditDialogOpen(true);
@@ -345,7 +352,8 @@ export default function CustomersManagement() {
   const filteredCustomers = Array.isArray(customers) ? customers.filter(customer => {
     const matchesSearch = customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       customer.place.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.phone.toString().includes(searchTerm);
+      customer.phone.toString().includes(searchTerm) ||
+      customer.gstNo?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesType = customerTypeFilter === "all" || 
       customer.customerType === customerTypeFilter;
@@ -477,6 +485,19 @@ export default function CustomersManagement() {
                         <FormLabel>Phone Number</FormLabel>
                         <FormControl>
                           <Input placeholder="Enter phone number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={addForm.control}
+                    name="gstNo"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>GST No</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter GST number" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -681,6 +702,9 @@ export default function CustomersManagement() {
                             <span>{customer.place}</span>
                           </div>
                         </div>
+                        {customer.gstNo && (
+                          <div className="text-sm text-slate-600">GST: {customer.gstNo}</div>
+                        )}
                       </div>
                     </TableCell>
 
@@ -981,6 +1005,19 @@ export default function CustomersManagement() {
                         {...field} 
                         onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                       />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name="gstNo"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>GST No</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter GST number" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
