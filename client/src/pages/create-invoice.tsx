@@ -465,6 +465,7 @@ export default function CreateInvoice() {
         productId: item.productId,
         quantity: item.quantity,
         discount: item.discount,
+        discountUnit: item.discountType,
       })),
     };
 
@@ -523,7 +524,7 @@ export default function CreateInvoice() {
               productId: item.product?.productId || 0,
               quantity: item.quantity,
               discount: item.discount,
-              discountType: "AMOUNT" as const,
+              discountType: (item.discountUnit || item.discountType || "AMOUNT") as "AMOUNT" | "PERCENTAGE",
               unitPrice: item.price || item.unitPrice || 0,
               _product: item.product || null
             }))

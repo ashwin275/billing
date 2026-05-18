@@ -277,6 +277,7 @@ export interface SaleItemInput {
   quantity: number;
   discount: number;
   unitPrice?: number;
+  discountUnit?: "AMOUNT" | "PERCENTAGE";
   discountType?: "AMOUNT" | "PERCENTAGE";
   _product?: Product | null;
 }
