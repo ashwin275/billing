@@ -539,6 +539,9 @@ export const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, isPre
             </div>
             <p>Phone: {invoice.customer?.phone || invoice.customerPhone || 'N/A'}</p>
             <p>Location: {invoice.customer?.place || invoice.customerLocation || 'N/A'}</p>
+            {(invoice.customer?.gstNo || invoice.customerGstNo) && (
+              <p>GST: {invoice.customer?.gstNo || invoice.customerGstNo}</p>
+            )}
           </div>
           <div className="billing-block">
             <h3>Payment Details</h3>

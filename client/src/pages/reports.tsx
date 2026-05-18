@@ -202,6 +202,7 @@ export default function Reports() {
       'Customer Name': customer.customerName,
       'Phone': customer.phone,
       'Place': customer.place,
+      'GST No': customer.gstNo || '',
       'Customer Type': customer.customerType,
       'Total Purchases': customer.totalPurchases,
       'Total Bills': customer.totalBills,
@@ -1074,6 +1075,7 @@ export default function Reports() {
                               <div>
                                 <div className="font-semibold">{customer.customerName}</div>
                                 <div className="text-sm text-gray-500">{customer.place}</div>
+                                {customer.gstNo && <div className="text-sm text-gray-500">GST: {customer.gstNo}</div>}
                               </div>
                             </TableCell>
                             <TableCell>{customer.phone}</TableCell>

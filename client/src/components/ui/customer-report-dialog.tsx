@@ -117,6 +117,7 @@ export default function CustomerReportDialog({
         ["Customer Name", reportData.customerName],
         ["Phone", reportData.phone],
         ["Place", reportData.place],
+        ["GST No", reportData.gstNo || ""],
         ["Customer Type", reportData.customerType],
         ["Report Period", `${fromDate} to ${toDate}`],
         ["", ""],
@@ -542,6 +543,12 @@ export default function CustomerReportDialog({
                   <span class="detail-label">Place:</span>
                   <span class="detail-value">${reportData.place}</span>
                 </div>
+                ${reportData.gstNo ? `
+                <div class="detail-item">
+                  <span class="detail-label">GST No:</span>
+                  <span class="detail-value">${reportData.gstNo}</span>
+                </div>
+                ` : ''}
                 <div class="detail-item">
                   <span class="detail-label">Customer Type:</span>
                   <span class="detail-value">${reportData.customerType}</span>
