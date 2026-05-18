@@ -840,6 +840,11 @@ export default function InvoiceManagementClean() {
                     <TableCell>
                       <div>
                         <div className="font-medium">{invoice.customerName || 'Unknown Customer'}</div>
+                        {(invoice.customer?.gstNo || invoice.customerGstNo) && (
+                          <div className="text-sm text-muted-foreground">
+                            GST: {invoice.customer?.gstNo || invoice.customerGstNo}
+                          </div>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>
